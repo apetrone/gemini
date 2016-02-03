@@ -27,9 +27,9 @@
 
 namespace gemini
 {
-	static inline unsigned char float_to_ubyte(float f)
+	static inline uint8_t float_to_ubyte(float f)
 	{
-		return (f * 255.0f);
+		return static_cast<uint8_t>(f * 255.0f);
 	}
 
 	Color Color::from_float_pointer(const float* fl, int num_elements)

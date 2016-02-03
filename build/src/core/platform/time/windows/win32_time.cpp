@@ -52,6 +52,13 @@ namespace platform
 		return static_cast<uint64_t>(((static_cast<double>(now.QuadPart)) / static_cast<double>(_frequency.QuadPart)) * MicrosecondsPerSecond);
 	}
 
+	uint64_t time_ticks()
+	{
+		LARGE_INTEGER now;
+		QueryPerformanceCounter(&now);
+		return static_cast<uint64_t>(now.QuadPart);
+	}
+
 	void datetime(DateTime& datetime)
 	{
 		SYSTEMTIME st;

@@ -39,7 +39,7 @@ namespace core
 				return requested_size + sizeof(size_t);
 			}
 
-			void* track_allocation(Zone* zone, void* pointer, size_t requested_size, size_t /*alignment*/, const char* /*filename*/, int /*line*/)
+			void* track_allocation(Zone* /*zone*/, void* pointer, size_t requested_size, size_t /*alignment*/, const char* /*filename*/, int /*line*/)
 			{
 				// store the allocation size in front of the pointer
 				size_t* allocation = static_cast<size_t*>(pointer);
@@ -49,7 +49,7 @@ namespace core
 				return static_cast<char*>(pointer) + sizeof(size_t);
 			}
 
-			void* untrack_allocation(Zone* zone, void* pointer, size_t& allocation_size)
+			void* untrack_allocation(Zone* /*zone*/, void* pointer, size_t& allocation_size)
 			{
 				// cast and move the pointer back to the front of the allocation
 				size_t* allocation = static_cast<size_t*>(pointer);
