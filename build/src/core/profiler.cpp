@@ -49,6 +49,7 @@ namespace gemini
 				return blocks.get(name);
 
 			profile_block* block = new profile_block();
+			block->index = scopes.size();
 			scopes.push_back(block);
 			blocks[name] = block;
 			return block;
@@ -57,7 +58,6 @@ namespace gemini
 		void begin_scope(const char* name, const char* fancy_name)
 		{
 			profile_block* block = find_or_create_block(name);
-			block->index = scopes.size() - 1;
 			block->parent_index = current_scope ? current_scope->index : block->index;
 			block->cycles -= platform::time_ticks();
 			block->name = name;

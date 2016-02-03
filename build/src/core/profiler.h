@@ -57,7 +57,6 @@ namespace gemini
 		void startup();
 		void shutdown();
 
-		static_assert(sizeof(profiler::profile_block) == 32, "profile_block is not aligned on cache line.");
 	} // namespace profiler
 #else
 	#define PROFILE_BEGIN(x)
