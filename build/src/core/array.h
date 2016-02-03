@@ -291,7 +291,7 @@ public:
 
 		value_type& operator* ()
 		{
-			return (*container)[index];
+			return (*container)[static_cast<int>(index)];
 		}
 
 		iterator operator+(int advance) const

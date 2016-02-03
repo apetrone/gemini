@@ -179,7 +179,7 @@ private:
 public:
 	typedef std::pair<K, T> value_type;
 
-	HashSet(size_t initial_size = 16, uint32_t growth_factor = 2, Allocator& allocator_instance = core::memory::system_allocator()) :
+	HashSet(uint32_t initial_size = 16, uint32_t growth_factor = 2, Allocator& allocator_instance = core::memory::system_allocator()) :
 		table(nullptr),
 		table_size(initial_size),
 		used_items(0),

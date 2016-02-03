@@ -138,7 +138,7 @@ namespace gemini
 				}
 
 				data = expanded_data;
-				max_capacity = capacity;
+				max_capacity = static_cast<uint32_t>(capacity);
 			}
 		}
 

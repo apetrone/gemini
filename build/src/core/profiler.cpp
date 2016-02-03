@@ -49,25 +49,25 @@ namespace gemini
 				return blocks.get(name);
 
 			profile_block* block = new profile_block();
-			block->index = scopes.size();
+			block->index = static_cast<uint32_t>(scopes.size());
 			scopes.push_back(block);
 			blocks[name] = block;
 			return block;
 		}
 
-		void begin_scope(const char* name, const char* fancy_name)
+		void begin_scope(const char* name, const char* /*fancy_name*/)
 		{
 			profile_block* block = find_or_create_block(name);
 			block->parent_index = current_scope ? current_scope->index : block->index;
 			block->cycles -= platform::time_ticks();
 			block->name = name;
-			block->depth = depth++;
+			block->depth = static_cast<uint32_t>(depth++);
 			block->hitcount++;
 			profile_stack.push(block);
 			current_scope = block;
 		}
 
-		void end_scope(const char* name, const char* caller_name)
+		void end_scope(const char* /*name*/, const char* /*fancy_name*/)
 		{
 			profile_block* scope = profile_stack.top();
 			scope->cycles += platform::time_ticks() - overhead;
@@ -90,8 +90,8 @@ namespace gemini
 		{
 			for (profile_block* scope : scopes)
 			{
-				const profile_block* parent = scopes[scope->parent_index];
-				const double parent_weight = scope->cycles / double(parent->cycles);
+				const profile_block* parent = scopes[static_cast<int>(scope->parent_index)];
+				const float parent_weight = scope->cycles / float(parent->cycles);
 				callback(scope->name, scope->cycles, scope->depth, scope->hitcount, parent_weight);
 			}
 		}
