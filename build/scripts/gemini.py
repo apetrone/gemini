@@ -26,7 +26,7 @@ COMMON_PROJECT_ROOT = "_projects"
 libglm = Dependency(file="glm.py")
 librecastnavigation = Dependency(file="recastnavigation.py")
 libfreetype = Dependency(file="freetype.py")
-rapidjson = Dependency(file="rapidjson.py")
+#rapidjson = Dependency(file="rapidjson.py")
 
 def assert_dependency(found, message):
 	if not found:
@@ -430,8 +430,8 @@ def get_libcore(arguments, target_platform):
 	]
 
 	libcore.dependencies += [
-		Dependency(file="glm.py"),
-		rapidjson
+		Dependency(file="glm.py")
+		#rapidjson
 	]
 
 
@@ -806,12 +806,12 @@ def create_unit_test(target_platform, arguments, name, dependencies, source, out
 def get_unit_tests(arguments, libcore, librenderer, libruntime, libglm, **kwargs):
 	target_platform = kwargs.get("target_platform", None)
 	return [
-		create_unit_test(target_platform, arguments, "test_core", [rapidjson, libcore, libglm], "tests/src/test_core.cpp"),
+		create_unit_test(target_platform, arguments, "test_core", [libcore, libglm], "tests/src/test_core.cpp"),
 		create_unit_test(target_platform, arguments, "test_platform", [libcore, libglm], "tests/src/test_platform.cpp"),
-		create_unit_test(target_platform, arguments, "test_runtime", [rapidjson, libruntime, librenderer, libfreetype, libcore, libglm], "tests/src/test_runtime.cpp"),
-		create_unit_test(target_platform, arguments, "test_render", [rapidjson, libruntime, librenderer, libfreetype, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_ui", [rapidjson, librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_window", [rapidjson, librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
+		create_unit_test(target_platform, arguments, "test_runtime", [libruntime, librenderer, libfreetype, libcore, libglm], "tests/src/test_runtime.cpp"),
+		create_unit_test(target_platform, arguments, "test_render", [libruntime, librenderer, libfreetype, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_ui", [librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_window", [librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
 	]
 
 def get_kraken(arguments, libruntime, librenderer, libcore, **kwargs):
