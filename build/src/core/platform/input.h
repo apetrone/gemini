@@ -330,6 +330,8 @@ namespace input
 		int window_coords[2];
 		int cursor_delta[2];
 
+		// > 0 towards screen
+		// < 0 towards user
 		int wheel_direction;
 
 		ButtonState buttons[ MOUSE_COUNT ];

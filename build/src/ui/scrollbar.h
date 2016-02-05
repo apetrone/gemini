@@ -24,10 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "ui/button.h"
 #include "ui/panel.h"
 #include "ui/events.h"
 #include "ui/utils.h"
-#include "ui/scrollable.h"
 
 #include <core/typedefs.h>
 
@@ -35,42 +35,42 @@
 
 namespace gui
 {
-	class Label : public ScrollablePanel
+	class ScrollButton : public Button
 	{
 	public:
-		LIBRARY_EXPORT Label(Panel* parent);
+		ScrollButton(Panel* parent, uint32_t direction = 0);
 
-		LIBRARY_EXPORT virtual void get_content_bounds(Rect& bounds) const;
-		LIBRARY_EXPORT virtual void update(Compositor* compositor, float delta_seconds) override;
-		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands) override;
-		LIBRARY_EXPORT virtual void set_font(const char* filename, size_t pixel_size);
-		LIBRARY_EXPORT virtual void set_text(const std::string& text);
-		LIBRARY_EXPORT virtual bool is_label() const override { return true; }
+	protected:
+		// 0 for horizontal
+		// 1 for vertical
+		uint32_t scroll_direction;
 
-		void append_text(const char* message);
+		// value is normalized [0, 1]
+		float scroll_value;
+	};
+
+	class Scrollbar : public Panel
+	{
+	public:
+		Scrollbar(Panel* parent, uint32_t direction);
+
+		LIBRARY_EXPORT virtual void handle_event(EventArgs& args) override;
+
+		// set the button dimensions on this scrollbar
+		// can be used by ScrollablePanels to set the side of the buttons
+		// depending on the content size.
+		LIBRARY_EXPORT void set_button_dimensions(float x, float y);
+
+		void set_scroll_value(float new_value);
+
+		DelegateHandler<float> on_scroll_value_changed;
 
 	protected:
 
-		// this should be called whenever the text is modified
-		// to recalculate the content rect.
-		void update_text_cache();
+		ScrollButton* bootun;
+		bool is_dragging;
 
-		struct font_cache_entry
-		{
-			glm::vec2 origin;
-			size_t start;
-			size_t length;
-		};
-
-		std::string text;
-		FontHandle font_handle;
-		Point text_origin;
-		Rect content_bounds;
-
-		// font cache stuff
-		Array<font_cache_entry> font_cache;
-		size_t font_cache_index;
-		uint32_t cache_is_dirty;
-		uint32_t font_height;
-	}; // Label
+		Point initial_click;
+		uint32_t deferred_flags;
+	};
 } // namespace gui

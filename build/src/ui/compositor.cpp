@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 #include "ui/compositor.h"
 #include "ui/renderer.h"
+#include <core/logging.h>
 
 #include <algorithm>
 
@@ -212,7 +213,7 @@ namespace gui
 					args.capture = get_capture();
 					args.delta.x = dx;
 					args.delta.y = dy;
-					args.local = cursor - last_hot->bounds.origin;
+					args.local = last_hot->compositor_to_local(cursor);
 					last_hot->handle_event(args);
 				}
 
@@ -226,7 +227,7 @@ namespace gui
 					args.capture = get_capture();
 					args.delta.x = dx;
 					args.delta.y = dy;
-					args.local = cursor - hot->bounds.origin;
+					args.local = hot->compositor_to_local(cursor);
 					hot->handle_event(args);
 				}
 			}
@@ -243,7 +244,7 @@ namespace gui
 			args.capture = get_capture();
 			args.delta.x = dx;
 			args.delta.y = dy;
-			args.local = cursor - focus->bounds.origin;
+			args.local = focus->compositor_to_local(cursor);
 
 			if (target)
 			{
@@ -260,7 +261,7 @@ namespace gui
 			args.capture = get_capture();
 			args.delta.x = dx;
 			args.delta.y = dy;
-			args.local = cursor - hot->bounds.origin;
+			args.local = hot->compositor_to_local(cursor);
 
 			hot->handle_event(args);
 		}
@@ -295,7 +296,7 @@ namespace gui
 
 			if ( panel )
 			{
-				args.local = last_cursor - panel->bounds.origin;
+				args.local = panel->compositor_to_local(last_cursor);
 				panel->handle_event( args );
 			}
 
@@ -318,7 +319,7 @@ namespace gui
 
 			if ( args.focus )
 			{
-				args.local = last_cursor - args.focus->bounds.origin;
+				args.local = args.focus->compositor_to_local(last_cursor);
 				args.focus->handle_event( args );
 			}
 
@@ -334,9 +335,22 @@ namespace gui
 		}
 	} // cursor_button
 
-	void Compositor::cursor_scroll( uint16_t direction )
+	void Compositor::cursor_scroll(int32_t direction)
 	{
+		EventArgs args(this, Event_CursorScroll);
+		args.focus = get_focus();
+		args.hot = get_hot();
+		args.capture = get_capture();
+		args.cursor = last_cursor;
+		args.modifiers = key_modifiers;
+		args.wheel = direction;
 
+		Panel* panel = args.hot;
+		if (panel)
+		{
+			args.local = panel->compositor_to_local(last_cursor);
+			panel->handle_event(args);
+		}
 	} // cursor_scroll
 
 	void Compositor::key_event(uint32_t unicode, bool is_down, uint32_t character, uint16_t modifiers)
@@ -354,7 +368,7 @@ namespace gui
 		Panel* panel = args.focus;
 		if (panel)
 		{
-			args.local = last_cursor - panel->bounds.origin;
+			args.local = panel->compositor_to_local(last_cursor);
 			panel->handle_event(args);
 		}
 	} // key_event
@@ -366,26 +380,44 @@ namespace gui
 		this->height = new_height;
 	} // resize
 
+
+	bool hit_test_panel(Panel* panel, const Point& location, uint32_t option_flags)
+	{
+		assert(panel != nullptr);
+
+		// TODO: convert compositor coordinates to panel local coordinates
+		const Point local_coords = panel->compositor_to_local(location);
+		const bool passed_flags = panel->has_flags(option_flags);
+		const bool hit_test = panel->hit_test_local(local_coords);
+		const bool result = passed_flags && hit_test;
+//		if (!result)
+//		{
+//			fprintf(stdout, "[%s] local_coords = %2.2f, %2.2f [flags: %s, hit_test: %s]\n",
+//				panel->get_name(),
+//				local_coords.x,
+//				local_coords.y,
+//				passed_flags ? "Yes" : "No",
+//				hit_test ? "Yes" : "No"
+//			);
+//		}
+
+		return result;
+	}
+
+
 	Panel* Compositor::find_panel_at_location(const Point& location, uint32_t option_flags)
 	{
-		Panel* panel = 0;
-		Panel* closest_panel = 0;
+		Panel* closest_panel = nullptr;
 
 		// reset hot and try to find a new one
 		this->hot = 0;
 
 		for(PanelVector::iterator it = zsorted.begin(); it != zsorted.end(); ++it)
 		{
-			panel = (*it);
-
-			// convert compositor coordinates to local panel coordinates
-			Point local_coords = location - panel->get_origin();
-
-//			LOGV("[%s] local_coords = %2.2f, %2.2f\n", panel->get_name(), local_coords.x, local_coords.y);
-			if (panel->has_flags(option_flags) && panel->hit_test_local(local_coords))
+			Panel* hit_panel = find_deepest_panel_at_location((*it), location, option_flags);
+			if (hit_panel)
 			{
-				closest_panel = panel;
-				return find_deepest_panel_at_location(panel, location, option_flags);
+				closest_panel = hit_panel;
 			}
 		}
 
@@ -399,20 +431,25 @@ namespace gui
 			return 0;
 		}
 
-		Panel* cpanel = 0;
-		for (PanelVector::iterator child = root->children.begin(); child != root->children.end(); ++child)
+		if (hit_test_panel(root, location, option_flags))
 		{
-			cpanel = (*child);
-			// convert parent coordinates to local panel coordinates
-			Point local_child_coords = location - cpanel->get_origin();
-//			LOGV("[%s] local_child_coords = %2.2f, %2.2f\n", cpanel->get_name(), local_child_coords.x, local_child_coords.y);
-			if (cpanel->has_flags(option_flags) && cpanel->hit_test_local(local_child_coords))
+			// hit test passed for root; descend into children
+			Panel* cpanel = 0;
+			for (PanelVector::iterator child = root->children.begin(); child != root->children.end(); ++child)
 			{
-				return find_deepest_panel_at_location(cpanel, local_child_coords, option_flags);
+				cpanel = (*child);
+				if (hit_test_panel(cpanel, location, option_flags))
+				{
+					return find_deepest_panel_at_location(cpanel, location, option_flags);
+				}
 			}
-		}
 
-		return root;
+			return root;
+		}
+		else
+		{
+			return nullptr;
+		}
 	} // find_deepest_panel_point
 
 	void Compositor::set_listener(Listener* event_listener)

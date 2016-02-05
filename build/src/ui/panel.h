@@ -71,8 +71,6 @@ namespace gui
 		gemini::Color background_color;
 		gemini::Color foreground_color;
 
-		uint32_t flags;
-
 		LIBRARY_EXPORT Panel(Panel* parent);
 		LIBRARY_EXPORT virtual ~Panel();
 
@@ -82,11 +80,9 @@ namespace gui
 		LIBRARY_EXPORT virtual void set_dimensions(float x, float y);
 		LIBRARY_EXPORT virtual void set_dimensions(const Point& dimensions);
 
-		LIBRARY_EXPORT virtual void get_screen_bounds(Rect& bounds) const;
-		LIBRARY_EXPORT virtual void calculate_screen_bounds(Compositor* compositor);
-
 		// compute content bounds (may exceed compositor bounds)
 		LIBRARY_EXPORT virtual void get_content_bounds(Rect& bounds) const;
+
 		LIBRARY_EXPORT virtual void add_child(Panel* panel);
 		LIBRARY_EXPORT virtual void remove_child(Panel* panel);
 		LIBRARY_EXPORT virtual void handle_event(EventArgs& args);
@@ -98,9 +94,6 @@ namespace gui
 		LIBRARY_EXPORT virtual void set_foreground_color(const gemini::Color& color);
 		LIBRARY_EXPORT virtual void set_visible(bool is_visible);
 		LIBRARY_EXPORT virtual bool is_visible() const;
-
-//		LIBRARY_EXPORT Point local_to_world(const Point& local) const;
-//		LIBRARY_EXPORT Point world_to_local(const Point& world) const;
 
 		// ---------------------------------------------------------------------
 		// hit tests
@@ -115,6 +108,8 @@ namespace gui
 		LIBRARY_EXPORT virtual bool is_button() const { return false; }
 
 		LIBRARY_EXPORT virtual bool has_flags(const uint32_t& test_flags) const { return (flags & test_flags) == test_flags; }
+		LIBRARY_EXPORT virtual void set_flags(uint32_t new_flags) { flags = new_flags; }
+		LIBRARY_EXPORT virtual uint32_t get_flags() const { return flags; }
 
 		// ---------------------------------------------------------------------
 		// transforms
@@ -140,7 +135,21 @@ namespace gui
 		LIBRARY_EXPORT const char* get_name() { return debug_name(); }
 		LIBRARY_EXPORT void set_name(const char* name) { debug_name = name; }
 
+		// convert compositor coordinates to local panel coordinates
+		LIBRARY_EXPORT Point compositor_to_local(const Point& location);
+
+		LIBRARY_EXPORT glm::mat3 get_transform(size_t index) const;
+		
+
 	protected:
+
+
+
+		void update_transform(Compositor*);
+
+		uint32_t flags;
+
+
 		core::StackString<64> debug_name;
 
 		// origin local to the parent
@@ -153,9 +162,6 @@ namespace gui
 		// of the parent's dimensions.
 		Point dimensions;
 
-		// screen-space (dynamically computed; transient) bounds
-		Rect bounds;
-
 		friend class Compositor;
 
 		// Panels will transform through the following spaces:
@@ -163,7 +169,9 @@ namespace gui
 		// Compositor (essentially world-space)
 		// Screen
 
-		glm::mat2 local_transform;
+		// homogeneous coordinates for this panel's local transform
+		// translation * pivot * rotation * scale * inverse_pivot
+		glm::mat3 local_transform;
 
 		// local scaling factor applied on top of initial dimensions
 		glm::vec2 scale;

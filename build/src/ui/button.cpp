@@ -30,7 +30,7 @@
 
 namespace gui
 {
-	Button::Button(Panel* parent) : Label(parent)
+	Button::Button(Panel* parent) : Panel(parent)
 	{
 		pressed_color = gemini::Color::from_rgba(255, 0, 0, 255);
 
@@ -81,7 +81,7 @@ namespace gui
 
 	void Button::update(Compositor* compositor, float delta_seconds)
 	{
-		Label::update(compositor, delta_seconds);
+		Panel::update(compositor, delta_seconds);
 
 		if (state == 0)
 		{
@@ -98,8 +98,8 @@ namespace gui
 
 		// We need floor to snap to pixel boundaries; not fractional pixels;
 		// which would introduce artifacts.
-		text_origin.x = glm::floor(bounds.origin.x + (bounds.width() / 2.0f) - (font_dims.width()/2.0f));
-		text_origin.y = glm::floor(bounds.origin.y + (bounds.height() / 2.0f) - (font_dims.height()/2.0f) + glm::max((float)font_height, font_dims.height()));
+		text_origin.x = glm::floor(origin.x + (size.width / 2.0f) - (font_dims.width()/2.0f));
+		text_origin.y = glm::floor(origin.y + (size.height / 2.0f) - (font_dims.height()/2.0f) + glm::max((float)font_height, font_dims.height()));
 	} // update
 
 	void Button::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
@@ -118,7 +118,8 @@ namespace gui
 			current_color
 		);
 
-		gui::Rect draw_bounds = bounds;
+		gui::Rect draw_bounds;
+		draw_bounds.size = size;
 		draw_bounds.origin = text_origin;
 
 		if (!text.empty())
@@ -127,4 +128,14 @@ namespace gui
 		}
 	}
 
+	void Button::set_font(const char* filename, size_t pixel_size)
+	{
+		Compositor* compositor = get_compositor();
+		font_handle = compositor->get_resource_cache()->create_font(filename, pixel_size);
+	}
+
+	void Button::set_text(const std::string& utf8_string)
+	{
+		text = utf8_string;
+	}
 } // namespace gui

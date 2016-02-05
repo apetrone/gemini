@@ -46,7 +46,7 @@
 #include <ui/compositor.h>
 #include <ui/graph.h>
 #include <ui/button.h>
-
+#include <ui/label.h>
 
 
 
@@ -78,7 +78,7 @@ namespace gui
 		TimelineScrubber(Panel* parent)
 			: Panel(parent)
 		{
-			flags |= Flag_CursorEnabled;
+			flags &= ~Flag_CursorEnabled;
 			set_name("TimelineScrubber");
 		}
 
@@ -152,7 +152,7 @@ namespace gui
 
 		virtual void update(gui::Compositor* compositor, float delta_seconds) override
 		{
-			Point dimensions = scrubber->dimensions_from_pixels(Point(frame_width_pixels, bounds.size.height));
+			Point dimensions = scrubber->dimensions_from_pixels(Point(frame_width_pixels, size.height));
 
 			scrubber->set_dimensions(dimensions);
 			scrubber->set_origin((current_frame * frame_width_pixels), 0.0f);
@@ -169,7 +169,7 @@ namespace gui
 			if (frame_width_pixels == 0)
 			{
 				// recompute the distance here
-				frame_width_pixels = (bounds.size.width / (float)total_frames);
+				frame_width_pixels = (size.width / (float)total_frames);
 			}
 
 			// should be updated before rendering
@@ -181,38 +181,23 @@ namespace gui
 			// add a top rule line to separate this panel
 			render_commands.add_line(geometry[0], geometry[3], gemini::Color::from_rgba(0, 0, 0, 255), 1.0f);
 
-			Rect frame;
-			get_screen_bounds(frame);
-
-			float origin_x = frame.origin.x + left_margin;
-			float origin_y = frame.origin.y + 1.0f;
-
 			// center the individual frames
 			Rect block;
-			block.set(origin_x, origin_y, 1.0f, frame.size.height - 2.0f);
+			block.set(left_margin + 2.0f, 1.0, (frame_width_pixels - 4.0f), size.height - 2.0f);
 
 			for (size_t index = 0; index < total_frames; ++index)
 			{
 				// draw frame ticks until we reach the end of the panel
-				if (block.origin.x + block.size.width >= (frame.origin.x + frame.size.width))
+				if (block.origin.x + block.size.width >= (origin.x + size.width))
 				{
 					break;
 				}
 
 				Point points[4];
-				points[0].x = block.origin.x;
-				points[0].y = block.origin.y;
-
-				points[1].x = block.origin.x + block.size.width;
-				points[1].y = block.origin.y;
-
-				points[2].x = block.origin.x + block.size.width;
-				points[2].y = block.origin.y + block.size.height;
-
-				points[3].x = block.origin.x;
-				points[3].y = block.origin.y + block.size.height;
-
-				// draw each frame's area
+				points[0] = transform_point(local_transform, block.origin);
+				points[1] = transform_point(local_transform, Point(block.origin.x, block.origin.y + block.size.height));
+				points[2] = transform_point(local_transform, Point(block.origin.x + block.size.width, block.origin.y + block.size.height));
+				points[3] = transform_point(local_transform, Point(block.origin.x + block.size.width, block.origin.y));
 				render_commands.add_rectangle(points[0], points[1], points[2], points[3], gui::render::WhiteTexture, frame_color);
 
 				block.origin.x += frame_width_pixels;
@@ -232,6 +217,11 @@ namespace gui
 			// force a recalculate on the next render call
 			frame_width_pixels = 0;
 		} // set_frame_range
+
+		void set_frame(size_t frame)
+		{
+			current_frame = frame;
+		}
 
 	private:
 		size_t left_margin;
@@ -308,245 +298,11 @@ struct MyVertex
 };
 
 
-
-class Scrollbar : public gui::Panel
-{
-	class ScrollButton : public gui::Button
-	{
-	public:
-		ScrollButton(gui::Panel* parent, uint32_t direction = 0)
-			: gui::Button(parent)
-			, scroll_direction(direction)
-			, scroll_value(0.0f)
-		{
-		}
-
-		LIBRARY_EXPORT virtual void update(gui::Compositor* compositor, float delta_seconds) override
-		{
-			gui::Rect parent_bounds;
-			parent->get_screen_bounds(parent_bounds);
-			const float max_walls[] = {
-				parent_bounds.width() - bounds.width(),
-				parent_bounds.height() - bounds.height()
-			};
-
-			float* origins[] = {
-				&origin.x,
-				&origin.y
-			};
-
-			if (*origins[scroll_direction] < 0.0f)
-			{
-				*origins[scroll_direction] = 0.0f;
-			}
-
-			if (*origins[scroll_direction] > max_walls[scroll_direction])
-			{
-				*origins[scroll_direction] = max_walls[scroll_direction];
-			}
-
-			Button::update(compositor, delta_seconds);
-		}
-
-		LIBRARY_EXPORT virtual void handle_event(gui::EventArgs& args)
-		{
-			Button::handle_event(args);
-			if (args.type == gui::Event_CursorDrag)
-			{
-				if (has_flags(Flag_CursorEnabled | Flag_CanMove))
-				{
-					if (has_flags(Flag_CanMove))
-					{
-						float* direction[] = {
-							&origin.x,
-							&origin.y
-						};
-
-						float source_value[] = {
-							args.delta.x,
-							args.delta.y
-						};
-
-						gui::Rect parent_bounds;
-						parent->get_screen_bounds(parent_bounds);
-
-						const float button_position[] = {
-							parent_bounds.width() - (parent_bounds.width() - bounds.origin.x),
-							parent_bounds.height() - (parent_bounds.height() - bounds.origin.y)
-						};
-
-
-						float max_walls[] = {
-							parent_bounds.width() - bounds.width(),
-							parent_bounds.height() - bounds.height()
-						};
-
-						float button_location = button_position[scroll_direction];
-
-						float new_value = *direction[scroll_direction];
-
-						if (button_location >= 0)
-						{
-							new_value += source_value[scroll_direction];
-						}
-
-						const float max_wall = max_walls[scroll_direction];
-
-						if (button_location < 0)
-						{
-							new_value = 0.0f;
-						}
-						else if (button_location > max_wall)
-						{
-							new_value = max_wall;
-						}
-
-
-						*direction[scroll_direction] = new_value;
-
-
-						float t = new_value / parent_bounds.height();
-						if (scroll_value != t)
-						{
-							scroll_value = t;
-//							on_scroll_value_changed(scroll_value);
-						}
-
-					}
-				}
-			}
-		}
-
-	protected:
-		// 0 for horizontal
-		// 1 for vertical
-		uint32_t scroll_direction;
-		float scroll_value;
-	};
-
-public:
-	Scrollbar(gui::Panel* parent, uint32_t direction)
-		: gui::Panel(parent)
-	{
-		set_background_color(gemini::Color::from_rgba(32, 32, 32, 128));
-
-		bootun = new ScrollButton(this, direction);
-		bootun->set_origin(0, 0);
-		bootun->set_font("fonts/debug.ttf", 16);
-		bootun->set_background_color(gemini::Color(0, 1.0f, 1.0f));
-		bootun->set_hover_color(gemini::Color(0, 0, 0));
-		bootun->flags |= Flag_CanMove | Flag_CursorEnabled;
-	}
-
-	// set the button dimensions on this scrollbar
-	// can be used by ScrollablePanels to set the side of the buttons
-	// depending on the content size.
-	LIBRARY_EXPORT void set_button_dimensions(float x, float y)
-	{
-		bootun->set_dimensions(x, y);
-	}
-
-	gui::DelegateHandler<float> on_scroll_value_changed;
-
-protected:
-	ScrollButton* bootun;
-};
-
-class ScrollablePanel : public gui::Panel
-{
-public:
-	ScrollablePanel(gui::Panel* parent)
-		: gui::Panel(parent)
-	{
-		horizontal_bar = new Scrollbar(this, 0);
-		horizontal_bar->on_scroll_value_changed.connect(&ScrollablePanel::on_horizontal_scroll, this);
-
-		vertical_bar = new Scrollbar(this, 1);
-		vertical_bar->on_scroll_value_changed.connect(&ScrollablePanel::on_vertical_scroll, this);
-	}
-
-	LIBRARY_EXPORT virtual void get_content_bounds(gui::Rect& bounds) const
-	{
-		bounds = gui::Rect(0, 0, 4096, 4096);
-	}
-
-	virtual void update(gui::Compositor* compositor, float delta_seconds) override
-	{
-		gui::Rect content_rect;
-		get_content_bounds(content_rect);
-
-		gui::Rect screen_bounds;
-		get_screen_bounds(screen_bounds);
-
-
-		// get the vertical ratio
-		float vratio = screen_bounds.height() / content_rect.height();
-		vertical_bar->set_origin(bounds.width()-32, 0);
-		vertical_bar->set_size(gui::Size(32, bounds.size.height-32));
-		vertical_bar->set_button_dimensions(1.0f, vratio);
-
-		float hratio = screen_bounds.width() / content_rect.width();
-		horizontal_bar->set_origin(0.0f, bounds.height()-32);
-		horizontal_bar->set_size(gui::Size(bounds.size.width-32, 32));
-		horizontal_bar->set_button_dimensions(hratio, 1.0f);
-
-		Panel::update(compositor, delta_seconds);
-	} // update
-
-	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
-	{
-		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, gemini::Color::from_rgba(255, 255, 255, 255));
-
-		render_children(compositor, renderer, render_commands);
-	} // render
-
-	void on_vertical_scroll(float value)
-	{
-		LOGV("vertical: %2.2f\n", value);
-	}
-
-	void on_horizontal_scroll(float value)
-	{
-		LOGV("horizontal: %2.2f\n", value);
-	}
-
-protected:
-	Scrollbar* horizontal_bar;
-	Scrollbar* vertical_bar;
-
-}; // ScrollablePanel
-
-class LogWindow : public gui::Label
-{
-public:
-	LogWindow(Panel* parent)
-		: Label(parent)
-	{
-		flags |= Flag_CanMove | Flag_CursorEnabled;
-	}
-
-//	virtual void update(gui::Compositor* compositor, float delta_seconds) override
-//	{
-//		Panel::update(compositor, delta_seconds);
-//	} // update
-
-//	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
-//	{
-//		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, Color::from_rgba(255, 255, 255, 255));
-//	}
-
-	void append_text(const char* message)
-	{
-		text.append(message);
-		cache_is_dirty = 1;
-	}
-};
-
-
 void log_window_logger_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
 {
-	LogWindow* logwindow = static_cast<LogWindow*>(handler->userdata);
+	gui::Label* logwindow = static_cast<gui::Label*>(handler->userdata);
 	logwindow->append_text(message);
+	logwindow->scroll_to_bottom();
 }
 
 int log_window_logger_open(core::logging::Handler* handler)
@@ -869,13 +625,15 @@ public:
 
 			compositor = new gui::Compositor(window_frame.width, window_frame.height, &resource_cache, gui_renderer);
 			compositor->set_name("compositor");
+
+
 #if 0
 			gui::Timeline* timeline = new gui::Timeline(compositor);
 			timeline->set_bounds(0, 550, 800, 50);
 			timeline->set_frame_range(0, 30);
 			timeline->on_scrubber_changed.connect(&EditorKernel::timeline_scrubber_changed, this);
+			timeline->set_frame(10);
 #endif
-
 
 #if 0
 			gui::RenderableSurface* surface = new gui::RenderableSurface(compositor);
@@ -895,11 +653,19 @@ public:
 			surface->set_texture_handle(handle);
 #endif
 
-#if 1
-			log_window = new LogWindow(compositor);
-			log_window->set_origin(0.0f, 0.0f);
+#if 0
+			log_window = new gui::Label(compositor);
+//			log_window->set_origin(50, 0);
+			log_window->set_origin(0.0f, 450);
 			log_window->set_dimensions(1.0f, 0.25f);
 			log_window->set_font("fonts/debug.ttf", 16);
+			log_window->set_name("log_window");
+			log_window->set_foreground_color(gemini::Color(0.85f, 0.85f, 0.85f));
+			log_window->set_background_color(gemini::Color(0.10f, 0.10f, 0.10f));
+//			log_window->set_scale(glm::vec2(2.0f, 2.0f));
+//			log_window->set_rotation(-mathlib::degrees_to_radians(15));
+			uint32_t current_flags = log_window->get_flags();
+			log_window->set_flags(gui::Panel::Flag_CursorEnabled | gui::Panel::Flag_CanMove | current_flags);
 
 			// install a log handler
 			log_handler.open = log_window_logger_open;
@@ -909,22 +675,10 @@ public:
 			core::logging::instance()->add_handler(&log_handler);
 
 			LOGV("log initialized.\n");
+
+
 #endif
 
-#if 0
-			// test out a scrollbar
-			Scrollbar* scrollbar = new Scrollbar(compositor);
-			scrollbar->set_origin(0.0f, 0.0f);
-			scrollbar->set_dimensions(0.1f, 1.0f);
-#endif
-
-#if 0
-			ScrollablePanel* sp = new ScrollablePanel(compositor);
-//			sp->set_origin(0.0f, 0.0f);
-//			sp->set_dimensions(0.5f, 0.5f);
-
-			sp->set_bounds(0, 0, 512, 512);
-#endif
 
 		}
 #endif

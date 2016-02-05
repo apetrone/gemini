@@ -83,6 +83,7 @@ namespace gui
 			LIBRARY_EXPORT void primitive_quad(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color);
 
 			LIBRARY_EXPORT void add_line(const Point& start, const Point& end, const gemini::Color& color, float thickness = 1.0f);
+			// these points should be in counter-clockwise order
 			LIBRARY_EXPORT void add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color);
 			LIBRARY_EXPORT void add_font(const FontHandle& font, const char* utf8, size_t string_length, const Rect& bounds, const gemini::Color& color);
 		};

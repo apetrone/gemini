@@ -116,18 +116,50 @@ namespace gui
 		return true;
 	}
 
+	void Rect::expand(const Rect& other)
+	{
+		Point new_origin;
+		new_origin.x = glm::min(origin.x, other.origin.x);
+		new_origin.y = glm::min(origin.y, other.origin.y);
+
+		Point delta(
+			glm::abs(origin.x - other.origin.x),
+			glm::abs(origin.y - other.origin.y)
+		);
+
+		const float combined_width = (size.width + other.size.width);
+		const float combined_height = (size.height + other.size.height);
+		float new_width;
+		float new_height;
+		if (origin.x <= other.origin.x)
+		{
+			// this is on the left of other
+			new_width = (other.origin.x - origin.x) + combined_width;
+		}
+		else
+		{
+			// other is on the left of this
+			new_width = (origin.x - other.origin.x) + combined_width;
+		}
+
+		if (origin.y <= other.origin.y)
+		{
+			new_height = (other.origin.y - origin.y) + combined_height;
+		}
+		else
+		{
+			new_height = (origin.y - other.origin.y) + combined_height;
+		}
+
+		size.width = new_width;
+		size.height = new_height;
+
+		origin = new_origin;
+	}
 
 	// ---------------------------------------------------------------------
 	// math utils
 	// ---------------------------------------------------------------------
-	void transform_geometry(glm::vec2* geometry, size_t total_vertices, const glm::mat2& transform)
-	{
-		for (size_t index = 0; index < total_vertices; ++index)
-		{
-			geometry[index] = geometry[index] * transform;
-		}
-	}
-
 	glm::mat2 rotation_matrix(const float radians)
 	{
 		return glm::mat2(
@@ -142,5 +174,19 @@ namespace gui
 			scale.x, 0.0f,
 			0.0f, scale.y
 		);
+	}
+
+	glm::mat3 translate_matrix(const Point& position)
+	{
+		glm::mat3 transform;
+		transform[0] = glm::vec3(1, 0, 0);
+		transform[1] = glm::vec3(0, 1, 0);
+		transform[2] = glm::vec3(position.x, position.y, 1);
+		return transform;
+	}
+
+	Point transform_point(const glm::mat3& transform, const Point& point)
+	{
+		return Point(transform * glm::vec3(point, 1.0f));
 	}
 } // namespace gui

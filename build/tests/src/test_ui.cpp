@@ -46,6 +46,7 @@
 #include <ui/graph.h>
 #include <ui/button.h>
 #include <ui/slider.h>
+#include <ui/label.h>
 
 
 #include <core/threadsafequeue.h>
@@ -270,11 +271,6 @@ public:
 		last.y = value;
 	}
 
-	virtual void update(gui::Compositor* compositor, float delta_seconds)
-	{
-		gui::Panel::update(compositor, delta_seconds);
-	}
-
 	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 	{
 		render_commands.reset();
@@ -286,11 +282,10 @@ public:
 			gui::render::WhiteTexture,
 			background_color);
 
-		gui::Rect frame = bounds;
-		glm::vec2 framesize(frame.width(), frame.height());
-		glm::vec2 center = geometry[0] + (framesize / 2.0f);
-		glm::vec2 start = center;
-		glm::vec2 end = center + last;
+		glm::vec2 framesize(size.width, size.height);
+		glm::vec2 center = (framesize / 2.0f);
+		glm::vec2 start = gui::transform_point(local_transform, center);
+		glm::vec2 end = gui::transform_point(local_transform, center + last);
 
 		// draw the joystick vector
 		render_commands.add_line(start, end, gemini::Color::from_rgba(255, 0, 0, 255), 3.0f);
@@ -307,8 +302,17 @@ public:
 		else if (flags & 1)
 			color = z_down;
 
-		render_commands.add_line(geometry[0], gui::Point(geometry[0].x+frame.width(), geometry[0].y), color, 4.0f);
-		render_commands.add_line(gui::Point(geometry[0].x+frame.width(), geometry[0].y), geometry[0] + framesize, color, 4.0f);
+		const gui::Point a(0, 0);
+		const gui::Point b(size.width, 0);
+
+
+		render_commands.add_line(
+			gui::transform_point(local_transform, a),
+			gui::transform_point(local_transform, b),
+			color,
+			4.0f);
+
+		render_commands.add_line(gui::Point(geometry[0].x+size.width, geometry[0].y), geometry[0] + framesize, color, 4.0f);
 
 //
 //		if (this->background != 0)

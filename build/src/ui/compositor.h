@@ -92,7 +92,7 @@ namespace gui
 		// events
 		LIBRARY_EXPORT void cursor_move_absolute(ScreenInt x, ScreenInt y);
 		LIBRARY_EXPORT void cursor_button(CursorButton::Type button, bool is_down);
-		LIBRARY_EXPORT void cursor_scroll(uint16_t direction);
+		LIBRARY_EXPORT void cursor_scroll(int32_t direction);
 		LIBRARY_EXPORT void key_event(uint32_t unicode, bool is_down, uint32_t character, uint16_t modifiers);
 
 		LIBRARY_EXPORT void resize(ScreenInt width, ScreenInt height);

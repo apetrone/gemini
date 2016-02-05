@@ -204,10 +204,9 @@ namespace gui
 			background_color
 		);
 
-		const Rect& frame = bounds;
-		float dx = (float)frame.size.width / (float)total_samples;
-		float y = frame.origin.y;
-		float height = frame.size.height;
+		float dx = (float)size.width / (float)total_samples;
+		float y = origin.y;
+		float height = size.height;
 		float vertical_scale = range_max - range_min;
 		float yoffset = (range_min / vertical_scale) * height;
 		float baseline_y = ((range_min-baseline_value) / vertical_scale) * height;
@@ -215,8 +214,8 @@ namespace gui
 		if (show_baseline)
 		{
 			// draw a line
-			Point start(frame.origin.x, baseline_y+y+height);
-			Point end(frame.origin.x+frame.size.width, baseline_y+y+height);
+			Point start(origin.x, baseline_y+y+height);
+			Point end(origin.x+size.width, baseline_y+y+height);
 
 			render_commands.add_line(start, end, baseline_color);
 		}
@@ -224,7 +223,7 @@ namespace gui
 		for( unsigned int current_channel = 0; current_channel < total_channels; ++current_channel )
 		{
 			// draw the most current information on the right
-			float cx = frame.origin.x;
+			float cx = origin.x;
 
 			// left to right graph: (sample_delta=1, dx = -dx, cx = right)
 			// right to left: (sample_delta=-1, cx=left)
@@ -278,7 +277,7 @@ namespace gui
 
 
 		// draw text
-		Point left_margin(frame.origin.x + 2, frame.origin.y);
+		Point left_margin(origin.x + 2, origin.y);
 
 		draw_float(renderer, range_max, left_margin, foreground_color, render_commands);
 

@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "ui/label.h"
+#include "ui/panel.h"
 #include "ui/events.h"
 
 
@@ -33,7 +33,7 @@ namespace gui
 	class Compositor;
 	class Renderer;
 
-	class Button : public Label
+	class Button : public Panel
 	{
 	public:
 		LIBRARY_EXPORT Button(Panel* parent);
@@ -47,6 +47,8 @@ namespace gui
 		LIBRARY_EXPORT virtual void update(Compositor* compositor, float delta_seconds) override;
 		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands) override;
 
+		LIBRARY_EXPORT virtual void set_font(const char* filename, size_t pixel_size);
+		LIBRARY_EXPORT virtual void set_text(const std::string& text);
 		LIBRARY_EXPORT virtual bool is_button() const override { return true; }
 
 		DelegateHandler<EventArgs&> on_click;
@@ -55,7 +57,9 @@ namespace gui
 		gemini::Color hover_color;
 		gemini::Color pressed_color;
 		gemini::Color current_color;
-
+		std::string text;
+		FontHandle font_handle;
+		Point text_origin;		
 		uint32_t state;
 	}; // struct Button
 } // namespace gui

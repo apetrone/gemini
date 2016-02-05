@@ -40,7 +40,8 @@ namespace gui
 	{
 		drag_handle = new Panel(this);
 		drag_handle->set_background_color(gemini::Color::from_rgba(0, 255, 255, 255));
-		drag_handle->flags &= ~Flag_CursorEnabled;
+		uint32_t flags = drag_handle->get_flags();
+		drag_handle->set_flags(flags & ~Flag_CursorEnabled);
 		drag_handle->set_origin(0, 0);
 	}
 
@@ -102,9 +103,7 @@ namespace gui
 		const float HANDLE_HEIGHT_DIMENSION = 0.6f;
 
 		// calculate the width of the drag handle
-		Rect screen_bounds;
-		get_screen_bounds(screen_bounds);
-		drag_handle_width = HANDLE_WIDTH_DIMENSION * screen_bounds.width();
+		drag_handle_width = HANDLE_WIDTH_DIMENSION * size.width;
 
 		Point left_edge = get_left_edge();
 		Point right_edge = get_right_edge();

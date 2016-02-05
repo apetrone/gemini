@@ -27,50 +27,32 @@
 #include "ui/panel.h"
 #include "ui/events.h"
 #include "ui/utils.h"
-#include "ui/scrollable.h"
+#include "ui/scrollbar.h"
 
 #include <core/typedefs.h>
+#include <core/logging.h>
 
 #include <string>
 
 namespace gui
 {
-	class Label : public ScrollablePanel
+	class ScrollablePanel : public gui::Panel
 	{
 	public:
-		LIBRARY_EXPORT Label(Panel* parent);
+		ScrollablePanel(gui::Panel* parent);
+		LIBRARY_EXPORT virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+		LIBRARY_EXPORT virtual void handle_event(gui::EventArgs& args);
 
-		LIBRARY_EXPORT virtual void get_content_bounds(Rect& bounds) const;
-		LIBRARY_EXPORT virtual void update(Compositor* compositor, float delta_seconds) override;
-		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands) override;
-		LIBRARY_EXPORT virtual void set_font(const char* filename, size_t pixel_size);
-		LIBRARY_EXPORT virtual void set_text(const std::string& text);
-		LIBRARY_EXPORT virtual bool is_label() const override { return true; }
-
-		void append_text(const char* message);
+		void scroll_to_bottom();
 
 	protected:
+		void update_scrollbars();
 
-		// this should be called whenever the text is modified
-		// to recalculate the content rect.
-		void update_text_cache();
+		void on_vertical_scroll(float value);
+		void on_horizontal_scroll(float value);
 
-		struct font_cache_entry
-		{
-			glm::vec2 origin;
-			size_t start;
-			size_t length;
-		};
-
-		std::string text;
-		FontHandle font_handle;
-		Point text_origin;
-		Rect content_bounds;
-
-		// font cache stuff
-		Array<font_cache_entry> font_cache;
-		size_t font_cache_index;
-		uint32_t cache_is_dirty;
-		uint32_t font_height;
-	}; // Label
+		Scrollbar* horizontal_bar;
+		Scrollbar* vertical_bar;
+		Point scroll_offset;
+	}; // ScrollablePanel
 } // namespace gui

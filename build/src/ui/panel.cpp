@@ -96,9 +96,12 @@ namespace gui
 
 		assert(parent);
 
+		assert(x <= 1.0f);
+		assert(y <= 1.0f);
 		size.width = (dimensions.x * parent->size.width);
 		size.height = (dimensions.y * parent->size.height);
-//		flags |= Flag_BoundsAreDirty;
+
+		flags |= Flag_TransformIsDirty;
 	} // set_dimensions
 
 	void Panel::set_dimensions(const Point& new_dimensions)
@@ -109,45 +112,21 @@ namespace gui
 
 		size.width = (dimensions.x * parent->size.width);
 		size.height = (dimensions.y * parent->size.height);
-//		flags |= Flag_BoundsAreDirty;
+
+		flags |= Flag_TransformIsDirty;
 	} // set_dimensions
 
 	void Panel::set_origin(float x, float y)
 	{
 		origin.x = x;
 		origin.y = y;
+		flags |= Flag_TransformIsDirty;
 	} // set_origin
 
-	void Panel::get_screen_bounds(Rect& screen_bounds) const
+	void Panel::get_content_bounds(Rect& content_bounds) const
 	{
-		screen_bounds = bounds;
-	} // get_screen_bounds
-
-	void Panel::calculate_screen_bounds(Compositor* compositor)
-	{
-		Point new_origin = origin;
-
-		// use the parent size as the basis for scaling
-		if (parent != 0 && parent != compositor)
-		{
-			// add the origin offset of the parent
-			new_origin = new_origin + parent->bounds.origin;
-		}
-
-		// TODO: modify offsets for anchors?
-
-		bounds.size = size;
-		bounds.origin = new_origin;
-
-		if (parent)
-		{
-			// add margins
-		}
-	} // calculate_screen_bounds
-
-	void Panel::get_content_bounds(Rect& screen_bounds) const
-	{
-		get_screen_bounds(screen_bounds);
+		content_bounds.origin = origin;
+		content_bounds.size = size;
 	} // get_content_bounds
 
 	void Panel::add_child(Panel* panel)
@@ -180,6 +159,7 @@ namespace gui
 				{
 					origin.x += args.delta.x;
 					origin.y += args.delta.y;
+					flags |= Flag_TransformIsDirty;
 				}
 			}
 			else if (args.type == Event_CursorButtonReleased)
@@ -187,10 +167,10 @@ namespace gui
 				if (args.cursor_button == gui::CursorButton::Middle)
 				{
 					LOGV("bounds = {%2.2f, %2.2f, %g, %g}\n",
-						bounds.origin.x,
-						bounds.origin.y,
-						bounds.size.width,
-						bounds.size.height
+						origin.x,
+						origin.y,
+						size.width,
+						size.height
 					);
 				}
 			}
@@ -199,41 +179,7 @@ namespace gui
 
 	void Panel::update(Compositor* compositor, float delta_seconds)
 	{
-		calculate_screen_bounds(compositor);
-
-		// the points have to be rotated around the center pivot
-		gui::Size sz = bounds.size;
-		Point center(bounds.width()/2, bounds.height()/2);
-
-		// center in local space
-		center += bounds.origin;
-
-		// calculate the bounds (local coordinates)
-		geometry[0] = bounds.origin;
-		geometry[1] = bounds.origin + Point(0, sz.height);
-		geometry[2] = bounds.origin + Point(sz.width, sz.height);
-		geometry[3] = bounds.origin + Point(sz.width, 0);
-
-		// transform to the origin
-		geometry[0] -= center;
-		geometry[1] -= center;
-		geometry[2] -= center;
-		geometry[3] -= center;
-
-		// update the local_transform matrix
-		if (flags & Flag_TransformIsDirty)
-		{
-			flags &= ~Flag_TransformIsDirty;
-			local_transform = rotation_matrix(z_rotation) * scale_matrix(scale);
-		}
-
-		transform_geometry(geometry, 4, local_transform);
-
-		// transform back to the panel's position
-		geometry[0] += center;
-		geometry[1] += center;
-		geometry[2] += center;
-		geometry[3] += center;
+		update_transform(compositor);
 
 		for(PanelVector::iterator it = children.begin(); it != children.end(); ++it)
 		{
@@ -318,26 +264,12 @@ namespace gui
 		return this->visible;
 	} // is_visible
 
-//	Point Panel::local_to_world(const Point& local) const
-//	{
-//		Point world;
-//		world = origin + local;
-//		return world;
-//	} // local_to_world
-//
-//	Point Panel::world_to_local(const Point& world) const
-//	{
-//		Point local;
-//		local = world - origin;
-//		return local;
-//	} // world_to_local
-
 	bool Panel::hit_test_local(const Point& local_point) const
 	{
 		// Don't use 'bounds' here because those are
 		// parent-space bounds.
 		// Setup local bounds here with origin (0, 0).
-		Rect local_bounds(Point(0.0f), bounds.size);
+		Rect local_bounds(Point(0.0f), size);
 		return local_bounds.is_point_inside(local_point);
 	}
 
@@ -371,25 +303,70 @@ namespace gui
 
 	Point Panel::pixels_from_dimensions(const Point& input_dimensions) const
 	{
-		Point pixels;
-
 		assert(parent);
-
+		Point pixels;
 		pixels.x = (input_dimensions.x * parent->size.width);
 		pixels.y = (input_dimensions.y * parent->size.height);
-
 		return pixels;
 	}
 
 	Point Panel::dimensions_from_pixels(const Point& pixels) const
 	{
-		Point out_dimensions;
-
 		assert(parent);
-
+		Point out_dimensions;
 		out_dimensions.x = (pixels.x / parent->size.width);
 		out_dimensions.y = (pixels.y / parent->size.height);
-
 		return out_dimensions;
 	}
+
+	Point Panel::compositor_to_local(const Point& location)
+	{
+		const glm::mat3 transform = get_transform(0);
+		return glm::vec2(glm::inverse(transform) * glm::vec3(location, 1.0));
+	}
+
+	glm::mat3 Panel::get_transform(size_t index) const
+	{
+		return local_transform;
+	}
+
+	void Panel::update_transform(Compositor* compositor)
+	{
+		// update the local_transform matrix
+		if (flags & Flag_TransformIsDirty)
+		{
+			glm::mat3 parent_transform;
+			if (parent && parent != compositor)
+			{
+				parent_transform = parent->get_transform(0);
+			}
+
+			// the points have to be rotated around the center pivot
+			Point center(size.width/2, size.height/2);
+
+			const glm::mat3 inverse_pivot = translate_matrix(-center);
+			const glm::mat3 pivot = translate_matrix(center);
+			const glm::mat3 translation = translate_matrix(origin);
+
+			flags &= ~Flag_TransformIsDirty;
+
+			// from RIGHT to LEFT:
+			// transform to origin (using inverse pivot)
+			// perform locale scale, then rotation
+			// transform back by pivot
+			local_transform = translation * pivot * glm::mat3(rotation_matrix(z_rotation) * scale_matrix(scale)) * inverse_pivot * parent_transform;
+
+			// geometry in local coordinates
+			geometry[0] = Point(0, 0);
+			geometry[1] = Point(0, size.height);
+			geometry[2] = Point(size.width, size.height);
+			geometry[3] = Point(size.width, 0);
+
+			geometry[0] = transform_point(local_transform, geometry[0]);
+			geometry[1] = transform_point(local_transform, geometry[1]);
+			geometry[2] = transform_point(local_transform, geometry[2]);
+			geometry[3] = transform_point(local_transform, geometry[3]);
+		}
+	}
+
 } // namespace gui

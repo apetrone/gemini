@@ -25,6 +25,7 @@
 #include "ui/label.h"
 #include "ui/renderer.h"
 #include "ui/compositor.h"
+#include <renderer/color.h>
 
 namespace gui
 {
@@ -32,10 +33,22 @@ namespace gui
 	static const float LABEL_TOP_MARGIN = 2;
 
 	Label::Label(Panel* parent)
-		: Panel(parent)
+		: ScrollablePanel(parent)
 		, font_cache_index(0)
 		, cache_is_dirty(1)
+		, font_height(0)
 	{
+	}
+
+	void Label::get_content_bounds(Rect& out_bounds) const
+	{
+		out_bounds = content_bounds;
+	}
+
+	void Label::update(Compositor* compositor, float delta_seconds)
+	{
+		update_text_cache();
+		ScrollablePanel::update(compositor, delta_seconds);
 	}
 
 	void Label::render(Compositor* compositor,
@@ -54,23 +67,83 @@ namespace gui
 		if (text.empty())
 			return;
 
+		// draw cache items
+		for (const font_cache_entry& item : font_cache)
+		{
+			Rect current_rect;
+			current_rect.origin = origin;
+			current_rect.size = size;
+			current_rect.origin += item.origin;
+			current_rect.origin -= scroll_offset;
+
+			// don't draw text above the panel
+			if (current_rect.origin.y < origin.y)
+				continue;
+
+			// don't draw text below the panel
+			if (current_rect.origin.y > (origin.y+size.height+font_height))
+				break;
+
+			render_commands.add_font(font_handle, &text[item.start], item.length, current_rect, foreground_color);
+		}
+
+//		const bool content_larger_than_bounds = content_bounds.height() > size.height;
+//		if (content_larger_than_bounds)
+//		{
+//			Point start(origin.x, origin.y + content_bounds.height());
+//			Point end(origin.x + size.width, origin.y + content_bounds.height());
+//			render_commands.add_line(start, end, gemini::Color::from_rgba(0, 255, 0, 255));
+//		}
+
+		render_children(compositor, renderer, render_commands);
+	}
+
+	void Label::set_font(const char* filename, size_t pixel_size)
+	{
+		Compositor* compositor = get_compositor();
+		font_handle = compositor->get_resource_cache()->create_font(filename, pixel_size);
+
+		// cache font_height
 		size_t height;
 		int ascender, descender;
-		renderer->font_metrics(font_handle, height, ascender, descender);
-		float font_height = (ascender + descender);
+		compositor->get_renderer()->font_metrics(font_handle, height, ascender, descender);
+		font_height = (ascender + descender);
+	}
 
-		float FONT_HEIGHT_OFFSET = font_height;
+	void Label::set_text(const std::string& utf8_string)
+	{
+		text = utf8_string;
+		cache_is_dirty = 1;
+	}
 
+	void Label::append_text(const char* message)
+	{
+		text.append(message);
+		cache_is_dirty = 1;
+		update_text_cache();
+	}
+
+	void Label::update_text_cache()
+	{
 		// try and render with a font cache
 		if (cache_is_dirty)
 		{
+			Renderer* renderer = get_compositor()->get_renderer();
+			size_t height;
+			int ascender, descender;
+			renderer->font_metrics(font_handle, height, ascender, descender);
+			const float FONT_HEIGHT = (ascender + descender);
+			float font_height = FONT_HEIGHT;
+			content_bounds.origin = origin + scroll_offset;
+
 			cache_is_dirty = 0;
 			font_cache.clear(false);
 
 			size_t last_start = 0;
 
 			glm::vec2 origin_offset = glm::vec2(LABEL_LEFT_MARGIN, LABEL_TOP_MARGIN);
-			origin_offset.y += FONT_HEIGHT_OFFSET;
+			origin_offset.y += FONT_HEIGHT;
+			content_bounds.size.height = -FONT_HEIGHT;
 
 			const size_t character_count = text.size();
 			for (size_t index = 0; index < character_count+1; ++index)
@@ -88,11 +161,12 @@ namespace gui
 
 						Rect text_bounds;
 						renderer->font_measure_string(font_handle, &text[cs.start], cs.length, text_bounds);
-						FONT_HEIGHT_OFFSET = glm::max(font_height, text_bounds.height());
+						font_height = glm::max(font_height, text_bounds.height());
 
 						font_cache.push_back(cs);
 						origin_offset.x = LABEL_LEFT_MARGIN;
-						origin_offset.y += FONT_HEIGHT_OFFSET + font_height;
+						origin_offset.y += font_height + FONT_HEIGHT;
+						content_bounds.size.height += FONT_HEIGHT + font_height;
 					}
 
 					if (is_last_character)
@@ -102,25 +176,5 @@ namespace gui
 				}
 			}
 		}
-
-		// draw cache items
-		for (const font_cache_entry& item : font_cache)
-		{
-			Rect current_rect = bounds;
-			current_rect.origin += item.origin;
-			render_commands.add_font(font_handle, &text[item.start], item.length, current_rect, foreground_color);
-		}
-	}
-
-	void Label::set_font(const char* filename, size_t pixel_size)
-	{
-		Compositor* compositor = get_compositor();
-		font_handle = compositor->get_resource_cache()->create_font(filename, pixel_size);
-	}
-
-	void Label::set_text(const std::string& utf8_string)
-	{
-		text = utf8_string;
-		cache_is_dirty = true;
 	}
 } // namespace gui

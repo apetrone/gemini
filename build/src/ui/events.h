@@ -103,21 +103,26 @@ namespace gui
 		// keyboard modifiers
 		uint32_t modifiers;
 
-
-
 		CursorButton::Type cursor_button;
+
+		// > 0 towards screen
+		// < 0 towards user
+		int32_t wheel;
+
 		Compositor* compositor;
 
 	public:
-		EventArgs(Compositor* compositor = 0, EventType event_type = Invalid) :
-			handled(false),
-			type(event_type),
-			focus(0),
-			hot(0),
-			capture(0),
-			modifiers(0)
+		EventArgs(Compositor* _compositor = nullptr, EventType event_type = Invalid)
+			: handled(false)
+			, type(event_type)
+			, focus(nullptr)
+			, hot(nullptr)
+			, capture(nullptr)
+			, modifiers(0)
+			, cursor_button(CursorButton::None)
+			, wheel(0)
+			, compositor(_compositor)
 		{
-			this->compositor = compositor;
 		}
 
 		virtual ~EventArgs() {}

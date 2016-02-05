@@ -149,6 +149,9 @@ namespace gui
 
 		LIBRARY_EXPORT bool fits_inside(const Rect& other) const;
 		LIBRARY_EXPORT bool is_point_inside( const glm::vec2& pt) const;
+
+		// Expand this rect by unioning this rect and other
+		LIBRARY_EXPORT void expand(const Rect& other);
 	}; // Rect
 
 
@@ -309,12 +312,14 @@ namespace gui
 		return ::cos(value);
 	}
 
-
-	void transform_geometry(glm::vec2* geometry, size_t total_vertices, const glm::mat2& transform);
-
 	// generate a 2D rotation matrix
 	glm::mat2 rotation_matrix(const float z_radians);
 
 	// generate a 2D scale matrix
 	glm::mat2 scale_matrix(const Point& scale);
+
+	// generate a 3D homogeneous coordinate matrix
+	glm::mat3 translate_matrix(const Point& translation);
+
+	Point transform_point(const glm::mat3& transform, const Point& point);
 } // namespace gui
