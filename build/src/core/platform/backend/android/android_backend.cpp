@@ -32,6 +32,7 @@
 #include <platform/kernel.h>
 #include <core/mem.h>
 #include <core/logging.h>
+#include <core/core.h>
 
 #include <android_native_app_glue.h>
 #include <android/log.h>
@@ -309,7 +310,7 @@ namespace platform
 		app->onAppCmd = android_handle_command;
 		app->onInputEvent = android_handle_input;
 
-		platform::startup();
+		gemini::core_startup();
 
 		LOGV("__ANDROID_API__ is %i\n", __ANDROID_API__);
 		LOGV("internalDataPath: %s\n", android::internal_data_path());
@@ -412,8 +413,8 @@ namespace platform
 
 		LOGV("exiting the android application\n");
 
-		// shutdown the platform
-		platform::shutdown();
+		// shutdown the core
+		gemini::core_shutdown();
 
 		return 0;
 	}

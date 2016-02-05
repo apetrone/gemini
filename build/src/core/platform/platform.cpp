@@ -217,7 +217,6 @@ namespace platform
 	kernel::Error backend_run_application()
 	{
 		gemini::core_startup();
-		platform::startup();
 
 #if defined(PLATFORM_WINDOWS)
 		// set title bar height, debugdraw uses this as an offset for text.
@@ -244,7 +243,6 @@ namespace platform
 
 		// cleanup kernel memory
 		kernel::shutdown();
-		platform::shutdown();
 		gemini::core_shutdown();
 
 		return error;

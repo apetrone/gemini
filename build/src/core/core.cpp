@@ -29,6 +29,8 @@
 #include <core/mem.h>
 #include <core/profiler.h>
 
+#include <platform/platform.h>
+
 namespace gemini
 {
 	// The logging interface is quite unique in that it needs to exist
@@ -44,6 +46,9 @@ namespace gemini
 
 		core::memory::startup();
 
+		platform::Result result = platform::startup();
+		assert(result.succeeded());
+
 #if defined(GEMINI_ENABLE_PROFILER)
 		profiler::startup();
 #endif
@@ -53,6 +58,8 @@ namespace gemini
 
 	LIBRARY_EXPORT void core_shutdown()
 	{
+		platform::shutdown();
+
 #if defined(GEMINI_ENABLE_PROFILER)
 		profiler::shutdown();
 #endif

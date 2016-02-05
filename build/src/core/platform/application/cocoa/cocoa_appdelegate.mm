@@ -73,7 +73,6 @@ static bool has_started = false;
 		has_started = true;
 
 		gemini::core_startup();
-		platform::startup();
 
 		kernel::startup();
 
@@ -96,7 +95,6 @@ static bool has_started = false;
 -(void)applicationWillTerminate:(NSNotification *)notification
 {
 	kernel::shutdown();
-	platform::shutdown();
 	gemini::core_shutdown();
 }
 

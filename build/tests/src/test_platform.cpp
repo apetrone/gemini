@@ -36,9 +36,6 @@ using namespace platform;
 // ---------------------------------------------------------------------
 UNITTEST(platform)
 {
-	platform::Result result = platform::startup();
-	TEST_ASSERT(result.succeeded(), platform_startup);
-
 	LOGV("PLATFORM_NAME: %s\n", PLATFORM_NAME);
 	LOGV("PLATFORM_COMPILER: %s, version: %s\n", PLATFORM_COMPILER, PLATFORM_COMPILER_VERSION);
 }
@@ -220,12 +217,7 @@ UNITTEST(datetime)
 int main(int, char**)
 {
 	gemini::core_startup();
-
 	unittest::UnitTest::execute();
-
-	// the matching 'startup' to this is in the platform unit test.
-	platform::shutdown();
-
 	gemini::core_shutdown();
 	return 0;
 }

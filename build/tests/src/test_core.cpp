@@ -534,14 +534,8 @@ UNITTEST(util)
 
 int main(int, char**)
 {
-	// platform startup is needed to install the platform log handler
 	gemini::core_startup();
-	platform::startup();
-
 	unittest::UnitTest::execute();
-
-	platform::shutdown();
 	gemini::core_shutdown();
-
 	return 0;
 }

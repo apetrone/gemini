@@ -74,16 +74,9 @@ UNITTEST(logging)
 int main(int, char**)
 {
 	gemini::core_startup();
-	platform::Result result = platform::startup();
-	assert(result.succeeded());
-
 	gemini::runtime_startup("arcfusion.net/gemini/test_runtime");
-
 	unittest::UnitTest::execute();
-
 	gemini::runtime_shutdown();
-
-	platform::shutdown();
 	gemini::core_shutdown();
 	return 0;
 }

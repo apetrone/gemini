@@ -1052,7 +1052,7 @@ void test_devices()
 
 int main(int argc, char** argv)
 {
-	platform::startup();
+	gemini::core_startup();
 
 //	test_memory();
 //	test_maths();
@@ -1067,8 +1067,7 @@ int main(int argc, char** argv)
 	test_devices();
 #endif
 
-//	core::shutdown();
-	platform::shutdown();
+	gemini::core_shutdown();
 
 	return 0;
 }
