@@ -79,6 +79,10 @@ typedef float real;
 	#v,\
 	v.x, v.y, v.z);
 
+#define PRINT_VEC2(v) \
+	LOGV("%s:[%2.2f, %2.2f]\n", \
+	#v,\
+	v.x, v.y);
 
 namespace mathlib
 {
