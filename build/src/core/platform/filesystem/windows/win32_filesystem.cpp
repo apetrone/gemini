@@ -83,6 +83,19 @@ namespace platform
 		return result;
 	}
 
+	Result remove_directory(const char* path)
+	{
+		wchar_t wpath[MAX_PATH_SIZE];
+		memset(wpath, 0, MAX_PATH_SIZE * sizeof(wchar_t));
+		MultiByteToWideChar(CP_UTF8, 0, path, -1, wpath, MAX_PATH_SIZE);
+		if (RemoveDirectory(wpath))
+		{
+			return Result::success();
+		}
+
+		return Result::failure("Error removing directory!");
+	}
+
 	const char* get_environment_variable(const char* name)
 	{
 		memset(_static_buffer, 0, STATIC_BUFFER_SIZE);

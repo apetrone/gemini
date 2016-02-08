@@ -102,6 +102,9 @@ UNITTEST(filesystem)
 	result = platform::make_directory("test_directory");
 	TEST_ASSERT(result.succeeded(), make_directory);
 
+	result = platform::remove_directory("test_directory");
+	TEST_ASSERT(result.succeeded(), remove_directory);
+
 	const char* user_home = nullptr;
 #if defined(PLATFORM_WINDOWS)
 	user_home = platform::get_environment_variable("%USERPROFILE%");

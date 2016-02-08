@@ -302,6 +302,9 @@ namespace platform
 	/// @brief Make directory on disk
 	LIBRARY_EXPORT Result make_directory(const char* path);
 
+	/// @brief Remove a directory from disk
+	LIBRARY_EXPORT Result remove_directory(const char* path);
+
 	/// @brief Returns the value of the environment variable passed in
 	/// or NULL, if it was not set.
 	/// DO NOT include platform specific tokens: e.g. use 'HOME', not '$HOME'
