@@ -89,6 +89,11 @@ namespace platform
 		return posix_make_directory(path);
 	}
 
+	Result remove_directory(const char* path)
+	{
+		return posix_remove_directory(path);
+	}
+
 	PathString get_user_directory()
 	{
 		return posix_get_user_directory();

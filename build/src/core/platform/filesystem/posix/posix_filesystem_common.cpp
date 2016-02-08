@@ -26,7 +26,7 @@
 #include "platform_internal.h"
 
 #include <sys/stat.h>
-
+#include <unistd.h>
 #include <stdlib.h> // for getenv
 
 #include <core/stackstring.h>
@@ -48,6 +48,14 @@ namespace platform
 
 		return result;
 	} // posix_make_directory
+
+	Result posix_remove_directory(const char* path)
+	{
+		Result result;
+		int status_code = rmdir(path);
+		assert(status_code == 0);
+		return result;
+	} // posix_remove_directory
 
 	const char* posix_get_environment_variable(const char* name)
 	{

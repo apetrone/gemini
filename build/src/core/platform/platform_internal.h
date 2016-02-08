@@ -57,6 +57,7 @@ namespace platform
 
 	// filesystem
 	Result posix_make_directory(const char* path);
+	Result posix_remove_directory(const char* path);
 	const char* posix_get_user_directory();
 	const char* posix_get_environment_variable(const char* name);
 	core::StackString<MAX_PATH_SIZE> posix_make_absolute_path(const char* path);

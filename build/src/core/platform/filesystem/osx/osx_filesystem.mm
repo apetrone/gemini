@@ -49,6 +49,11 @@ namespace platform
 		return posix_make_directory(path);
 	}
 
+	Result remove_directory(const char* path)
+	{
+		return posix_remove_directory(path);
+	}
+
 	const char* get_environment_variable(const char* name)
 	{
 		return posix_get_environment_variable(name);
