@@ -701,7 +701,7 @@ namespace platform
 			return window;
 		}
 
-		void destroy(NativeWindow* window)
+		void destroy(NativeWindow* window, DestroyWindowBehavior)
 		{
 			MEMORY_DELETE(window, get_platform_allocator());
 		}

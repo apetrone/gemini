@@ -599,7 +599,9 @@ def get_libcore(arguments, target_platform):
 
 	windows.links += [
 		"Shlwapi",
-		"user32"
+		"user32",
+		"OpenGL32", # for wglGetProcAddress
+		"Gdi32"		# for ChoosePixelFormat, SetPixelFormat
 	]
 
 	return libcore

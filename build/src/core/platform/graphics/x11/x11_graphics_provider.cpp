@@ -106,10 +106,7 @@ namespace platform
 
 			NativeWindow* temporary_window = ::platform::window::create(params);
 
-			// We should have a valid GL context now -- let's try to fetch the
-
-			LOGV("fetching symbol\n");
-
+			// We should have a valid GL context now.
 			const GLubyte context_attribs_arb[] = "glXCreateContextAttribsARB";
 			glXCreateContextAttribsARB = reinterpret_cast<GLXCREATECONTEXTATTRIBSARBPROC>(glXGetProcAddress(context_attribs_arb));
 
@@ -121,7 +118,7 @@ namespace platform
 				glXCreateContextAttribsARB = reinterpret_cast<GLXCREATECONTEXTATTRIBSARBPROC>(glXGetProcAddress(context_attribs));
 			}
 
-			::platform::window::destroy(temporary_window);
+			::platform::window::destroy(temporary_window, DestroyWindowBehavior::WitholdDestroyMessage);
 
 			return Result::success();
 		}

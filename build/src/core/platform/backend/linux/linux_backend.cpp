@@ -247,14 +247,14 @@ namespace platform
 			return window;
 		}
 
-		void destroy(NativeWindow* window)
+		void destroy(NativeWindow* window, DestroyWindowBehavior behavior)
 		{
 			_graphics_provider->detach_context(window);
 			_graphics_provider->destroy_surface(window);
 			_graphics_provider->destroy_context(window);
 
 			MEMORY_DEALLOC(window->graphics_data, get_platform_allocator());
-			_window_provider->destroy(window);
+			_window_provider->destroy(window, behavior);
 		}
 
 		void activate_context(NativeWindow* window)

@@ -472,7 +472,7 @@ namespace platform
 			return _window_provider->get_android_window();
 		}
 
-		void destroy(NativeWindow* window)
+		void destroy(NativeWindow*, DestroyWindowBehavior)
 		{
 		}
 

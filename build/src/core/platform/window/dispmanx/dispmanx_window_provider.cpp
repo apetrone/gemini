@@ -109,7 +109,7 @@ namespace platform
 			return &main_window;
 		}
 
-		void DispManXWindowProvider::destroy(NativeWindow* window)
+		void DispManXWindowProvider::destroy(NativeWindow*, DestroyWindowBehavior)
 		{
 		}
 

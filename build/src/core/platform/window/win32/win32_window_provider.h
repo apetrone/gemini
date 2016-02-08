@@ -24,12 +24,26 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <core/platform/window_provider.h>
+
 namespace platform
 {
 	namespace window
 	{
-		namespace win32
+		class Win32WindowProvider : public WindowProvider
 		{
-		} // namespace win32
+		public:
+			//virtual ~Win32WindowProvider();
+
+			virtual Result startup() override;
+			virtual void shutdown() override;
+			virtual NativeWindow* create(const Parameters& parameters, void* native_visual) override;
+			virtual void destroy(NativeWindow* window, DestroyWindowBehavior behavior) override;
+			virtual Frame get_frame(NativeWindow* window) const override;
+			virtual Frame get_render_frame(NativeWindow* window) const override;
+			virtual size_t get_screen_count() const override;
+			virtual Frame get_screen_frame(size_t screen_index) const override;
+			virtual void dispatch_events() override;
+		};
 	} // namespace window
 } // namespace platform

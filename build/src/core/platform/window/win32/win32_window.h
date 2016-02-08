@@ -41,7 +41,6 @@ namespace platform
 				Window(const Parameters&) :
 					NativeWindow(),
 					handle(NULL)
-					//context(NULL)
 				{
 				}
 
@@ -50,9 +49,9 @@ namespace platform
 					return handle;
 				}
 
+				void set_handle(HWND window_handle) { handle = window_handle; }
 			private:
 				HANDLE handle;
-				//HGLRC context;
 			}; // class Window
 		} // namespace win32
 	} // namespace window

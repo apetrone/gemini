@@ -31,7 +31,6 @@
 	#pragma warning(disable: 4305) // 'initializing' : truncation from 'double' to 'const aengine::real'
 	#pragma warning(disable: 4244) // 'initializing' : conversion from 'double' to 'const aengine::real', possible loss of data
 	#pragma warning(disable: 4668) // '_M_IX86_FP' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
-	#pragma warning(disable: 4464) // relative include path contains '..'
 #endif
 
 // show output at build time regarding glm

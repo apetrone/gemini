@@ -92,7 +92,7 @@ namespace platform
 			return &main_window;
 		}
 
-		void AndroidWindowProvider::destroy(NativeWindow* window)
+		void AndroidWindowProvider::destroy(NativeWindow*, DestroyWindowBehavior)
 		{
 		}
 

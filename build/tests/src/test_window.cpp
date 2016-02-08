@@ -151,6 +151,7 @@ public:
 	{
 		gemini::runtime_startup("arcfusion.net/test_window");
 
+
 		// create a platform window
 		{
 			platform::window::startup(platform::window::RenderingBackend_Default);
@@ -180,6 +181,7 @@ public:
 			main_window = platform::window::create(params);
 		}
 
+
 		// initialize the renderer
 		{
 			using namespace render2;
@@ -201,7 +203,7 @@ public:
 			device = create_device(params);
 
 			platform::window::Frame window_frame = platform::window::get_frame(main_window);
-			device->init(window_frame.width, window_frame.height);
+			device->init(static_cast<int>(window_frame.width), static_cast<int>(window_frame.height));
 
 			// setup shaders
 			render2::PipelineDescriptor desc;
@@ -211,6 +213,7 @@ public:
 			vertex_format.add("in_color", render2::VD_FLOAT, 4);
 			desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
 			pipeline = device->create_pipeline(desc);
+
 
 			size_t total_bytes = sizeof(MyVertex) * 6;
 			vertex_buffer = device->create_vertex_buffer(total_bytes);
@@ -246,7 +249,6 @@ public:
 
 		return kernel::NoError;
 	}
-
 
 
 	virtual void tick()

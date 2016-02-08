@@ -26,6 +26,14 @@
 
 #include <core/typedefs.h>
 
+namespace platform
+{
+	namespace window
+	{
+		struct NativeWindow;
+	}
+}
+
 namespace kernel
 {
 	//
@@ -104,6 +112,7 @@ namespace kernel
 	{
 		static const EventType event_type = type;
 		EventSubType subtype;
+		struct platform::window::NativeWindow* window;
 	}; // Event
 
 	// call this when the resolution of the window or device has changed

@@ -29,6 +29,7 @@ namespace platform
 {
 	namespace window
 	{
+
 		class WindowProvider
 		{
 		public:
@@ -37,7 +38,7 @@ namespace platform
 			virtual Result startup() = 0;
 			virtual void shutdown() = 0;
 			virtual NativeWindow* create(const Parameters& parameters, void* native_visual) = 0;
-			virtual void destroy(NativeWindow* window) = 0;
+			virtual void destroy(NativeWindow* window, DestroyWindowBehavior behavior) = 0;
 			virtual Frame get_frame(NativeWindow* window) const = 0;
 			virtual Frame get_render_frame(NativeWindow* window) const = 0;
 			virtual size_t get_screen_count() const = 0;

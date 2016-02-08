@@ -135,6 +135,12 @@ namespace platform
 			LIBRARY_EXPORT virtual ~Parameters();
 		};
 
+		enum class DestroyWindowBehavior
+		{
+			None,
+			WitholdDestroyMessage	// don't dispatch a system event for this window destruction
+		};
+
 		struct NativeWindow
 		{
 			LIBRARY_EXPORT NativeWindow() :
@@ -158,10 +164,21 @@ namespace platform
 			/// @param[in] height The new window's height in pixels.
 			LIBRARY_EXPORT virtual void update_size(int, int) {}
 
+			LIBRARY_EXPORT virtual void set_destroy_behavior(DestroyWindowBehavior behavior)
+			{
+				destroy_behavior = behavior;
+			}
+
+			LIBRARY_EXPORT virtual DestroyWindowBehavior get_destroy_behavior() const
+			{
+				return destroy_behavior;
+			}
+
 			// data used by the graphics provider on this system
 			void* graphics_data;
 
 			BackbufferConfig backbuffer;
+			DestroyWindowBehavior destroy_behavior;
 		};
 
 		class InputProvider
@@ -204,7 +221,7 @@ namespace platform
 		LIBRARY_EXPORT void dispatch_events();
 
 		LIBRARY_EXPORT NativeWindow* create(const Parameters& window_parameters);
-		LIBRARY_EXPORT void destroy(NativeWindow* window);
+		LIBRARY_EXPORT void destroy(NativeWindow* window, DestroyWindowBehavior behavior = DestroyWindowBehavior::None);
 
 		// activate this window for rendering
 		LIBRARY_EXPORT void activate_context(NativeWindow* window);

@@ -159,9 +159,10 @@ namespace platform
 			return window;
 		}
 
-		void X11WindowProvider::destroy(NativeWindow* window)
+		void X11WindowProvider::destroy(NativeWindow* window, DestroyWindowBehavior behavior)
 		{
 			void* native_handle = window->get_native_handle();
+			window->set_destroy_behavior(behavior);
 			Window* window_handle = static_cast<Window*>(native_handle);
 
 			XDestroyWindow(display, *window_handle);
