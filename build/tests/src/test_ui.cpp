@@ -47,7 +47,7 @@
 #include <ui/button.h>
 #include <ui/slider.h>
 #include <ui/label.h>
-
+#include <ui/tabcontrol.h>
 
 #include <core/threadsafequeue.h>
 
@@ -92,153 +92,7 @@ struct MyVertex
 
 
 
-class TabControl : public gui::Panel
-{
-	class TabButton : public gui::Button
-	{
-	public:
-		TabButton(gui::Panel* parent, const std::string& name)
-			: gui::Button(parent)
-			, panel(nullptr)
-		{
-			set_text(name);
-		}
 
-		gui::Panel* get_panel() const { return panel; }
-		void set_panel(gui::Panel* target) { panel = target; }
-
-	private:
-		gui::Panel* panel;
-	};
-
-	Array<TabButton*> tabs;
-	size_t current_tab;
-	TabButton* active_tab;
-
-	// the size of a tab's clickable region
-	gui::Size tab_size;
-
-	gui::FontHandle font;
-
-public:
-	TabControl(gui::Panel* root);
-
-	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
-	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
-
-	void add_tab(size_t index, const std::string& name, gui::Panel* panel);
-	void remove_tab(size_t index);
-	void show_tab(size_t index);
-
-	void tab_clicked(gui::EventArgs& args)
-	{
-		TabButton* tab = nullptr;
-		size_t index = 0;
-		for (TabButton* current : tabs)
-		{
-			if (args.hot == current)
-			{
-				tab = current;
-				break;
-			}
-			++index;
-		}
-
-		if (tab)
-		{
-			show_tab(index);
-		}
-	}
-
-	size_t get_active_tab_index() const { return current_tab+1; }
-};
-
-TabControl::TabControl(gui::Panel* root)
-	: gui::Panel(root)
-	, active_tab(nullptr)
-//	, hot_tab(nullptr)
-{
-	// TODO: should get this from style
-	tab_size.width = 40;
-	tab_size.height = 20;
-
-	font = get_compositor()->get_resource_cache()->create_font("fonts/debug.ttf", 16);
-	flags |= Flag_CanMove;
-}
-
-void TabControl::add_tab(size_t index, const std::string& name, gui::Panel* panel)
-{
-	current_tab = tabs.size();
-
-	TabButton* new_tab = new TabButton(this, name);
-	new_tab->set_panel(panel);
-	new_tab->on_click.connect(&TabControl::tab_clicked, this);
-
-	// TODO: should get this from style
-	new_tab->set_font("fonts/debug.ttf", 16);
-
-	// TODO: handle vertical tabs?
-	new_tab->set_bounds(current_tab * (tab_size.width), 0, tab_size.width, tab_size.height);
-	new_tab->set_name(name.c_str());
-
-	tabs.push_back(new_tab);
-
-	// show the latest tab
-	show_tab(current_tab);
-
-	if (panel)
-	{
-		panel->parent = this;
-		panel->set_origin(0, tab_size.height);
-		panel->set_size(gui::Size(size.width, size.height - tab_size.height));
-	}
-}
-
-void TabControl::remove_tab(size_t index)
-{
-}
-
-void TabControl::show_tab(size_t index)
-{
-	current_tab = index;
-
-	TabButton* prev_tab = active_tab;
-
-	if (prev_tab && prev_tab->get_panel())
-	{
-		prev_tab->get_panel()->set_visible(false);
-	}
-	active_tab = tabs[current_tab];
-
-	if (active_tab && active_tab->get_panel())
-	{
-		active_tab->get_panel()->set_visible(true);
-	}
-}
-
-void TabControl::update(gui::Compositor* compositor, float delta_seconds)
-{
-	gui::Panel::update(compositor, delta_seconds);
-
-	if (active_tab && active_tab->get_panel())
-	{
-		active_tab->get_panel()->update(compositor, delta_seconds);
-	}
-}
-
-void TabControl::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
-{
-	// draw the tab background
-	render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], -1, gemini::Color::from_rgba(128, 0, 0, 255));
-
-	render_children(compositor, renderer, render_commands);
-
-	if (active_tab && active_tab->get_panel())
-	{
-		gui::Panel* panel = active_tab->get_panel();
-		panel->render(compositor, renderer, render_commands);
-	}
-}
 
 class ControllerTestPanel : public gui::Panel
 {
@@ -505,7 +359,7 @@ public:
 
 		// test tab panel
 
-		TabControl* tab = new TabControl(root);
+		gui::TabControl* tab = new gui::TabControl(root);
 		tab->set_bounds(10, 10, 250, 250);
 		tab->set_name("tab_panel");
 
