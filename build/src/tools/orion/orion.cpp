@@ -115,7 +115,7 @@ namespace gui
 			scrubber->set_origin(0.0f, 0.0f);
 		}
 
-		gui::DelegateHandler<size_t> on_scrubber_changed;
+		gemini::DelegateHandler<size_t> on_scrubber_changed;
 
 		virtual void handle_event(EventArgs& args) override
 		{
@@ -267,7 +267,7 @@ namespace gui
 
 		// invoked when the handler should render its content to the render
 		// target.
-		gui::DelegateHandler<render2::RenderTarget*> on_render_content;
+		gemini::DelegateHandler<render2::RenderTarget*> on_render_content;
 
 	private:
 		//

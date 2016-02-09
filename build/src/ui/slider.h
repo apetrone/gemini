@@ -45,7 +45,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void set_value(float new_value);
 		LIBRARY_EXPORT virtual float get_value() const { return current_value; }
 
-		gui::DelegateHandler<float> on_value_changed;
+		gemini::DelegateHandler<float> on_value_changed;
 
 	protected:
 

@@ -51,7 +51,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void set_text(const std::string& text);
 		LIBRARY_EXPORT virtual bool is_button() const override { return true; }
 
-		DelegateHandler<EventArgs&> on_click;
+		gemini::DelegateHandler<EventArgs&> on_click;
 
 	protected:
 		gemini::Color hover_color;
