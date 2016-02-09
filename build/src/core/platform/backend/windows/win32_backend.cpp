@@ -76,4 +76,22 @@ namespace platform
 		return version;
 	} // system_version_string
 
+	Process* process_create(
+		const char*,
+		const Array<PathString>&,
+		const char*
+		)
+	{
+		return nullptr;
+	} // process_create
+
+	void process_destroy(Process*)
+	{
+	} // process_destroy
+
+	bool process_is_running(Process*)
+	{
+		return false;
+	} // process_is_running
+
 } // namespace platform

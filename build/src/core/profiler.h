@@ -55,13 +55,12 @@ namespace gemini
 
 		typedef void (*profile_callback)(const char* name, uint64_t cycles, uint32_t depth, uint32_t hitcount, float parent_weight);
 
-		profile_block* find_or_create_block(const char* name);
-		void begin_scope(const char* name, const char* fancy_name);
-		void end_scope(const char* name, const char* caller_name);
-		void report(profile_callback callback);
-		void reset();
-		void startup();
-		void shutdown();
+		LIBRARY_EXPORT void begin_scope(const char* name, const char* fancy_name);
+		LIBRARY_EXPORT void end_scope(const char* name, const char* caller_name);
+		LIBRARY_EXPORT void report(profile_callback callback);
+		LIBRARY_EXPORT void reset();
+		LIBRARY_EXPORT void startup();
+		LIBRARY_EXPORT void shutdown();
 
 	} // namespace profiler
 #else

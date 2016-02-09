@@ -43,7 +43,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void update(gui::Compositor* compositor, float delta_seconds) override;
 		LIBRARY_EXPORT virtual void handle_event(gui::EventArgs& args);
 
-		void scroll_to_bottom();
+		LIBRARY_EXPORT void scroll_to_bottom();
 
 	protected:
 		void update_scrollbars();

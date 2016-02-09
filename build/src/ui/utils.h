@@ -211,13 +211,13 @@ namespace gui
 	}
 
 	// generate a 2D rotation matrix
-	glm::mat2 rotation_matrix(const float z_radians);
+	LIBRARY_EXPORT glm::mat2 rotation_matrix(const float z_radians);
 
 	// generate a 2D scale matrix
-	glm::mat2 scale_matrix(const Point& scale);
+	LIBRARY_EXPORT glm::mat2 scale_matrix(const Point& scale);
 
 	// generate a 3D homogeneous coordinate matrix
-	glm::mat3 translate_matrix(const Point& translation);
+	LIBRARY_EXPORT glm::mat3 translate_matrix(const Point& translation);
 
-	Point transform_point(const glm::mat3& transform, const Point& point);
+	LIBRARY_EXPORT glm::vec2 transform_point(const glm::mat3& transform, const Point& point);
 } // namespace gui

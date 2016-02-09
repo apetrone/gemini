@@ -324,7 +324,7 @@ namespace render2
 					}
 					else
 					{
-						// Encountered an unhandled render commmand
+						// Encountered an unhandled render command
 						assert(0);
 					}
 				}

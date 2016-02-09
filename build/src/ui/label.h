@@ -47,7 +47,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void set_text(const std::string& text);
 		LIBRARY_EXPORT virtual bool is_label() const override { return true; }
 
-		void append_text(const char* message);
+		LIBRARY_EXPORT void append_text(const char* message);
 
 	protected:
 
