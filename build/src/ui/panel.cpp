@@ -80,7 +80,7 @@ namespace gui
 		origin.y = y;
 		size.width = width;
 		size.height = height;
-//		flags |= Flag_BoundsAreDirty;
+		flags |= Flag_TransformIsDirty;
 	} // set_bounds
 
 	void Panel::set_bounds(const Rect& new_bounds)
@@ -184,6 +184,11 @@ namespace gui
 		for(PanelVector::iterator it = children.begin(); it != children.end(); ++it)
 		{
 			(*it)->update(compositor, delta_seconds);
+		}
+
+		if (flags & Flag_TransformIsDirty)
+		{
+			flags &= ~Flag_TransformIsDirty;
 		}
 	} // update
 
@@ -332,6 +337,11 @@ namespace gui
 
 	void Panel::update_transform(Compositor* compositor)
 	{
+		if (parent && parent->get_flags() & Flag_TransformIsDirty)
+		{
+			flags |= Flag_TransformIsDirty;
+		}
+
 		// update the local_transform matrix
 		if (flags & Flag_TransformIsDirty)
 		{
@@ -347,8 +357,6 @@ namespace gui
 			const glm::mat3 inverse_pivot = translate_matrix(-center);
 			const glm::mat3 pivot = translate_matrix(center);
 			const glm::mat3 translation = translate_matrix(origin);
-
-			flags &= ~Flag_TransformIsDirty;
 
 			// from RIGHT to LEFT:
 			// transform to origin (using inverse pivot)

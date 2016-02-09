@@ -71,9 +71,9 @@ namespace gui
 		for (const font_cache_entry& item : font_cache)
 		{
 			Rect current_rect;
-			current_rect.origin = origin;
+			current_rect.origin = Point(LABEL_LEFT_MARGIN, LABEL_TOP_MARGIN);
 			current_rect.size = size;
-			current_rect.origin += item.origin;
+			current_rect.origin += transform_point(local_transform, item.origin);
 			current_rect.origin -= scroll_offset;
 
 			// don't draw text above the panel

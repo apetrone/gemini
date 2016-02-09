@@ -178,8 +178,8 @@ void TabControl::add_tab(size_t index, const std::string& name, gui::Panel* pane
 	new_tab->set_font("fonts/debug.ttf", 16);
 
 	// TODO: handle vertical tabs?
-	new_tab->set_bounds(current_tab * tab_size.width, 0, tab_size.width, tab_size.height);
-	new_tab->set_name(core::str::format("tab_button[%i]", current_tab));
+	new_tab->set_bounds(current_tab * (tab_size.width), 0, tab_size.width, tab_size.height);
+	new_tab->set_name(name.c_str());
 
 	tabs.push_back(new_tab);
 
@@ -218,18 +218,18 @@ void TabControl::show_tab(size_t index)
 
 void TabControl::update(gui::Compositor* compositor, float delta_seconds)
 {
+	gui::Panel::update(compositor, delta_seconds);
+
 	if (active_tab && active_tab->get_panel())
 	{
 		active_tab->get_panel()->update(compositor, delta_seconds);
 	}
-
-	gui::Panel::update(compositor, delta_seconds);
 }
 
 void TabControl::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
 {
 	// draw the tab background
-	render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], -1, gemini::Color::from_rgba(128, 128, 128, 255));
+	render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], -1, gemini::Color::from_rgba(128, 0, 0, 255));
 
 	render_children(compositor, renderer, render_commands);
 
@@ -472,7 +472,7 @@ public:
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
 		compositor = new gui::Compositor(width, height, &resource_cache, &renderer);
 
-		root = new gui::Panel(compositor);
+		root = compositor;
 		platform::window::Frame frame = platform::window::get_render_frame(native_window);
 
 		// Window frame is invalid!
@@ -512,14 +512,10 @@ public:
 		label = new gui::Label(tab);
 		label->set_background_color(gemini::Color::from_rgba(32, 32, 32, 255));
 		label->set_foreground_color(gemini::Color::from_rgba(0, 255, 0, 255));
-//		label->set_bounds(50, 75, 110, 40);
-//		label->set_origin(0, 0);
-//		label->set_dimensions(1.0f, 1.0f);
 		label->set_font(dev_font, dev_font_size);
 		label->set_text("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
 		tab->add_tab(0, "test", label);
-
 
 		{
 			label = new gui::Label(tab);
@@ -527,7 +523,7 @@ public:
 			label->set_foreground_color(gemini::Color::from_rgba(255, 0, 0, 255));
 			label->set_bounds(50, 115, 110, 40);
 			label->set_font(dev_font, dev_font_size);
-			label->set_text("ABCDEFGHIJKLMNOPQRSTUVWXYZ adam 0123456789");
+			label->set_text("adam 0123456789");
 			tab->add_tab(1, "test2", label);
 		}
 
@@ -543,7 +539,7 @@ public:
 
 
 		// test buttons
-
+#if 1
 		gemini::Color button_background = gemini::Color::from_rgba(128, 128, 128, 255);
 		gemini::Color button_hover = gemini::Color::from_rgba(255, 255, 128, 255);
 
@@ -581,7 +577,7 @@ public:
 
 		buttons[0]->set_visible(false);
 		LOGV("button %p is not visible\n", buttons[0]);
-
+#endif
 
 		// test slider
 

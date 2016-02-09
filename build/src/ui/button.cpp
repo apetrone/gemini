@@ -91,15 +91,10 @@ namespace gui
 		gui::Rect font_dims;
 		compositor->get_renderer()->font_measure_string(font_handle, this->text.c_str(), text.size(), font_dims);
 
-		size_t font_height;
-		int ascender, descender;
-		compositor->get_renderer()->font_metrics(font_handle, font_height, ascender, descender);
-		font_height = (ascender + descender);
-
 		// We need floor to snap to pixel boundaries; not fractional pixels;
 		// which would introduce artifacts.
-		text_origin.x = glm::floor(origin.x + (size.width / 2.0f) - (font_dims.width()/2.0f));
-		text_origin.y = glm::floor(origin.y + (size.height / 2.0f) - (font_dims.height()/2.0f) + glm::max((float)font_height, font_dims.height()));
+		text_origin.x = glm::floor((size.width / 2.0f) - (font_dims.width()/2.0f));
+		text_origin.y = glm::floor((size.height / 2.0f) - (font_dims.height()/2.0f) + glm::max((float)font_height, font_dims.height()));
 	} // update
 
 	void Button::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
@@ -120,7 +115,7 @@ namespace gui
 
 		gui::Rect draw_bounds;
 		draw_bounds.size = size;
-		draw_bounds.origin = text_origin;
+		draw_bounds.origin = transform_point(local_transform, text_origin);
 
 		if (!text.empty())
 		{
@@ -132,6 +127,10 @@ namespace gui
 	{
 		Compositor* compositor = get_compositor();
 		font_handle = compositor->get_resource_cache()->create_font(filename, pixel_size);
+
+		int ascender, descender;
+		compositor->get_renderer()->font_metrics(font_handle, font_height, ascender, descender);
+		font_height = (ascender + descender);
 	}
 
 	void Button::set_text(const std::string& utf8_string)
