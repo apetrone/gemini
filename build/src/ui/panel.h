@@ -101,7 +101,7 @@ namespace gui
 		LIBRARY_EXPORT virtual bool hit_test_local(const Point& local_point) const;
 
 		// determine if this panel can become the foreground window (if it can be the first Z-ordered window)
-		LIBRARY_EXPORT virtual bool can_send_to_front() const { return false; }
+		LIBRARY_EXPORT virtual bool can_send_to_front() const { return true; }
 
 		// use this until we get a better system in place for type checks / registration
 		LIBRARY_EXPORT virtual bool is_label() const { return false; }

@@ -373,13 +373,11 @@ namespace gui
 		}
 	} // key_event
 
-
 	void Compositor::resize(ScreenInt new_width, ScreenInt new_height)
 	{
 		this->width = new_width;
 		this->height = new_height;
 	} // resize
-
 
 	bool hit_test_panel(Panel* panel, const Point& location, uint32_t option_flags)
 	{
@@ -404,7 +402,6 @@ namespace gui
 		return result;
 	}
 
-
 	Panel* Compositor::find_panel_at_location(const Point& location, uint32_t option_flags)
 	{
 		Panel* closest_panel = nullptr;
@@ -412,7 +409,7 @@ namespace gui
 		// reset hot and try to find a new one
 		this->hot = 0;
 
-		for(PanelVector::iterator it = zsorted.begin(); it != zsorted.end(); ++it)
+		for(PanelVector::reverse_iterator it = zsorted.rbegin(); it != zsorted.rend(); ++it)
 		{
 			Panel* hit_panel = find_deepest_panel_at_location((*it), location, option_flags);
 			if (hit_panel)
