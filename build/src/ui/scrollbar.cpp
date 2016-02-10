@@ -72,11 +72,25 @@ namespace gui
 			{
 				initial_click = pos;
 				is_dragging = true;
+				bootun->set_background_color(gemini::Color::from_rgba(128, 64, 0, 255));
 			}
 		}
 		else if (args.type == gui::Event_CursorButtonReleased)
 		{
 			is_dragging = false;
+			bootun->set_background_color(gemini::Color::from_rgba(255, 128, 0, 255));
+		}
+		if (args.type == Event_CursorMove || args.type == Event_CursorExit)
+		{
+			const Point local_point = bootun->compositor_to_local(args.cursor);
+			if (bootun->hit_test_local(local_point))
+			{
+				bootun->set_background_color(gemini::Color::from_rgba(255, 128, 0, 255));
+			}
+			else
+			{
+				bootun->set_background_color(gemini::Color::from_rgba(120, 120, 120, 255));
+			}
 		}
 	}
 

@@ -47,10 +47,6 @@ namespace gui
 
 	void ScrollablePanel::update(gui::Compositor* compositor, float delta_seconds)
 	{
-		// For now, we need this to update the scrollbar position in case
-		// the ScrollablePanel itself moves.
-		update_scrollbars();
-
 		Panel::update(compositor, delta_seconds);
 	} // update
 
