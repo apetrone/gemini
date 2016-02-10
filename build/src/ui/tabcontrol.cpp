@@ -57,6 +57,7 @@ namespace gui
 		// TODO: handle vertical tabs?
 		new_tab->set_bounds(current_tab * (tab_size.width), 0, tab_size.width, tab_size.height);
 		new_tab->set_name(name.c_str());
+		new_tab->set_hover_color(gemini::Color(0, 1, 1));
 
 		tabs.push_back(new_tab);
 
@@ -73,6 +74,8 @@ namespace gui
 
 	void TabControl::remove_tab(size_t index)
 	{
+		// TODO: implement this
+		assert(0);
 	}
 
 	void TabControl::show_tab(size_t index)

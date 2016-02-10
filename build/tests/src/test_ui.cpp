@@ -94,111 +94,6 @@ struct MyVertex
 
 
 
-class ControllerTestPanel : public gui::Panel
-{
-	glm::vec2 mins;
-	glm::vec2 maxs;
-
-	glm::vec2 last;
-
-	int flags;
-public:
-	ControllerTestPanel(gui::Panel* root) : gui::Panel(root)
-	{
-		mins = glm::vec2(-127, -127);
-		maxs = glm::vec2(127, 127);
-
-		last.x = 0;
-		last.y = 0;
-
-		flags |= Flag_CanMove;
-	}
-
-
-	void set_x(float value)
-	{
-		last.x = value;
-	}
-
-	void set_y(float value)
-	{
-		last.y = value;
-	}
-
-	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
-	{
-		render_commands.reset();
-		render_commands.add_rectangle(
-			geometry[0],
-			geometry[1],
-			geometry[2],
-			geometry[3],
-			gui::render::WhiteTexture,
-			background_color);
-
-		glm::vec2 framesize(size.width, size.height);
-		glm::vec2 center = (framesize / 2.0f);
-		glm::vec2 start = gui::transform_point(local_transform, center);
-		glm::vec2 end = gui::transform_point(local_transform, center + last);
-
-		// draw the joystick vector
-		render_commands.add_line(start, end, gemini::Color::from_rgba(255, 0, 0, 255), 3.0f);
-
-		// render the outline
-		gemini::Color color(0, 0, 0);
-
-
-		gemini::Color c_down = gemini::Color::from_rgba(0, 255, 255, 255);
-		gemini::Color z_down = gemini::Color::from_rgba(255, 128, 0, 255);
-
-		if (flags & 2)
-			color = c_down;
-		else if (flags & 1)
-			color = z_down;
-
-		const gui::Point a(0, 0);
-		const gui::Point b(size.width, 0);
-
-
-		render_commands.add_line(
-			gui::transform_point(local_transform, a),
-			gui::transform_point(local_transform, b),
-			color,
-			4.0f);
-
-		render_commands.add_line(gui::Point(geometry[0].x+size.width, geometry[0].y), geometry[0] + framesize, color, 4.0f);
-
-//
-//		if (this->background != 0)
-//		{
-////			renderer->draw_textured_bounds(frame, this->background);
-//			render_commands.add_rectangle(
-//				geometry[0],
-//				geometry[1],
-//				geometry[2],
-//				geometry[3],
-//				this->background,
-//				gemini::Color(255, 255, 255, 255)
-//			);
-//		}
-//
-//
-//		for(PanelVector::iterator it = children.begin(); it != children.end(); ++it)
-//		{
-//			Panel* child = (*it);
-//			if (child->is_visible())
-//			{
-//				child->render(compositor, renderer, style);
-//			}
-//		}
-
-//		gui::Panel::render(frame, compositor, renderer, style);
-	} // render
-};
-
-
-
-
 // ---------------------------------------------------------------------
 // TestUi
 // ---------------------------------------------------------------------
@@ -210,14 +105,12 @@ class TestUi : public kernel::IKernel,
 	bool active;
 	platform::window::NativeWindow* native_window;
 	gui::Compositor* compositor;
-	gui::Panel* root;
 	gui::Graph* graph;
 	gui::Label* label;
 	gui::Slider* slider;
 	gui::Label* slider_label;
 	GUIRenderer renderer;
 	StandaloneResourceCache resource_cache;
-	ControllerTestPanel* ctp;
 
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
@@ -297,7 +190,6 @@ public:
 	{
 		native_window = nullptr;
 		active = true;
-		root = nullptr;
 		graph = nullptr;
 	}
 
@@ -325,19 +217,14 @@ public:
 
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
 		compositor = new gui::Compositor(width, height, &resource_cache, &renderer);
+		compositor->set_name("main_compositor");
 
-		root = compositor;
 		platform::window::Frame frame = platform::window::get_render_frame(native_window);
 
 		// Window frame is invalid!
 		assert(frame.width > 0);
 		assert(frame.height > 0);
 
-		root->set_bounds(0, 0, frame.width, frame.height);
-		root->set_background_color(gemini::Color::from_rgba(255, 255, 255, 0));
-		root->set_name("root");
-
-//		const char dev_font[] = "fonts/04B_08.ttf";
 		const char dev_font[] = "fonts/debug.ttf";
 		const char menu_font[] = "fonts/debug.ttf";
 
@@ -346,7 +233,7 @@ public:
 
 		// setup the framerate graph
 #if 1
-		graph = new gui::Graph(root);
+		graph = new gui::Graph(compositor);
 		graph->set_bounds(width-250, 0, 250, 100);
 		graph->set_font(dev_font, dev_font_size);
 		graph->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
@@ -359,7 +246,7 @@ public:
 
 		// test tab panel
 
-		gui::TabControl* tab = new gui::TabControl(root);
+		gui::TabControl* tab = new gui::TabControl(compositor);
 		tab->set_bounds(10, 10, 250, 250);
 		tab->set_name("tab_panel");
 
@@ -380,17 +267,6 @@ public:
 			label->set_text("adam 0123456789");
 			tab->add_tab(1, "test2", label);
 		}
-
-
-
-//		ctp = new ControllerTestPanel(root);
-//		ctp->set_bounds(0, 0, 300, 300);
-//		ctp->set_background_color(gemini::Color(80, 80, 80));
-
-//		gui::Panel* panel = new gui::Panel(root);
-//		panel->set_bounds(width-250, 0, 250, 100);
-//		panel->set_background_color(gemini::Color(60, 60, 60, 255));
-
 
 		// test buttons
 #if 1
@@ -416,7 +292,7 @@ public:
 
 		for (size_t index = 0; index < total_buttons; ++index)
 		{
-			gui::Button* button = new gui::Button(root);
+			gui::Button* button = new gui::Button(compositor);
 			button->set_bounds(origin_x, origin_y, button_width, button_height);
 			button->set_font(menu_font, menu_font_size);
 			button->set_text(captions[index]);
@@ -436,14 +312,14 @@ public:
 		// test slider
 
 		// slider label to check value
-		slider_label = new gui::Label(root);
+		slider_label = new gui::Label(compositor);
 		slider_label->set_bounds(230, 300, 40, 30);
 		slider_label->set_background_color(gemini::Color::from_rgba(0, 0, 0, 0));
 		slider_label->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
 		slider_label->set_text("empty");
 		slider_label->set_font("fonts/debug.ttf", 16);
 
-		slider = new gui::Slider(root);
+		slider = new gui::Slider(compositor);
 		slider->set_bounds(20, 300, 200, 40);
 		slider->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
 		slider->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
