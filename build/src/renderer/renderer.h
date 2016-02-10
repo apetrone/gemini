@@ -390,6 +390,7 @@ namespace render2
 	// ---------------------------------------------------------------------
 	struct Texture
 	{
+		virtual ~Texture();
 	};
 
 	// This is an implementation-specific format which

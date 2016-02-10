@@ -369,6 +369,8 @@ public:
 
 		window_frame = platform::window::get_frame(native_window);
 
+		device->init(static_cast<int>(window_frame.width), static_cast<int>(window_frame.height));
+
 		// setup the pipeline
 		render2::PipelineDescriptor desc;
 		desc.shader = device->create_shader("vertexcolor");
@@ -380,8 +382,6 @@ public:
 		// create a vertex buffer and populate it with data
 		float width = (float)window_frame.width;
 		float height = (float)window_frame.height;
-
-		device->init(static_cast<int>(window_frame.width), static_cast<int>(window_frame.height));
 
 		// Draw a triangle on screen with the wide part of the base at the bottom
 		// of the screen.

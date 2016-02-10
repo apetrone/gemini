@@ -580,6 +580,9 @@ def get_libcore(arguments, target_platform):
 		# filesystem
 		"src/core/platform/filesystem/windows/win32_filesystem.cpp",
 
+		"src/core/platform/graphics/win32/win32_graphics_provider.cpp",
+		"src/core/platform/graphics/win32/win32_graphics_provider.h",
+
 		# serial
 		"src/core/platform/serial/win32/win32_serial.cpp",
 

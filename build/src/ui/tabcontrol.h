@@ -63,16 +63,16 @@ namespace gui
 		FontHandle font;
 
 	public:
-		TabControl(Panel* root);
+		LIBRARY_EXPORT TabControl(Panel* root);
 
-		virtual void update(Compositor* compositor, float delta_seconds) override;
-		virtual void render(Compositor* compositor, Renderer* renderer, render::CommandList& render_commands) override;
+		LIBRARY_EXPORT virtual void update(Compositor* compositor, float delta_seconds) override;
+		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, render::CommandList& render_commands) override;
 
-		void add_tab(size_t index, const std::string& name, Panel* panel);
-		void remove_tab(size_t index);
-		void show_tab(size_t index);
+		LIBRARY_EXPORT void add_tab(size_t index, const std::string& name, Panel* panel);
+		LIBRARY_EXPORT void remove_tab(size_t index);
+		LIBRARY_EXPORT void show_tab(size_t index);
 
-		void tab_clicked(EventArgs& args)
+		LIBRARY_EXPORT void tab_clicked(EventArgs& args)
 		{
 			TabButton* tab = nullptr;
 			size_t index = 0;
@@ -92,7 +92,7 @@ namespace gui
 			}
 		}
 
-		size_t get_active_tab_index() const { return current_tab+1; }
+		LIBRARY_EXPORT size_t get_active_tab_index() const { return current_tab+1; }
 	};
 } // namespace gui
 
