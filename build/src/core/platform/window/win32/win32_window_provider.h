@@ -33,8 +33,6 @@ namespace platform
 		class Win32WindowProvider : public WindowProvider
 		{
 		public:
-			//virtual ~Win32WindowProvider();
-
 			virtual Result startup() override;
 			virtual void shutdown() override;
 			virtual NativeWindow* create(const Parameters& parameters, void* native_visual) override;

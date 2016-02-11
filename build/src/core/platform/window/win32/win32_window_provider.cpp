@@ -30,6 +30,7 @@
 #include <core/typedefs.h>
 #include <core/logging.h>
 
+#include "input.h"
 #include "kernel.h"
 
 namespace platform
@@ -47,6 +48,9 @@ namespace platform
 				size_t current_screen_index;
 				Frame frame;
 			};
+
+			int32_t last_mousex = 0;
+			int32_t last_mousey = 0;
 
 			BOOL CALLBACK get_screen_frame(HMONITOR,
 				HDC,
@@ -82,12 +86,245 @@ namespace platform
 				return TRUE;
 			}
 
+			void handle_mouse_button(bool is_down, int mx, int my, NativeWindow* window, input::MouseButton mouse_button)
+			{
+				kernel::MouseEvent mevent;
+				mevent.mx = mx;
+				mevent.my = my;
+				mevent.dx = (mevent.mx - last_mousex);
+				last_mousex = mevent.mx;
+				mevent.dy = (mevent.my - last_mousey);
+				last_mousey = mevent.my;
+				mevent.window = window;
+				mevent.subtype = kernel::MouseButton;
+				mevent.is_down = is_down;
+				mevent.button = mouse_button;
+				kernel::event_dispatch(mevent);
+			}
+
+			void handle_keyboard_event(win32::Window* window, UINT message, WPARAM wparam, LPARAM lparam)
+			{
+				// https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
+
+				using namespace input;
+
+				// map windows virtual keys to input::Button
+				const Button keymap[] = {
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID, // VK_LBUTTON
+					Button::BUTTON_INVALID, // VK_RBUTTON
+					Button::BUTTON_INVALID, // VK_CANCEL
+					Button::BUTTON_INVALID, // VK_MBUTTON
+					Button::BUTTON_INVALID, // VK_XBUTTON1
+					Button::BUTTON_INVALID, // VK_XBUTTON2
+					Button::BUTTON_INVALID, // undefined
+					Button::BUTTON_BACKSPACE,
+					Button::BUTTON_TAB,
+					Button::BUTTON_INVALID,	// reserved (0x0A-0x0B)
+					Button::BUTTON_INVALID, // reserved
+					Button::BUTTON_INVALID, // VK_CLEAR
+					Button::BUTTON_RETURN,
+					Button::BUTTON_INVALID, // undefined (0x0E-0x0F)
+					Button::BUTTON_INVALID, // undefined
+					Button::BUTTON_LSHIFT,
+					Button::BUTTON_LCONTROL,
+					Button::BUTTON_LALT,
+					Button::BUTTON_PAUSE,
+					Button::BUTTON_CAPSLOCK,
+					Button::BUTTON_INVALID, // IME Kana/Hanguel mode; VK_KANA/VK_HANGUEL/VK_HANGUL
+					Button::BUTTON_INVALID, // undefined
+					Button::BUTTON_INVALID, // IME Junja mode; VK_JUNJA
+					Button::BUTTON_INVALID, // IME final mode; VK_FINAL
+					Button::BUTTON_INVALID, // IME Hanja/Kanji mode; VK_HANJA/VK_KANJI
+					Button::BUTTON_INVALID, // undefined
+					Button::BUTTON_ESCAPE,
+					Button::BUTTON_INVALID, // IME convert; VK_CONVERT
+					Button::BUTTON_INVALID, // IME nonconvert; VK_NONCONVERT
+					Button::BUTTON_INVALID, // IME accept; VK_ACCEPT
+					Button::BUTTON_INVALID, // IME mode change request; VK_MODECHANGE
+					Button::BUTTON_SPACE,
+					Button::BUTTON_PAGEUP,
+					Button::BUTTON_PAGEDN,
+					Button::BUTTON_END,
+					Button::BUTTON_HOME,
+					Button::BUTTON_LEFT,
+					Button::BUTTON_UP,
+					Button::BUTTON_RIGHT,
+					Button::BUTTON_DOWN,
+					Button::BUTTON_INVALID, // VK_SELECT
+					Button::BUTTON_INVALID, // VK_PRINT
+					Button::BUTTON_INVALID, // VK_EXECUTE
+					Button::BUTTON_INVALID, // PRINT SCREEN key; VK_SNAPSHOT
+					Button::BUTTON_INSERT,
+					Button::BUTTON_DELETE,
+					Button::BUTTON_INVALID, // VK_HELP
+					Button::BUTTON_0,
+					Button::BUTTON_1,
+					Button::BUTTON_2,
+					Button::BUTTON_3,
+					Button::BUTTON_4,
+					Button::BUTTON_5,
+					Button::BUTTON_6,
+					Button::BUTTON_7,
+					Button::BUTTON_8,
+					Button::BUTTON_9,
+					Button::BUTTON_INVALID, // undefined
+					Button::BUTTON_INVALID, // undefined
+					Button::BUTTON_INVALID, // undefined
+					Button::BUTTON_INVALID, // undefined
+					Button::BUTTON_INVALID, // undefined
+					Button::BUTTON_INVALID, // undefined
+					Button::BUTTON_INVALID, // undefined
+					Button::BUTTON_A,
+					Button::BUTTON_B,
+					Button::BUTTON_C,
+					Button::BUTTON_D,
+					Button::BUTTON_E,
+					Button::BUTTON_F,
+					Button::BUTTON_G,
+					Button::BUTTON_H,
+					Button::BUTTON_I,
+					Button::BUTTON_J,
+					Button::BUTTON_K,
+					Button::BUTTON_L,
+					Button::BUTTON_M,
+					Button::BUTTON_N,
+					Button::BUTTON_O,
+					Button::BUTTON_P,
+					Button::BUTTON_Q,
+					Button::BUTTON_R,
+					Button::BUTTON_S,
+					Button::BUTTON_T,
+					Button::BUTTON_U,
+					Button::BUTTON_V,
+					Button::BUTTON_W,
+					Button::BUTTON_X,
+					Button::BUTTON_Y,
+					Button::BUTTON_Z,
+					Button::BUTTON_LOSKEY,
+					Button::BUTTON_ROSKEY,
+					Button::BUTTON_MENU, // applications key
+					Button::BUTTON_INVALID, // reserved
+					Button::BUTTON_INVALID, // sleep key
+					Button::BUTTON_NUMPAD0,
+					Button::BUTTON_NUMPAD1,
+					Button::BUTTON_NUMPAD2,
+					Button::BUTTON_NUMPAD3,
+					Button::BUTTON_NUMPAD4,
+					Button::BUTTON_NUMPAD5,
+					Button::BUTTON_NUMPAD6,
+					Button::BUTTON_NUMPAD7,
+					Button::BUTTON_NUMPAD8,
+					Button::BUTTON_NUMPAD9,
+					Button::BUTTON_NUMPAD_MULTIPLY,
+					Button::BUTTON_NUMPAD_PLUS,
+					Button::BUTTON_INVALID, // VK_SEPARATOR
+					Button::BUTTON_NUMPAD_MINUS,
+					Button::BUTTON_NUMPAD_PERIOD,
+					Button::BUTTON_NUMPAD_DIVIDE,
+					Button::BUTTON_F1,
+					Button::BUTTON_F2,
+					Button::BUTTON_F3,
+					Button::BUTTON_F4,
+					Button::BUTTON_F5,
+					Button::BUTTON_F6,
+					Button::BUTTON_F7,
+					Button::BUTTON_F8,
+					Button::BUTTON_F9,
+					Button::BUTTON_F10,
+					Button::BUTTON_F11,
+					Button::BUTTON_F12,
+					Button::BUTTON_F13,
+					Button::BUTTON_F14,
+					Button::BUTTON_F15,
+					Button::BUTTON_F16,
+					Button::BUTTON_F17,
+					Button::BUTTON_F18,
+					Button::BUTTON_F19,
+					Button::BUTTON_F20,
+					Button::BUTTON_F21,
+					Button::BUTTON_F22,
+					Button::BUTTON_F23,
+					Button::BUTTON_F24,
+					Button::BUTTON_INVALID, // unassigned (0x88-0x8F)
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_NUMLOCK,
+					Button::BUTTON_SCROLLLOCK,
+					Button::BUTTON_INVALID, // OEM specific (0x92-0x96)
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_LSHIFT,
+					Button::BUTTON_RSHIFT,
+					Button::BUTTON_LCONTROL,
+					Button::BUTTON_RCONTROL,
+					Button::BUTTON_LOSKEY, // VK_LMENU
+					Button::BUTTON_ROSKEY, // VK_RMENU
+					Button::BUTTON_INVALID, // VK_BROWSER_BACK
+					Button::BUTTON_INVALID, // VK_BROWSER_FORWARD
+					Button::BUTTON_INVALID, // VK_BROWSER_REFRESH
+					Button::BUTTON_INVALID, // VK_BROWSER_STOP
+					Button::BUTTON_INVALID, // VK_BROWSER_SEARCH
+					Button::BUTTON_INVALID, // VK_BROWSER_FAVORITES
+					Button::BUTTON_INVALID, // VK_BROWSER_HOME
+					Button::BUTTON_INVALID, // VK_VOLUME_MUTE
+					Button::BUTTON_INVALID, // VK_VOLUME_DOWN
+					Button::BUTTON_INVALID, // VK_VOLUME_UP
+					Button::BUTTON_INVALID, // VK_MEDIA_NEXT_TRACK
+					Button::BUTTON_INVALID, // VK_MEDIA_PREV_TRACK
+					Button::BUTTON_INVALID, // VK_MEDIA_STOP
+					Button::BUTTON_INVALID, // VK_MEDIA_PLAY_PAUSE
+					Button::BUTTON_INVALID, // VK_LAUNCH_MAIL
+					Button::BUTTON_INVALID, // VK_LAUNCH_MEDIA_SELECT
+					Button::BUTTON_INVALID, // VK_LAUNCH_APP1
+					Button::BUTTON_INVALID, // VK_LAUNCH_APP2
+					Button::BUTTON_INVALID, // Reserved (0xB8-0xB9)
+					// All keys below are OEM reserved keys.
+				};
+
+				const size_t max_keys = sizeof(keymap) / sizeof(input::Button);
+
+				// keymap is missing something
+				if (wparam < max_keys)
+				{
+					const WPARAM vkey = wparam;
+					const UINT scancode = static_cast<UINT>((lparam & 0xff0000) >> 16);
+					const int extended = (lparam & (1 << 24)) != 0;
+					const int is_repeat = (HIWORD(lparam) & KF_REPEAT) != 0;
+
+					kernel::KeyboardEvent event;
+					event.key = keymap[vkey];
+					event.is_down = (message == WM_KEYDOWN) || (message == WM_SYSKEYDOWN) ? true : false;
+					event.modifiers = 0;
+					event.window = window;
+					event.unicode = 0;
+					kernel::event_dispatch(event);
+				}
+				else
+				{
+					LOGV("[win32] missing virtualkey in keymap: %i\n", wparam);
+				}
+			}
+
 			LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 			{
 				// fetch our window pointer from hwnd
 				win32::Window* window = reinterpret_cast<win32::Window*>(GetWindowLongPtrA(hwnd, GWLP_USERDATA));
 				if (window)
 				{
+					const input::MouseButton xmouse[] = {
+						input::MouseButton::MOUSE_INVALID,
+						input::MouseButton::MOUSE_MOUSE5,
+						input::MouseButton::MOUSE_MOUSE4
+					};
+
 					switch (message)
 					{
 						// handle mouse events
@@ -96,12 +333,17 @@ namespace platform
 							kernel::MouseEvent mevent;
 							mevent.mx = LOWORD(lparam);
 							mevent.my = HIWORD(lparam);
+							mevent.dx = (mevent.mx - last_mousex);
+							last_mousex = mevent.mx;
+							mevent.dy = (mevent.my - last_mousey);
+							last_mousey = mevent.my;
 							mevent.wheel_direction = 0;
 							mevent.window = window;
 							mevent.subtype = kernel::MouseMoved;
 							kernel::event_dispatch(mevent);
 							break;
 						}
+
 
 						case WM_MOUSEWHEEL:
 						{
@@ -110,6 +352,10 @@ namespace platform
 							kernel::MouseEvent mevent;
 							mevent.mx = LOWORD(lparam);
 							mevent.my = HIWORD(lparam);
+							mevent.dx = (mevent.mx - last_mousex);
+							last_mousex = mevent.mx;
+							mevent.dy = (mevent.my - last_mousey);
+							last_mousey = mevent.my;
 							mevent.wheel_direction = (static_cast<int16_t>(HIWORD(wparam)) > 0) ? 1 : -1;
 							mevent.window = window;
 							mevent.subtype = kernel::MouseWheelMoved;
@@ -117,7 +363,45 @@ namespace platform
 							break;
 						}
 
+						case WM_LBUTTONDBLCLK:
+						case WM_LBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_LEFT); break;
+						case WM_RBUTTONDBLCLK:
+						case WM_RBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_RIGHT); break;
+						case WM_MBUTTONDBLCLK:
+						case WM_MBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_MIDDLE); break;
+						case WM_XBUTTONDBLCLK:
+						case WM_XBUTTONDOWN:
+						{
+							const WORD button_index = HIWORD(wparam);
+							assert(button_index >= 0 && button_index <= 2);
+							handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, xmouse[button_index]);
+							break;
+						}
+
+						case WM_LBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_LEFT); break;
+						case WM_RBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_RIGHT); break;
+						case WM_MBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_MIDDLE); break;
+						case WM_XBUTTONUP:
+						{
+							const WORD button_index = HIWORD(wparam);
+							assert(button_index >= 0 && button_index <= 2);
+							handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, xmouse[button_index]);
+							break;
+						}
+
 						// handle keyboard events
+						case WM_SYSKEYDOWN:
+						case WM_SYSKEYUP:
+						case WM_KEYDOWN:
+						case WM_KEYUP:
+						{
+							handle_keyboard_event(window, message, wparam, lparam);
+							break;
+						}
+
+						case WM_CHAR:
+							// TODO: We need to handle individual unicode chars here.
+							break;
 
 						// handle system events
 						case WM_SETFOCUS:

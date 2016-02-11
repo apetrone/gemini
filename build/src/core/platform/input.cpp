@@ -182,6 +182,7 @@ namespace input
 			"BUTTON_Y",
 			"BUTTON_X",
 			"BUTTON_Z",
+
 			"BUTTON_MENU",
 			"BUTTON_SEMICOLON",
 			"BUTTON_SLASH",
@@ -206,6 +207,7 @@ namespace input
 			"BUTTON_INSERT",
 			"BUTTON_DELETE",
 			"BUTTON_PAUSE",
+
 			"BUTTON_LSHIFT",
 			"BUTTON_RSHIFT",
 			"BUTTON_LCONTROL",
@@ -214,9 +216,15 @@ namespace input
 			"BUTTON_RALT",
 			"BUTTON_NUMLOCK",
 			"BUTTON_CAPSLOCK",
+			"BUTTON_SCROLLLOCK",
+
+			// windows key / command key (left/right variants)
 			"BUTTON_LOSKEY",
 			"BUTTON_ROSKEY",
+
 			"BUTTON_FUNCTION",
+
+			// numeric keys
 			"BUTTON_0",
 			"BUTTON_1",
 			"BUTTON_2",
@@ -227,6 +235,8 @@ namespace input
 			"BUTTON_7",
 			"BUTTON_8",
 			"BUTTON_9",
+
+			// function keys
 			"BUTTON_F1",
 			"BUTTON_F2",
 			"BUTTON_F3",
@@ -247,10 +257,18 @@ namespace input
 			"BUTTON_F18",
 			"BUTTON_F19",
 			"BUTTON_F20",
+			"BUTTON_F21",
+			"BUTTON_F22",
+			"BUTTON_F23",
+			"BUTTON_F24",
+
+			// directional keys
 			"BUTTON_LEFT",
 			"BUTTON_RIGHT",
 			"BUTTON_UP",
 			"BUTTON_DOWN",
+
+			// numpad keys
 			"BUTTON_NUMPAD0",
 			"BUTTON_NUMPAD1",
 			"BUTTON_NUMPAD2",
