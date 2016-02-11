@@ -352,8 +352,6 @@ private:
 	render2::RenderTarget* render_target;
 	render2::Texture* texture;
 
-	platform::Process* process;
-
 	float value;
 
 	core::logging::Handler log_handler;
@@ -365,7 +363,6 @@ public:
 		, gui_renderer(nullptr)
 		, render_target(nullptr)
 		, texture(nullptr)
-		, process(nullptr)
 		, value(0.0f)
 	{
 	}
@@ -439,25 +436,6 @@ public:
 			LOGV("target path is: %s\n", paths[0]());
 		}
 	}
-
-	void start_watching_assets(const char* project_path)
-	{
-		std::string asset_root = project_path;
-		asset_root.append(PATH_SEPARATOR_STRING);
-		asset_root.append("assets");
-
-		// launch the blacksmith tool
-		const std::string script_path = "tools/blacksmith/blacksmith.py";
-		const std::string config_path = "tools/conf/blacksmith/desktop_monitor.conf";
-
-
-		// close the process if it's already open
-	}
-
-	void stop_watching_assets()
-	{
-	}
-
 
 	void timeline_scrubber_changed(size_t current_frame)
 	{
@@ -541,10 +519,10 @@ public:
 
 			// set opengl specific options
 			params["rendering_backend"] = "opengl";
-			params["opengl.major"] = "3";
-			params["opengl.minor"] = "2";
-			params["opengl.profile"] = "core";
-			params["opengl.share_context"] = "true";
+//			params["opengl.major"] = "3";
+//			params["opengl.minor"] = "2";
+//			params["opengl.profile"] = "core";
+//			params["opengl.share_context"] = "true";
 
 //			for (RenderParameters::Iterator it = params.begin(); it != params.end(); ++it)
 //			{
@@ -653,17 +631,14 @@ public:
 			surface->set_texture_handle(handle);
 #endif
 
-#if 0
+#if 1
 			log_window = new gui::Label(compositor);
-//			log_window->set_origin(50, 0);
 			log_window->set_origin(0.0f, 450);
 			log_window->set_dimensions(1.0f, 0.25f);
 			log_window->set_font("fonts/debug.ttf", 16);
 			log_window->set_name("log_window");
 			log_window->set_foreground_color(gemini::Color(0.85f, 0.85f, 0.85f));
 			log_window->set_background_color(gemini::Color(0.10f, 0.10f, 0.10f));
-//			log_window->set_scale(glm::vec2(2.0f, 2.0f));
-//			log_window->set_rotation(-mathlib::degrees_to_radians(15));
 			uint32_t current_flags = log_window->get_flags();
 			log_window->set_flags(gui::Panel::Flag_CursorEnabled | gui::Panel::Flag_CanMove | current_flags);
 
@@ -675,29 +650,12 @@ public:
 			core::logging::instance()->add_handler(&log_handler);
 
 			LOGV("log initialized.\n");
-
-
 #endif
 
 
 		}
 #endif
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
-
-		// test some stuff
-		Array<PathString> arguments;
-#if 0
-		arguments.push_back("--version");
-		process = platform::process_create("/usr/bin/clang", arguments);
-#elif 0
-		// test blacksmith
-		arguments.push_back("/Users/apetrone/gemlin/tools/blacksmith/blacksmith.py");
-		arguments.push_back("-c");
-		arguments.push_back("/Users/apetrone/gemlin/tools/conf/blacksmith/desktop_monitor.conf");
-		arguments.push_back("-s");
-		arguments.push_back("/Users/apetrone/Documents/games/vrpowergrid/assets");
-		process = platform::process_create("/Users/apetrone/gemlin/tools/env/bin/python", arguments);
-#endif
 
 		return kernel::NoError;
 	}
@@ -771,9 +729,6 @@ public:
 
 	virtual void shutdown()
 	{
-		LOGV("terminating process...\n");
-		platform::process_destroy(process);
-
 		// remove the log handler
 		core::logging::instance()->remove_handler(&log_handler);
 
@@ -800,8 +755,6 @@ public:
 		destroy_device(device);
 
 //		glDeleteSync(fence);
-
-//		renderer::shutdown();
 
 		platform::window::destroy(main_window);
 		platform::window::shutdown();
