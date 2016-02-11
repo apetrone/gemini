@@ -43,7 +43,7 @@ namespace gui
 		flags |= Flag_CanMove;
 	}
 
-	void TabControl::add_tab(size_t index, const std::string& name, Panel* panel)
+	void TabControl::add_tab(size_t /*index*/, const std::string& name, Panel* panel)
 	{
 		current_tab = tabs.size();
 
@@ -55,7 +55,7 @@ namespace gui
 		new_tab->set_font("fonts/debug.ttf", 16);
 
 		// TODO: handle vertical tabs?
-		new_tab->set_bounds(current_tab * (tab_size.width), 0, tab_size.width, tab_size.height);
+		new_tab->set_bounds(static_cast<ScreenInt>(current_tab * (tab_size.width)), 0, tab_size.width, tab_size.height);
 		new_tab->set_name(name.c_str());
 		new_tab->set_hover_color(gemini::Color(0, 1, 1));
 
@@ -72,7 +72,7 @@ namespace gui
 		}
 	}
 
-	void TabControl::remove_tab(size_t index)
+	void TabControl::remove_tab(size_t /*index*/)
 	{
 		// TODO: implement this
 		assert(0);

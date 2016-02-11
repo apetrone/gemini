@@ -101,7 +101,7 @@ void GUIRenderer::startup(gui::Compositor* target_compositor)
 	white_texture = device->create_texture(white_image);
 }
 
-void GUIRenderer::shutdown(gui::Compositor* c)
+void GUIRenderer::shutdown(gui::Compositor* /*compositor*/)
 {
 	if (white_texture)
 	{
@@ -126,7 +126,7 @@ void GUIRenderer::shutdown(gui::Compositor* c)
 	vertex_cache.clear();
 }
 
-void GUIRenderer::begin_frame(gui::Compositor* c)
+void GUIRenderer::begin_frame(gui::Compositor* /*compositor*/)
 {
 	current_depth = 0.0f;
 //		::renderer::RenderStream rs;
@@ -150,7 +150,7 @@ void GUIRenderer::end_frame()
 }
 
 
-gui::TextureResult GUIRenderer::texture_create(const char* path, gui::TextureHandle& handle)
+gui::TextureResult GUIRenderer::texture_create(const char* /*path*/, gui::TextureHandle& /*handle*/)
 {
 //		assets::Texture * tex = assets::textures()->load_from_path((char*)path);
 //		if ( !tex )
@@ -163,12 +163,12 @@ gui::TextureResult GUIRenderer::texture_create(const char* path, gui::TextureHan
 	return gui::TextureResult_Success;
 }
 
-void GUIRenderer::texture_destroy(const gui::TextureHandle& handle)
+void GUIRenderer::texture_destroy(const gui::TextureHandle& /*handle*/)
 {
 	// nothing really to do in our system
 }
 
-gui::TextureResult GUIRenderer::texture_info(const gui::TextureHandle& handle, uint32_t& width, uint32_t& height, uint8_t& channels)
+gui::TextureResult GUIRenderer::texture_info(const gui::TextureHandle& /*handle*/, uint32_t& /*width*/, uint32_t& /*height*/, uint8_t& /*channels*/)
 {
 //		assets::Texture * tex = assets::textures()->find_with_id( handle );
 //		if ( !tex )
@@ -211,12 +211,12 @@ void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height, in
 	font::Metrics metrics;
 	font::get_font_metrics(font::Handle(handle), metrics);
 
-	height = metrics.height;
+	height = static_cast<size_t>(metrics.height);
 	ascender = metrics.ascender;
 	descender = metrics.descender;
 }
 
-size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, size_t string_length, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
+size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, size_t string_length, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t /*buffer_size*/)
 {
 	font::Handle font_handle(handle);
 

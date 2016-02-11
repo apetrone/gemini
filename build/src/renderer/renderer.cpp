@@ -54,7 +54,7 @@ namespace renderer
 		shader_config::load_shaderprogram_from_file(path, program);
 	}
 
-	int startup( DriverType driver_type, const RenderSettings& settings )
+	int startup(DriverType /*driver_type*/, const RenderSettings& settings)
 	{
 		// setup vertex descriptor
 		VertexDescriptor::startup();
@@ -127,6 +127,15 @@ namespace renderer
 
 		gemgl_shutdown(gl);
 	} // shutdown
+
+
+	Geometry::Geometry()
+	{
+	}
+
+	Geometry::~Geometry()
+	{
+	}
 
 } // namespace renderer
 
@@ -203,7 +212,7 @@ namespace renderer
 
 	void VertexDescriptor::map_type(uint32_t type, uint16_t sizeof_type_bytes, uint16_t total_elements)
 	{
-		VertexDescriptor::size_in_bytes[type] = sizeof_type_bytes * total_elements;
+		VertexDescriptor::size_in_bytes[type] = static_cast<uint16_t>(sizeof_type_bytes * total_elements);
 		VertexDescriptor::elements[type] = total_elements;
 	}
 

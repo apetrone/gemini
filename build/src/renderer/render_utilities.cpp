@@ -66,9 +66,9 @@ namespace renderer
 				while(*end != '\n')
 					++end;
 
-				version._length = (end-pos);
+				version._length = static_cast<size_t>(end-pos);
 				memcpy(&version[0], &buffer[(pos-buffer)], version._length);
-				memset(&buffer[(pos-buffer)], ' ', (end-pos));
+				memset(&buffer[(pos-buffer)], ' ', version._length);
 			}
 		} // strip_shader_version
 	} // mamespace render_utilities

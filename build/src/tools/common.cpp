@@ -46,7 +46,7 @@ namespace gemini
 {
 	namespace tools
 	{
-		void startup(const char* application_name)
+		void startup(const char* /*application_name*/)
 		{
 #if 0 // disabling during refactor.
 			platform::startup();

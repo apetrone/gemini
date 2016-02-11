@@ -89,7 +89,7 @@ namespace renderer
 		return handle;
 	}
 
-	void StandaloneResourceCache::destroy_font(const gui::FontHandle& handle)
+	void StandaloneResourceCache::destroy_font(const gui::FontHandle& /*handle*/)
 	{
 		// ignore these for now; we take care of font tracking
 	//	font::Handle fonthandle(handle);
@@ -107,7 +107,7 @@ namespace renderer
 		return gui::TextureHandle();
 	}
 
-	gui::TextureHandle StandaloneResourceCache::create_texture(const char* filename)
+	gui::TextureHandle StandaloneResourceCache::create_texture(const char* /*filename*/)
 	{
 		// generate a texture
 //		image::Image checker_pattern;
@@ -135,7 +135,7 @@ namespace renderer
 		return ref;
 	}
 
-	void StandaloneResourceCache::destroy_texture(const gui::TextureHandle& handle)
+	void StandaloneResourceCache::destroy_texture(const gui::TextureHandle& /*handle*/)
 	{
 		assert(0);
 	}
@@ -151,7 +151,7 @@ namespace renderer
 	{
 		assert(handle.is_valid());
 		int index = handle;
-		return textures[index];
+		return textures[static_cast<size_t>(index)];
 	}
 
 } // namespace renderer

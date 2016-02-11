@@ -41,8 +41,8 @@ namespace gui
 		float* values;
 		bool show_baseline;
 
-		int32_t range_min;
-		int32_t range_max;
+		float range_min;
+		float range_max;
 
 		Point* last_point;
 		gemini::Color* channel_colors;

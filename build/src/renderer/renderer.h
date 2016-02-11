@@ -251,6 +251,9 @@ namespace renderer
 		// return true if this object is animated
 		// i.e. requires dynamic updates in the renderer
 		LIBRARY_EXPORT bool is_animated() const { return 0; }
+		LIBRARY_EXPORT Geometry();
+		LIBRARY_EXPORT virtual ~Geometry();
+		LIBRARY_EXPORT Geometry& operator=(const Geometry& other) = delete;
 	}; // Geometry
 } // namespace renderer
 

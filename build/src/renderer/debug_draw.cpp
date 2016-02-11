@@ -122,9 +122,12 @@ namespace renderer
 				{
 				}
 
+				// should not be assigning this.
+				VertexAccessor<T>& operator=(VertexAccessor<T>& other) = delete;
+
 				T* request(size_t vertices)
 				{
-					// determine if we can accomodate <vertices>
+					// determine if we can accommodate <vertices>
 					if (current_index + vertices <= vertex_cache.size())
 					{
 						T* vertex = &vertex_cache[current_index];
@@ -233,8 +236,8 @@ namespace renderer
 		}
 
 
-		const int MAX_CIRCLE_SIDES = 12;
-		const int TOTAL_CIRCLE_VERTICES = 2 * MAX_CIRCLE_SIDES;
+		const size_t MAX_CIRCLE_SIDES = 12;
+		const size_t TOTAL_CIRCLE_VERTICES = 2 * MAX_CIRCLE_SIDES;
 
 		detail::PrimitiveCache* line_list = nullptr;
 		detail::PrimitiveCache* tris_list = nullptr;
@@ -834,7 +837,7 @@ namespace renderer
 			text_list->reset();
 		} // draw_text
 
-		void render(const glm::mat4& modelview, const glm::mat4& projection, int x, int y, int viewport_width, int viewport_height)
+		void render(const glm::mat4& modelview, const glm::mat4& projection, int viewport_width, int viewport_height)
 		{
 			render2::Pass pass;
 			pass.depth_test = false;

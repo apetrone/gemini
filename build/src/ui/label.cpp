@@ -107,7 +107,7 @@ namespace gui
 		size_t height;
 		int ascender, descender;
 		compositor->get_renderer()->font_metrics(font_handle, height, ascender, descender);
-		font_height = (ascender + descender);
+		font_height = static_cast<int32_t>(ascender + descender);
 	}
 
 	void Label::set_text(const std::string& utf8_string)
@@ -132,8 +132,7 @@ namespace gui
 			size_t height;
 			int ascender, descender;
 			renderer->font_metrics(font_handle, height, ascender, descender);
-			const float FONT_HEIGHT = (ascender + descender);
-			float font_height = FONT_HEIGHT;
+			float best_height = static_cast<float>(font_height);
 			content_bounds.origin = origin + scroll_offset;
 
 			cache_is_dirty = 0;
@@ -142,13 +141,13 @@ namespace gui
 			size_t last_start = 0;
 
 			glm::vec2 origin_offset = glm::vec2(LABEL_LEFT_MARGIN, LABEL_TOP_MARGIN);
-			origin_offset.y += FONT_HEIGHT;
-			content_bounds.size.height = -FONT_HEIGHT;
+			origin_offset.y += font_height;
+			content_bounds.size.height = static_cast<DimensionType>(-font_height);
 
 			const size_t character_count = text.size();
 			for (size_t index = 0; index < character_count+1; ++index)
 			{
-				const size_t is_last_character = (index == character_count);
+				const bool is_last_character = (index == character_count);
 				if (text[index] == '\n' || is_last_character)
 				{
 					if ((index - last_start) > 1)
@@ -161,12 +160,12 @@ namespace gui
 
 						Rect text_bounds;
 						renderer->font_measure_string(font_handle, &text[cs.start], cs.length, text_bounds);
-						font_height = glm::max(font_height, text_bounds.height());
+						best_height = glm::max(static_cast<float>(font_height), text_bounds.height());
 
 						font_cache.push_back(cs);
 						origin_offset.x = LABEL_LEFT_MARGIN;
-						origin_offset.y += font_height + FONT_HEIGHT;
-						content_bounds.size.height += FONT_HEIGHT + font_height;
+						origin_offset.y += font_height + best_height;
+						content_bounds.size.height += font_height + best_height;
 					}
 
 					if (is_last_character)

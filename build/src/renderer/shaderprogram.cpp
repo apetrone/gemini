@@ -26,4 +26,16 @@
 
 namespace renderer
 {
+	ShaderProgram::~ShaderProgram()
+	{
+	}
+
+	ShaderProgram& ShaderProgram::operator=(const ShaderProgram& other)
+	{
+		frag_data_location = other.frag_data_location;
+		uniforms = other.uniforms;
+		attributes = other.attributes;
+		object = other.object;
+		return *this;
+	}
 } // namespace renderer

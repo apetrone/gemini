@@ -71,6 +71,6 @@ namespace gui
 		Array<font_cache_entry> font_cache;
 		size_t font_cache_index;
 		uint32_t cache_is_dirty;
-		uint32_t font_height;
+		int32_t font_height;
 	}; // Label
 } // namespace gui

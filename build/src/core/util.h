@@ -28,7 +28,17 @@
 #include "stackstring.h"
 #include "array.h"
 #include <string>
+
+#if defined(PLATFORM_COMPILER_MSVC)
+#pragma warning(push)
+#pragma warning(disable: 4265) // 'std::_Func_base<_Ret,const char *>': class has virtual functions, but destructor is not virtual
+#endif
+
 #include <functional>
+
+#if defined(PLATFORM_COMPILER_MSVC)
+#pragma warning(pop)
+#endif
 
 namespace core
 {

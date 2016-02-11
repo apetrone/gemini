@@ -40,10 +40,12 @@ namespace renderer
 			{
 				return 1;
 			}
-			else if ( left.key > right.key )
-			{
-				return -1;
-			}
+
+			// What kind of logic was this?
+			//else if ( left.key > right.key )
+			//{
+			//	return -1;
+			//}
 
 			return 0;
 		}

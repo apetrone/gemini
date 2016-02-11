@@ -58,7 +58,7 @@ namespace render2
 		total_attributes = id;
 	} // add
 
-	const VertexDescriptor::InputDescription& VertexDescriptor::operator[](int index) const
+	const VertexDescriptor::InputDescription& VertexDescriptor::operator[](size_t index) const
 	{
 		return description[ index ];
 	} // operator[]

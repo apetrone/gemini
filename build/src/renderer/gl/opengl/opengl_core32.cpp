@@ -35,7 +35,7 @@
 namespace renderer
 {
 	// utility functions
-	static GLenum image_source_format( int num_channels )
+	static GLenum image_source_format( uint32_t num_channels )
 	{
 		if ( num_channels == 3 )
 		{
@@ -148,7 +148,7 @@ namespace renderer
 			gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
 			gl.CheckError( "BindBuffer" );
 
-			gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * max_vertices, 0, this->gl_buffer_type );
+			gl.BufferData( GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertex_stride * max_vertices), 0, this->gl_buffer_type );
 			gl.CheckError( "BufferData" );
 
 			if ( max_indices > 0 )
@@ -156,7 +156,7 @@ namespace renderer
 				gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
 				gl.CheckError( "BindBuffer" );
 
-				gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, this->gl_buffer_type );
+				gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(IndexType) * max_indices), 0, this->gl_buffer_type );
 				gl.CheckError( "BufferData" );
 			}
 
@@ -218,7 +218,7 @@ namespace renderer
 				gl.EnableVertexAttribArray( attrib_id );
 				gl.CheckError( "EnableVertexAttribArray" );
 
-				gl.VertexAttribPointer( attrib_id, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
+				gl.VertexAttribPointer( attrib_id, static_cast<GLsizeiptr>(num_elements), attrib_type, static_cast<GLboolean>(normalized), static_cast<GLint>(vertex_stride), (void*)offset );
 				gl.CheckError( "VertexAttribPointer" );
 
 				offset += attrib_size;
@@ -232,12 +232,12 @@ namespace renderer
 
 		void upload_interleaved_data( const GLvoid * data, unsigned int total_vertices )
 		{
-			vertex_count = total_vertices;
+			vertex_count = static_cast<int>(total_vertices);
 
 			gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
 			gl.CheckError( "BindBuffer GL_ARRAY_BUFFER" );
 
-			gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * vertex_count, data, this->gl_buffer_type );
+			gl.BufferData( GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertex_stride * vertex_count), data, this->gl_buffer_type );
 			gl.CheckError( "BufferData GL_ARRAY_BUFFER" );
 		}
 
@@ -245,11 +245,11 @@ namespace renderer
 		{
 			if ( this->vbo[1] != 0 )
 			{
-				index_count = total_vertices;
+				index_count = static_cast<int>(total_vertices);
 				gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
 				gl.CheckError( "BindBuffer GL_ELEMENT_ARRAY_BUFFER" );
 
-				gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * index_count, indices, this->gl_buffer_type );
+				gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(IndexType) * index_count), indices, this->gl_buffer_type );
 				gl.CheckError( "BufferData - GL_ELEMENT_ARRAY_BUFFER" );
 			}
 		}
@@ -304,7 +304,7 @@ namespace renderer
 			}
 
 
-			GLenum wrap_type = GL_REPEAT;
+			GLint wrap_type = GL_REPEAT;
 			// setup texture wrapping
 			if (image.flags & image::F_CLAMP)
 			{
@@ -324,8 +324,8 @@ namespace renderer
 			gl.TexParameteri(texture_type, GL_TEXTURE_WRAP_S, wrap_type);
 			gl.TexParameteri(texture_type, GL_TEXTURE_WRAP_T, wrap_type);
 
-			GLenum min_filter = GL_NEAREST;
-			GLenum mag_filter = GL_NEAREST;
+			GLint min_filter = GL_NEAREST;
+			GLint mag_filter = GL_NEAREST;
 
 			if (image.filter == image::FILTER_LINEAR)
 			{
@@ -389,7 +389,7 @@ namespace renderer
 
 			if (type == renderer::RenderTarget::COLOR)
 			{
-				gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+index, texture->texture_type, texture->texture_id, 0);
+				gl.FramebufferTexture2D(GL_FRAMEBUFFER, static_cast<GLenum>(GL_COLOR_ATTACHMENT0+index), texture->texture_type, texture->texture_id, 0);
 			}
 			else
 			{
@@ -465,7 +465,7 @@ namespace renderer
 		renderer.shaderprogram_deactivate( shader_program );
 	}
 
-	void c_uniform_matrix4( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void c_uniform_matrix4( core::util::MemoryStream & stream, GLCore32 & /*renderer*/ )
 	{
 		GL_LOG();
 
@@ -480,7 +480,7 @@ namespace renderer
 		gl.CheckError( "uniform matrix 4" );
 	}
 
-	void c_uniform1i( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void c_uniform1i( core::util::MemoryStream & stream, GLCore32 & /*renderer*/ )
 	{
 		GL_LOG();
 
@@ -493,7 +493,7 @@ namespace renderer
 		gl.CheckError( "uniform1i" );
 	}
 
-	void c_uniform3f( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void c_uniform3f( core::util::MemoryStream & stream, GLCore32 & /*renderer*/ )
 	{
 		GL_LOG();
 
@@ -506,7 +506,7 @@ namespace renderer
 		gl.CheckError( "uniform3f" );
 	}
 
-	void c_uniform4f( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void c_uniform4f( core::util::MemoryStream & stream, GLCore32 & /*renderer*/ )
 	{
 		GL_LOG();
 
@@ -519,7 +519,7 @@ namespace renderer
 		gl.CheckError( "uniform4f" );
 	}
 
-	void c_uniform_sampler2d( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void c_uniform_sampler2d( core::util::MemoryStream & stream, GLCore32 & /*renderer*/ )
 	{
 		GL_LOG();
 
@@ -539,7 +539,7 @@ namespace renderer
 
 		//	if ( last_texture[ texture_unit ] != texture_id )
 		{
-			gl.ActiveTexture( GL_TEXTURE0+texture_unit );
+			gl.ActiveTexture( static_cast<GLenum>(GL_TEXTURE0+texture_unit) );
 			gl.CheckError( "ActiveTexture" );
 
 			gl.BindTexture( texture->texture_type, texture->texture_id );
@@ -553,7 +553,7 @@ namespace renderer
 		}
 	}
 
-	void p_uniform_sampler2d( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void p_uniform_sampler2d( core::util::MemoryStream & stream, GLCore32 & /*renderer*/ )
 	{
 		GL_LOG();
 
@@ -565,14 +565,14 @@ namespace renderer
 		stream.read( texture_unit );
 		stream.read( texture_id );
 
-		gl.ActiveTexture( GL_TEXTURE0+texture_unit );
+		gl.ActiveTexture( static_cast<GLenum>(GL_TEXTURE0+texture_unit) );
 		gl.CheckError( "ActiveTexture" );
 
 		gl.BindTexture( GL_TEXTURE_2D, 0 );
 		gl.CheckError( "BindTexture: GL_TEXTURE_2D" );
 	}
 
-	void c_clear( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void c_clear( core::util::MemoryStream & stream, GLCore32 & /*renderer*/ )
 	{
 		GL_LOG();
 
@@ -582,7 +582,7 @@ namespace renderer
 		gl.CheckError( "Clear" );
 	}
 
-	void c_clearcolor( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void c_clearcolor( core::util::MemoryStream & stream, GLCore32 & /*renderer*/ )
 	{
 		GL_LOG();
 
@@ -592,7 +592,7 @@ namespace renderer
 		gl.CheckError( "ClearColor" );
 	}
 
-	void c_cleardepth( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void c_cleardepth( core::util::MemoryStream & stream, GLCore32 & /*renderer*/ )
 	{
 		GL_LOG();
 
@@ -602,7 +602,7 @@ namespace renderer
 		gl.CheckError( "glClearDepth" );
 	}
 
-	void c_cullface( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void c_cullface( core::util::MemoryStream & stream, GLCore32 & /*renderer*/ )
 	{
 		GL_LOG();
 
@@ -612,7 +612,7 @@ namespace renderer
 		gl.CheckError( "glCullFace" );
 	}
 
-	void c_viewport( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void c_viewport( core::util::MemoryStream & stream, GLCore32 & /*renderer*/ )
 	{
 		int x, y, width, height;
 		//			stream.read(x);
@@ -673,7 +673,7 @@ namespace renderer
 		op( driver_state, stream, &renderer );
 	}
 
-	void c_blendfunc( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void c_blendfunc( core::util::MemoryStream & stream, GLCore32 & /*renderer*/ )
 	{
 		RenderBlendType render_blendstate_source, render_blendstate_destination;
 
@@ -689,7 +689,7 @@ namespace renderer
 	}
 
 
-	void c_noop( core::util::MemoryStream & stream, GLCore32 & renderer )
+	void c_noop( core::util::MemoryStream & /*stream*/, GLCore32 & /*renderer*/ )
 	{
 	}
 
@@ -832,7 +832,7 @@ namespace renderer
 	//			assets::Texture * texture = assets::textures()->find_with_id(parameter->int_value);
 				if ( parameter->texture )
 				{
-					stream.add_sampler2d( uniform_location, parameter->texture_unit, parameter->texture );
+					stream.add_sampler2d( uniform_location, static_cast<int>(parameter->texture_unit), parameter->texture );
 				}
 			}
 			else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_CUBE )
@@ -877,14 +877,33 @@ namespace renderer
 		if (image.type == image::TEX_2D)
 		{
 			// upload image and generate mipmaps
-			gl.TexImage2D(texture->texture_type, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, pixels);
+			gl.TexImage2D(texture->texture_type,
+				0,
+				static_cast<GLint>(internal_format),
+				static_cast<GLsizei>(image.width),
+				static_cast<GLsizei>(image.height),
+				0,
+				source_format,
+				GL_UNSIGNED_BYTE,
+				pixels
+			);
 			gl.CheckError("teximage2d");
 		}
 		else if (image.type == image::TEX_CUBE)
 		{
 			for (uint8_t index = 0; index < 6; ++index)
 			{
-				gl.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+index, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, pixels);
+				gl.TexImage2D(static_cast<GLenum>(GL_TEXTURE_CUBE_MAP_POSITIVE_X+index),
+					0,
+					static_cast<GLint>(internal_format),
+					static_cast<GLsizei>(image.width),
+					static_cast<GLsizei>(image.height),
+					0,
+					source_format,
+					GL_UNSIGNED_BYTE,
+					pixels
+				);
+
 				gl.CheckError("teximage2d (cube)");
 			}
 		}
@@ -927,7 +946,7 @@ namespace renderer
 			gl.PixelStorei(GL_UNPACK_ALIGNMENT, gltexture->unpack_alignment);
 		}
 
-		gl.PixelStorei(GL_UNPACK_ROW_LENGTH, gltexture->width);
+		gl.PixelStorei(GL_UNPACK_ROW_LENGTH, static_cast<GLint>(gltexture->width));
 		gl.PixelStorei(GL_UNPACK_SKIP_PIXELS, rect.left);
 		gl.PixelStorei(GL_UNPACK_SKIP_ROWS, rect.top);
 
@@ -999,7 +1018,7 @@ namespace renderer
 		MEMORY_DELETE(stream, core::memory::global_allocator());
 	} // vertexbuffer_destroy
 
-	void GLCore32::vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
+	void GLCore32::vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int /*vertex_stride*/, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
 	{
 		GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 
@@ -1037,7 +1056,7 @@ namespace renderer
 		gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
 		gl.CheckError( "BindVertexArray" );
 
-		gl.DrawElements( stream->gl_draw_type, num_indices, GL_UNSIGNED_INT, 0 );
+		gl.DrawElements( stream->gl_draw_type, static_cast<GLsizei>(num_indices), GL_UNSIGNED_INT, 0 );
 		gl.CheckError( "DrawElements" );
 
 		gl.BindVertexArray( 0 );
@@ -1052,7 +1071,7 @@ namespace renderer
 		gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
 		gl.CheckError( "BindVertexArray" );
 
-		gl.DrawArrays( stream->gl_draw_type, 0, num_vertices );
+		gl.DrawArrays( stream->gl_draw_type, 0, static_cast<GLsizei>(num_vertices) );
 		gl.CheckError( "DrawArrays" );
 
 		gl.BindVertexArray( 0 );
@@ -1172,7 +1191,7 @@ namespace renderer
 		object.shader_id = gl.CreateShader( type );
 		gl.CheckError( "CreateShader" );
 
-		bool is_shader = gl.IsShader( object.shader_id );
+		GLboolean is_shader = gl.IsShader( object.shader_id );
 		gl.CheckError( "IsShader: shaderobject_create" );
 		if ( !is_shader )
 		{
@@ -1244,10 +1263,10 @@ namespace renderer
 	renderer::ShaderProgram* GLCore32::shaderprogram_create()
 	{
 		GLCore32ShaderProgram* program = MEMORY_NEW(GLCore32ShaderProgram, core::memory::global_allocator());
-		program->object = gl.CreateProgram();
+		program->object = static_cast<GLint>(gl.CreateProgram());
 		gl.CheckError( "CreateProgram" );
 
-		if ( !gl.IsProgram( program->object ) )
+		if ( !gl.IsProgram(static_cast<GLObject>(program->object) ) )
 		{
 			LOGE("generated object is NOT a program!\n" );
 		}
@@ -1260,7 +1279,7 @@ namespace renderer
 		GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 		if ( program->object != 0 )
 		{
-			gl.DeleteProgram( program->object );
+			gl.DeleteProgram(static_cast<GLObject>(program->object) );
 			gl.CheckError( "DeleteProgram" );
 		}
 
@@ -1270,14 +1289,14 @@ namespace renderer
 	void GLCore32::shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object )
 	{
 		GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
-		gl.AttachShader( program->object, shader_object.shader_id );
+		gl.AttachShader(static_cast<GLObject>(program->object), shader_object.shader_id );
 		gl.CheckError( "AttachShader" );
 	}
 
 	void GLCore32::shaderprogram_detach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object )
 	{
 		GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
-		gl.DetachShader( program->object, shader_object.shader_id );
+		gl.DetachShader(static_cast<GLObject>(program->object), shader_object.shader_id );
 		gl.CheckError( "DetachShader" );
 	}
 
@@ -1285,14 +1304,14 @@ namespace renderer
 	{
 		GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 
-		gl.BindFragDataLocation(program->object, 0, program->frag_data_location());
+		gl.BindFragDataLocation(static_cast<GLObject>(program->object), 0, program->frag_data_location());
 		gl.CheckError( "BindFragDataLocation" );
 
 		for(uint32_t i = 0; i < program->attributes.size(); ++i)
 		{
 			ShaderKeyValuePair * keyvalue = &program->attributes[i];
 			SHADER_DEBUG( "BindAttribLocation -> %s to %i\n", keyvalue->first.c_str(), keyvalue->second );
-			gl.BindAttribLocation( program->object, keyvalue->second, keyvalue->first.c_str() );
+			gl.BindAttribLocation(static_cast<GLObject>(program->object), static_cast<GLuint>(keyvalue->second), keyvalue->first.c_str() );
 			gl.CheckError(core::str::format("BindAttribLocation: %s", keyvalue->first.c_str()));
 		}
 	}
@@ -1309,7 +1328,7 @@ namespace renderer
 		{
 			ShaderKeyValuePair * keyvalue = &program->uniforms[ uniform_id ];
 
-			keyvalue->second = gl.GetUniformLocation( program->object, keyvalue->first.c_str() );
+			keyvalue->second = gl.GetUniformLocation(static_cast<GLObject>(program->object), keyvalue->first.c_str() );
 			SHADER_DEBUG( "GetUniformLocation: \"%s\" -> %i\n", keyvalue->first.c_str(), keyvalue->second );
 			gl.CheckError( "GetUniformLocation" );
 
@@ -1325,7 +1344,7 @@ namespace renderer
 		GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 
 		// find the uniform block
-		GLuint block_index = gl.GetUniformBlockIndex(program->object, block_name);
+		GLuint block_index = gl.GetUniformBlockIndex(static_cast<GLObject>(program->object), block_name);
 		if (block_index == GL_INVALID_INDEX)
 		{
 			LOGV("uniform block \"%s\" could not be found\n", block_name);
@@ -1336,7 +1355,7 @@ namespace renderer
 
 		// determine the size of the uniform block
 		GLint block_size = 0;
-		gl.GetActiveUniformBlockiv(program->object, block_index, GL_UNIFORM_BLOCK_DATA_SIZE, &block_size);
+		gl.GetActiveUniformBlockiv(static_cast<GLObject>(program->object), block_index, GL_UNIFORM_BLOCK_DATA_SIZE, &block_size);
 		LOGV("block_size = %i\n", block_size);
 
 		// Query for the offsets of each uniform
@@ -1346,14 +1365,14 @@ namespace renderer
 		};
 
 		GLuint indices[] = {0, 0};
-		gl.GetUniformIndices(program->object, 2, names, indices);
+		gl.GetUniformIndices(static_cast<GLObject>(program->object), 2, names, indices);
 		for (auto i : indices)
 		{
 			LOGV("index: %i\n", i);
 		}
 
 		GLint offset[] = {-1, -1};
-		gl.GetActiveUniformsiv(program->object, 2, indices, GL_UNIFORM_OFFSET, offset);
+		gl.GetActiveUniformsiv(static_cast<GLObject>(program->object), 2, indices, GL_UNIFORM_OFFSET, offset);
 		for (auto o: offset)
 		{
 			LOGV("offset: %i\n", o);
@@ -1365,21 +1384,21 @@ namespace renderer
 		GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 
 		bool status = true;
-		gl.BindFragDataLocation(program->object, 0, program->frag_data_location());
+		gl.BindFragDataLocation(static_cast<GLObject>(program->object), 0, program->frag_data_location());
 		gl.CheckError( "BindFragDataLocation" );
 
-		gl.LinkProgram( program->object );
+		gl.LinkProgram(static_cast<GLObject>(program->object) );
 		gl.CheckError( "LinkProgram" );
 
 		GLint link_status;
-		gl.GetProgramiv( program->object, GL_LINK_STATUS, &link_status );
+		gl.GetProgramiv(static_cast<GLObject>(program->object), GL_LINK_STATUS, &link_status );
 		gl.CheckError( "GetProgramiv" );
 
 		if ( !link_status )
 		{
 			status = false;
 			LOGE( "Error linking program!\n" );
-			char * logbuffer = query_program_info_log( program->object );
+			char * logbuffer = query_program_info_log(static_cast<GLObject>(program->object) );
 			if ( logbuffer )
 			{
 				LOGW( "Program Info Log:\n" );
@@ -1446,7 +1465,7 @@ namespace renderer
 	{
 		GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 
-		bool is_program = gl.IsProgram( program->object );
+		GLboolean is_program = gl.IsProgram( static_cast<GLObject>(program->object) );
 		gl.CheckError( "IsProgram shaderprogram_activate" );
 		if ( !is_program )
 		{
@@ -1454,11 +1473,11 @@ namespace renderer
 			assert(is_program);
 		}
 
-		gl.UseProgram( program->object );
+		gl.UseProgram( static_cast<GLObject>(program->object) );
 		gl.CheckError( "UseProgram shaderprogram_activate" );
 	}
 
-	void GLCore32::shaderprogram_deactivate( renderer::ShaderProgram* shader_program )
+	void GLCore32::shaderprogram_deactivate(renderer::ShaderProgram* /*shader_program*/)
 	{
 		gl.UseProgram( 0 );
 		gl.CheckError( "UseProgram shaderprogram_deactivate" );
@@ -1526,7 +1545,7 @@ namespace renderer
 		gl.DrawBuffers(1, drawbufs);
 	}
 
-	void GLCore32::render_target_deactivate(renderer::RenderTarget* rendertarget)
+	void GLCore32::render_target_deactivate(renderer::RenderTarget* /*rendertarget*/)
 	{
 		GL_LOG();
 		gl.BindFramebuffer(GL_FRAMEBUFFER, 0);

@@ -84,8 +84,8 @@ namespace renderer
 		gl.GetShaderiv( handle, GL_INFO_LOG_LENGTH, &log_length );
 		if ( log_length > 0 )
 		{
-			logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
-			memset( logbuffer, 0, log_length );
+			logbuffer = (char*)MEMORY_ALLOC(static_cast<size_t>(log_length+1), core::memory::global_allocator());
+			memset( logbuffer, 0, static_cast<size_t>(log_length));
 
 			gl.GetShaderInfoLog( handle, log_length, &log_length, logbuffer );
 			if ( log_length > 0 )
@@ -108,8 +108,8 @@ namespace renderer
 		gl.GetProgramiv( handle, GL_INFO_LOG_LENGTH, &log_length );
 		if ( log_length > 0 )
 		{
-			logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
-			memset( logbuffer, 0, log_length );
+			logbuffer = (char*)MEMORY_ALLOC(static_cast<size_t>(log_length+1), core::memory::global_allocator());
+			memset(logbuffer, 0, static_cast<size_t>(log_length));
 
 			gl.GetProgramInfoLog( handle, log_length, &log_length, logbuffer );
 			if ( log_length > 0 )
@@ -176,7 +176,7 @@ namespace renderer
 		return cullmode[ mode ];
 	} // cullmode_to_gl_cullmode
 
-	void state_op_enabledisable( renderer::DriverState state, core::util::MemoryStream & stream, renderer::IRenderDriver * driver )
+	void state_op_enabledisable(renderer::DriverState state, core::util::MemoryStream& stream, renderer::IRenderDriver* /*driver*/)
 	{
 		GLenum gl_state;
 		int enable = 0;
@@ -198,13 +198,13 @@ namespace renderer
 		}
 	} // state_op_enabledisable
 
-	void state_op_depthmask( renderer::DriverState state, core::util::MemoryStream & stream, renderer::IRenderDriver * driver )
+	void state_op_depthmask(renderer::DriverState /*state*/, core::util::MemoryStream& stream, renderer::IRenderDriver* /*driver*/)
 	{
 		int enable = 0;
 		GLboolean flag;
 
 		stream.read( enable );
-		flag = enable ? GL_TRUE : GL_FALSE;
+		flag = static_cast<GLboolean>(enable ? GL_TRUE : GL_FALSE);
 
 		// set depth buffer enabled for writing flag
 		gl.DepthMask( flag );

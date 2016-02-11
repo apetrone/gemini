@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include "filesystem.h"
+#include "runtime.h"
 
 #include <core/logging.h>
 #include <core/str.h>
@@ -36,8 +37,6 @@
 #include "filesystem_interface.h"
 
 
-
-#include <functional>
 
 using platform::PathString;
 

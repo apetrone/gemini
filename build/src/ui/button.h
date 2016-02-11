@@ -60,7 +60,7 @@ namespace gui
 		std::string text;
 		FontHandle font_handle;
 		Point text_origin;
-		size_t font_height;
+		int32_t font_height;
 		uint32_t state;
 	}; // struct Button
 } // namespace gui

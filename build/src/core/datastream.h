@@ -76,13 +76,13 @@ namespace core
 			LIBRARY_EXPORT size_t current_offset() const;
 
 			template <class Type>
-			LIBRARY_EXPORT int write(const Type & value)
+			LIBRARY_EXPORT size_t write(const Type & value)
 			{
 				return write(&value, sizeof(Type));
 			}
 
 			template <class Type>
-			LIBRARY_EXPORT int read(Type & destination)
+			LIBRARY_EXPORT size_t read(Type & destination)
 			{
 				return read(&destination, sizeof(Type));
 			}

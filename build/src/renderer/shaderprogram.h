@@ -63,7 +63,8 @@ namespace renderer
 		unsigned int object;
 
 		ShaderProgram() : frag_data_location("out_color"), object(0) {}
-		virtual ~ShaderProgram() {}
+		virtual ~ShaderProgram();
+		ShaderProgram& operator=(const ShaderProgram& other);
 
 		int get_uniform_location( const char * name );
 

@@ -802,7 +802,7 @@ public:
 
 		glm::mat4 origin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
 		::renderer::debugdraw::axes(origin, 0.25f);
-		::renderer::debugdraw::render(newview.modelview, newview.projection, 0, 0, newview.width, newview.height);
+		::renderer::debugdraw::render(newview.modelview, newview.projection, newview.width, newview.height);
 	}
 
 	virtual void render_gui()

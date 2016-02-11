@@ -34,7 +34,19 @@
 #include FT_FREETYPE_H
 
 #define STB_RECT_PACK_IMPLEMENTATION
+#if defined(PLATFORM_COMPILER_MSVC)
+	// disable some warnings in stb_rect_pack
+	#pragma warning(push)
+	#pragma warning(disable: 4100) // 'foo': unreferenced formal parameter
+	#pragma warning(disable: 4365) // 'argument': conversion from 'int' to 'size_t', signed/unsigned mismatch
+	#pragma warning(disable: 4505) // 'foo' : unreferenced local function has been removed
+#endif
+
 #include "stb_rect_pack.h"
+
+#if defined(PLATFORM_COMPILER_MSVC)
+	#pragma warning(pop)
+#endif
 
 namespace font
 {
@@ -51,8 +63,8 @@ namespace font
 	{
 		int advancex;
 		int advancey;
-		unsigned int width;
-		unsigned int height;
+		uint32_t width;
+		uint32_t height;
 		int hbearingx;
 		int hbearingy;
 		int vbearingx;
@@ -67,7 +79,7 @@ namespace font
 
 	void get_gylph_info(FT_Face face, int codepoint, GlyphData& glyphdata)
 	{
-		FT_UInt glyph_index = FT_Get_Char_Index(face, codepoint);
+		FT_UInt glyph_index = FT_Get_Char_Index(face, static_cast<FT_ULong>(codepoint));
 		FT_Error error = FT_Err_Ok;
 
 		// glyph doesn't exist in the font; need to display blank rect?
@@ -109,8 +121,8 @@ namespace font
 			glyphdata.hbearingy = face->glyph->metrics.horiBearingY >> 6;
 		}
 
-		glyphdata.width = face->glyph->metrics.width >> 6;
-		glyphdata.height = face->glyph->metrics.height >> 6;
+		glyphdata.width = static_cast<uint32_t>(face->glyph->metrics.width >> 6);
+		glyphdata.height = static_cast<uint32_t>(face->glyph->metrics.height >> 6);
 
 		assert(glyphdata.width == face->glyph->bitmap.width);
 		assert(glyphdata.height == face->glyph->bitmap.rows);
@@ -126,7 +138,7 @@ namespace font
 	struct FontData
 	{
 		Type type;
-		unsigned int pixel_size;
+		uint32_t pixel_size;
 		FT_Face face;
 		void* data;
 		size_t data_size;
@@ -139,8 +151,8 @@ namespace font
 
 		int has_kerning;
 		int is_fixed_width;
-		float line_height;
-		int border;
+		uint32_t line_height;
+		uint32_t border;
 
 		HashSet<int, GlyphData*> glyphdata_cache;
 
@@ -273,7 +285,7 @@ namespace font
 		const float TEXTURE_WIDTH = (float)FONT_ATLAS_RESOLUTION;
 		const float TEXTURE_HEIGHT = (float)FONT_ATLAS_RESOLUTION;
 
-		int border = font->border;
+		uint32_t border = font->border;
 
 		// lower left
 		uvs[0] = glm::vec2(
@@ -300,7 +312,7 @@ namespace font
 						   );
 	}
 
-	int uvs_for_codepoint(FontData* font, uint32_t codepoint, glm::vec2* uvs)
+	int uvs_for_codepoint(FontData* font, int codepoint, glm::vec2* uvs)
 	{
 		assert(font);
 
@@ -316,14 +328,14 @@ namespace font
 			assert(rect->was_packed);
 
 			// the rect isn't associated with the requested code point
-			assert(static_cast<uint32_t>(rect->id) == codepoint);
+			assert(rect->id == codepoint);
 
 			compute_uvs_for_rect(font, *rect, uvs);
 			return 0;
 		}
 
 		// get the glyph index
-		FT_ULong glyph_index = FT_Get_Char_Index(font->face, codepoint);
+		FT_ULong glyph_index = FT_Get_Char_Index(font->face, static_cast<FT_ULong>(codepoint));
 
 		// load the glyph
 		FT_Load_Glyph(font->face, glyph_index, FT_LOAD_RENDER);
@@ -353,15 +365,19 @@ namespace font
 		img.alignment = 1; // tightly packed
 		img.fill(gemini::Color(1.0f, 0, 1.0f));
 
-		img.copy(bitmap->buffer, bitmap->width, bitmap->rows, bitmap->pitch, font->border);
+		img.copy(bitmap->buffer,
+			bitmap->width,
+			static_cast<uint32_t>(bitmap->rows),
+			static_cast<uint32_t>(bitmap->pitch),
+			font->border);
 
 		// insert the glyph into our cache
 		stbrp_rect newrect;
 		newrect.id = codepoint;
 		newrect.x = 0;
 		newrect.y = 0;
-		newrect.w = img.width;
-		newrect.h = img.height;
+		newrect.w = static_cast<stbrp_coord>(img.width);
+		newrect.h = static_cast<stbrp_coord>(img.height);
 
 		// pack the rect in the font atlas (or not)
 		stbrp_pack_rects(&font->rp_context, &newrect, 1);
@@ -384,7 +400,7 @@ namespace font
 		}
 	}
 
-	Handle load_from_memory(const void* data, unsigned int data_size, unsigned int pixel_size, Type target_type)
+	Handle load_from_memory(const void* data, size_t data_size, size_t pixel_size, Type /*target_type*/)
 	{
 		Handle handle;
 		FT_Error error = FT_Err_Ok;
@@ -395,12 +411,12 @@ namespace font
 		// so make a local copy and store it.
 		font->data = MEMORY_ALLOC(data_size, core::memory::global_allocator());
 		font->data_size = data_size;
-		font->pixel_size = pixel_size;
+		font->pixel_size = static_cast<uint32_t>(pixel_size);
 		memcpy(font->data, data, data_size);
 
 		// try to parse the font data
 		FT_Face face = nullptr;
-		error = FT_New_Memory_Face(detail::_ftlibrary, (const FT_Byte*)font->data, font->data_size, 0, &face);
+		error = FT_New_Memory_Face(detail::_ftlibrary, static_cast<const FT_Byte*>(font->data), static_cast<FT_Long>(font->data_size), 0, &face);
 		assert(error == FT_Err_Ok);
 		if (error == FT_Err_Unknown_File_Format)
 		{
@@ -414,7 +430,7 @@ namespace font
 		}
 
 		// try to set the pixel size of characters
-		error = FT_Set_Pixel_Sizes(face, 0, pixel_size);
+		error = FT_Set_Pixel_Sizes(face, 0, static_cast<FT_UInt>(pixel_size));
 		if (error != FT_Err_Ok)
 		{
 			LOGW("Error while setting the character size!\n");
@@ -422,12 +438,12 @@ namespace font
 		}
 
 
-		handle.ref = detail::_fonts.size();
+		handle.ref = static_cast<int>(detail::_fonts.size());
 		font->type = FONT_TYPE_BITMAP;
 		font->face = face;
 
 		// cache line height and other flags
-		font->line_height = (font->face->ascender - font->face->descender) >> 6;
+		font->line_height = static_cast<uint32_t>((font->face->ascender - font->face->descender) >> 6);
 		font->is_fixed_width = FT_HAS_FIXED_SIZES(face);
 		font->has_kerning = FT_HAS_KERNING(face);
 
@@ -448,7 +464,7 @@ namespace font
 
 	void destroy_font(Handle& handle)
 	{
-		FontData* font = detail::_fonts[handle.ref];
+		FontData* font = detail::_fonts[static_cast<size_t>(handle.ref)];
 		detail::delete_font_data(font);
 
 		// invalidate the handle
@@ -457,7 +473,7 @@ namespace font
 
 	unsigned int get_pixel_size(Handle handle)
 	{
-		FontData* font = detail::_fonts[handle.ref];
+		FontData* font = detail::_fonts[static_cast<size_t>(handle.ref)];
 		return font->pixel_size;
 	}
 
@@ -468,7 +484,7 @@ namespace font
 			return;
 		}
 
-		FontData* font = detail::_fonts[handle.ref];
+		FontData* font = detail::_fonts[static_cast<size_t>(handle.ref)];
 		FT_Size_Metrics& sm = font->face->size->metrics;
 		out_metrics.height = sm.height >> 6;
 		out_metrics.ascender = sm.ascender >> 6;
@@ -477,7 +493,7 @@ namespace font
 //		LOGV("height = %i, ascender = %i, descender = %i (pixels)\n", out_metrics.height, out_metrics.ascender, out_metrics.descender);
 	}
 
-	int get_glyph_metrics(Handle handle, uint32_t codepoint, glm::vec2& mins, glm::vec2& maxs, int* advance)
+	int get_glyph_metrics(Handle /*handle*/, uint32_t /*codepoint*/, glm::vec2& /*mins*/, glm::vec2& /*maxs*/, int* /*advance*/)
 	{
 		return 0;
 	}
@@ -489,7 +505,7 @@ namespace font
 			return -1;
 		}
 
-		FontData* font = detail::_fonts[handle.ref];
+		FontData* font = detail::_fonts[static_cast<size_t>(handle.ref)];
 		glm::vec2 pen;
 		uint32_t previous_codepoint = 0;
 
@@ -501,12 +517,12 @@ namespace font
 
 		for (size_t index = 0; index < string_length; ++index)
 		{
-			uint32_t codepoint = utf8[index];
+			int codepoint = utf8[index];
 			GlyphData gd;
 			get_gylph_info(font->face, codepoint, gd);
 
 			if (gd.height > largest)
-				largest = gd.height;
+				largest = static_cast<float>(gd.height);
 
 			if (previous_codepoint != 0 && font->has_kerning)
 			{
@@ -526,7 +542,7 @@ namespace font
 		return 0;
 	}
 
-	size_t count_vertices(Handle handle, size_t string_length)
+	size_t count_vertices(Handle /*handle*/, size_t string_length)
 	{
 		return 6 * string_length;
 	}
@@ -537,7 +553,7 @@ namespace font
 		if (!handle.is_valid())
 			return 0;
 
-		FontData* data = detail::_fonts[handle.ref];
+		FontData* data = detail::_fonts[static_cast<size_t>(handle.ref)];
 
 		glm::vec2 pen(0.0f, 0.0f);
 
@@ -546,7 +562,7 @@ namespace font
 		uint32_t previous_codepoint = 0;
 		for (size_t index = 0; index < string_length; ++index)
 		{
-			uint32_t codepoint = utf8[index];
+			int codepoint = utf8[index];
 
 			GlyphData* glyph_data = data->lookup_glyph_data(codepoint);
 			const GlyphData& gd = *glyph_data;
@@ -617,7 +633,7 @@ namespace font
 	{
 		if (handle.is_valid())
 		{
-			FontData* data = detail::_fonts[handle.ref];
+			FontData* data = detail::_fonts[static_cast<size_t>(handle.ref)];
 			return data->texture;
 		}
 

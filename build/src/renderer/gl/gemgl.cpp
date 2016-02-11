@@ -146,7 +146,7 @@ namespace renderer
 	}
 
 
-	int gemgl_load_symbols(gemgl_interface_t& gl_interface)
+	int gemgl_load_symbols(gemgl_interface_t& /*gl_interface*/)
 	{
 #if GEMGL_ENABLE_ES
 		GEMGL_LINK( gl.Viewport, "glViewport", GEMGLFNVIEWPORT );
@@ -487,7 +487,7 @@ namespace renderer
 			if (total_extensions > 0)
 			{
 				LOGV("GL_EXTENSIONS: (%i)\n", total_extensions);
-				for (int i = 0; i < total_extensions; ++i)
+				for (GLuint i = 0; i < static_cast<GLuint>(total_extensions); ++i)
 				{
 					LOGV("[%i] - %s\n", i, gl.GetStringi(GL_EXTENSIONS, i));
 				}

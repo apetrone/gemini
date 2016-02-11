@@ -269,8 +269,8 @@ namespace gui
 
 	void Compositor::cursor_move_absolute(ScreenInt x, ScreenInt y)
 	{
-		ScreenInt dx = (x - last_cursor.x);
-		ScreenInt dy = (y - last_cursor.y);
+		ScreenInt dx = static_cast<ScreenInt>(x - last_cursor.x);
+		ScreenInt dy = static_cast<ScreenInt>(y - last_cursor.y);
 
 		if (dx != 0 || dy != 0)
 		{
@@ -353,7 +353,7 @@ namespace gui
 		}
 	} // cursor_scroll
 
-	void Compositor::key_event(uint32_t unicode, bool is_down, uint32_t character, uint16_t modifiers)
+	void Compositor::key_event(uint32_t /*unicode*/, bool is_down, uint32_t /*character*/, uint16_t modifiers)
 	{
 		key_modifiers = modifiers;
 

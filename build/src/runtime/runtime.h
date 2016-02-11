@@ -25,8 +25,8 @@
 #pragma once
 
 #include <core/typedefs.h>
+#include <core/util.h> // for std::function
 #include <platform/platform.h>
-#include <functional>
 
 namespace platform
 {

@@ -32,12 +32,12 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// render target
 	// ---------------------------------------------------------------------
-	void OpenGLDevice::activate_render_target(const RenderTarget& rt)
+	void OpenGLDevice::activate_render_target(const RenderTarget& /*rt*/)
 	{
 
 	}
 
-	void OpenGLDevice::deactivate_render_target(const RenderTarget& rt)
+	void OpenGLDevice::deactivate_render_target(const RenderTarget& /*rt*/)
 	{
 
 	}
@@ -62,8 +62,8 @@ namespace render2
 	// ---------------------------------------------------------------------
 	void OpenGLDevice::init(int backbuffer_width, int backbuffer_height)
 	{
-		default_target.width = backbuffer_width;
-		default_target.height = backbuffer_height;
+		default_target.width = static_cast<uint32_t>(backbuffer_width);
+		default_target.height = static_cast<uint32_t>(backbuffer_height);
 	}
 
 
@@ -77,7 +77,7 @@ namespace render2
 		return &serializer;
 	}
 
-	void OpenGLDevice::destroy_serializer(CommandSerializer* serializer)
+	void OpenGLDevice::destroy_serializer(CommandSerializer* /*serializer*/)
 	{
 	}
 

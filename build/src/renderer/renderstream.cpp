@@ -33,20 +33,20 @@
 
 namespace renderer
 {
-	RenderStream::RenderStream( unsigned int max_bytes, unsigned int max_commands )
+	RenderStream::RenderStream(unsigned int /*max_bytes*/, unsigned int /*max_commands*/)
 	{
 		num_commands = 0;
-		stream.init( buffer, MAX_RENDERER_STREAM_BYTES );
+		stream.init(buffer, MAX_RENDERER_STREAM_BYTES);
 	}
 
-	void RenderStream::save_offset( long & offset )
+	void RenderStream::save_offset(long& offset)
 	{
-		offset = stream.current_offset();
+		offset = static_cast<long>(stream.current_offset());
 	} // save_offset
 
-	void RenderStream::load_offset( long offset )
+	void RenderStream::load_offset(long offset)
 	{
-		stream.seek( offset, true );
+		stream.seek(static_cast<size_t>(offset), true);
 	} // load_offset
 
 	void RenderStream::rewind()
@@ -83,7 +83,7 @@ namespace renderer
 			renderstate = &commands[ state_id ];
 
 			// setup the stream and run the command
-			stream.seek(renderstate->offset, 1);
+			stream.seek(static_cast<size_t>(renderstate->offset), 1);
 			driver->run_command((renderer::DriverCommandType)renderstate->type, stream);
 		}
 	#if 0
@@ -103,7 +103,7 @@ namespace renderer
 	{
 		RenderState * state = new_render_state();
 		state->type = type;
-		state->offset = stream.current_offset();
+		state->offset = static_cast<long>(stream.current_offset());
 	}
 
 	void RenderStream::add_clearcolor( float r, float g, float b, float a )

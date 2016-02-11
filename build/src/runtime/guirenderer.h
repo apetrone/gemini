@@ -50,19 +50,19 @@ public:
 	virtual void clear() {}
 
 protected:
-	virtual int track_texture(render2::Texture* texture)
+	virtual int track_texture(render2::Texture* /*texture*/)
 	{
 		return -1;
 	}
 //	void untrack_texture(render2::Texture* texture);
 
 public:
-	virtual gui::TextureHandle texture_to_handle(render2::Texture* texture)
+	virtual gui::TextureHandle texture_to_handle(render2::Texture* /*texture*/)
 	{
 		return -1;
 	}
 
-	virtual render2::Texture* handle_to_texture(const gui::TextureHandle& handle)
+	virtual render2::Texture* handle_to_texture(const gui::TextureHandle& /*handle*/)
 	{
 		return nullptr;
 	}
@@ -112,6 +112,8 @@ public:
 //	LIBRARY_EXPORT virtual gui::TextureHandle font_get_texture(const gui::FontHandle& handle);
 //	LIBRARY_EXPORT virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
 	LIBRARY_EXPORT virtual void draw_commands(gui::render::CommandList* command_list, Array<gui::render::Vertex>& vertex_buffer);
+
+	LIBRARY_EXPORT GUIRenderer& operator=(const GUIRenderer& other) = delete;
 
 private:
 	gui::Compositor* compositor;

@@ -79,7 +79,7 @@ namespace render2
 		void compute_size()
 		{
 			// compute byte size for this attribute
-			byte_size = (size * type_to_bytes(type));
+			byte_size = static_cast<GLint>(size * type_to_bytes(type));
 		}
 	};
 
@@ -90,8 +90,8 @@ namespace render2
 		{
 			GLint location;
 			GLenum type;
-			GLsizei element_count;
-			GLenum normalized;
+			GLint element_count;
+			GLboolean normalized;
 			size_t offset;
 			size_t size;
 		};
@@ -105,7 +105,7 @@ namespace render2
 		GLShader();
 		virtual ~GLShader();
 
-		bool compile_shader(GLint shader, const char* source, const char* preprocessor_defines, const char* version);
+		bool compile_shader(GLuint shader, const char* source, const char* preprocessor_defines, const char* version);
 		void query_program_info_log(renderer::GLObject handle);
 		void query_shader_info_log(renderer::GLObject handle);
 
@@ -113,7 +113,7 @@ namespace render2
 		GLint get_attribute_location(const char* name);
 		GLint get_uniform_location(const char* name);
 
-		GLint id;
+		GLuint id;
 		FixedArray<shader_variable> uniforms;
 		FixedArray<shader_variable> attributes;
 	}; // GLShader
@@ -208,7 +208,7 @@ namespace render2
 
 	// for use with glTexImage
 	GLenum image_to_source_format(const Image& image);
-	GLenum image_to_internal_format(const Image& image);
+	GLint image_to_internal_format(const Image& image);
 	GLenum texture_type_from_image(const Image& image);
 	GLTexture* common_create_texture(const Image& image);
 	void common_update_texture(GLTexture* texture, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions);

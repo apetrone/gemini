@@ -40,8 +40,8 @@ namespace gui
 	{
 		drag_handle = new Panel(this);
 		drag_handle->set_background_color(gemini::Color::from_rgba(0, 255, 255, 255));
-		uint32_t flags = drag_handle->get_flags();
-		drag_handle->set_flags(flags & ~Flag_CursorEnabled);
+		const uint32_t handle_flags = drag_handle->get_flags();
+		drag_handle->set_flags(handle_flags & ~Flag_CursorEnabled);
 		drag_handle->set_origin(0, 0);
 	}
 

@@ -48,7 +48,7 @@ namespace gemini
 			// catch out of range ids
 			assert(materials.size() >= (uint32_t)id);
 
-			return materials[ id ];
+			return materials[ static_cast<size_t>(id) ];
 		}
 
 		Material& MaterialMap::find_with_name(const String& name)

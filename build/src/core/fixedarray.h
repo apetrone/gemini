@@ -38,8 +38,6 @@ class FixedArray
 	Type *elements;
 	size_t total_elements;
 
-	FixedArray<Type> & operator=(const FixedArray<Type>& other) {}
-
 private:
 	void assert_valid_index(size_t index) const
 	{
@@ -84,6 +82,17 @@ public:
 	{
 		clear();
 	} // ~FixedArray
+
+	FixedArray<Type>& operator=(const FixedArray<Type>& other)
+	{
+		if (&other != this)
+		{
+			clear();
+			allocate(other.total_elements);
+			memcpy(elements, other.elements, sizeof(Type) * total_elements);
+		}
+		return *this;
+	}
 
 	void operator=(Type* other)
 	{

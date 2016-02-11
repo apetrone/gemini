@@ -97,7 +97,7 @@ namespace gui
 		text_origin.y = glm::floor((size.height / 2.0f) - (font_dims.height()/2.0f) + glm::max((float)font_height, font_dims.height()));
 	} // update
 
-	void Button::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
+	void Button::render(Compositor* compositor, Renderer* /*renderer*/, gui::render::CommandList& render_commands)
 	{
 		if (compositor->get_hot() == this && state == 0)
 		{
@@ -129,8 +129,9 @@ namespace gui
 		font_handle = compositor->get_resource_cache()->create_font(filename, pixel_size);
 
 		int ascender, descender;
-		compositor->get_renderer()->font_metrics(font_handle, font_height, ascender, descender);
-		font_height = (ascender + descender);
+		size_t height;
+		compositor->get_renderer()->font_metrics(font_handle, height, ascender, descender);
+		font_height = static_cast<int32_t>(ascender + descender);
 	}
 
 	void Button::set_text(const std::string& utf8_string)

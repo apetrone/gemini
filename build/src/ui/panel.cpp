@@ -230,7 +230,7 @@ namespace gui
 		}
 	} // render_children
 
-	void Panel::set_background_image(Compositor* compositor, const char* path)
+	void Panel::set_background_image(Compositor* /*compositor*/, const char* /*path*/)
 	{
 		// This needs to be updated to use the new ResourceCache
 		assert(0);
@@ -330,7 +330,7 @@ namespace gui
 		return glm::vec2(glm::inverse(transform) * glm::vec3(location, 1.0));
 	}
 
-	glm::mat3 Panel::get_transform(size_t index) const
+	glm::mat3 Panel::get_transform(size_t /*index*/) const
 	{
 		return local_transform;
 	}

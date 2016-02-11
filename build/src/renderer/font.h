@@ -58,7 +58,7 @@ namespace font
 	struct Metrics
 	{
 		// scaled font metrics in pixels
-		size_t height;
+		int32_t height;
 		int32_t ascender;
 		int32_t descender;
 		int32_t max_height;
@@ -94,7 +94,7 @@ namespace font
 	LIBRARY_EXPORT void shutdown();
 
 	// load font from memory with the desired pixel size
-	LIBRARY_EXPORT Handle load_from_memory(const void* data, unsigned int data_size, unsigned int pixel_size, Type target_type = FONT_TYPE_BITMAP);
+	LIBRARY_EXPORT Handle load_from_memory(const void* data, size_t data_size, size_t pixel_size, Type target_type = FONT_TYPE_BITMAP);
 
 	// called to purge memory used by handle's font
 	LIBRARY_EXPORT void destroy_font(Handle& handle);

@@ -42,6 +42,8 @@ namespace render2
 		{
 		}
 
+		GLCommandSerializer& operator=(const GLCommandSerializer& other) = delete;
+
 		virtual void vertex_buffer(Buffer* buffer)
 		{
 			queue.add_command(

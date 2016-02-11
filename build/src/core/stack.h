@@ -51,6 +51,8 @@ namespace gemini
 			max_capacity = 0;
 		}
 
+		stack& operator=(const stack& other) = delete;
+
 		void push(const T& item)
 		{
 			if (!data && max_capacity == 0)

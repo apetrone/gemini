@@ -58,7 +58,7 @@ namespace render2
 		LIBRARY_EXPORT VertexDescriptor();
 		LIBRARY_EXPORT VertexDescriptor(const VertexDescriptor& other);
 		LIBRARY_EXPORT void add(const char* name, const VertexDataType& type, size_t element_count);
-		LIBRARY_EXPORT const InputDescription& operator[](int index) const;
+		LIBRARY_EXPORT const InputDescription& operator[](size_t index) const;
 		LIBRARY_EXPORT void reset();
 		LIBRARY_EXPORT size_t size() const;
 

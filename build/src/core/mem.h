@@ -174,6 +174,14 @@ namespace core
 			}
 		}
 
+#if defined(PLATFORM_COMPILER_MSVC)
+	// msvc doesn't think using a variable in a term with a constructor
+	// or cast is 'using' the variable, so it throws up this warning.
+	// Let's disable it for construct_array/destruct_array.
+	#pragma warning(push)
+	#pragma warning(disable: 4189) // 'p': local variable is initialized but not referenced
+#endif
+
 		template <class _Type, class _Allocator>
 		_Type* construct_array(size_t elements, _Allocator& allocator, const char* filename, int line)
 		{
@@ -235,5 +243,9 @@ namespace core
 				allocator.deallocate(block);
 			}
 		}
+
+#if defined(PLATFORM_COMPILER_MSVC)
+	#pragma warning(pop)
+#endif
 	} // namespace memory
 } // namespace core

@@ -90,7 +90,7 @@ namespace gemini
 		{
 			for (profile_block* scope : scopes)
 			{
-				const profile_block* parent = scopes[static_cast<int>(scope->parent_index)];
+				const profile_block* parent = scopes[scope->parent_index];
 				const float parent_weight = scope->cycles / float(parent->cycles);
 				callback(scope->name, scope->cycles, scope->depth, scope->hitcount, parent_weight);
 			}

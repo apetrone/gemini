@@ -157,11 +157,11 @@ namespace renderer
 			if (shader->attributes.empty())
 			{
 				shader->attributes.allocate(attributes.size());
-				int index = 0;
-				for (auto value : attributes)
+				size_t index = 0;
+				for (const auto& value : attributes)
 				{
 					shader->attributes[index].first = value;
-					shader->attributes[index].second = index;
+					shader->attributes[index].second = static_cast<int>(index);
 					++index;
 				}
 			}
@@ -169,11 +169,11 @@ namespace renderer
 			if (shader->uniforms.empty())
 			{
 				shader->uniforms.allocate(uniforms.size());
-				int index = 0;
-				for (auto value : uniforms)
+				size_t index = 0;
+				for (const auto& value : uniforms)
 				{
 					shader->uniforms[index].first = value;
-					shader->uniforms[index].second = index;
+					shader->uniforms[index].second = static_cast<int>(index);
 					++index;
 				}
 			}

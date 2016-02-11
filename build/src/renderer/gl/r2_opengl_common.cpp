@@ -56,7 +56,7 @@ namespace render2
 	}
 
 
-	bool GLShader::compile_shader(GLint shader, const char* source, const char* preprocessor_defines, const char* version)
+	bool GLShader::compile_shader(GLuint shader, const char* source, const char* preprocessor_defines, const char* version)
 	{
 		GLint is_compiled = 0;
 		const char* shader_source[3] = {
@@ -84,7 +84,7 @@ namespace render2
 
 		assert(is_compiled);
 
-		return is_compiled;
+		return (is_compiled == 1);
 	} // compile_shader
 
 	void GLShader::query_program_info_log(GLObject handle)
@@ -102,10 +102,10 @@ namespace render2
 		}
 		else
 		{
-		logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
+			logbuffer = (char*)MEMORY_ALLOC(static_cast<size_t>(log_length + 1), core::memory::global_allocator());
 		}
 
-		memset(logbuffer, 0, log_length);
+		memset(logbuffer, 0, static_cast<size_t>(log_length));
 
 		gl.GetProgramInfoLog(handle, log_length, &log_length, logbuffer);
 		gl.CheckError("GetProgramInfoLog");
@@ -140,11 +140,11 @@ namespace render2
 		}
 		else
 		{
-			logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
+			logbuffer = (char*)MEMORY_ALLOC(static_cast<size_t>(log_length + 1), core::memory::global_allocator());
 		}
 
 
-		memset(logbuffer, 0, log_length);
+		memset(logbuffer, 0, static_cast<size_t>(log_length));
 
 		gl.GetShaderInfoLog(handle, log_length, &log_length, logbuffer);
 		gl.CheckError("GetShaderInfoLog");
@@ -163,8 +163,10 @@ namespace render2
 
 	int GLShader::build_from_source(const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version)
 	{
-		GLint vert = gl.CreateShader(GL_VERTEX_SHADER); gl.CheckError("CreateShader");
-		GLint frag = gl.CreateShader(GL_FRAGMENT_SHADER); gl.CheckError("CreateShader");
+		GLuint vert = gl.CreateShader(GL_VERTEX_SHADER);
+		gl.CheckError("CreateShader");
+		GLuint frag = gl.CreateShader(GL_FRAGMENT_SHADER);
+		gl.CheckError("CreateShader");
 
 		compile_shader(vert, vertex_shader, preprocessor, version);
 		compile_shader(frag, fragment_shader, preprocessor, version);
@@ -204,12 +206,19 @@ namespace render2
 			gl.GetProgramiv(id, GL_ACTIVE_ATTRIBUTES, &active_attributes);
 			gl.CheckError("inspect attributes GetProgramiv");
 
-			attributes.allocate(active_attributes);
+			attributes.allocate(static_cast<size_t>(active_attributes));
 
-			for (GLint attribute_index = 0; attribute_index < active_attributes; ++attribute_index)
+			for (size_t attribute_index = 0; attribute_index < static_cast<size_t>(active_attributes); ++attribute_index)
 			{
 				shader_variable& attribute = attributes[attribute_index];
-				gl.GetActiveAttrib(id, attribute_index, MAX_ATTRIBUTE_NAME_LENGTH, &attribute.length, &attribute.size, &attribute.type, attribute.name);
+				gl.GetActiveAttrib(id,
+					static_cast<GLuint>(attribute_index),
+					MAX_ATTRIBUTE_NAME_LENGTH,
+					&attribute.length,
+					&attribute.size,
+					&attribute.type,
+					attribute.name
+				);
 				attribute.location = gl.GetAttribLocation(id, attribute.name);
 //				LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
 //					 attribute_index,
@@ -228,12 +237,19 @@ namespace render2
 			gl.GetProgramiv(id, GL_ACTIVE_UNIFORMS, &active_uniforms);
 
 			// allocate data for uniforms
-			uniforms.allocate(active_uniforms);
+			uniforms.allocate(static_cast<size_t>(active_uniforms));
 
-			for (GLint uniform_index = 0; uniform_index < active_uniforms; ++uniform_index)
+			for (size_t uniform_index = 0; uniform_index < static_cast<size_t>(active_uniforms); ++uniform_index)
 			{
 				shader_variable& uniform = uniforms[uniform_index];
-				gl.GetActiveUniform(id, uniform_index, MAX_ATTRIBUTE_NAME_LENGTH, &uniform.length, &uniform.size, &uniform.type, uniform.name);
+				gl.GetActiveUniform(id,
+					static_cast<GLuint>(uniform_index),
+					MAX_ATTRIBUTE_NAME_LENGTH,
+					&uniform.length,
+					&uniform.size,
+					&uniform.type,
+					uniform.name
+				);
 				uniform.location = gl.GetUniformLocation(id, uniform.name);
 //				LOGV("uniform: %i, location: %i, name: %s, size: %i, type: %i\n",
 //					 uniform_index,
@@ -344,7 +360,7 @@ namespace render2
 	void GLTexture::set_parameters(const Image& image)
 	{
 		// set texture wrapping
-		GLenum wrap_type = GL_REPEAT;
+		GLint wrap_type = GL_REPEAT;
 
 		if (image.flags & image::F_CLAMP)
 		{
@@ -375,8 +391,8 @@ namespace render2
 
 
 		// set filter type
-		GLenum min_filter = GL_NEAREST;
-		GLenum mag_filter = GL_NEAREST;
+		GLint min_filter = GL_NEAREST;
+		GLint mag_filter = GL_NEAREST;
 
 		if (image.filter == image::FILTER_LINEAR)
 		{
@@ -555,12 +571,12 @@ namespace render2
 			GLInputLayout::Description target;
 			target.location = location;
 			target.type = gldata.type;
-			target.normalized = gldata.normalized;
-			target.element_count = input.element_count;
+			target.normalized = static_cast<GLboolean>(gldata.normalized);
+			target.element_count = static_cast<GLint>(input.element_count);
 			target.size = gldata.element_size * input.element_count;
 			target.offset = current_offset;
 
-			layout->items[target.location] = target;
+			layout->items[static_cast<size_t>(target.location)] = target;
 
 			// increment the offset pointer
 			current_offset += target.size;
@@ -695,8 +711,8 @@ namespace render2
 
 	void common_resize_backbuffer(int width, int height, RenderTarget* target)
 	{
-		target->width = width;
-		target->height = height;
+		target->width = static_cast<uint32_t>(width);
+		target->height = static_cast<uint32_t>(height);
 	}
 
 	CommandQueue* common_create_queue(const Pass& render_pass, CommandQueue* next_queue)
@@ -709,7 +725,7 @@ namespace render2
 	void common_pass_setup(const Pass* pass)
 	{
 		assert(pass->target->width > 0 && pass->target->height > 0);
-		gl.Viewport(0, 0, pass->target->width, pass->target->height);
+		gl.Viewport(0, 0, static_cast<GLsizei>(pass->target->width), static_cast<GLsizei>(pass->target->height));
 
 		GLuint clear_flags = 0;
 
@@ -734,7 +750,7 @@ namespace render2
 		if (pass->clear_stencil)
 		{
 			clear_flags |= GL_STENCIL_BUFFER_BIT;
-			gl.ClearStencil(0.0f);
+			gl.ClearStencil(0);
 			gl.CheckError("ClearStencil");
 		}
 
@@ -849,7 +865,7 @@ namespace render2
 		return GL_RGBA;
 	} // image_source_format
 
-	GLenum image_to_internal_format(const Image& image)
+	GLint image_to_internal_format(const Image& image)
 	{
 		//GLenum internalFormat = GL_SRGB8;
 		if (image.channels == 3)
@@ -899,7 +915,7 @@ namespace render2
 	GLTexture* common_create_texture(const Image& image)
 	{
 		GLenum source_format = image_to_source_format(image);
-		GLenum internal_format = image_to_internal_format(image);
+		GLint internal_format = image_to_internal_format(image);
 
 		GLTexture* texture = MEMORY_NEW(GLTexture, core::memory::global_allocator())(image);
 
@@ -927,14 +943,32 @@ namespace render2
 		if (image.type == image::TEX_2D)
 		{
 			// upload image and generate mipmaps
-			gl.TexImage2D(texture->texture_type, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, pixels);
+			gl.TexImage2D(texture->texture_type,
+				0,
+				internal_format,
+				static_cast<GLsizei>(image.width),
+				static_cast<GLsizei>(image.height),
+				0,
+				source_format,
+				GL_UNSIGNED_BYTE,
+				pixels
+			);
 			gl.CheckError("teximage2d");
 		}
 		else if (image.type == image::TEX_CUBE)
 		{
 			for (uint8_t index = 0; index < 6; ++index)
 			{
-				gl.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+index, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, pixels);
+				gl.TexImage2D(static_cast<GLenum>(GL_TEXTURE_CUBE_MAP_POSITIVE_X+index),
+					0,
+					internal_format,
+					static_cast<GLsizei>(image.width),
+					static_cast<GLsizei>(image.height),
+					0,
+					source_format,
+					GL_UNSIGNED_BYTE,
+					pixels
+				);
 				gl.CheckError("teximage2d (cube)");
 			}
 		}
@@ -964,7 +998,7 @@ namespace render2
 		// dimensions should be positive
 		assert(dimensions.x > 0 && dimensions.y > 0);
 
-		GLenum internal_format = image_to_internal_format(image);
+		GLenum internal_format = static_cast<GLenum>(image_to_internal_format(image));
 
 		texture->bind();
 
@@ -982,7 +1016,7 @@ namespace render2
 		assert(texture->unpack_alignment == 1 || texture->unpack_alignment == 2 || texture->unpack_alignment == 4 || texture->unpack_alignment == 8);
 
 		// set alignment for this operation
-		gl.PixelStorei(GL_UNPACK_ALIGNMENT, image.alignment);
+		gl.PixelStorei(GL_UNPACK_ALIGNMENT, static_cast<GLint>(image.alignment));
 
 #if 0
 		gl.PixelStorei(GL_UNPACK_ROW_LENGTH, image.width);
@@ -999,7 +1033,16 @@ namespace render2
 		}
 
 		GLint mip_level = 0;
-		gl.TexSubImage2D(texture->texture_type, mip_level, origin.x, origin.y, dimensions.x, dimensions.y, internal_format, GL_UNSIGNED_BYTE, pixels);
+		gl.TexSubImage2D(texture->texture_type,
+			mip_level,
+			static_cast<GLint>(origin.x),
+			static_cast<GLint>(origin.y),
+			static_cast<GLsizei>(dimensions.x),
+			static_cast<GLsizei>(dimensions.y),
+			internal_format,
+			GL_UNSIGNED_BYTE,
+			pixels
+		);
 		gl.CheckError("TexSubImage2D");
 
 		texture->unbind();
@@ -1042,7 +1085,7 @@ namespace render2
 				case GL_INT:
 				case GL_UNSIGNED_INT:
 				{
-					const GLuint* value = static_cast<const GLuint*>(data);
+					const GLint* value = static_cast<const GLint*>(data);
 					gl.Uniform1i(uniform.location, (*value));
 					gl.CheckError("Uniform1i");
 					break;
@@ -1054,7 +1097,7 @@ namespace render2
 					break;
 				case GL_SAMPLER_2D:
 				{
-					const GLuint* sampler = static_cast<const GLuint*>(data);
+					const GLint* sampler = static_cast<const GLint*>(data);
 
 					// maximum of eight texture units
 					assert(*sampler < 8);

@@ -106,6 +106,7 @@ namespace image
 		FixedArray<uint8_t> pixels;
 
 		LIBRARY_EXPORT Image();
+		LIBRARY_EXPORT Image& operator=(const Image& other);
 		LIBRARY_EXPORT void create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels);
 		LIBRARY_EXPORT void fill(const gemini::Color& color);
 

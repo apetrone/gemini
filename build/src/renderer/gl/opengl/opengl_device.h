@@ -52,7 +52,7 @@ namespace render2
 			{
 				vbo = vao = 0;
 
-				max_size = size_bytes;
+				max_size = static_cast<uint32_t>(size_bytes);
 
 				gl.GenBuffers(1, &vbo);
 				gl.CheckError("GLBuffer() - GenBuffers");
@@ -88,11 +88,11 @@ namespace render2
 			void upload(const void* data, size_t size_bytes)
 			{
 				assert(max_size >= size_bytes);
-				gl.BufferData(type, size_bytes, data, GL_STREAM_DRAW);
+				gl.BufferData(type, static_cast<GLsizeiptr>(size_bytes), data, GL_STREAM_DRAW);
 				gl.CheckError("upload -> BufferData");
 			}
 
-			void setup(const VertexDescriptor& descriptor)
+			void setup(const VertexDescriptor& /*descriptor*/)
 			{
 				//				core::util::MemoryStream ms;
 				//				ms.init(pointer, max_size);
@@ -129,7 +129,7 @@ namespace render2
 
 			void resize(size_t bytes)
 			{
-				max_size = bytes;
+				max_size = static_cast<uint32_t>(bytes);
 				bind();
 				upload(nullptr, bytes);
 				unbind();
@@ -162,13 +162,13 @@ namespace render2
 			GLBuffer* vertex_stream,
 			size_t initial_offset,
 			size_t total,
-			size_t instance_index,
-			size_t index_count)
+			size_t /*instance_index*/,
+			size_t /*index_count*/)
 		{
 			activate_pipeline(pipeline, vertex_stream);
 
 			vertex_stream->bind_vao();
-			gl.DrawArrays(pipeline->draw_type, initial_offset, total);
+			gl.DrawArrays(pipeline->draw_type, static_cast<GLint>(initial_offset), static_cast<GLsizei>(total));
 			gl.CheckError("DrawArrays");
 
 			vertex_stream->unbind_vao();
@@ -188,7 +188,7 @@ namespace render2
 			vertex_buffer->bind_vao();
 
 			index_buffer->bind();
-			gl.DrawElements(GL_TRIANGLES, total, GL_UNSIGNED_SHORT, 0);
+			gl.DrawElements(GL_TRIANGLES, static_cast<GLsizei>(total), GL_UNSIGNED_SHORT, 0);
 			gl.CheckError("DrawElements");
 			index_buffer->unbind();
 
@@ -227,10 +227,16 @@ namespace render2
 
 					assert(item.element_count >= 1 && item.element_count <= 4);
 
-					gl.EnableVertexAttribArray(index);
+					gl.EnableVertexAttribArray(static_cast<GLuint>(index));
 					gl.CheckError("EnableVertexAttribArray");
 
-					gl.VertexAttribPointer(index, item.element_count, item.type, item.normalized, layout->vertex_stride, (void*)item.offset);
+					gl.VertexAttribPointer(static_cast<GLuint>(index),
+						item.element_count,
+						static_cast<GLenum>(item.type),
+						item.normalized,
+						static_cast<GLsizei>(layout->vertex_stride),
+						(void*)item.offset
+					);
 					gl.CheckError("VertexAttribPointer");
 				}
 
@@ -318,7 +324,7 @@ namespace render2
 							texture->unbind();
 						}
 						texture = static_cast<GLTexture*>(command->data[0]);
-						gl.ActiveTexture((GL_TEXTURE0 + command->params[0]));
+						gl.ActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + command->params[0]));
 						gl.CheckError("ActiveTexture");
 						texture->bind();
 					}

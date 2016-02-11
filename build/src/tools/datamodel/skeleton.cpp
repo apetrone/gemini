@@ -46,7 +46,7 @@ namespace gemini
 		Bone* Skeleton::add_bone(int32_t parent_index, const String& name)
 		{
 			Bone* bone = MEMORY_NEW(Bone, core::memory::global_allocator());
-			bone->index = bones.size();
+			bone->index = static_cast<int32_t>(bones.size());
 			bone->parent = parent_index;
 			bone->name = name;
 			bones.push_back(bone);

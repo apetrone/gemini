@@ -31,7 +31,23 @@
 #define STBI_HEADER_FILE_ONLY 1
 #define STBI_NO_STDIO 1
 #define STB_IMAGE_IMPLEMENTATION 1
+
+#if defined(PLATFORM_COMPILER_MSVC)
+	// disable some warnings in stb_image
+	#pragma warning(push)
+	#pragma warning(disable: 4312) // 'type cast': conversion from 'int' to 'unsigned char *' of greater size
+	#pragma warning(disable: 4365) // 'argument': conversion from 'int' to 'size_t', signed/unsigned mismatch
+	#pragma warning(disable: 4456) // declaration of 'k' hides previous local declaration
+	#pragma warning(disable: 4457) // declaration of 'y' hides function parameter
+#endif
+
 #include "stb_image.h"
+
+#if defined(PLATFORM_COMPILER_MSVC)
+	#pragma warning(pop)
+#endif
+
+
 
 using namespace core;
 
@@ -53,6 +69,22 @@ namespace image
 		alignment = 4;
 	}
 
+	Image& Image::operator=(const Image& other)
+	{
+		type = other.type;
+		filter = other.filter;
+		flags = other.flags;
+		width = other.width;
+		height = other.height;
+		channels = other.channels;
+		alignment = other.alignment;
+
+		// invoke assigment operator on array
+		pixels = other.pixels;
+
+		return *this;
+	}
+
 	LIBRARY_EXPORT void Image::create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels)
 	{
 		width = image_width;
@@ -66,10 +98,10 @@ namespace image
 	LIBRARY_EXPORT void Image::fill(const gemini::Color& color)
 	{
 		uint8_t* pixel = &pixels[0];
-		const uint8_t red = uint8_t(color.red * 255.0f) & 0xff;
-		const uint8_t green = uint8_t(color.green * 255.0f) & 0xff;
-		const uint8_t blue = uint8_t(color.blue * 255.0f) & 0xff;
-		const uint8_t alpha = uint8_t(color.alpha * 255.0f) & 0xff;
+		const uint8_t red = static_cast<uint8_t>(static_cast<int>(color.red * 255.0f) & 0xff);
+		const uint8_t green = static_cast<uint8_t>(static_cast<int>(color.green * 255.0f) & 0xff);
+		const uint8_t blue = static_cast<uint8_t>(static_cast<int>(color.blue * 255.0f) & 0xff);
+		const uint8_t alpha = static_cast<uint8_t>(static_cast<int>(color.alpha * 255.0f) & 0xff);
 
 		// We don't handle cases outside this.
 		assert(channels <= 4);
@@ -172,9 +204,9 @@ namespace image
 					}
 				}
 
-				pixels[0] = uint8_t(color->red * 255.0f) & 0xff;
-				pixels[1] = uint8_t(color->green * 255.0f) & 0xff;
-				pixels[2] = uint8_t(color->blue * 255.0f) & 0xff;
+				pixels[0] = static_cast<uint8_t>(static_cast<int>(color->red * 255.0f) & 0xff);
+				pixels[1] = static_cast<uint8_t>(static_cast<int>(color->green * 255.0f) & 0xff);
+				pixels[2] = static_cast<uint8_t>(static_cast<int>(color->blue * 255.0f) & 0xff);
 				pixels += image.channels;
 			}
 		}
@@ -232,11 +264,14 @@ namespace image
 	// flip an image vertically - this uses heap space to create a copy, but deletes it when finished
 	LIBRARY_EXPORT void flip_image_vertically(int width, int height, int components, unsigned char* pixels)
 	{
-		int scanline_size = width*components;
+		size_t scanline_size = static_cast<size_t>(width * components);
+		const size_t image_size_bytes = static_cast<size_t>(width * height * components);
 		int dst = 0;
-		unsigned char* copy;
-		copy = (unsigned char*)MEMORY_ALLOC((width*height*components), core::memory::global_allocator());
-		memcpy(copy, pixels, (width*height*components));
+		unsigned char* copy = (unsigned char*)MEMORY_ALLOC(
+			image_size_bytes,
+			core::memory::global_allocator()
+		);
+		memcpy(copy, pixels, image_size_bytes);
 
 		for(int h = 0; h < height; ++h)
 		{
@@ -267,11 +302,11 @@ namespace image
 		int height;
 		int channels;
 
-		unsigned char* pixels = stbi_load_from_memory(data, data_size, &width, &height, &channels, 0);
+		unsigned char* pixels = stbi_load_from_memory(data, static_cast<int>(data_size), &width, &height, &channels, 0);
 
-		image.width = width;
-		image.height = height;
-		image.channels = channels;
+		image.width = static_cast<uint32_t>(width);
+		image.height = static_cast<uint32_t>(height);
+		image.channels = static_cast<uint32_t>(channels);
 
 		// pixels returned by stbi are uncompressed; so do a raw alloc and copy.
 		size_t pixels_size = image.width * image.height * image.channels;
@@ -286,10 +321,10 @@ namespace image
 		unsigned char* pixels = 0;
 		int w, h, c;
 
-		pixels = stbi_load_from_memory(data, data_size, &w, &h, &c, 0);
-		*width = w;
-		*height = h;
-		*channels = c;
+		pixels = stbi_load_from_memory(data, static_cast<int>(data_size), &w, &h, &c, 0);
+		*width = static_cast<unsigned int>(w);
+		*height = static_cast<unsigned int>(h);
+		*channels = static_cast<unsigned int>(c);
 
 		return pixels;
 	} // load_image_from_memory

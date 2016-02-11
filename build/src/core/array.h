@@ -198,12 +198,12 @@ public:
 		return total_elements == 0;
 	}
 
-	T& operator[](int index)
+	T& operator[](size_t index)
 	{
 		return data[index];
 	}
 
-	const T& operator[](int index) const
+	const T& operator[](size_t index) const
 	{
 		return data[index];
 	}
@@ -291,7 +291,7 @@ public:
 
 		value_type& operator* ()
 		{
-			return (*container)[static_cast<int>(index)];
+			return (*container)[index];
 		}
 
 		iterator operator+(int advance) const

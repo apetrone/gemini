@@ -97,7 +97,7 @@ namespace gui
 			vertical_bar->set_origin(size.width-SCROLL_BAR_WIDTH, 0);
 			vertical_bar->set_size(gui::Size(SCROLL_BAR_WIDTH, size.height-SCROLL_BAR_WIDTH));
 			vertical_bar->set_button_dimensions(1.0f, vratio);
-			vertical_bar->set_visible(vertical_content_overflow);
+			vertical_bar->set_visible(vertical_content_overflow ? true : false);
 		}
 	}
 

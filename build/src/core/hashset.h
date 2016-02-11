@@ -58,7 +58,7 @@ private:
 	int32_t find_bucket(HashType hash, int32_t& bucket_index, bool inserting = false) const
 	{
 		// use linear probing to find the bucket
-		int32_t current_index = (hash % table_size);
+		int32_t current_index = static_cast<int32_t>(hash % table_size);
 		for( ; ; )
 		{
 			bucket_index = static_cast<int32_t>(current_index++ % table_size);
@@ -78,10 +78,10 @@ private:
 	int32_t find_first_occupied(int32_t starting_position) const
 	{
 		int32_t current_index = starting_position;
-		int32_t max_iterations = table_size-1;
+		int32_t max_iterations = static_cast<int32_t>(table_size - 1);
 		while(max_iterations > -1)
 		{
-			int32_t bucket_index = current_index % table_size;
+			int32_t bucket_index = static_cast<int32_t>(current_index % table_size);
 			Bucket* bucket = &table[bucket_index];
 			if (bucket->hash != 0 && bucket->hash != REMOVED_SLOT)
 			{
@@ -193,6 +193,11 @@ public:
 	{
 		deallocate(table);
 	} // ~HashSet
+
+	HashSet<K, T, H, Allocator>& operator=(const HashSet<K, T, H, Allocator>& other)
+	{
+		return *this;
+	}
 
 	bool has_key(const K& key) const
 	{
@@ -336,9 +341,9 @@ public:
 		int32_t index = find_first_occupied(0);
 		if (index == -1)
 		{
-			index = table_size;
+			index = static_cast<int>(table_size);
 		}
-		return Iterator(table, index, table_size);
+		return Iterator(table, static_cast<size_t>(index), table_size);
 	} // begin
 
 	Iterator end() const

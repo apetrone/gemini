@@ -48,7 +48,7 @@ namespace render
 		write_pointer = nullptr;
 	}
 
-	void CommandList::push_clip_rect(const Rect& clip_rect)
+	void CommandList::push_clip_rect(const Rect& /*clip_rect*/)
 	{
 
 	}
@@ -79,7 +79,7 @@ namespace render
 		size_t current_vertex_offset = vertex_buffer->size();
 		Command& command = commands.back();
 		command.vertex_offset = current_vertex_offset;
-		command.vertex_count = count;
+		command.vertex_count = static_cast<uint16_t>(count);
 
 		vertex_buffer->resize(current_vertex_offset + count);
 		write_pointer = &(*vertex_buffer)[current_vertex_offset];

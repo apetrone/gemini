@@ -193,7 +193,7 @@ namespace gui
 		foreground_color = color;
 	}
 
-	void Graph::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
+	void Graph::render(Compositor* /*compositor*/, Renderer* renderer, gui::render::CommandList& render_commands)
 	{
 		render_commands.add_rectangle(
 			geometry[0],
