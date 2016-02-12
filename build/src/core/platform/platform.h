@@ -161,7 +161,7 @@ namespace platform
 		THREAD_STATE_SUSPENDED
 	};
 
-	typedef void(*ThreadEntry)(void*);
+	typedef void (*ThreadEntry)(void*);
 
 	struct Thread
 	{
