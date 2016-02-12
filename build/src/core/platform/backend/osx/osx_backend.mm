@@ -32,6 +32,11 @@
 
 #include <core/logging.h>
 
+// I haven't found a way to remove a variable from an Objective-C
+// implementation. For now, we'll just disable that warning in objc.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 namespace platform
 {
 	namespace cocoa
@@ -395,3 +400,5 @@ namespace platform
 	}
 
 } // namespace platform
+
+#pragma GCC diagnostic pop

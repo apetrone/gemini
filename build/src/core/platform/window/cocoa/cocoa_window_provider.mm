@@ -225,7 +225,7 @@ namespace platform
 
 			struct cocoa_native_window : public NativeWindow
 			{
-				cocoa_native_window(const Parameters& parameters) :
+				cocoa_native_window(const Parameters& /*parameters*/) :
 					NativeWindow(),
 					cw(nil),
 					context(nil)
@@ -387,7 +387,7 @@ namespace platform
 				[window->context makeCurrentContext];
 			}
 
-			void detach_cocoa_context(cocoa_native_window* window)
+			void detach_cocoa_context(cocoa_native_window* /*window*/)
 			{
 				[NSOpenGLContext clearCurrentContext];
 			}
@@ -712,7 +712,7 @@ namespace platform
 			attach_cocoa_context(cocoawindow);
 		}
 
-		void deactivate_context(NativeWindow* window)
+		void deactivate_context(NativeWindow* /*window*/)
 		{
 			// Don't need a window pointer since GL just has a global context
 			cocoa::detach_cocoa_context(nullptr);

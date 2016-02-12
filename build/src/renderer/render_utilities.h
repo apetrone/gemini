@@ -71,7 +71,7 @@ namespace renderer
 				render = current = last = value;
 			}
 
-			void step( float delta_sec )
+			void step(float /*delta_sec*/)
 			{
 				last = current;
 			}

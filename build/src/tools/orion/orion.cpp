@@ -56,7 +56,7 @@ using namespace renderer;
 namespace render2
 {
 	template <class O, class I>
-	O convert(const I& input)
+	O convert(const I& /*input*/)
 	{
 		O a;
 		return a;
@@ -82,7 +82,7 @@ namespace gui
 			set_name("TimelineScrubber");
 		}
 
-		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
+		virtual void render(gui::Compositor* /*compositor*/, gui::Renderer* /*renderer*/, gui::render::CommandList& render_commands) override
 		{
 			// TODO: we should get this from the style
 			gemini::Color scrubber_highlight = gemini::Color::from_rgba(255, 128, 0, 32);
@@ -258,7 +258,7 @@ namespace gui
 		render2::RenderTarget* get_render_target() const { return target; }
 		void set_texture_handle(int ref) { handle = ref; }
 
-		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
+		virtual void render(gui::Compositor* /*compositor*/, gui::Renderer* /*renderer*/, gui::render::CommandList& render_commands) override
 		{
 			on_render_content(target);
 
@@ -298,19 +298,19 @@ struct MyVertex
 };
 
 
-void log_window_logger_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
+void log_window_logger_message(core::logging::Handler* handler, const char* message, const char* /*filename*/, const char* /*function*/, int /*line*/, int /*type*/)
 {
 	gui::Label* logwindow = static_cast<gui::Label*>(handler->userdata);
 	logwindow->append_text(message);
 	logwindow->scroll_to_bottom();
 }
 
-int log_window_logger_open(core::logging::Handler* handler)
+int log_window_logger_open(core::logging::Handler* /*handler*/)
 {
 	return 1;
 }
 
-void log_window_logger_close(core::logging::Handler* handler)
+void log_window_logger_close(core::logging::Handler* /*handler*/)
 {
 }
 
@@ -323,7 +323,7 @@ void profile_output(const char* name, uint64_t cycles, uint32_t depth, uint32_t 
 		++indents;
 	}
 
-	fprintf(stdout, " %s, cycles: %zu, hits: %i, pct: %2.3f cycles/hit: %2.2f\n", name, cycles, hitcount, parent_weight * 100.0, cycles/(float)hitcount);
+	fprintf(stdout, " %s, cycles: %llu, hits: %i, pct: %2.3f cycles/hit: %2.2f\n", name, cycles, hitcount, parent_weight * 100.0, cycles/(float)hitcount);
 }
 
 class EditorKernel : public kernel::IKernel,

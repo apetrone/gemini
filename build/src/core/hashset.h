@@ -194,7 +194,7 @@ public:
 		deallocate(table);
 	} // ~HashSet
 
-	HashSet<K, T, H, Allocator>& operator=(const HashSet<K, T, H, Allocator>& other)
+	HashSet<K, T, H, Allocator>& operator=(const HashSet<K, T, H, Allocator>& /*other*/)
 	{
 		return *this;
 	}

@@ -15,12 +15,6 @@ DESKTOP = ["macosx", "linux", "windows"]
 COMMON_PRODUCT_ROOT = "bin/${CONFIGURATION}_${ARCHITECTURE}"
 COMMON_PROJECT_ROOT = "_projects"
 
-# TODO:
-	# windows:
-	# - platform needs user32.lib
-	#
-
-
 # dependencies
 
 libglm = Dependency(file="glm.py")
@@ -244,10 +238,7 @@ def setup_driver(arguments, product, target_platform):
 		"-Wextra",
 		"-Wreorder",
 		"-Wunused",
-		"-Wsign-compare",
-
-		# enable this for a cleanup pass
-		"-Wno-unused-parameter"
+		"-Wsign-compare"
 	]
 
 	mac_debug = product.layout(platform="macosx", configuration="debug")
@@ -255,6 +246,7 @@ def setup_driver(arguments, product, target_platform):
 	mac_debug.driver.debug_information_format="dwarf-with-dsym"
 
 	mac_debug.cflags += gcc_flags + [
+		"-Wextra",
 
 		# This can be useful; however some third-party code uses macros
 		# where this starts to accumulate fast. I'm looking at you, Bullet.

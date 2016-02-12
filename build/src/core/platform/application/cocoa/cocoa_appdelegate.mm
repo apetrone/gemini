@@ -28,6 +28,11 @@
 #import "platform.h"
 #import "kernel.h"
 
+// I haven't found a way to remove a variable from an Objective-C
+// implementation. For now, we'll just disable that warning in objc.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 static bool has_started = false;
 
 @implementation AppDelegate
@@ -52,7 +57,7 @@ static bool has_started = false;
 	[[NSApplication sharedApplication] terminate:nil];
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+- (void)applicationDidFinishLaunching:(NSNotification *)notification
 {
 }
 
@@ -114,3 +119,5 @@ static bool has_started = false;
 
 
 @end
+
+#pragma GCC diagnostic pop

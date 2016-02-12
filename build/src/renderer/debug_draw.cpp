@@ -419,7 +419,7 @@ namespace renderer
 
 			// XY plane
 			generate_circle( primitive->start, vlist, MAX_CIRCLE_SIDES, primitive->radius, 0 );
-			for( int i = 0; i < TOTAL_CIRCLE_VERTICES; ++i )
+			for(size_t i = 0; i < TOTAL_CIRCLE_VERTICES; ++i)
 			{
 				vertices[0].position = vlist[ i ];
 				vertices[0].color = primitive->color;
@@ -428,7 +428,7 @@ namespace renderer
 
 			// XZ plane
 			generate_circle( primitive->start, vlist, MAX_CIRCLE_SIDES, primitive->radius, 1 );
-			for( int i = 0; i < TOTAL_CIRCLE_VERTICES; ++i )
+			for(size_t i = 0; i < TOTAL_CIRCLE_VERTICES; ++i)
 			{
 				vertices[0].position = vlist[ i ];
 				vertices[0].color = primitive->color;
@@ -437,7 +437,7 @@ namespace renderer
 
 			// YZ plane
 			generate_circle( primitive->start, vlist, MAX_CIRCLE_SIDES, primitive->radius, 2 );
-			for( int i = 0; i < TOTAL_CIRCLE_VERTICES; ++i )
+			for(size_t i = 0; i < TOTAL_CIRCLE_VERTICES; ++i)
 			{
 				vertices[0].position = vlist[ i ];
 				vertices[0].color = primitive->color;
