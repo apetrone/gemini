@@ -27,10 +27,113 @@
 #include <core/core.h>
 #include <core/logging.h>
 
+#include <platform/platform.h>
+
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
+#include <runtime/jobqueue.h>
 
 #include <assert.h>
+
+// ---------------------------------------------------------------------
+// jobqueue
+// ---------------------------------------------------------------------
+
+void print_string(const char* data)
+{
+	LOGV("thread: 0x%x, string: %s\n", (size_t)platform::thread_id(), data);
+}
+
+UNITTEST(jobqueue)
+{
+	const size_t MAX_JOB_ITERATIONS = 6;
+	const char* iterations[] = {
+		"ALPHA: 0",
+		"ALPHA: 1",
+		"ALPHA: 2",
+		"ALPHA: 3",
+		"ALPHA: 4",
+		"ALPHA: 5",
+		"ALPHA: 6",
+		"ALPHA: 7",
+		"ALPHA: 8",
+		"ALPHA: 9",
+		"BETA: 0",
+		"BETA: 1",
+		"BETA: 2",
+		"BETA: 3",
+		"BETA: 4",
+		"BETA: 5",
+		"BETA: 6",
+		"BETA: 7",
+		"BETA: 8",
+		"BETA: 9",
+		"DELTA: 0",
+		"DELTA: 1",
+		"DELTA: 2",
+		"DELTA: 3",
+		"DELTA: 4",
+		"DELTA: 5",
+		"DELTA: 6",
+		"DELTA: 7",
+		"DELTA: 8",
+		"DELTA: 9",
+		"EPSILON: 0",
+		"EPSILON: 1",
+		"EPSILON: 2",
+		"EPSILON: 3",
+		"EPSILON: 4",
+		"EPSILON: 5",
+		"EPSILON: 6",
+		"EPSILON: 7",
+		"EPSILON: 8",
+		"EPSILON: 9",
+		"FOXTROT: 0",
+		"FOXTROT: 1",
+		"FOXTROT: 2",
+		"FOXTROT: 3",
+		"FOXTROT: 4",
+		"FOXTROT: 5",
+		"FOXTROT: 6",
+		"FOXTROT: 7",
+		"FOXTROT: 8",
+		"FOXTROT: 9",
+		"GAMMA: 0",
+		"GAMMA: 1",
+		"GAMMA: 2",
+		"GAMMA: 3",
+		"GAMMA: 4",
+		"GAMMA: 5",
+		"GAMMA: 6",
+		"GAMMA: 7",
+		"GAMMA: 8",
+		"GAMMA: 9"
+	};
+
+	gemini::JobQueue jq;
+	jq.create_workers(3);
+
+	for (size_t index = 0; index < MAX_JOB_ITERATIONS; ++index)
+	{
+		jq.push_back(print_string, iterations[(index * 10) + 0]);
+		jq.push_back(print_string, iterations[(index * 10) + 1]);
+		jq.push_back(print_string, iterations[(index * 10) + 2]);
+		jq.push_back(print_string, iterations[(index * 10) + 3]);
+		jq.push_back(print_string, iterations[(index * 10) + 4]);
+		jq.push_back(print_string, iterations[(index * 10) + 5]);
+		jq.push_back(print_string, iterations[(index * 10) + 6]);
+		jq.push_back(print_string, iterations[(index * 10) + 7]);
+		jq.push_back(print_string, iterations[(index * 10) + 8]);
+		jq.push_back(print_string, iterations[(index * 10) + 9]);
+
+		jq.wait_for_jobs_to_complete();
+
+		platform::thread_sleep(250);
+	}
+
+	LOGV("destroying workers...\n");
+	jq.destroy_workers();
+}
 
 // ---------------------------------------------------------------------
 // filesystem
@@ -65,16 +168,13 @@ UNITTEST(logging)
 	LOGW("Warning, %i parameters missing!\n", 3);
 }
 
-
-
-// ---------------------------------------------------------------------
-// configloader
-// ---------------------------------------------------------------------
-
 int main(int, char**)
 {
 	gemini::core_startup();
 	gemini::runtime_startup("arcfusion.net/gemini/test_runtime");
+
+	using namespace gemini;
+
 	unittest::UnitTest::execute();
 	gemini::runtime_shutdown();
 	gemini::core_shutdown();

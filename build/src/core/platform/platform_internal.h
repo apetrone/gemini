@@ -78,16 +78,18 @@ namespace platform
 	bool posix_fs_directory_exists(const char* path);
 
 	// threads
-	Result posix_thread_create(Thread& thread, ThreadEntry entry, void* data);
-	int posix_thread_join(Thread& thread);
+	Thread* posix_thread_create(ThreadEntry entry, void* data);
+	void posix_thread_destroy(Thread* thread);
+	int posix_thread_join(Thread* thread);
 	void posix_thread_sleep(int milliseconds);
-	void posix_thread_detach(Thread& thread);
-	ThreadId posix_thread_id();
+	pthread_t posix_thread_id();
+	ThreadStatus posix_thread_status(Thread* thread);
+	bool posix_thread_is_active(Thread* thread);
 
 
-	Semaphore* posix_semaphore_create(int32_t initial_count, int32_t max_count);
+	Semaphore* posix_semaphore_create(uint32_t initial_count, uint32_t max_count);
 	void posix_semaphore_wait(Semaphore* sem);
-	void posix_semaphore_signal(Semaphore* sem);
+	void posix_semaphore_signal(Semaphore* sem, uint32_t count);
 	void posix_semaphore_destroy(Semaphore* sem);
 
 	// time

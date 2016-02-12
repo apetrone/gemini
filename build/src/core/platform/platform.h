@@ -24,14 +24,11 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "config.h"
-
-#if defined(PLATFORM_APPLE)
-	#include <TargetConditionals.h>
-#endif
+#include <core/typedefs.h>
 
 #include <core/array.h>
 #include <core/stackstring.h>
+
 
 #include <stdint.h>
 #include <stdio.h> // for size_t
@@ -47,6 +44,12 @@
 
 	#define PLATFORM_LIBRARY_EXPORT __declspec(dllexport)
 	#define PLATFORM_LIBRARY_IMPORT __declspec(dllimport)
+
+	namespace platform
+	{
+		typedef DWORD ThreadId;
+	} // namespace platform
+
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE) || defined(PLATFORM_ANDROID)
 	#include <limits.h>
 	#define MAX_PATH_SIZE PATH_MAX
@@ -57,6 +60,12 @@
 	#define PLATFORM_LIBRARY_IMPORT
 
 	struct android_app;
+
+	namespace platform
+	{
+		typedef pthread_t ThreadId;
+	} // namespace platform
+
 #else
 	#error Unknown platform!
 #endif
@@ -68,18 +77,6 @@ namespace kernel
 	class IKernel;
 	struct Parameters;
 } // namespace kernel
-
-
-// thread types
-
-#if defined(PLATFORM_WINDOWS)
-	#include "thread/windows/windows_thread.h"
-#elif defined(PLATFORM_POSIX)
-	#include "thread/posix/posix_thread.h"
-#else
-	#error Not implemented on this platform
-#endif
-
 
 namespace platform
 {
@@ -153,28 +150,6 @@ namespace platform
 #else
 	#error Unknown platform!
 #endif
-
-	enum ThreadStatus
-	{
-		THREAD_STATE_INACTIVE,
-		THREAD_STATE_ACTIVE,
-		THREAD_STATE_SUSPENDED
-	};
-
-	typedef void(*ThreadEntry)(void*);
-
-	struct Thread
-	{
-		ThreadId thread_id;
-		ThreadHandle handle;
-		ThreadEntry entry;
-		void* userdata;
-		ThreadStatus state;
-	};
-
-	struct Semaphore
-	{
-	};
 
 	struct Result
 	{
@@ -404,25 +379,59 @@ namespace platform
 	// ---------------------------------------------------------------------
 	// thread
 	// ---------------------------------------------------------------------
+	enum ThreadStatus
+	{
+		THREAD_STATE_INACTIVE,
+		THREAD_STATE_ACTIVE,
+		THREAD_STATE_SUSPENDED
+	};
+
+	struct Thread
+	{
+		virtual ~Thread();
+
+		void* user_data;
+	};
+
+	typedef void(*ThreadEntry)(Thread*);
+
+
 
 	/// @brief Creates a thread with entry point
-	/// 	   This sets up signals, thread names, thread id and states.
-	LIBRARY_EXPORT Result thread_create(Thread& thread, ThreadEntry entry, void* data);
+	/// This sets up signals, thread names, thread id and states.
+	LIBRARY_EXPORT Thread* thread_create(ThreadEntry entry, void* data);
+
+	/// @brief Destroys a thread created by thread_create
+	LIBRARY_EXPORT void thread_destroy(Thread* thread);
 
 	/// @brief Wait for a thread to complete.
-	/// @returns 0 on success; non-zero on failure (abnormal thread termination)
-	LIBRARY_EXPORT int thread_join(Thread& thread);
+	/// @param thread The target thread to wait on.
+	/// @param timeout (Optional) Timeout to wait for the thread to finish in
+	/// milliseconds. This is only applicable on Windows.
+	/// If timeout is zero, this call blocks indefinitely.
+	/// Otherwise, if the thread does not complete in timeout milliseconds,
+	/// the thread is forcibly closed.
+	/// The consequences of this behavior for each platform still remain.
+	/// @returns 0 on success non-zero on failure (abnormal termination)
+	LIBRARY_EXPORT int thread_join(Thread* thread, uint32_t timeout = 0);
 
 	/// @brief Allows the calling thread to sleep
 	LIBRARY_EXPORT void thread_sleep(int milliseconds);
-
-	/// @brief Detach the thread
-	LIBRARY_EXPORT void thread_detach(Thread& thread);
 
 	/// @brief Get the calling thread's id
 	/// @returns The calling thread's platform designated id
 	LIBRARY_EXPORT ThreadId thread_id();
 
+	/// @brief Get the target thread's current status
+	/// @returns ThreadStatus enum for thread.
+	LIBRARY_EXPORT ThreadStatus thread_status(const Thread* thread);
+
+	/// @brief Determine if the platform thread is still active.
+	/// This will return false when the thread should terminate (determined
+	/// by OS-specific mechanisms). Otherwise, work can continue like normal.
+	/// If this returns false, your thread must exit shortly thereafter.
+	/// This should only be called from created Threads.
+	LIBRARY_EXPORT bool thread_is_active(Thread* thread);
 
 
 	LIBRARY_EXPORT void mutex_create();
@@ -430,14 +439,20 @@ namespace platform
 	LIBRARY_EXPORT void mutex_lock();
 	LIBRARY_EXPORT void mutex_unlock();
 
+
+	struct Semaphore
+	{
+	};
+
+
 	/// @brief Create a new semaphore
-	LIBRARY_EXPORT Semaphore* semaphore_create(int32_t initial_count, int32_t max_count);
+	LIBRARY_EXPORT Semaphore* semaphore_create(uint32_t initial_count, uint32_t max_count);
 
 	/// @brief Wait indefinitely on a semaphore signal
 	LIBRARY_EXPORT void semaphore_wait(Semaphore* sem);
 
 	/// @brief Signal the semaphore
-	LIBRARY_EXPORT void semaphore_signal(Semaphore* sem);
+	LIBRARY_EXPORT void semaphore_signal(Semaphore* sem, uint32_t count = 1);
 
 	/// @brief Destroy this semaphore
 	LIBRARY_EXPORT void semaphore_destroy(Semaphore* sem);
