@@ -85,6 +85,11 @@ namespace platform
 	ThreadId posix_thread_id();
 
 
+	Semaphore* posix_semaphore_create(int32_t initial_count, int32_t max_count);
+	void posix_semaphore_wait(Semaphore* sem);
+	void posix_semaphore_signal(Semaphore* sem);
+	void posix_semaphore_destroy(Semaphore* sem);
+
 	// time
 	void posix_datetime(DateTime& datetime);
 #elif defined(PLATFORM_WINDOWS)

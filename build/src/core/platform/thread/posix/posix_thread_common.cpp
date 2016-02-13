@@ -29,6 +29,7 @@
 #include <unistd.h> // for usleep
 
 #include <algorithm>
+#include <semaphore.h>
 
 namespace platform
 {
@@ -104,13 +105,55 @@ namespace platform
 
 	void posix_thread_detach(Thread& thread)
 	{
-		pthread_cancel(thread.handle);
+		int result = pthread_cancel(thread.handle);
+
+		assert(result == 0);
 		thread.state = THREAD_STATE_INACTIVE;
 	}
 
 	ThreadId posix_thread_id()
 	{
 		return pthread_self();
+	}
+
+
+	class PosixSemaphore : public platform::Semaphore
+	{
+	public:
+		sem_t handle;
+
+		PosixSemaphore(int32_t initial_count, int32_t max_count)
+		{
+			sem_init(&handle, initial_count, max_count);
+		}
+
+		~PosixSemaphore()
+		{
+			sem_destroy(&handle);
+		}
+	};
+
+	Semaphore* posix_semaphore_create(int32_t initial_count, int32_t max_count)
+	{
+		return MEMORY_NEW(PosixSemaphore, platform::get_platform_allocator())(initial_count, max_count);
+	}
+
+	void posix_semaphore_wait(Semaphore* sem)
+	{
+		PosixSemaphore* posix_sem = static_cast<PosixSemaphore*>(sem);
+		sem_wait(&posix_sem->handle);
+	}
+
+	void posix_semaphore_signal(Semaphore* sem)
+	{
+		PosixSemaphore* posix_sem = static_cast<PosixSemaphore*>(sem);
+		sem_post(&posix_sem->handle);
+	}
+
+	void posix_semaphore_destroy(Semaphore* sem)
+	{
+		PosixSemaphore* posix_sem = static_cast<PosixSemaphore*>(sem);
+		MEMORY_DELETE(posix_sem, platform::get_platform_allocator());
 	}
 
 } // namespace platform
