@@ -73,7 +73,7 @@ namespace renderer
 		int major_version = 0;
 		int minor_version = 0;
 
-		gemgl_GLGETSTRINGPROC gl_get_string = (gemgl_GLGETSTRINGPROC)gemgl_findsymbol("glGetString");
+		gemgl_GLGETSTRINGPROC gl_get_string = (gemgl_GLGETSTRINGPROC)gemgl_findsymbol(gl, "glGetString");
 		if ( gl_get_string )
 		{
 			LOGV( "glGetString is %p\n", gl_get_string );
@@ -107,7 +107,7 @@ namespace renderer
 	} // gemgl_parse_version
 
 
-	int gemgl_startup()
+	int gemgl_startup(gemgl_interface_t& gl_interface)
 	{
 		// load the platform-specific GL library
 #if defined(PLATFORM_WINDOWS) || defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID)
@@ -146,7 +146,7 @@ namespace renderer
 	}
 
 
-	int gemgl_load_symbols()
+	int gemgl_load_symbols(gemgl_interface_t& gl_interface)
 	{
 #if GEMGL_ENABLE_ES
 		GEMGL_LINK( gl.Viewport, "glViewport", GEMGLFNVIEWPORT );
@@ -504,7 +504,7 @@ namespace renderer
 		return 1;
 	} // gl_startup
 
-	void* gemgl_findsymbol(const char* name)
+	void* gemgl_findsymbol(gemgl_interface_t& gl_interface, const char* name)
 	{
 		void* ptr = 0;
 
@@ -543,7 +543,7 @@ namespace renderer
 		return ptr;
 	} // gem_glfindsymbol
 
-	void gemgl_shutdown()
+	void gemgl_shutdown(gemgl_interface_t& gl_interface)
 	{
 #if defined(PLATFORM_WINDOWS) || defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID)
 		// If you hit this, gemgl_shutdown was called more than once.

@@ -96,7 +96,7 @@
 #endif
 
 // sparkle party
-#define GEMGL_LINK( name, fn, type )	name = (type) gemgl_findsymbol(fn)
+#define GEMGL_LINK( name, fn, type )	name = (type) gemgl_findsymbol(gl, fn)
 
 // hardcore party
 // #define GEMGL_LINK( name, fn, type )	name = (type) gemgl_findsymbol( gl, fn ) , assert(name != nullptr)
@@ -660,10 +660,10 @@ namespace renderer
 		extern gemgl_interface_t gl;
 
 		// init GL interface
-		int gemgl_startup();
-		int gemgl_load_symbols();
-		void gemgl_shutdown();
-		void* gemgl_findsymbol(const char* symbol_name);
+		int gemgl_startup(gemgl_interface_t& gl);
+		int gemgl_load_symbols(gemgl_interface_t& gl);
+		void gemgl_shutdown(gemgl_interface_t& gl);
+		void* gemgl_findsymbol(gemgl_interface_t& gl, const char* symbol_name);
 		const char * gemgl_uniform_to_string(GLenum type);
 		bool gemgl_find_extension(const char * extension);
 

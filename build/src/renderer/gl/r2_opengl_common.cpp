@@ -612,7 +612,7 @@ namespace render2
 
 	int load_gl_symbols()
 	{
-		int result = gemgl_startup();
+		int result = gemgl_startup(gl);
 		if (result != 0)
 		{
 			LOGE("load of gl symbols failed!\n");
@@ -623,14 +623,14 @@ namespace render2
 		gemgl_config config;
 		gemgl_parse_version(config.major_version, config.minor_version);
 
-		gemgl_load_symbols();
+		gemgl_load_symbols(gl);
 
 		return 0;
 	}
 
 	void unload_gl_symbols()
 	{
-		gemgl_shutdown();
+		gemgl_shutdown(gl);
 	}
 
 	// ---------------------------------------------------------------------
