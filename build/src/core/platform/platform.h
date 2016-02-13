@@ -172,6 +172,9 @@ namespace platform
 		ThreadStatus state;
 	};
 
+	struct Semaphore
+	{
+	};
 
 	struct Result
 	{
@@ -416,7 +419,6 @@ namespace platform
 	/// @brief Detach the thread
 	LIBRARY_EXPORT void thread_detach(Thread& thread);
 
-
 	/// @brief Get the calling thread's id
 	/// @returns The calling thread's platform designated id
 	LIBRARY_EXPORT ThreadId thread_id();
@@ -427,6 +429,18 @@ namespace platform
 	LIBRARY_EXPORT void mutex_destroy();
 	LIBRARY_EXPORT void mutex_lock();
 	LIBRARY_EXPORT void mutex_unlock();
+
+	/// @brief Create a new semaphore
+	LIBRARY_EXPORT Semaphore* semaphore_create(int32_t initial_count, int32_t max_count);
+
+	/// @brief Wait indefinitely on a semaphore signal
+	LIBRARY_EXPORT void semaphore_wait(Semaphore* sem);
+
+	/// @brief Signal the semaphore
+	LIBRARY_EXPORT void semaphore_signal(Semaphore* sem);
+
+	/// @brief Destroy this semaphore
+	LIBRARY_EXPORT void semaphore_destroy(Semaphore* sem);
 
 	// ---------------------------------------------------------------------
 	// time

@@ -51,4 +51,28 @@ namespace platform
 		return posix_thread_id();
 	}
 
+
+	Semaphore* semaphore_create(int32_t initial_count, int32_t max_count)
+	{
+		return posix_semaphore_create(initial_count, max_count);
+	}
+
+	void semaphore_wait(Semaphore* sem)
+	{
+		assert(sem);
+		posix_semaphore_wait(sem);
+	}
+
+	void semaphore_signal(Semaphore* sem)
+	{
+		assert(sem);
+		posix_semaphore_signal(sem);
+	}
+
+	void semaphore_destroy(Semaphore* sem)
+	{
+		assert(sem);
+		posix_semaphore_destroy(sem);
+	}
+
 } // namespace platform
