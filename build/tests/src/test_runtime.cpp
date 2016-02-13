@@ -212,7 +212,65 @@ namespace gemini
 #include <pthread.h>
 #include <semaphore.h>
 
+namespace gemini
+{
+	class job_queue
+	{
+	public:
+		struct worker_data
+		{
+			uint32_t worker_index;
+			platform::Thread handle;
+			class job_queue* queue;
+		};
 
+		typedef void (*process_job)(const char* user_data);
+
+		struct job
+		{
+			uint32_t valid;
+			const char* data;
+			process_job execute;
+		};
+
+	private:
+
+
+		int32_t volatile total_jobs;
+		int32_t volatile next_entry;
+		int32_t volatile jobs_completed;
+		job queue[128];
+		worker_data workers[3];
+
+		sem_t event;
+
+	public:
+
+
+		job_queue()
+			: total_jobs(0)
+			, next_entry(0)
+			, jobs_completed(0)
+		{
+		}
+
+		~job_queue()
+		{
+			destroy_workers();
+		}
+
+		void create_workers(size_t max_workers); // create max_workers
+		void destroy_workers(); // destroys all workers
+		void wake_workers();	// wake up worker threads
+		void sleep_worker(); // puts this worker thread to sleep
+
+		void push_back(process_job execute_function, const char* data);
+		job pop();
+
+		void wait_until_complete();
+		void complete_job();
+	}; // class job_queue
+} // namespace gemini
 
 
 sem_t test;
@@ -222,15 +280,15 @@ struct work_queue_entry
 	const char* str;
 };
 
-//struct work_queue_shared_thread_state
-//{
-//
-//};
 
 work_queue_entry work_queue[256];
 
 int32_t volatile current_work = 0;
 int32_t volatile next_entry = 0;
+int32_t volatile completed_work = 0;
+
+// C11 atomics
+// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
 
 #if defined(PLATFORM_APPLE)
 	#include <libkern/OSAtomic.h>
@@ -286,6 +344,23 @@ void queue_string(const char* string)
 	sem_post(&test);
 }
 
+#if 0
+* declaration: volatile
+* load/store
+* memory fences (mostly compiler barriers)
+	lightweight: orders loads from memory. orders stores to memory
+		- atomic_thread_fence(acquire/release/acq_rel)
+	full fence: lightweight + commits stores before next load
+		- atomic_thread_fence(memory_order_seq_cst)
+* read/modify/write
+	- AtomicIncrement, AtomicCompareExchange
+
+* use atomic operations for high contention objects
+
+#endif
+
+
+
 void thread_proc(void*)
 {
 	fprintf(stdout, "created thread: %zu\n", (size_t)platform::thread_id());
@@ -302,12 +377,9 @@ void thread_proc(void*)
 			// job has been accepted.
 
 			fprintf(stdout, "thread: %zu, string: %s\n", (size_t)platform::thread_id(), entry->str);
-			for (size_t index = 0; index < 10000; ++index)
-			{
-				std::string blah = entry->str;
-			}
 
 			// job has completed.
+			OSAtomicIncrement32(&completed_work);
 		}
 		else
 		{
@@ -316,6 +388,136 @@ void thread_proc(void*)
 		}
 	}
 }
+
+
+namespace gemini
+{
+	void job_processor(void* thread_data)
+	{
+		job_queue::worker_data* worker = static_cast<job_queue::worker_data*>(thread_data);
+
+
+		for (;;)
+		{
+			const char temp[] = "test";
+			job_queue::job entry;
+			entry.valid = 0;
+			entry = worker->queue->pop();
+			if (entry.valid)
+			{
+//				fprintf(stdout, "execute job: %i\n", worker->worker_index);
+//				fprintf(stdout, "item: %s, %p\n", entry.data, entry.execute);
+//				assert(entry.valid);
+				entry.execute(temp);
+//				worker->queue->complete_job();
+			}
+			else
+			{
+				// no available jobs. wait for signal.
+				worker->queue->sleep_worker();
+			}
+		}
+		fprintf(stdout, "exiting job processor!\n");
+	}
+
+	void job_queue::create_workers(size_t max_workers)
+	{
+		for (size_t index = 0; index < 3; ++index)
+		{
+//			workers.push_back(worker_data());
+			worker_data* data = &workers[index];
+			data->worker_index = index;
+			data->queue = this;
+			platform::thread_create(data->handle, job_processor, data);
+		}
+
+		sem_init(&event, 0, max_workers);
+	}
+
+	void job_queue::destroy_workers()
+	{
+		for (worker_data& worker : workers)
+		{
+			platform::thread_detach(worker.handle);
+			worker.queue = nullptr;
+		}
+//		workers.clear();
+
+		sem_destroy(&event);
+	}
+
+	void job_queue::wake_workers()
+	{
+		sem_post(&event);
+	}
+
+	void job_queue::sleep_worker()
+	{
+		sem_wait(&event);
+	}
+
+	void job_queue::push_back(process_job execute_function, const char* data)
+	{
+		assert(next_entry < 127);
+
+		// this is only intended to be called from a single thread.
+		// otherwise, this should have a load/acquire barrier
+
+		size_t index = total_jobs;
+		job* entry = &queue[index];
+		entry->execute = execute_function;
+		entry->data = data;
+
+		// Needed because the compiler OR processor could re-order writes.
+		complete_past_writes_before_future_writes();
+		++total_jobs;
+		wake_workers();
+	}
+
+	job_queue::job job_queue::pop()
+	{
+		job_queue::job entry;
+		entry.data = nullptr;
+		entry.execute = nullptr;
+		entry.valid = 0;
+
+
+
+		int32_t next_index = next_entry;
+		if (next_index < total_jobs)
+		{
+			if (OSAtomicCompareAndSwap32Barrier(next_entry, next_index + 1, &next_entry))
+			{
+//				assert(next_index < 127);
+				job_queue::job& item = queue[next_index];
+				entry.data = item.data;
+				entry.execute = item.execute;
+				entry.valid = 1;
+				complete_past_reads_before_future_reads();
+			}
+		}
+		return entry;
+	}
+
+	void job_queue::wait_until_complete()
+	{
+		while(total_jobs != jobs_completed);
+	}
+
+	void job_queue::complete_job()
+	{
+		OSAtomicIncrement32(&jobs_completed);
+	}
+
+} // namespace gemini
+
+
+void print_string(const char* data)
+{
+	fprintf(stdout, "thread: %zu, string: %s\n", (size_t)platform::thread_id(), data);
+	platform::thread_sleep(250);
+}
+
 
 // ---------------------------------------------------------------------
 // configloader
@@ -328,7 +530,8 @@ int main(int, char**)
 
 	using namespace gemini;
 
-	platform::thread_sleep(3000);
+#if 0
+	platform::thread_sleep(1000);
 
 	sem_init(&test, 0, 10);
 
@@ -340,32 +543,41 @@ int main(int, char**)
 		platform::thread_create(threads[index], thread_proc, 0);
 	}
 
-	queue_string("ALPHA: 0");
-	queue_string("ALPHA: 1");
-	queue_string("ALPHA: 2");
-	queue_string("ALPHA: 3");
-	queue_string("ALPHA: 4");
-	queue_string("ALPHA: 5");
-	queue_string("ALPHA: 6");
-	queue_string("ALPHA: 7");
-	queue_string("ALPHA: 8");
-	queue_string("ALPHA: 9");
+	platform::thread_sleep(1000);
 
-	platform::thread_sleep(15000);
+	for (size_t index = 0; index < 10; ++index)
+	{
+		queue_string("ALPHA: 0");
+		queue_string("ALPHA: 1");
+		queue_string("ALPHA: 2");
+		queue_string("ALPHA: 3");
+		queue_string("ALPHA: 4");
+		queue_string("ALPHA: 5");
+		queue_string("ALPHA: 6");
+		queue_string("ALPHA: 7");
+		queue_string("ALPHA: 8");
+		queue_string("ALPHA: 9");
+
+//		platform::thread_sleep(1000);
 
 //	AssetHandle handle = model_by_path("models/test");
 //	fprintf(stdout, "is handle valid?: %s\n", lib.validate(handle) ? "Yes" : "No");
 
-	queue_string("BETA: 0");
-	queue_string("BETA: 1");
-	queue_string("BETA: 2");
-	queue_string("BETA: 3");
-	queue_string("BETA: 4");
-	queue_string("BETA: 5");
-	queue_string("BETA: 6");
-	queue_string("BETA: 7");
-	queue_string("BETA: 8");
-	queue_string("BETA: 9");
+		queue_string("BETA: 0");
+		queue_string("BETA: 1");
+		queue_string("BETA: 2");
+		queue_string("BETA: 3");
+		queue_string("BETA: 4");
+		queue_string("BETA: 5");
+		queue_string("BETA: 6");
+		queue_string("BETA: 7");
+		queue_string("BETA: 8");
+		queue_string("BETA: 9");
+
+	}
+
+	// should wait until the queue has finished.
+	while(current_work != completed_work);
 
 	for (size_t index = 0; index < MAX_THREADS; ++index)
 	{
@@ -375,8 +587,71 @@ int main(int, char**)
 
 
 	sem_destroy(&test);
+#else
+
+	job_queue jq;
+	jq.create_workers(3);
+
+	for (size_t index = 0; index < 4; ++index)
+	{
+
+		jq.push_back(print_string, "ALPHA: 0");
+		jq.push_back(print_string, "ALPHA: 1");
+		jq.push_back(print_string, "ALPHA: 2");
+		jq.push_back(print_string, "ALPHA: 3");
+		jq.push_back(print_string, "ALPHA: 4");
+		jq.push_back(print_string, "ALPHA: 5");
+		jq.push_back(print_string, "ALPHA: 6");
+		jq.push_back(print_string, "ALPHA: 7");
+		jq.push_back(print_string, "ALPHA: 8");
+		jq.push_back(print_string, "ALPHA: 9");
 
 
+	//	platform::thread_sleep(1000);
+
+
+		jq.push_back(print_string, "BETA: 0");
+		jq.push_back(print_string, "BETA: 1");
+		jq.push_back(print_string, "BETA: 2");
+		jq.push_back(print_string, "BETA: 3");
+		jq.push_back(print_string, "BETA: 4");
+		jq.push_back(print_string, "BETA: 5");
+		jq.push_back(print_string, "BETA: 6");
+		jq.push_back(print_string, "BETA: 7");
+		jq.push_back(print_string, "BETA: 8");
+		jq.push_back(print_string, "BETA: 9");
+
+		jq.push_back(print_string, "DELTA: 0");
+		jq.push_back(print_string, "DELTA: 1");
+		jq.push_back(print_string, "DELTA: 2");
+		jq.push_back(print_string, "DELTA: 3");
+		jq.push_back(print_string, "DELTA: 4");
+		jq.push_back(print_string, "DELTA: 5");
+		jq.push_back(print_string, "DELTA: 6");
+		jq.push_back(print_string, "DELTA: 7");
+		jq.push_back(print_string, "DELTA: 8");
+		jq.push_back(print_string, "DELTA: 9");
+
+		jq.push_back(print_string, "GAMMA: 0");
+		jq.push_back(print_string, "GAMMA: 1");
+		jq.push_back(print_string, "GAMMA: 2");
+		jq.push_back(print_string, "GAMMA: 3");
+		jq.push_back(print_string, "GAMMA: 4");
+		jq.push_back(print_string, "GAMMA: 5");
+		jq.push_back(print_string, "GAMMA: 6");
+		jq.push_back(print_string, "GAMMA: 7");
+		jq.push_back(print_string, "GAMMA: 8");
+		jq.push_back(print_string, "GAMMA: 9");
+	}
+
+
+
+	// wait until all work completes
+	jq.wait_until_complete();
+
+	fprintf(stdout, "destroying workers...\n");
+	jq.destroy_workers();
+#endif
 //	unittest::UnitTest::execute();
 	gemini::runtime_shutdown();
 	gemini::core_shutdown();
