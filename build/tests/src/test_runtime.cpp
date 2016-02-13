@@ -209,87 +209,22 @@ namespace gemini
 	}
 }
 
+//#define GEMINI_USE_STD_ATOMIC 1
+
+#if defined(GEMINI_USE_STD_ATOMIC)
+#include <atomic>
+
+#define complete_past_writes_before_future_writes() std::atomic_thread_fence(std::memory_order_release)
+#define complete_past_reads_before_future_reads() std::atomic_thread_fence(std::memory_order_acquire)
+
+#endif
+
 #include <pthread.h>
-#include <semaphore.h>
-
-const size_t MAX_THREADS = 3;
-namespace gemini
-{
-	class job_queue
-	{
-	public:
-		struct worker_data
-		{
-			uint32_t worker_index;
-			platform::Thread handle;
-			class job_queue* queue;
-		};
-
-		typedef void (*process_job)(const char* user_data);
-
-		struct job
-		{
-			uint32_t valid;
-			const char* data;
-			process_job execute;
-		};
-
-	private:
-
-
-		int32_t volatile total_jobs;
-		int32_t volatile next_entry;
-		int32_t volatile jobs_completed;
-		job queue[256];
-		worker_data workers[MAX_THREADS];
-
-		sem_t event;
-
-	public:
-
-
-		job_queue()
-			: total_jobs(0)
-			, next_entry(0)
-			, jobs_completed(0)
-		{
-		}
-
-		~job_queue()
-		{
-			destroy_workers();
-		}
-
-		void create_workers(size_t max_workers); // create max_workers
-		void destroy_workers(); // destroys all workers
-		void wake_workers();	// wake up worker threads
-		void sleep_worker(); // puts this worker thread to sleep
-
-		void push_back(process_job execute_function, const char* data);
-		job pop(const job_queue::job previous);
-
-		void wait_until_complete();
-		void complete_job();
-	}; // class job_queue
-} // namespace gemini
-
-
-sem_t test;
-
-struct work_queue_entry
-{
-	const char* str;
-};
-
-
-work_queue_entry work_queue[256];
-
-int32_t volatile current_work = 0;
-int32_t volatile next_entry = 0;
-int32_t volatile completed_work = 0;
 
 // C11 atomics
 // https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
+
+#if !defined(GEMINI_USE_STD_ATOMIC)
 
 #if defined(PLATFORM_APPLE)
 	#include <libkern/OSAtomic.h>
@@ -326,24 +261,77 @@ int32_t volatile completed_work = 0;
 	#define complete_past_writes_before_future_writes()
 	#define complete_past_reads_before_future_reads()
 #endif
+#endif // GEMINI_USE_STD_ATOMIC
 
 // memory write ordering (guaranteed on some processors, but compiler won't).
 
-void queue_string(const char* string)
+const size_t MAX_THREADS = 3;
+namespace gemini
 {
-	assert(current_work < 256);
+	class job_queue
+	{
+	public:
+		struct worker_data
+		{
+			uint32_t worker_index;
+			platform::Thread handle;
+			class job_queue* queue;
+			int32_t is_active;
+		};
 
-	work_queue_entry* entry = work_queue + current_work;
-	entry->str = string;
+		typedef void (*process_job)(const char* user_data);
 
-	// Needed because the compiler OR processor could re-order writes.
-	complete_past_writes_before_future_writes();
+		struct job
+		{
+			uint32_t valid;
+			const char* data;
+			process_job execute;
+		};
 
-	++current_work;
+	private:
 
-	// wake-up threads
-	sem_post(&test);
-}
+
+		int32_t volatile total_jobs;
+		int32_t volatile next_entry;
+		int32_t volatile jobs_completed;
+		job queue[256];
+//		worker_data workers[MAX_THREADS];
+		Array<worker_data> workers;
+
+		platform::Semaphore* semaphore;
+
+	public:
+
+
+		job_queue()
+			: total_jobs(0)
+			, next_entry(0)
+			, jobs_completed(0)
+			, semaphore(nullptr)
+		{
+		}
+
+		~job_queue()
+		{
+		}
+
+		void create_workers(size_t max_workers); // create max_workers
+		void destroy_workers(); // destroys all workers
+		void wake_workers();	// wake up worker threads
+		void sleep_worker(); // puts this worker thread to sleep
+
+		void push_back(process_job execute_function, const char* data);
+		job pop();
+
+		void wait_for_jobs_to_complete();
+		void complete_job(const job_queue::job& job);
+	}; // class job_queue
+} // namespace gemini
+
+// http://nullprogram.com/blog/2014/09/02/
+// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
+// http://en.cppreference.com/w/c/atomic
+// http://en.cppreference.com/w/cpp/atomic/memory_order
 
 #if 0
 * declaration: volatile
@@ -360,37 +348,6 @@ void queue_string(const char* string)
 
 #endif
 
-
-
-void thread_proc(void*)
-{
-	fprintf(stdout, "created thread: %zu\n", (size_t)platform::thread_id());
-	for (;;)
-	{
-		// check for available jobs
-		if (next_entry < current_work)
-		{
-			size_t entry_index = OSAtomicIncrement32Barrier(&next_entry) - 1;
-
-			complete_past_reads_before_future_reads();
-			work_queue_entry* entry = work_queue + entry_index;
-
-			// job has been accepted.
-
-			fprintf(stdout, "thread: %zu, string: %s\n", (size_t)platform::thread_id(), entry->str);
-
-			// job has completed.
-			OSAtomicIncrement32(&completed_work);
-		}
-		else
-		{
-			// no available jobs. wait for signal.
-			sem_wait(&test);
-		}
-	}
-}
-
-
 namespace gemini
 {
 	void job_processor(void* thread_data)
@@ -398,21 +355,23 @@ namespace gemini
 		job_queue::worker_data* worker = static_cast<job_queue::worker_data*>(thread_data);
 		job_queue* queue = worker->queue;
 
-		fprintf(stdout, "created thread %i, %zu\n", worker->worker_index, platform::thread_id());
-
 		job_queue::job entry;
 		entry.valid = 0;
-		for (;;)
+		while (worker->is_active)
 		{
-//			const char temp[] = "test";
-			entry = queue->pop(entry);
+			entry = queue->pop();
+
+			complete_past_reads_before_future_reads();
 			if (entry.valid)
 			{
-//				fprintf(stdout, "execute job: %i\n", worker->worker_index);
-//				fprintf(stdout, "item: %s, %p\n", entry.data, entry.execute);
-//				assert(entry.valid);
+				assert(entry.valid);
+				assert(entry.execute);
+
+				// execute the job
 				entry.execute(entry.data);
-//				worker->queue->complete_job();
+
+				// mark it as complete
+				queue->complete_job(entry);
 			}
 			else
 			{
@@ -420,17 +379,19 @@ namespace gemini
 				worker->queue->sleep_worker();
 			}
 		}
-		fprintf(stdout, "exiting job processor!\n");
+
+		fprintf(stdout, "exit job processor\n");
 	}
 
 	void job_queue::create_workers(size_t max_workers)
 	{
-		for (size_t index = 0; index < MAX_THREADS; ++index)
+		for (size_t index = 0; index < max_workers; ++index)
 		{
-//			workers.push_back(worker_data());
+			workers.push_back(worker_data());
 			worker_data* data = &workers[index];
 			data->worker_index = index;
 			data->queue = this;
+			data->is_active = 1;
 			platform::Result result = platform::thread_create(data->handle, job_processor, data);
 			if (result.failed())
 			{
@@ -438,29 +399,53 @@ namespace gemini
 			}
 		}
 
-		sem_init(&event, 0, MAX_THREADS);
+		semaphore = platform::semaphore_create(0, max_workers);
+		assert(semaphore);
 	}
 
 	void job_queue::destroy_workers()
 	{
+		// set all threads as inactive
 		for (worker_data& worker : workers)
 		{
-			platform::thread_detach(worker.handle);
+			int32_t is_active = worker.is_active;
+			OSAtomicCompareAndSwap32(is_active, 0, &worker.is_active);
+		}
+
+		// wake all workers (in case they were sleeping)
+		wake_workers();
+
+		// finally, give the threads a chance to join
+		for (worker_data& worker : workers)
+		{
+			if (platform::thread_join(worker.handle) != 0)
+			{
+				// couldn't exit normally; try detaching.
+				platform::thread_detach(worker.handle);
+			}
 			worker.queue = nullptr;
 		}
-//		workers.clear();
 
-		sem_destroy(&event);
+		workers.clear();
+
+		platform::semaphore_destroy(semaphore);
+		semaphore = nullptr;
 	}
 
 	void job_queue::wake_workers()
 	{
-		sem_post(&event);
+		if (semaphore)
+		{
+			platform::semaphore_signal(semaphore);
+		}
 	}
 
 	void job_queue::sleep_worker()
 	{
-		sem_wait(&event);
+		if (semaphore)
+		{
+			platform::semaphore_wait(semaphore);
+		}
 	}
 
 	void job_queue::push_back(process_job execute_function, const char* data)
@@ -474,26 +459,20 @@ namespace gemini
 		job* entry = &queue[index];
 		entry->execute = execute_function;
 		entry->data = data;
-		// Needed because the compiler OR processor could re-order writes.
 
-//		fprintf(stdout, "push job %i\n", index+1);
+		// Needed because the compiler OR processor could re-order writes.
+		complete_past_writes_before_future_writes();
 		++total_jobs;
 
-		complete_past_writes_before_future_writes();
 		wake_workers();
 	}
 
-	job_queue::job job_queue::pop(const job_queue::job previous)
+	job_queue::job job_queue::pop()
 	{
 		job_queue::job entry;
 		entry.data = nullptr;
 		entry.execute = nullptr;
 		entry.valid = 0;
-
-		if (previous.valid)
-		{
-			OSAtomicIncrement32(&jobs_completed);
-		}
 
 		int32_t next_index = next_entry;
 		if (next_index < total_jobs)
@@ -510,18 +489,21 @@ namespace gemini
 		return entry;
 	}
 
-	void job_queue::wait_until_complete()
+	void job_queue::wait_for_jobs_to_complete()
 	{
 		while(total_jobs != jobs_completed);
 	}
 
-	void job_queue::complete_job()
+	void job_queue::complete_job(const job_queue::job& job)
 	{
-
+		assert(job.valid);
+		if (job.valid)
+		{
+			// job has completed.
+			OSAtomicIncrement32(&jobs_completed);
+		}
 	}
-
 } // namespace gemini
-
 
 void print_string(const char* data)
 {
@@ -541,68 +523,8 @@ int main(int, char**)
 
 	using namespace gemini;
 
-#if 0
-//	platform::thread_sleep(1000);
-
-	sem_init(&test, 0, 10);
-
-	platform::Thread threads[MAX_THREADS];
-
-	for (size_t index = 0; index < MAX_THREADS; ++index)
-	{
-		platform::thread_create(threads[index], thread_proc, 0);
-	}
-
-	platform::thread_sleep(1000);
-
-	for (size_t index = 0; index < 10; ++index)
-	{
-		queue_string("ALPHA: 0");
-		queue_string("ALPHA: 1");
-		queue_string("ALPHA: 2");
-		queue_string("ALPHA: 3");
-		queue_string("ALPHA: 4");
-		queue_string("ALPHA: 5");
-		queue_string("ALPHA: 6");
-		queue_string("ALPHA: 7");
-		queue_string("ALPHA: 8");
-		queue_string("ALPHA: 9");
-
-//		platform::thread_sleep(1000);
-
-//	AssetHandle handle = model_by_path("models/test");
-//	fprintf(stdout, "is handle valid?: %s\n", lib.validate(handle) ? "Yes" : "No");
-
-		queue_string("BETA: 0");
-		queue_string("BETA: 1");
-		queue_string("BETA: 2");
-		queue_string("BETA: 3");
-		queue_string("BETA: 4");
-		queue_string("BETA: 5");
-		queue_string("BETA: 6");
-		queue_string("BETA: 7");
-		queue_string("BETA: 8");
-		queue_string("BETA: 9");
-
-	}
-
-	// should wait until the queue has finished.
-	while(current_work != completed_work);
-
-	for (size_t index = 0; index < MAX_THREADS; ++index)
-	{
-		platform::thread_detach(threads[index]);
-	}
-
-
-
-	sem_destroy(&test);
-#else
-
 	job_queue jq;
-	jq.create_workers(1);
-
-	platform::thread_sleep(250);
+	jq.create_workers(MAX_THREADS);
 
 	for (size_t index = 0; index < 1; ++index)
 	{
@@ -629,12 +551,11 @@ int main(int, char**)
 		jq.push_back(print_string, "BETA: 9");
 	}
 
-	// wait until all work completes
-	jq.wait_until_complete();
+	jq.wait_for_jobs_to_complete();
 
 	fprintf(stdout, "destroying workers...\n");
 	jq.destroy_workers();
-#endif
+
 //	unittest::UnitTest::execute();
 	gemini::runtime_shutdown();
 	gemini::core_shutdown();
