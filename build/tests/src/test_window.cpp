@@ -200,10 +200,15 @@ public:
 			params["opengl.profile"] = "core";
 			params["opengl.share_context"] = "true";
 
+			LOGV("creating render device...\n");
 			device = create_device(params);
+			assert(device);
 
 			platform::window::Frame window_frame = platform::window::get_frame(main_window);
+			LOGV("initializing render device...\n");
 			device->init(static_cast<int>(window_frame.width), static_cast<int>(window_frame.height));
+
+			LOGV("setting up shaders...\n");
 
 			// setup shaders
 			render2::PipelineDescriptor desc;
@@ -211,14 +216,23 @@ public:
 			render2::VertexDescriptor& vertex_format = desc.vertex_description;
 			vertex_format.add("in_position", render2::VD_FLOAT, 3);
 			vertex_format.add("in_color", render2::VD_FLOAT, 4);
-			desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
-			pipeline = device->create_pipeline(desc);
 
+			LOGV("vertexcolor - create_input_layout\n");
+			desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
+			LOGV("vertexcolor - create_pipeline\n");
+			pipeline = device->create_pipeline(desc);
+			LOGV("vertexcolor shader loaded OK\n");
 
 			size_t total_bytes = sizeof(MyVertex) * 6;
+			LOGV("creating vertex buffer (%i bytes)\n", total_bytes);
 			vertex_buffer = device->create_vertex_buffer(total_bytes);
+			assert(vertex_buffer);
 
-#if 1
+
+			// This section is for testing platforms where the vertex buffer
+			// can be locked and unlocked. Not available on GLES2!
+#if 0
+			LOGV("lock and populate vertex buffer\n");
 			MyVertex* vertex = reinterpret_cast<MyVertex*>(device->buffer_lock(vertex_buffer));
 
 //			MyVertex vertex[4];
@@ -236,12 +250,29 @@ public:
 			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
 
 			device->buffer_unlock(vertex_buffer);
+#else
+			MyVertex vertex[6];
+			vertex[0].set_position(0, window_frame.height, 0);
+			vertex[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
+
+			vertex[1].set_position(window_frame.width, window_frame.height, 0);
+			vertex[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
+
+			vertex[2].set_position(window_frame.width/2.0f, 0, 0);
+			vertex[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
+
+			vertex[3].set_position(0, 0, 0);
+			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
+
+			device->buffer_upload(vertex_buffer, vertex, total_bytes);
 #endif
 		}
 
+		LOGV("font startup...\n");
 		font::startup(device);
 
 		Array<unsigned char> data;
+		LOGV("load fonts/debug.ttf\n");
 		core::filesystem::instance()->virtual_load_file(data, "fonts/debug.ttf");
 		font = font::load_from_memory(&data[0], data.size(), 16);
 

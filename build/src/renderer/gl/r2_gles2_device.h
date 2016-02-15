@@ -81,6 +81,8 @@ namespace render2
 				assert(max_size >= size_bytes);
 				// gl.BufferData(type, size_bytes, 0, GL_STREAM_DRAW);
 				// gl.CheckError("upload -> BufferData");
+				//
+				// this is cached for later use by the GLES2 renderer
 				buffer_data = data;
 			}
 
@@ -306,26 +308,12 @@ namespace render2
 
 		virtual void* buffer_lock(Buffer* buffer)
 		{
-			// GLBuffer* glb = static_cast<GLBuffer*>(buffer);
-			// glb->bind();
-			// void* pointer = gl.MapBuffer(glb->type, GL_WRITE_ONLY);
-			// gl.CheckError("MapBuffer");
-
-			// locked_buffer = glb;
-
-			// return pointer;
+			assert(!"buffer_lock is not supported with GLES2 device!");
 			return nullptr;
 		}
 
 		virtual void buffer_unlock(Buffer* buffer)
 		{
-			// GLBuffer* glb = static_cast<GLBuffer*>(buffer);
-			// gl.UnmapBuffer(glb->type);
-			// gl.CheckError("UnmapBuffer");
-
-			// glb->unbind();
-
-			// locked_buffer = nullptr;
 		}
 
 		virtual void buffer_upload(Buffer* buffer, void* data, size_t data_size)
