@@ -130,8 +130,6 @@ namespace platform
 			// either via build settings or at runtime.
 
 #if defined(PLATFORM_RASPBERRYPI)
-			fprintf(stdout, "[Raspberry Pi]!\n");
-
 			// this must be called before we can issue any hardware commands
 			bcm_host_init();
 #endif
