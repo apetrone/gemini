@@ -265,9 +265,57 @@ namespace gemini
 
 // memory write ordering (guaranteed on some processors, but compiler won't).
 
+
+template <class T>
+struct atomic
+{
+#if defined(GEMINI_USE_STD_ATOMIC)
+	std::atomic<T> value;
+#else
+	typedef volatile T value_type;
+	value_type value;
+#endif
+
+	atomic(const T& initial_value = T())
+	: value(initial_value)
+	{
+	}
+
+	~atomic()
+	{
+	}
+
+	atomic& operator=(const atomic<T>& other)
+	{
+		value = other.value;
+	}
+
+	operator value_type() const
+	{
+		return value;
+	}
+
+	const T operator++()
+	{
+		return ++value;
+	}
+
+	const T operator++(int)
+	{
+		return value++;
+	}
+
+	value_type* operator&()
+	{
+		return &value;
+	}
+};
+
 const size_t MAX_THREADS = 3;
 namespace gemini
 {
+	// Single producer, multi-consumer job queue.
+	// This creates a number of threads and executes jobs on them.
 	class job_queue
 	{
 	public:
@@ -289,20 +337,16 @@ namespace gemini
 		};
 
 	private:
+		atomic<int32_t> total_jobs;
+		atomic<int32_t> next_entry;
+		atomic<int32_t> jobs_completed;
 
-
-		int32_t volatile total_jobs;
-		int32_t volatile next_entry;
-		int32_t volatile jobs_completed;
 		job queue[256];
-//		worker_data workers[MAX_THREADS];
 		Array<worker_data> workers;
 
 		platform::Semaphore* semaphore;
 
 	public:
-
-
 		job_queue()
 			: total_jobs(0)
 			, next_entry(0)
