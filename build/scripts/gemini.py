@@ -588,7 +588,6 @@ def get_libcore(arguments, target_platform):
 
 		# thread
 		"src/core/platform/thread/windows/win32_thread.cpp",
-		"src/core/platform/thread/windows/windows_thread.h",
 
 		# time
 		"src/core/platform/time/windows/win32_time.cpp",

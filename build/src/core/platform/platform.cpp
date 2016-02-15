@@ -77,6 +77,9 @@ namespace platform
 	{
 	}
 
+	Thread::~Thread()
+	{
+	}
 
 
 	namespace detail

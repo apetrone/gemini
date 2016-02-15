@@ -295,6 +295,7 @@ struct atomic
 	atomic& operator=(const atomic<T>& other)
 	{
 		value = other.value;
+		return *this;
 	}
 
 	operator value_type() const
@@ -329,9 +330,9 @@ namespace gemini
 		struct worker_data
 		{
 			uint32_t worker_index;
-			platform::ThreadTwo* thread;
+			platform::Thread* thread;
 			class job_queue* queue;
-			int32_t is_active;
+			atomic<int32_t> is_active;
 		};
 
 		typedef void (*process_job)(const char* user_data);
@@ -401,19 +402,17 @@ namespace gemini
 
 namespace gemini
 {
-	void job_processor(void* thread_data)
+	void job_processor(platform::Thread* thread)
 	{
-		LOGV("---------------> enter job_processor, thread: %i\n", platform::thread_id());
-		job_queue::worker_data* worker = static_cast<job_queue::worker_data*>(thread_data);
+		LOGV("---------------> enter job_processor, thread: 0x%x\n", platform::thread_id());
+		job_queue::worker_data* worker = static_cast<job_queue::worker_data*>(thread->user_data);
 		job_queue* queue = worker->queue;
 
 		job_queue::job entry;
 		entry.valid = 0;
-		while (worker->is_active)
+		while (platform::thread_is_active(thread))
 		{
 			entry = queue->pop();
-
-			complete_past_reads_before_future_reads();
 			if (entry.valid)
 			{
 				assert(entry.valid);
@@ -428,11 +427,13 @@ namespace gemini
 			else
 			{
 				// no available jobs. wait for signal.
+				LOGV("---------------> thread 0x%x going to sleep...\n", platform::thread_id());
 				worker->queue->sleep_worker();
+				LOGV("---------------> thread 0x%x waking up...\n", platform::thread_id());
 			}
 		}
 
-		LOGV("---------------> exit job_processor, thread: %i\n", platform::thread_id());
+		LOGV("---------------> exit job_processor, thread: 0x%x\n", platform::thread_id());
 	}
 
 	void job_queue::create_workers(size_t max_workers)
@@ -456,25 +457,49 @@ namespace gemini
 	void job_queue::destroy_workers()
 	{
 		// set all threads as inactive
-		for (worker_data& worker : workers)
+		for (size_t index = 0; index < workers.size(); ++index)
 		{
-			int32_t is_active = worker.is_active;
-			atom_compare_and_swap32(&worker.is_active, 0, is_active);
+			worker_data& worker = workers[index];
+			worker.is_active = 0;
+			LOGV("set worker %i as inactive.\n", index);
 		}
 
-		// wake all workers (in case they were sleeping)
-		wake_workers();
+		// wake ALL workers (in case they were sleeping)
+		// since this just increments a semaphore, it has to be called
+		// once for each thread.
+		for (worker_data& worker : workers)
+		{
+			platform::thread_join(worker.thread);
+		}
+
+		for (const worker_data& worker : workers)
+		{
+			wake_workers();
+		}
+
+		// If this thread sleeps (and is the main thread) it could potentially
+		// be pre-empted which further delays the join of the worker threads.
+		// So - enter a spin lock and wait on the workers.
+		const size_t total_threads = workers.size();
+		for (;;)
+		{
+			size_t inactives = 0;
+			for (worker_data& worker : workers)
+			{
+				if (platform::thread_status(worker.thread) == platform::THREAD_STATE_INACTIVE)
+				{
+					++inactives;
+				}
+			}
+
+			if (inactives == total_threads)
+				break;
+		}
 
 		// finally, give the threads a chance to join
 		for (worker_data& worker : workers)
 		{
-			if (platform::thread_join(worker.thread) != 0)
-			{
-				// couldn't exit normally; try detaching.
-				platform::thread_detach(worker.thread);
-			}
 			worker.queue = nullptr;
-
 			platform::thread_destroy(worker.thread);
 		}
 
@@ -559,8 +584,7 @@ namespace gemini
 
 void print_string(const char* data)
 {
-	LOGV("thread: %zu, string: %s\n", (size_t)platform::thread_id(), data);
-//	platform::thread_sleep(250);
+	LOGV("thread: 0x%x, string: %s\n", (size_t)platform::thread_id(), data);
 }
 
 
@@ -609,7 +633,6 @@ int main(int, char**)
 
 	LOGV("destroying workers...\n");
 	jq.destroy_workers();
-
 
 //	unittest::UnitTest::execute();
 	gemini::runtime_shutdown();

@@ -28,21 +28,26 @@
 namespace platform
 {
 
-	struct Win32Thread : public ThreadTwo
+	struct Win32Thread : public Thread
 	{
 		HANDLE handle;
 		DWORD thread_id;
 		ThreadStatus state;
 		ThreadEntry entry;
-		void* user_data;
+
+		// signaled when the thread should close
 		HANDLE close_event;
+
+		// signaled when the win32 thread exits.
+		HANDLE exit_event;
 
 		Win32Thread()
 			: handle(NULL)
 			, entry(nullptr)
-			, user_data(NULL)
 			, close_event(NULL)
+			, exit_event(NULL)
 		{
+			user_data = nullptr;
 		}
 
 		~Win32Thread()
@@ -51,6 +56,12 @@ namespace platform
 			{
 				CloseHandle(close_event);
 				close_event = NULL;
+			}
+
+			if (exit_event)
+			{
+				CloseHandle(exit_event);
+				exit_event = NULL;
 			}
 
 			if (handle)
@@ -64,25 +75,17 @@ namespace platform
 	DWORD __stdcall windows_thread_entry(LPVOID data)
 	{
 		Win32Thread* thread = static_cast<Win32Thread*>(data);
-
-		thread->entry(thread->user_data);
-
-		for (;;)
-		{
-
-
-			// This is the preferred solution on Windows, to see if the thread
-			// should exit its loop.
-			if (WaitForSingleObjectEx(thread->close_event, 0, FALSE) == WAIT_OBJECT_0)
-				return 0;
-		}
-
+		thread->entry(thread);
+		SetEvent(thread->exit_event);
 		return 0;
 	}
 
-	ThreadTwo* thread_create(ThreadEntry entry, void* data)
+	Thread* thread_create(ThreadEntry entry, void* data)
 	{
 		Win32Thread* thread = MEMORY_NEW(Win32Thread, platform::get_platform_allocator());
+		thread->entry = entry;
+		thread->state = THREAD_STATE_ACTIVE;
+		thread->user_data = data;
 		thread->handle = CreateThread(
 			NULL,					// security attributes
 			0,						// initial size of stack in bytes
@@ -104,9 +107,13 @@ namespace platform
 				NULL // name
 			);
 
-			thread->entry = entry;
-			thread->user_data = data;
-			thread->state = THREAD_STATE_ACTIVE;
+			thread->exit_event = CreateEvent(
+				NULL, // security attributes
+				TRUE, // manual reset
+				FALSE, // initial state
+				NULL // name
+			);
+
 			return thread;
 		}
 		else
@@ -116,16 +123,28 @@ namespace platform
 		}
 	}
 
-	void thread_destroy(ThreadTwo* thread)
+	void thread_destroy(Thread* thread)
 	{
 		Win32Thread* native_thread = static_cast<Win32Thread*>(thread);
 		MEMORY_DELETE(native_thread, platform::get_platform_allocator());
 	}
 
-	int thread_join(ThreadTwo* thread)
+	int thread_join(Thread* thread)
 	{
 		Win32Thread* native_thread = static_cast<Win32Thread*>(thread);
-		SetEvent(native_thread->close_event);
+		if (native_thread->state != THREAD_STATE_INACTIVE)
+		{
+			// tell the thread it should exit
+			SetEvent(native_thread->close_event);
+
+			if (WAIT_OBJECT_0 == WaitForSingleObject(native_thread->exit_event, 1000))
+			{
+				CloseHandle(native_thread->exit_event);
+				native_thread->exit_event = NULL;
+			}
+
+		}
+
 		return 0;
 	}
 
@@ -134,10 +153,19 @@ namespace platform
 		Sleep(static_cast<DWORD>(milliseconds));
 	}
 
-	void thread_detach(ThreadTwo* thread)
+	void thread_detach(Thread* thread)
 	{
 		Win32Thread* native_thread = static_cast<Win32Thread*>(thread);
-		SetEvent(native_thread->close_event);
+		if (native_thread->state != THREAD_STATE_INACTIVE)
+		{
+			// This is not advised by MSDN; but since the exit_event hasn't
+			// been reached, this is our only choice. It doesn't allow the
+			// thread to properly clean up. It won't free handles
+			// allocated by the thread; it won't free initial stack memory.
+			TerminateThread(native_thread->handle, static_cast<DWORD>(-1));
+			assert(0);
+		}
+
 		if (native_thread->handle)
 		{
 			CloseHandle(native_thread->handle);
@@ -146,15 +174,29 @@ namespace platform
 		native_thread->state = THREAD_STATE_INACTIVE;
 	}
 
-	ThreadId thread_id()
+	uint64_t thread_id()
 	{
-		return GetCurrentThreadId();
+		return static_cast<uint64_t>(GetCurrentThreadId());
 	}
 
-	ThreadStatus thread_status(ThreadTwo* thread)
+	ThreadStatus thread_status(const Thread* thread)
+	{
+		const Win32Thread* native_thread = static_cast<const Win32Thread*>(thread);
+		return native_thread->state;
+	}
+
+	bool thread_is_active(Thread* thread)
 	{
 		Win32Thread* native_thread = static_cast<Win32Thread*>(thread);
-		return native_thread->state;
+		if (WaitForSingleObject(native_thread->close_event, 0) == WAIT_OBJECT_0)
+		{
+			CloseHandle(native_thread->close_event);
+			native_thread->close_event = NULL;
+			native_thread->state = THREAD_STATE_INACTIVE;
+			return false;
+		}
+
+		return true;
 	}
 
 	class Win32Semaphore : public Semaphore

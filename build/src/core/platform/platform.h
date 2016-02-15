@@ -24,14 +24,11 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "config.h"
-
-#if defined(PLATFORM_APPLE)
-	#include <TargetConditionals.h>
-#endif
+#include <core/typedefs.h>
 
 #include <core/array.h>
 #include <core/stackstring.h>
+
 
 #include <stdint.h>
 #include <stdio.h> // for size_t
@@ -72,12 +69,8 @@ namespace kernel
 
 // thread types
 
-#if defined(PLATFORM_WINDOWS)
-	#include "thread/windows/windows_thread.h"
-#elif defined(PLATFORM_POSIX)
+#if defined(PLATFORM_POSIX)
 	#include "thread/posix/posix_thread.h"
-#else
-	#error Not implemented on this platform
 #endif
 
 
@@ -389,46 +382,48 @@ namespace platform
 		THREAD_STATE_SUSPENDED
 	};
 
-	typedef void(*ThreadEntry)(void*);
-
 	struct Thread
 	{
-		ThreadId thread_id;
-		ThreadHandle handle;
-		ThreadEntry entry;
-		void* userdata;
-		ThreadStatus state;
+		virtual ~Thread();
+
+		void* user_data;
 	};
 
-	struct ThreadTwo
-	{
-	};
+	typedef void(*ThreadEntry)(Thread*);
+
+
 
 	/// @brief Creates a thread with entry point
 	/// This sets up signals, thread names, thread id and states.
-	LIBRARY_EXPORT ThreadTwo* thread_create(ThreadEntry entry, void* data);
+	LIBRARY_EXPORT Thread* thread_create(ThreadEntry entry, void* data);
 
 	/// @brief Destroys a thread created by thread_create
-	LIBRARY_EXPORT void thread_destroy(ThreadTwo* thread);
+	LIBRARY_EXPORT void thread_destroy(Thread* thread);
 
 	/// @brief Wait for a thread to complete.
 	/// @returns 0 on success; non-zero on failure (abnormal thread termination)
-	LIBRARY_EXPORT int thread_join(ThreadTwo* thread);
+	LIBRARY_EXPORT int thread_join(Thread* thread);
 
 	/// @brief Allows the calling thread to sleep
 	LIBRARY_EXPORT void thread_sleep(int milliseconds);
 
 	/// @brief Detach the thread
-	LIBRARY_EXPORT void thread_detach(ThreadTwo* thread);
+	LIBRARY_EXPORT void thread_detach(Thread* thread);
 
 	/// @brief Get the calling thread's id
 	/// @returns The calling thread's platform designated id
-	LIBRARY_EXPORT ThreadId thread_id();
+	LIBRARY_EXPORT uint64_t thread_id();
 
 	/// @brief Get the target thread's current status
 	/// @returns ThreadStatus enum for thread.
-	LIBRARY_EXPORT ThreadStatus thread_status(ThreadTwo* thread);
+	LIBRARY_EXPORT ThreadStatus thread_status(const Thread* thread);
 
+	/// @brief Determine if the platform thread is still active.
+	/// This will return false when the thread should terminate (determined
+	/// by OS-specific mechanisms). Otherwise, work can continue like normal.
+	/// If this returns false, your thread must exit shortly thereafter.
+	/// This should only be called from created Threads.
+	LIBRARY_EXPORT bool thread_is_active(Thread* thread);
 
 
 	LIBRARY_EXPORT void mutex_create();
