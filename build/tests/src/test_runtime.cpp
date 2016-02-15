@@ -219,45 +219,57 @@ namespace gemini
 
 #endif
 
-#include <pthread.h>
+
 
 // C11 atomics
 // https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
 
+/// @brief Perform an atomic compare and swap
+/// @returns true if the operation succeeded (destination now equals new_value)
+bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, int32_t comparand);
+
+/// @brief Atomically increments an int32.
+/// @returns The value of destination post increment.
+int32_t atom_increment32(volatile int32_t* destination);
+
 #if !defined(GEMINI_USE_STD_ATOMIC)
 
 #if defined(PLATFORM_APPLE)
+	#include <pthread.h>
 	#include <libkern/OSAtomic.h>
 
 	// docs: "This function serves as both a read and write barrier."
 	#define complete_past_writes_before_future_writes() OSMemoryBarrier()
 	#define complete_past_reads_before_future_reads() OSMemoryBarrier()
 
+	bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, int32_t comparand)
+	{
+		return OSAtomicCompareAndSwap32Barrier(comparand, new_value, destination);
+	}
+
+	int32_t atom_increment32(volatile int32_t* destination)
+	{
+		return OSAtomicIncrement32(destination);
+	}
+
 #elif defined(PLATFORM_WINDOWS)
 	// os (_WriteBarrier) + processor fence (_mm_sfence())
 	#define complete_past_writes_before_future_writes() _WriteBarrier()
 	#define complete_past_reads_before_future_reads() _ReadBarrier()
-#if 0
-	HANDLE semaphore_handle = CreateSemaphoreEx(NULL, // security attributes,
-		0, 					// number of threads awake at startup
-		MAX_THREADS, 		// maximum number of threads
-		NULL,				// name
-		0,					// flags: reserved and must be zero
-		SEMAPHORE_ALL_ACCESS
-	);
 
-	DWORD return = WaitForSingleObjectEx(semaphore_handle, // event handle
-		INFINITE,			// time-out interval in milliseconds
-		FALSE				// alertable
-	);
+	bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, int32_t comparand)
+	{
+		long initial_destination = InterlockedCompareExchange(reinterpret_cast<volatile long*>(destination), new_value, comparand);
+		return (initial_destination == comparand);
+	}
 
-	// increment the semaphore value by 'release_count'
-	ReleaseSemaphore(semaphore_handle,
-		release_count,
-		&opt_previous_count
-	);
-#endif
+	int32_t atom_increment32(volatile int32_t* destination)
+	{
+		return InterlockedIncrement((volatile long*)destination);
+	}
+
 #else
+	#include <pthread.h>
 	#define complete_past_writes_before_future_writes()
 	#define complete_past_reads_before_future_reads()
 #endif
@@ -265,16 +277,11 @@ namespace gemini
 
 // memory write ordering (guaranteed on some processors, but compiler won't).
 
-
 template <class T>
 struct atomic
 {
-#if defined(GEMINI_USE_STD_ATOMIC)
-	std::atomic<T> value;
-#else
 	typedef volatile T value_type;
 	value_type value;
-#endif
 
 	atomic(const T& initial_value = T())
 	: value(initial_value)
@@ -322,7 +329,7 @@ namespace gemini
 		struct worker_data
 		{
 			uint32_t worker_index;
-			platform::Thread handle;
+			platform::ThreadTwo* thread;
 			class job_queue* queue;
 			int32_t is_active;
 		};
@@ -396,6 +403,7 @@ namespace gemini
 {
 	void job_processor(void* thread_data)
 	{
+		LOGV("---------------> enter job_processor, thread: %i\n", platform::thread_id());
 		job_queue::worker_data* worker = static_cast<job_queue::worker_data*>(thread_data);
 		job_queue* queue = worker->queue;
 
@@ -424,7 +432,7 @@ namespace gemini
 			}
 		}
 
-		fprintf(stdout, "exit job processor\n");
+		LOGV("---------------> exit job_processor, thread: %i\n", platform::thread_id());
 	}
 
 	void job_queue::create_workers(size_t max_workers)
@@ -433,17 +441,15 @@ namespace gemini
 		{
 			workers.push_back(worker_data());
 			worker_data* data = &workers[index];
-			data->worker_index = index;
+			data->worker_index = static_cast<uint32_t>(index);
 			data->queue = this;
 			data->is_active = 1;
-			platform::Result result = platform::thread_create(data->handle, job_processor, data);
-			if (result.failed())
-			{
-				fprintf(stdout, "thread_create failed!\n");
-			}
+
+			data->thread = platform::thread_create(job_processor, data);
+			assert(data->thread);
 		}
 
-		semaphore = platform::semaphore_create(0, max_workers);
+		semaphore = platform::semaphore_create(0, static_cast<int32_t>(max_workers));
 		assert(semaphore);
 	}
 
@@ -453,7 +459,7 @@ namespace gemini
 		for (worker_data& worker : workers)
 		{
 			int32_t is_active = worker.is_active;
-			OSAtomicCompareAndSwap32(is_active, 0, &worker.is_active);
+			atom_compare_and_swap32(&worker.is_active, 0, is_active);
 		}
 
 		// wake all workers (in case they were sleeping)
@@ -462,12 +468,14 @@ namespace gemini
 		// finally, give the threads a chance to join
 		for (worker_data& worker : workers)
 		{
-			if (platform::thread_join(worker.handle) != 0)
+			if (platform::thread_join(worker.thread) != 0)
 			{
 				// couldn't exit normally; try detaching.
-				platform::thread_detach(worker.handle);
+				platform::thread_detach(worker.thread);
 			}
 			worker.queue = nullptr;
+
+			platform::thread_destroy(worker.thread);
 		}
 
 		workers.clear();
@@ -499,8 +507,8 @@ namespace gemini
 		// this is only intended to be called from a single thread.
 		// otherwise, this should have a load/acquire barrier
 
-		size_t index = total_jobs;
-		job* entry = &queue[index];
+		int32_t index = total_jobs;
+		job* entry = &queue[static_cast<size_t>(index)];
 		entry->execute = execute_function;
 		entry->data = data;
 
@@ -521,7 +529,7 @@ namespace gemini
 		int32_t next_index = next_entry;
 		if (next_index < total_jobs)
 		{
-			if (OSAtomicCompareAndSwap32Barrier(next_index, next_index + 1, &next_entry))
+			if (atom_compare_and_swap32(&next_entry, next_index + 1, next_index))
 			{
 				job_queue::job& item = queue[next_index];
 				entry.data = item.data;
@@ -544,14 +552,14 @@ namespace gemini
 		if (job.valid)
 		{
 			// job has completed.
-			OSAtomicIncrement32(&jobs_completed);
+			atom_increment32(&jobs_completed);
 		}
 	}
 } // namespace gemini
 
 void print_string(const char* data)
 {
-	fprintf(stdout, "thread: %zu, string: %s\n", (size_t)platform::thread_id(), data);
+	LOGV("thread: %zu, string: %s\n", (size_t)platform::thread_id(), data);
 //	platform::thread_sleep(250);
 }
 
@@ -583,6 +591,8 @@ int main(int, char**)
 		jq.push_back(print_string, "ALPHA: 8");
 		jq.push_back(print_string, "ALPHA: 9");
 
+		platform::thread_sleep(250);
+
 		jq.push_back(print_string, "BETA: 0");
 		jq.push_back(print_string, "BETA: 1");
 		jq.push_back(print_string, "BETA: 2");
@@ -597,8 +607,9 @@ int main(int, char**)
 
 	jq.wait_for_jobs_to_complete();
 
-	fprintf(stdout, "destroying workers...\n");
+	LOGV("destroying workers...\n");
 	jq.destroy_workers();
+
 
 //	unittest::UnitTest::execute();
 	gemini::runtime_shutdown();

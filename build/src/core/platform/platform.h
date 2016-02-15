@@ -154,28 +154,6 @@ namespace platform
 	#error Unknown platform!
 #endif
 
-	enum ThreadStatus
-	{
-		THREAD_STATE_INACTIVE,
-		THREAD_STATE_ACTIVE,
-		THREAD_STATE_SUSPENDED
-	};
-
-	typedef void (*ThreadEntry)(void*);
-
-	struct Thread
-	{
-		ThreadId thread_id;
-		ThreadHandle handle;
-		ThreadEntry entry;
-		void* userdata;
-		ThreadStatus state;
-	};
-
-	struct Semaphore
-	{
-	};
-
 	struct Result
 	{
 		const char* message;
@@ -404,24 +382,52 @@ namespace platform
 	// ---------------------------------------------------------------------
 	// thread
 	// ---------------------------------------------------------------------
+	enum ThreadStatus
+	{
+		THREAD_STATE_INACTIVE,
+		THREAD_STATE_ACTIVE,
+		THREAD_STATE_SUSPENDED
+	};
+
+	typedef void(*ThreadEntry)(void*);
+
+	struct Thread
+	{
+		ThreadId thread_id;
+		ThreadHandle handle;
+		ThreadEntry entry;
+		void* userdata;
+		ThreadStatus state;
+	};
+
+	struct ThreadTwo
+	{
+	};
 
 	/// @brief Creates a thread with entry point
-	/// 	   This sets up signals, thread names, thread id and states.
-	LIBRARY_EXPORT Result thread_create(Thread& thread, ThreadEntry entry, void* data);
+	/// This sets up signals, thread names, thread id and states.
+	LIBRARY_EXPORT ThreadTwo* thread_create(ThreadEntry entry, void* data);
+
+	/// @brief Destroys a thread created by thread_create
+	LIBRARY_EXPORT void thread_destroy(ThreadTwo* thread);
 
 	/// @brief Wait for a thread to complete.
 	/// @returns 0 on success; non-zero on failure (abnormal thread termination)
-	LIBRARY_EXPORT int thread_join(Thread& thread);
+	LIBRARY_EXPORT int thread_join(ThreadTwo* thread);
 
 	/// @brief Allows the calling thread to sleep
 	LIBRARY_EXPORT void thread_sleep(int milliseconds);
 
 	/// @brief Detach the thread
-	LIBRARY_EXPORT void thread_detach(Thread& thread);
+	LIBRARY_EXPORT void thread_detach(ThreadTwo* thread);
 
 	/// @brief Get the calling thread's id
 	/// @returns The calling thread's platform designated id
 	LIBRARY_EXPORT ThreadId thread_id();
+
+	/// @brief Get the target thread's current status
+	/// @returns ThreadStatus enum for thread.
+	LIBRARY_EXPORT ThreadStatus thread_status(ThreadTwo* thread);
 
 
 
@@ -429,6 +435,12 @@ namespace platform
 	LIBRARY_EXPORT void mutex_destroy();
 	LIBRARY_EXPORT void mutex_lock();
 	LIBRARY_EXPORT void mutex_unlock();
+
+
+	struct Semaphore
+	{
+	};
+
 
 	/// @brief Create a new semaphore
 	LIBRARY_EXPORT Semaphore* semaphore_create(int32_t initial_count, int32_t max_count);
