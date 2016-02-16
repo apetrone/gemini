@@ -401,14 +401,18 @@ namespace platform
 	LIBRARY_EXPORT void thread_destroy(Thread* thread);
 
 	/// @brief Wait for a thread to complete.
-	/// @returns 0 on success; non-zero on failure (abnormal thread termination)
-	LIBRARY_EXPORT int thread_join(Thread* thread);
+	/// @param thread The target thread to wait on.
+	/// @param timeout (Optional) Timeout to wait for the thread to finish in
+	/// milliseconds.
+	/// If timeout is zero, this call blocks indefinitely.
+	/// Otherwise, if the thread does not complete in timeout milliseconds,
+	/// the thread is forcibly closed.
+	/// The consequences of this behavior for each platform still remain.
+	/// @returns 0 on success non-zero on failure (abnormal termination)
+	LIBRARY_EXPORT int thread_join(Thread* thread, uint32_t timeout = 0);
 
 	/// @brief Allows the calling thread to sleep
 	LIBRARY_EXPORT void thread_sleep(int milliseconds);
-
-	/// @brief Detach the thread
-	LIBRARY_EXPORT void thread_detach(Thread* thread);
 
 	/// @brief Get the calling thread's id
 	/// @returns The calling thread's platform designated id
@@ -444,7 +448,7 @@ namespace platform
 	LIBRARY_EXPORT void semaphore_wait(Semaphore* sem);
 
 	/// @brief Signal the semaphore
-	LIBRARY_EXPORT void semaphore_signal(Semaphore* sem);
+	LIBRARY_EXPORT void semaphore_signal(Semaphore* sem, uint32_t count = 1);
 
 	/// @brief Destroy this semaphore
 	LIBRARY_EXPORT void semaphore_destroy(Semaphore* sem);

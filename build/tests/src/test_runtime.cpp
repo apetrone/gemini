@@ -367,15 +367,29 @@ namespace gemini
 		{
 		}
 
-		void create_workers(size_t max_workers); // create max_workers
-		void destroy_workers(); // destroys all workers
-		void wake_workers();	// wake up worker threads
-		void sleep_worker(); // puts this worker thread to sleep
+		// create max_workers
+		void create_workers(size_t max_workers);
 
+		// destroys all workers
+		void destroy_workers();
+
+		// wake up worker threads
+		void wake_workers(bool all_workers = false);
+
+		// puts this worker thread to sleep
+		void sleep_worker();
+
+		// push back a new job onto the queue
 		void push_back(process_job execute_function, const char* data);
+
+		// Pop an available job off the queue
+		// Check Job's valid flag before operating on it.
 		job pop();
 
+		// block waiting for all queued jobs to complete
 		void wait_for_jobs_to_complete();
+
+		// explicitly mark a job as complete. TODO: ugh, get rid of this.
 		void complete_job(const job_queue::job& job);
 	}; // class job_queue
 } // namespace gemini
@@ -424,7 +438,7 @@ namespace gemini
 				// mark it as complete
 				queue->complete_job(entry);
 			}
-			else
+			else if (worker->is_active) // can this thread sleep?
 			{
 				// no available jobs. wait for signal.
 				LOGV("---------------> thread 0x%x going to sleep...\n", platform::thread_id());
@@ -457,6 +471,7 @@ namespace gemini
 	void job_queue::destroy_workers()
 	{
 		// set all threads as inactive
+		// this should be done as a single transaction.
 		for (size_t index = 0; index < workers.size(); ++index)
 		{
 			worker_data& worker = workers[index];
@@ -467,53 +482,34 @@ namespace gemini
 		// wake ALL workers (in case they were sleeping)
 		// since this just increments a semaphore, it has to be called
 		// once for each thread.
+		wake_workers(true);
+
 		for (worker_data& worker : workers)
 		{
-			platform::thread_join(worker.thread);
-		}
+			// wait for the threads to join in a timely fashion
+			platform::thread_join(worker.thread, 2.5 * MillisecondsPerSecond);
 
-		for (const worker_data& worker : workers)
-		{
-			wake_workers();
-		}
-
-		// If this thread sleeps (and is the main thread) it could potentially
-		// be pre-empted which further delays the join of the worker threads.
-		// So - enter a spin lock and wait on the workers.
-		const size_t total_threads = workers.size();
-		for (;;)
-		{
-			size_t inactives = 0;
-			for (worker_data& worker : workers)
-			{
-				if (platform::thread_status(worker.thread) == platform::THREAD_STATE_INACTIVE)
-				{
-					++inactives;
-				}
-			}
-
-			if (inactives == total_threads)
-				break;
-		}
-
-		// finally, give the threads a chance to join
-		for (worker_data& worker : workers)
-		{
-			worker.queue = nullptr;
+			// cleanup memory
 			platform::thread_destroy(worker.thread);
+			worker.queue = nullptr;
 		}
 
 		workers.clear();
-
 		platform::semaphore_destroy(semaphore);
 		semaphore = nullptr;
 	}
 
-	void job_queue::wake_workers()
+	void job_queue::wake_workers(bool all_workers)
 	{
 		if (semaphore)
 		{
-			platform::semaphore_signal(semaphore);
+			uint32_t increment = 1;
+			if (all_workers)
+			{
+				// Shouldn't have more than uint32_t workers.
+				increment = static_cast<uint32_t>(workers.size());
+			}
+			platform::semaphore_signal(semaphore, increment);
 		}
 	}
 
@@ -527,8 +523,6 @@ namespace gemini
 
 	void job_queue::push_back(process_job execute_function, const char* data)
 	{
-		assert(next_entry < 127);
-
 		// this is only intended to be called from a single thread.
 		// otherwise, this should have a load/acquire barrier
 

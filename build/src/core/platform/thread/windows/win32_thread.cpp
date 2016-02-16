@@ -129,7 +129,7 @@ namespace platform
 		MEMORY_DELETE(native_thread, platform::get_platform_allocator());
 	}
 
-	int thread_join(Thread* thread)
+	int thread_join(Thread* thread, uint32_t timeout_milliseconds)
 	{
 		Win32Thread* native_thread = static_cast<Win32Thread*>(thread);
 		if (native_thread->state != THREAD_STATE_INACTIVE)
@@ -137,12 +137,31 @@ namespace platform
 			// tell the thread it should exit
 			SetEvent(native_thread->close_event);
 
-			if (WAIT_OBJECT_0 == WaitForSingleObject(native_thread->exit_event, 1000))
+			// No timeout if 0 is passed in.
+			if (timeout_milliseconds == 0)
+			{
+				timeout_milliseconds = INFINITE;
+			}
+
+			DWORD wait_close = WaitForSingleObject(native_thread->exit_event, timeout_milliseconds);
+			if (WAIT_OBJECT_0 == wait_close)
 			{
 				CloseHandle(native_thread->exit_event);
 				native_thread->exit_event = NULL;
+				native_thread->state = THREAD_STATE_INACTIVE;
 			}
-
+			else if (WAIT_TIMEOUT == wait_close)
+			{
+				// Time expired! terminate the thread.
+				// NOTE: This is not advised by MSDN; but since the exit_event
+				// hasn't been reached, this is our only choice.
+				// It doesn't allow the thread to properly clean up if the
+				// thread allocated any HANDLEs.
+				TerminateThread(native_thread->handle, static_cast<DWORD>(-1));
+				CloseHandle(native_thread->handle);
+				native_thread->handle = NULL;
+				return 1;
+			}
 		}
 
 		return 0;
@@ -151,27 +170,6 @@ namespace platform
 	void thread_sleep(int milliseconds)
 	{
 		Sleep(static_cast<DWORD>(milliseconds));
-	}
-
-	void thread_detach(Thread* thread)
-	{
-		Win32Thread* native_thread = static_cast<Win32Thread*>(thread);
-		if (native_thread->state != THREAD_STATE_INACTIVE)
-		{
-			// This is not advised by MSDN; but since the exit_event hasn't
-			// been reached, this is our only choice. It doesn't allow the
-			// thread to properly clean up. It won't free handles
-			// allocated by the thread; it won't free initial stack memory.
-			TerminateThread(native_thread->handle, static_cast<DWORD>(-1));
-			assert(0);
-		}
-
-		if (native_thread->handle)
-		{
-			CloseHandle(native_thread->handle);
-			native_thread->handle = NULL;
-		}
-		native_thread->state = THREAD_STATE_INACTIVE;
 	}
 
 	uint64_t thread_id()
@@ -236,10 +234,10 @@ namespace platform
 		);
 	}
 
-	void semaphore_signal(Semaphore* sem)
+	void semaphore_signal(Semaphore* sem, uint32_t count)
 	{
 		Win32Semaphore* semaphore = static_cast<Win32Semaphore*>(sem);
-		ReleaseSemaphore(semaphore->handle, 1, NULL);
+		ReleaseSemaphore(semaphore->handle, static_cast<LONG>(count), NULL);
 	}
 
 	void semaphore_destroy(Semaphore* sem)
