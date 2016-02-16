@@ -99,19 +99,19 @@ namespace platform
 	{
 	}
 
-	Process* process_create(const char* executable_path,
-		const Array<PathString>& arguments,
-		const char* working_directory)
+	Process* process_create(const char* /*executable_path*/,
+		const Array<PathString>& /*arguments*/,
+		const char* /*working_directory*/)
 	{
 		return nullptr;
 	}
 
-	void process_destroy(Process* process)
+	void process_destroy(Process* /*process*/)
 	{
 
 	}
 
-	bool process_is_running(Process* process)
+	bool process_is_running(Process* /*process*/)
 	{
 		return false;
 	}
@@ -290,30 +290,30 @@ namespace platform
 			return _window_provider->get_screen_frame(screen_index);
 		}
 
-		void focus(NativeWindow* window)
+		void focus(NativeWindow* /*window*/)
 		{
 		}
 
-		void show_cursor(bool enable)
+		void show_cursor(bool /*enable*/)
 		{
 		}
 
-		void set_cursor(float x, float y)
-		{
-
-		}
-
-		void get_cursor(float& x, float& y)
+		void set_cursor(float /*x*/, float /*y*/)
 		{
 
 		}
 
-		void set_relative_mouse_mode(bool enable)
+		void get_cursor(float& /*x*/, float& /*y*/)
 		{
 
 		}
 
-		void set_mouse_tracking(bool enable)
+		void set_relative_mouse_mode(bool /*enable*/)
+		{
+
+		}
+
+		void set_mouse_tracking(bool /*enable*/)
 		{
 
 		}

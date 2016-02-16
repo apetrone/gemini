@@ -49,7 +49,7 @@ namespace platform
 				return &native_window;
 			}
 
-			virtual void update_visual(int visual_id) override
+			virtual void update_visual(int /*visual_id*/) override
 			{
 				// visual = visual_id;
 			}
