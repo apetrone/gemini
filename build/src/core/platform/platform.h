@@ -44,6 +44,12 @@
 
 	#define PLATFORM_LIBRARY_EXPORT __declspec(dllexport)
 	#define PLATFORM_LIBRARY_IMPORT __declspec(dllimport)
+
+	namespace platform
+	{
+		typedef DWORD ThreadId;
+	} // namespace platform
+
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE) || defined(PLATFORM_ANDROID)
 	#include <limits.h>
 	#define MAX_PATH_SIZE PATH_MAX
@@ -54,6 +60,12 @@
 	#define PLATFORM_LIBRARY_IMPORT
 
 	struct android_app;
+
+	namespace platform
+	{
+		typedef pthread_t ThreadId;
+	} // namespace platform
+
 #else
 	#error Unknown platform!
 #endif
@@ -408,7 +420,7 @@ namespace platform
 
 	/// @brief Get the calling thread's id
 	/// @returns The calling thread's platform designated id
-	LIBRARY_EXPORT uint64_t thread_id();
+	LIBRARY_EXPORT ThreadId thread_id();
 
 	/// @brief Get the target thread's current status
 	/// @returns ThreadStatus enum for thread.

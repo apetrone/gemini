@@ -82,7 +82,7 @@ namespace platform
 	void posix_thread_destroy(Thread* thread);
 	int posix_thread_join(Thread* thread);
 	void posix_thread_sleep(int milliseconds);
-	uint64_t posix_thread_id();
+	pthread_t posix_thread_id();
 	ThreadStatus posix_thread_status(Thread* thread);
 	bool posix_thread_is_active(Thread* thread);
 

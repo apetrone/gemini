@@ -141,9 +141,9 @@ namespace platform
 		usleep(milliseconds * MicrosecondsPerMillisecond);
 	}
 
-	uint64_t posix_thread_id()
+	pthread_t posix_thread_id()
 	{
-		return reinterpret_cast<uint64_t>(pthread_self());
+		return pthread_self();
 	}
 
 	ThreadStatus posix_thread_status(Thread* thread)

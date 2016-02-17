@@ -46,7 +46,7 @@ namespace platform
 		posix_thread_sleep(milliseconds);
 	}
 
-	uint64_t thread_id()
+	pthread_t thread_id()
 	{
 		return posix_thread_id();
 	}

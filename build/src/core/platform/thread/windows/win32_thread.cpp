@@ -172,9 +172,9 @@ namespace platform
 		Sleep(static_cast<DWORD>(milliseconds));
 	}
 
-	uint64_t thread_id()
+	DWORD thread_id()
 	{
-		return static_cast<uint64_t>(GetCurrentThreadId());
+		return GetCurrentThreadId();
 	}
 
 	ThreadStatus thread_status(const Thread* thread)
