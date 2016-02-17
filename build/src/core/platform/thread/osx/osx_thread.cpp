@@ -36,7 +36,7 @@ namespace platform
 		posix_thread_destroy(thread);
 	}
 
-	int thread_join(Thread& thread)
+	int thread_join(Thread* thread, uint32_t)
 	{
 		return posix_thread_join(thread);
 	}

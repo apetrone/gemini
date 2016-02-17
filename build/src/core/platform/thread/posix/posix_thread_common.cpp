@@ -25,6 +25,7 @@
 
 #include "platform_internal.h"
 
+#include <pthread.h>
 #include <signal.h> // for pthread_kill
 #include <unistd.h> // for usleep
 
@@ -142,7 +143,7 @@ namespace platform
 
 	uint64_t posix_thread_id()
 	{
-		return static_cast<uint64_t>(pthread_self());
+		return reinterpret_cast<uint64_t>(pthread_self());
 	}
 
 	ThreadStatus posix_thread_status(Thread* thread)
