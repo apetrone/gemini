@@ -446,7 +446,7 @@ namespace platform
 
 
 	/// @brief Create a new semaphore
-	LIBRARY_EXPORT Semaphore* semaphore_create(int32_t initial_count, int32_t max_count);
+	LIBRARY_EXPORT Semaphore* semaphore_create(uint32_t initial_count, uint32_t max_count);
 
 	/// @brief Wait indefinitely on a semaphore signal
 	LIBRARY_EXPORT void semaphore_wait(Semaphore* sem);

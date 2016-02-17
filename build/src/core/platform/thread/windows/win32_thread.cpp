@@ -202,14 +202,28 @@ namespace platform
 	public:
 		HANDLE handle;
 
-		Win32Semaphore(int32_t initial_count, int32_t max_count)
+		Win32Semaphore(uint32_t initial_count, uint32_t max_count)
 		{
-			handle = CreateSemaphoreEx(NULL, // security attributes, (NULL cannot be inherited by child processes)
-				initial_count, 				// number of threads awake at startup
-				max_count, 					// maximum count
-				NULL,						// name
-				0,							// flags: reserved and must be zero
-				SEMAPHORE_ALL_ACCESS		// access mask
+
+			handle = CreateSemaphoreEx(
+				// security attributes,
+				// (NULL cannot be inherited by child processes)
+				NULL,
+
+				// number of threads awake at startup
+				static_cast<LONG>(initial_count),
+
+				// maximum count
+				static_cast<LONG>(max_count),
+
+				// name
+				NULL,
+
+				// flags: reserved and must be zero
+				0,
+
+				// access mask
+				SEMAPHORE_ALL_ACCESS
 			);
 		}
 
@@ -220,7 +234,7 @@ namespace platform
 		}
 	};
 
-	Semaphore* semaphore_create(int32_t initial_count, int32_t max_count)
+	Semaphore* semaphore_create(uint32_t initial_count, uint32_t max_count)
 	{
 		return MEMORY_NEW(Win32Semaphore, platform::get_platform_allocator())(initial_count, max_count);
 	}

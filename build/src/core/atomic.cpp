@@ -31,33 +31,39 @@
 namespace gemini
 {
 #if defined(PLATFORM_APPLE)
-	bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, int32_t comparand)
+	bool atom_compare_and_swap32(volatile uint32_t* destination, uint32_t new_value, uint32_t comparand)
 	{
-		return OSAtomicCompareAndSwap32Barrier(comparand, new_value, destination);
+		return OSAtomicCompareAndSwap32Barrier(
+			static_cast<int32_t>(comparand),
+			static_cast<int32_t>(new_value),
+			static_cast<volatile int32_t*>(destination));
 	}
 
-	int32_t atom_increment32(volatile int32_t* destination)
+	uint32_t atom_increment32(volatile uint32_t* destination)
 	{
-		return OSAtomicIncrement32(destination);
+		return static_cast<uint32_t>(OSAtomicIncrement32(static_cast<volatile int32_t*>(destination)));
 	}
 #elif defined(PLATFORM_WINDOWS)
-	bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, int32_t comparand)
+	bool atom_compare_and_swap32(volatile uint32_t* destination, uint32_t new_value, uint32_t comparand)
 	{
-		long initial_destination = InterlockedCompareExchange(reinterpret_cast<volatile long*>(destination), new_value, comparand);
+		unsigned int initial_destination = InterlockedCompareExchange(
+			reinterpret_cast<volatile unsigned int*>(destination),
+			static_cast<unsigned int>(new_value),
+			static_cast<unsigned int>(comparand));
 		return (initial_destination == comparand);
 	}
 
-	int32_t atom_increment32(volatile int32_t* destination)
+	uint32_t atom_increment32(volatile uint32_t* destination)
 	{
-		return InterlockedIncrement((volatile long*)destination);
+		return InterlockedIncrement((volatile unsigned int*)destination);
 	}
 #elif defined(PLATFORM_LINUX) && (defined(__clang__) || defined(__GNUC__))
-	bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, int32_t comparand)
+	bool atom_compare_and_swap32(volatile uint32_t* destination, uint32_t new_value, uint32_t comparand)
 	{
 		return __sync_bool_compare_and_swap(destination, comparand, new_value);
 	}
 
-	int32_t atom_increment32(volatile int32_t* destination)
+	uint32_t atom_increment32(volatile uint32_t* destination)
 	{
 		return __sync_add_and_fetch(destination, 1);
 	}

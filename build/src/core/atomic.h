@@ -71,11 +71,11 @@ namespace gemini
 	/// @brief Perform an atomic compare and swap
 	/// If the value in destination is equal to the comparand, destination is set to new_value.
 	/// @returns true if the operation succeeded (destination now equals new_value)
-	LIBRARY_EXPORT bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, int32_t comparand);
+	LIBRARY_EXPORT bool atom_compare_and_swap32(volatile uint32_t* destination, uint32_t new_value, uint32_t comparand);
 
-	/// @brief Atomically increments an int32.
+	/// @brief Atomically increments an integer of 32-bit width.
 	/// @returns The value of destination post increment.
-	LIBRARY_EXPORT int32_t atom_increment32(volatile int32_t* destination);
+	LIBRARY_EXPORT uint32_t atom_increment32(volatile uint32_t* destination);
 
 	// Use this to wrap atomic variables. Update as needed.
 	template <class T>

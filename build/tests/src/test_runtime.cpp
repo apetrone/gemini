@@ -237,13 +237,13 @@ namespace gemini
 
 	private:
 		// this must be a power of two
-		static const size_t MAX_QUEUE_ITEMS = 16;
+		static const uint32_t MAX_QUEUE_ITEMS = 16;
 		static_assert(((MAX_QUEUE_ITEMS - 1) & MAX_QUEUE_ITEMS) == 0, "MAX_QUEUE_ITEMS must be a power of two!");
 
-		atomic<int32_t> total_jobs;
-		atomic<int32_t> next_write_index;
-		atomic<int32_t> next_read_index;
-		atomic<int32_t> jobs_completed;
+		atomic<uint32_t> total_jobs;
+		atomic<uint32_t> next_write_index;
+		atomic<uint32_t> next_read_index;
+		atomic<uint32_t> jobs_completed;
 
 		job queue[MAX_QUEUE_ITEMS];
 		Array<worker_data> workers;
@@ -265,7 +265,7 @@ namespace gemini
 		}
 
 		// create max_workers
-		void create_workers(size_t max_workers);
+		void create_workers(uint32_t max_workers);
 
 		// destroys all workers
 		void destroy_workers();
@@ -347,17 +347,17 @@ namespace gemini
 		LOGV("---------------> exit job_processor, thread: 0x%x\n", platform::thread_id());
 	}
 
-	void job_queue::create_workers(size_t max_workers)
+	void job_queue::create_workers(uint32_t max_workers)
 	{
 		// Reserve space for worker data: this is required because Array<T>
 		// doesn't use re-alloc -- and once the data is passed
 		// to the individual threads on startup, it can blow up.
 		workers.resize(max_workers);
 
-		for (size_t index = 0; index < max_workers; ++index)
+		for (uint32_t index = 0; index < max_workers; ++index)
 		{
 			worker_data* data = &workers[index];
-			data->worker_index = static_cast<uint32_t>(index);
+			data->worker_index = index;
 			data->queue = this;
 			data->is_active = 1;
 
@@ -365,7 +365,7 @@ namespace gemini
 			assert(data->thread);
 		}
 
-		semaphore = platform::semaphore_create(0, static_cast<int32_t>(max_workers));
+		semaphore = platform::semaphore_create(0, max_workers);
 		assert(semaphore);
 	}
 
@@ -373,7 +373,7 @@ namespace gemini
 	{
 		// set all threads as inactive
 		// this should be done as a single transaction.
-		for (size_t index = 0; index < workers.size(); ++index)
+		for (uint32_t index = 0; index < workers.size(); ++index)
 		{
 			worker_data& worker = workers[index];
 			worker.is_active = 0;
@@ -425,7 +425,7 @@ namespace gemini
 	void job_queue::push_back(process_job execute_function, const char* data)
 	{
 		// This is only intended to be called from a single thread.
-		int32_t write_index = (next_write_index + 1) & (MAX_QUEUE_ITEMS - 1);
+		uint32_t write_index = (next_write_index + 1) & (MAX_QUEUE_ITEMS - 1);
 
 		// The queue is full. Attempting to write at this stage
 		// would invalidate the queue's state.
@@ -452,8 +452,8 @@ namespace gemini
 		entry.execute = nullptr;
 		entry.valid = 0;
 
-		int32_t read_index = next_read_index;
-		int32_t incremented_read_index = (read_index + 1) & (MAX_QUEUE_ITEMS - 1);
+		uint32_t read_index = next_read_index;
+		uint32_t incremented_read_index = (read_index + 1) & (MAX_QUEUE_ITEMS - 1);
 		if (read_index != next_write_index)
 		{
 			if (atom_compare_and_swap32(&next_read_index, incremented_read_index, read_index))
