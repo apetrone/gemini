@@ -19,9 +19,6 @@
 [submodule "build/dependencies/civetweb"]
 	path = build/dependencies/civetweb
 	url = git://github.com/apetrone/civetweb.git
-[submodule "build/dependencies/bullet3"]
-	path = build/dependencies/bullet3
-	url = git://github.com/bulletphysics/bullet3.git
 [submodule "build/dependencies/bullet2"]
 	path = build/dependencies/bullet2
 	url = git://github.com/apetrone/bulletphysics.git
