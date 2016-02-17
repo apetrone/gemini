@@ -66,14 +66,6 @@ namespace kernel
 	struct Parameters;
 } // namespace kernel
 
-
-// thread types
-
-#if defined(PLATFORM_POSIX)
-	#include "thread/posix/posix_thread.h"
-#endif
-
-
 namespace platform
 {
 
@@ -403,7 +395,7 @@ namespace platform
 	/// @brief Wait for a thread to complete.
 	/// @param thread The target thread to wait on.
 	/// @param timeout (Optional) Timeout to wait for the thread to finish in
-	/// milliseconds.
+	/// milliseconds. This is only applicable on Windows.
 	/// If timeout is zero, this call blocks indefinitely.
 	/// Otherwise, if the thread does not complete in timeout milliseconds,
 	/// the thread is forcibly closed.

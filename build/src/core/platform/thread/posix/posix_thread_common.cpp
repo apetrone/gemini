@@ -33,65 +33,102 @@
 
 namespace platform
 {
+	struct PosixThread : public Thread
+	{
+		pthread_t handle;
+		ThreadStatus state;
+		ThreadEntry entry;
+		sem_t launch;
+
+		PosixThread() :
+			handle(0),
+			state(THREAD_STATE_INACTIVE),
+			entry(nullptr)
+		{
+			user_data = nullptr;
+			sem_init(&launch, 0, 1);
+		}
+
+		~PosixThread()
+		{
+			sem_destroy(&launch);
+		}
+	};
+
 	void* posix_thread_entry(void* data)
 	{
-		Thread* thread_data = static_cast<Thread*>(data);
-		thread_data->thread_id = thread_id();
-		// TODO: determine how to get the thread id
-//		ThreadId tid = thread_id();
-//		memcpy(&thread_data->thread_id, &tid, std::min(sizeof(uint64_t), sizeof(ThreadId)));
+		PosixThread* thread_data = static_cast<PosixThread*>(data);
+
+		// signal to calling thread that this launched
+		sem_post(&thread_data->launch);
 
 #if defined(PTHREAD_CANCEL_ASYNCHRONOUS)
 		// allow this thread to be cancelled at anytime
 		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, 0);
 #endif
-		thread_data->entry(thread_data->userdata);
+		thread_data->entry(thread_data);
 
 		return 0;
 	}
 
 
-	Result posix_thread_create(Thread& thread, ThreadEntry entry, void* data)
+	Thread* posix_thread_create(ThreadEntry entry, void* data)
 	{
 		pthread_attr_t attrib;
 		if (pthread_attr_init(&attrib) != 0)
 		{
-			return Result::failure("Unable to initialize pthread_attr_t");
+			assert(!"pthread_attr_init failed");
+			return nullptr;
 		}
 
-		// We can start this in detached or joinable. detached threads will release
-		// their resources once they terminate, but cannot be synchronized.
-		// joinable threads must have pthread_join called on them to release resources,
-		// but this allows thread sync.
+		// We can start the new thread in detached or joinable state.
+		// detached threads will release their resources once they terminate,
+		// but cannot be synchronized.
+		// joinable threads must have pthread_join called on them to release
+		// resources but this allows thread sync.
+		// detached threads are not supported by this API.
 		if (pthread_attr_setdetachstate(&attrib, PTHREAD_CREATE_JOINABLE) != 0)
 		{
-			return Result::failure("Unable to set pthread attach state");
+			assert("!Unable to set pthread attach state");
+			return nullptr;
 		}
 
-		thread.entry = entry;
-		thread.userdata = data;
+		PosixThread* thread = MEMORY_NEW(PosixThread, platform::get_platform_allocator());
+		thread->entry = entry;
+		thread->user_data = data;
 
-		int result = pthread_create(&thread.handle, &attrib, posix_thread_entry, &thread);
+		// try to launch
+		int result = pthread_create(&thread->handle, &attrib, posix_thread_entry, thread);
 		if (result == 0)
 		{
-			thread.state = THREAD_STATE_ACTIVE;
-			return Result::success();
+			// wait for signal from spawned thread.
+			sem_wait(&thread->launch);
+
+			thread->state = THREAD_STATE_ACTIVE;
+			return thread;
 		}
 		else
 		{
-			thread.state = THREAD_STATE_INACTIVE;
-			return Result::failure("Unable to create thread!");
+			MEMORY_DELETE(thread, platform::get_platform_allocator());
+			assert(!"PosixThread failed on pthread_create");
+			return nullptr;
 		}
 	}
 
-
-	int posix_thread_join(Thread& thread)
+	void posix_thread_destroy(Thread* thread)
 	{
-		int result = pthread_join(thread.handle, 0);
+		MEMORY_DELETE(thread, platform::get_platform_allocator());
+	}
 
+	int posix_thread_join(Thread* thread)
+	{
+		PosixThread* posix_thread = static_cast<PosixThread*>(thread);
+		posix_thread->state = THREAD_STATE_INACTIVE;
+
+		int result = pthread_join(posix_thread->handle, 0);
 		if (result == 0)
 		{
-			thread.state = THREAD_STATE_INACTIVE;
+
 			return 0;
 		}
 
@@ -103,19 +140,22 @@ namespace platform
 		usleep(milliseconds * MicrosecondsPerMillisecond);
 	}
 
-	void posix_thread_detach(Thread& thread)
+	uint64_t posix_thread_id()
 	{
-		int result = pthread_cancel(thread.handle);
-
-		assert(result == 0);
-		thread.state = THREAD_STATE_INACTIVE;
+		return static_cast<uint64_t>(pthread_self());
 	}
 
-	ThreadId posix_thread_id()
+	ThreadStatus posix_thread_status(Thread* thread)
 	{
-		return pthread_self();
+		PosixThread* posix_thread = static_cast<PosixThread*>(thread);
+		return posix_thread->state;
 	}
 
+	bool posix_thread_is_active(Thread* thread)
+	{
+		PosixThread* posix_thread = static_cast<PosixThread*>(thread);
+		return (posix_thread->state == THREAD_STATE_ACTIVE);
+	}
 
 	class PosixSemaphore : public platform::Semaphore
 	{
@@ -144,10 +184,13 @@ namespace platform
 		sem_wait(&posix_sem->handle);
 	}
 
-	void posix_semaphore_signal(Semaphore* sem)
+	void posix_semaphore_signal(Semaphore* sem, uint32_t count)
 	{
 		PosixSemaphore* posix_sem = static_cast<PosixSemaphore*>(sem);
-		sem_post(&posix_sem->handle);
+		for (size_t index = 0; index < count; ++index)
+		{
+			sem_post(&posix_sem->handle);
+		}
 	}
 
 	void posix_semaphore_destroy(Semaphore* sem)

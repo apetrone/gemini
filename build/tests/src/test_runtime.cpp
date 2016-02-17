@@ -232,6 +232,10 @@ bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, i
 /// @returns The value of destination post increment.
 int32_t atom_increment32(volatile int32_t* destination);
 
+// There are four types of memory barriers.
+// Jeff Preshing has an excellent series of articles
+// on his blog regarding these.
+
 #if !defined(GEMINI_USE_STD_ATOMIC)
 
 #if defined(PLATFORM_APPLE)
@@ -267,11 +271,22 @@ int32_t atom_increment32(volatile int32_t* destination);
 	{
 		return InterlockedIncrement((volatile long*)destination);
 	}
+#elif defined(PLATFORM_LINUX) && (defined(__clang__) || defined(__GNUC__))
+	#define complete_past_writes_before_future_writes() asm volatile("" ::: "memory");
+	#define complete_past_reads_before_future_reads() asm volatile("" ::: "memory");
+
+	bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, int32_t comparand)
+	{
+		return __sync_bool_compare_and_swap(destination, comparand, new_value);
+	}
+
+	int32_t atom_increment32(volatile int32_t* destination)
+	{
+		return __sync_add_and_fetch(destination, 1);
+	}
 
 #else
-	#include <pthread.h>
-	#define complete_past_writes_before_future_writes()
-	#define complete_past_reads_before_future_reads()
+	#error No atomics defined for this platform.
 #endif
 #endif // GEMINI_USE_STD_ATOMIC
 
@@ -452,9 +467,11 @@ namespace gemini
 
 	void job_queue::create_workers(size_t max_workers)
 	{
+		// reserve space
+		workers.resize(max_workers);
+
 		for (size_t index = 0; index < max_workers; ++index)
 		{
-			workers.push_back(worker_data());
 			worker_data* data = &workers[index];
 			data->worker_index = static_cast<uint32_t>(index);
 			data->queue = this;
@@ -596,7 +613,7 @@ int main(int, char**)
 	job_queue jq;
 	jq.create_workers(MAX_THREADS);
 
-	for (size_t index = 0; index < 1; ++index)
+	for (size_t index = 0; index < 5; ++index)
 	{
 		jq.push_back(print_string, "ALPHA: 0");
 		jq.push_back(print_string, "ALPHA: 1");

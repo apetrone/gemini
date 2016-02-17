@@ -161,9 +161,9 @@ UNITTEST(system)
 // ---------------------------------------------------------------------
 // thread
 // ---------------------------------------------------------------------
-void test_thread(void* /*data*/)
+void test_thread(platform::Thread* /*data*/)
 {
-	platform::ThreadId thread_id = platform::thread_id();
+	uint64_t thread_id = platform::thread_id();
 	LOGV("test_thread enter: %i\n", thread_id);
 
 	LOGV("test_thread exit\n");
@@ -171,11 +171,12 @@ void test_thread(void* /*data*/)
 
 UNITTEST(thread)
 {
-	platform::Thread thread;
-	platform::Result result = platform::thread_create(thread, test_thread, nullptr);
-	TEST_ASSERT(result.succeeded(), thread_create);
+	platform::Thread* thread = platform::thread_create(test_thread, nullptr);
+	TEST_ASSERT(thread, thread_create);
 
 	platform::thread_join(thread);
+
+	platform::thread_destroy(thread);
 }
 
 // ---------------------------------------------------------------------

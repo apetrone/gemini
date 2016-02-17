@@ -29,12 +29,17 @@
 
 namespace platform
 {
-	Result thread_create(Thread& thread, ThreadEntry entry, void* data)
+	Thread* thread_create(ThreadEntry entry, void* data)
 	{
-		return posix_thread_create(thread, entry, data);
+		return posix_thread_create(entry, data);
 	}
 
-	int thread_join(Thread& thread)
+	void thread_destroy(Thread* thread)
+	{
+		posix_thread_destroy(thread);
+	}
+
+	int thread_join(Thread* thread, uint32_t)
 	{
 		return posix_thread_join(thread);
 	}
@@ -44,14 +49,39 @@ namespace platform
 		posix_thread_sleep(milliseconds);
 	}
 
-	void thread_detach(Thread& thread)
-	{
-		posix_thread_detach(thread);
-	}
-
-	ThreadId thread_id()
+	uint64_t thread_id()
 	{
 		return posix_thread_id();
 	}
 
+	ThreadStatus thread_status(Thread* thread)
+	{
+		return posix_thread_status(thread);
+	}
+
+	bool thread_is_active(Thread* thread)
+	{
+		return posix_thread_is_active(thread);
+	}
+
+
+	Semaphore* semaphore_create(int32_t initial_count, int32_t max_count)
+	{
+		return posix_semaphore_create(initial_count, max_count);
+	}
+
+	void semaphore_wait(Semaphore* sem)
+	{
+		posix_semaphore_wait(sem);
+	}
+
+	void semaphore_signal(Semaphore* sem, uint32_t count)
+	{
+		posix_semaphore_signal(sem, count);
+	}
+
+	void semaphore_destroy(Semaphore* sem)
+	{
+		posix_semaphore_destroy(sem);
+	}
 } // namespace platform
