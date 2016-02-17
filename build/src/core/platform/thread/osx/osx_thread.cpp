@@ -61,7 +61,7 @@ namespace platform
 		return posix_thread_is_active(thread);
 	}
 
-	Semaphore* semaphore_create(int32_t initial_count, int32_t max_count)
+	Semaphore* semaphore_create(int32_t initial_count, uint32_t max_count)
 	{
 		return posix_semaphore_create(initial_count, max_count);
 	}

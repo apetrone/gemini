@@ -65,7 +65,7 @@ namespace platform
 	}
 
 
-	Semaphore* semaphore_create(int32_t initial_count, int32_t max_count)
+	Semaphore* semaphore_create(uint32_t initial_count, uint32_t max_count)
 	{
 		return posix_semaphore_create(initial_count, max_count);
 	}

@@ -174,7 +174,7 @@ namespace platform
 		}
 	};
 
-	Semaphore* posix_semaphore_create(int32_t initial_count, int32_t max_count)
+	Semaphore* posix_semaphore_create(uint32_t initial_count, uint32_t max_count)
 	{
 		return MEMORY_NEW(PosixSemaphore, platform::get_platform_allocator())(initial_count, max_count);
 	}

@@ -87,7 +87,7 @@ namespace platform
 	bool posix_thread_is_active(Thread* thread);
 
 
-	Semaphore* posix_semaphore_create(int32_t initial_count, int32_t max_count);
+	Semaphore* posix_semaphore_create(uint32_t initial_count, uint32_t max_count);
 	void posix_semaphore_wait(Semaphore* sem);
 	void posix_semaphore_signal(Semaphore* sem, uint32_t count);
 	void posix_semaphore_destroy(Semaphore* sem);
