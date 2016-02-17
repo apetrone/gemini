@@ -26,7 +26,7 @@
 
 // TODO: Break these up into separate atomic files?
 // At the moment, there isn't a clear architecture for that since
-// there OS AND compiler specifics to be organized.
+// there are OS AND compiler specifics to be organized.
 
 namespace gemini
 {
@@ -63,6 +63,6 @@ namespace gemini
 	}
 
 #else
-	#error No atomic interlocked functions defined for this platform.
+	#error No atomic synchronization functions defined for this platform.
 #endif
 } // namespace gemini
