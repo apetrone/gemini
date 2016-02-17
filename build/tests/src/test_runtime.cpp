@@ -458,7 +458,9 @@ namespace gemini
 
 	void job_queue::create_workers(size_t max_workers)
 	{
-		// reserve space
+		// Reserve space for worker data: this is required because Array<T>
+		// doesn't use re-alloc -- and once the data is passed
+		// to the individual threads on startup, it can blow up.
 		workers.resize(max_workers);
 
 		for (size_t index = 0; index < max_workers; ++index)
