@@ -425,16 +425,17 @@ namespace gemini
 	void job_queue::push_back(process_job execute_function, const char* data)
 	{
 		// This is only intended to be called from a single thread.
-		int32_t write_index = (next_write_index + 1) % (MAX_QUEUE_ITEMS - 1);
+		int32_t write_index = (next_write_index + 1) & (MAX_QUEUE_ITEMS - 1);
 
 		// The queue is full. Attempting to write at this stage
 		// would invalidate the queue's state.
 		assert(write_index != next_read_index);
 
+		assert(next_write_index < MAX_QUEUE_ITEMS);
+		LOGV("set '%s' to job %i\n", data, (int32_t)next_write_index);
 		job* entry = &queue[static_cast<size_t>(next_write_index)];
 		entry->execute = execute_function;
 		entry->data = data;
-		entry->valid = 1;
 
 		// Needed because the compiler OR processor could re-order writes.
 		PLATFORM_MEMORY_FENCE();
@@ -457,10 +458,13 @@ namespace gemini
 		{
 			if (atom_compare_and_swap32(&next_read_index, incremented_read_index, read_index))
 			{
+				read_index = (read_index) & (MAX_QUEUE_ITEMS - 1);
+				LOGV("thread: 0x%x taking job: %i\n", platform::thread_id(), read_index);
+				assert(read_index < MAX_QUEUE_ITEMS);
 				job_queue::job& item = queue[read_index];
 				entry.data = item.data;
 				entry.execute = item.execute;
-				entry.valid = item.valid;
+				entry.valid = 1;
 				PLATFORM_MEMORY_FENCE();
 			}
 		}
@@ -493,43 +497,101 @@ void print_string(const char* data)
 // configloader
 // ---------------------------------------------------------------------
 
-int main(int, char**)
+int main(int, char** argv)
 {
 	gemini::core_startup();
 	gemini::runtime_startup("arcfusion.net/gemini/test_runtime");
+
+	size_t max_iterations = atoi(argv[1]);
+	if (max_iterations > 6)
+		max_iterations = 6;
+
+	LOGV("using iterations: %i (capped at 5)\n", max_iterations);
 
 	using namespace gemini;
 
 	job_queue jq;
 	jq.create_workers(MAX_THREADS);
 
-	for (size_t index = 0; index < 64; ++index)
+	const char* iterations[] = {
+		"ALPHA: 0",
+		"ALPHA: 1",
+		"ALPHA: 2",
+		"ALPHA: 3",
+		"ALPHA: 4",
+		"ALPHA: 5",
+		"ALPHA: 6",
+		"ALPHA: 7",
+		"ALPHA: 8",
+		"ALPHA: 9",
+		"BETA: 0",
+		"BETA: 1",
+		"BETA: 2",
+		"BETA: 3",
+		"BETA: 4",
+		"BETA: 5",
+		"BETA: 6",
+		"BETA: 7",
+		"BETA: 8",
+		"BETA: 9",
+		"DELTA: 0",
+		"DELTA: 1",
+		"DELTA: 2",
+		"DELTA: 3",
+		"DELTA: 4",
+		"DELTA: 5",
+		"DELTA: 6",
+		"DELTA: 7",
+		"DELTA: 8",
+		"DELTA: 9",
+		"EPSILON: 0",
+		"EPSILON: 1",
+		"EPSILON: 2",
+		"EPSILON: 3",
+		"EPSILON: 4",
+		"EPSILON: 5",
+		"EPSILON: 6",
+		"EPSILON: 7",
+		"EPSILON: 8",
+		"EPSILON: 9",
+		"FOXTROT: 0",
+		"FOXTROT: 1",
+		"FOXTROT: 2",
+		"FOXTROT: 3",
+		"FOXTROT: 4",
+		"FOXTROT: 5",
+		"FOXTROT: 6",
+		"FOXTROT: 7",
+		"FOXTROT: 8",
+		"FOXTROT: 9",
+		"GAMMA: 0",
+		"GAMMA: 1",
+		"GAMMA: 2",
+		"GAMMA: 3",
+		"GAMMA: 4",
+		"GAMMA: 5",
+		"GAMMA: 6",
+		"GAMMA: 7",
+		"GAMMA: 8",
+		"GAMMA: 9"
+	};
+
+	for (size_t index = 0; index < max_iterations; ++index)
 	{
-		jq.push_back(print_string, "ALPHA: 0");
-		jq.push_back(print_string, "ALPHA: 1");
-		jq.push_back(print_string, "ALPHA: 2");
-		jq.push_back(print_string, "ALPHA: 3");
-		jq.push_back(print_string, "ALPHA: 4");
-		jq.push_back(print_string, "ALPHA: 5");
-		jq.push_back(print_string, "ALPHA: 6");
-		jq.push_back(print_string, "ALPHA: 7");
-		jq.push_back(print_string, "ALPHA: 8");
-		jq.push_back(print_string, "ALPHA: 9");
-
-		platform::thread_sleep(250);
-
-		jq.push_back(print_string, "BETA: 0");
-		jq.push_back(print_string, "BETA: 1");
-		jq.push_back(print_string, "BETA: 2");
-		jq.push_back(print_string, "BETA: 3");
-		jq.push_back(print_string, "BETA: 4");
-		jq.push_back(print_string, "BETA: 5");
-		jq.push_back(print_string, "BETA: 6");
-		jq.push_back(print_string, "BETA: 7");
-		jq.push_back(print_string, "BETA: 8");
-		jq.push_back(print_string, "BETA: 9");
+		jq.push_back(print_string, iterations[(index*10)+0]);
+		jq.push_back(print_string, iterations[(index*10)+1]);
+		jq.push_back(print_string, iterations[(index*10)+2]);
+		jq.push_back(print_string, iterations[(index*10)+3]);
+		jq.push_back(print_string, iterations[(index*10)+4]);
+		jq.push_back(print_string, iterations[(index*10)+5]);
+		jq.push_back(print_string, iterations[(index*10)+6]);
+		jq.push_back(print_string, iterations[(index*10)+7]);
+		jq.push_back(print_string, iterations[(index*10)+8]);
+		jq.push_back(print_string, iterations[(index*10)+9]);
 
 		jq.wait_for_jobs_to_complete();
+
+		platform::thread_sleep(250);
 	}
 
 	LOGV("destroying workers...\n");
