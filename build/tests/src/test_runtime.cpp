@@ -26,6 +26,7 @@
 
 #include <core/core.h>
 #include <core/logging.h>
+#include <core/atomic.h>
 
 #include <platform/platform.h>
 
@@ -208,120 +209,6 @@ namespace gemini
 		return handle;
 	}
 }
-
-// C11 atomics
-// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
-
-/// @brief Perform an atomic compare and swap
-/// @returns true if the operation succeeded (destination now equals new_value)
-bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, int32_t comparand);
-
-/// @brief Atomically increments an int32.
-/// @returns The value of destination post increment.
-int32_t atom_increment32(volatile int32_t* destination);
-
-// There are four types of memory barriers.
-// Jeff Preshing has an excellent series of articles
-// on his blog regarding these.
-
-#if defined(PLATFORM_APPLE)
-	#include <pthread.h>
-	#include <libkern/OSAtomic.h>
-
-	// docs: "This function serves as both a read and write barrier."
-	#define complete_past_writes_before_future_writes() OSMemoryBarrier()
-	#define complete_past_reads_before_future_reads() OSMemoryBarrier()
-
-	bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, int32_t comparand)
-	{
-		return OSAtomicCompareAndSwap32Barrier(comparand, new_value, destination);
-	}
-
-	int32_t atom_increment32(volatile int32_t* destination)
-	{
-		return OSAtomicIncrement32(destination);
-	}
-
-#elif defined(PLATFORM_WINDOWS)
-	// os (_WriteBarrier) + processor fence (_mm_sfence())
-	#define complete_past_writes_before_future_writes() _WriteBarrier()
-	#define complete_past_reads_before_future_reads() _ReadBarrier()
-
-	bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, int32_t comparand)
-	{
-		long initial_destination = InterlockedCompareExchange(reinterpret_cast<volatile long*>(destination), new_value, comparand);
-		return (initial_destination == comparand);
-	}
-
-	int32_t atom_increment32(volatile int32_t* destination)
-	{
-		return InterlockedIncrement((volatile long*)destination);
-	}
-#elif defined(PLATFORM_LINUX) && (defined(__clang__) || defined(__GNUC__))
-	#define complete_past_writes_before_future_writes() asm volatile("" ::: "memory");
-	#define complete_past_reads_before_future_reads() asm volatile("" ::: "memory");
-
-	bool atom_compare_and_swap32(volatile int32_t* destination, int32_t new_value, int32_t comparand)
-	{
-		return __sync_bool_compare_and_swap(destination, comparand, new_value);
-	}
-
-	int32_t atom_increment32(volatile int32_t* destination)
-	{
-		return __sync_add_and_fetch(destination, 1);
-	}
-
-#else
-	#error No atomics defined for this platform.
-
-//#include <atomic>
-//
-//#define complete_past_writes_before_future_writes() std::atomic_thread_fence(std::memory_order_release)
-//#define complete_past_reads_before_future_reads() std::atomic_thread_fence(std::memory_order_acquire)
-
-#endif
-
-template <class T>
-struct atomic
-{
-	typedef volatile T value_type;
-	value_type value;
-
-	atomic(const T& initial_value = T())
-		: value(initial_value)
-	{
-	}
-
-	~atomic()
-	{
-	}
-
-	atomic& operator=(const atomic<T>& other)
-	{
-		value = other.value;
-		return *this;
-	}
-
-	operator value_type() const
-	{
-		return value;
-	}
-
-	const T operator++()
-	{
-		return ++value;
-	}
-
-	const T operator++(int)
-	{
-		return value++;
-	}
-
-	value_type* operator&()
-	{
-		return &value;
-	}
-};
 
 const size_t MAX_THREADS = 3;
 namespace gemini
@@ -542,7 +429,7 @@ namespace gemini
 		entry->data = data;
 
 		// Needed because the compiler OR processor could re-order writes.
-		complete_past_writes_before_future_writes();
+		PLATFORM_MEMORY_FENCE();
 		++total_jobs;
 
 		wake_workers();
@@ -564,7 +451,7 @@ namespace gemini
 				entry.data = item.data;
 				entry.execute = item.execute;
 				entry.valid = 1;
-				complete_past_reads_before_future_reads();
+				PLATFORM_MEMORY_FENCE();
 			}
 		}
 		return entry;
