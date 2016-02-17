@@ -47,17 +47,17 @@
 	#include <intrin.h>
 	#define PLATFORM_MEMORY_FENCE() _ReadWriteBarrier()
 #elif defined(PLATFORM_LINUX) && (defined(__clang__) || defined(__GNUC__))
-	#if defined(_M_ARM)
+	#if defined(__arm__)
 		// This is an ARM processor.
-		#if _M_ARM == 7
+		#if defined(__ARM_ARCH_7A__) || (defined(__ARM_ARCH) && __ARM_ARCH == 7)
 			// Data Memory Barrier: ensures all explicit memory accesses
 			// before the instruction complete before any explicit memory
 			// accesses after the instruction.
-			#define PLATFORM_MEMORY_FENCE() asm volatile("" ::: "dmb")
+			#define PLATFORM_MEMORY_FENCE() asm volatile("dmb")
 		#else
 			#error PLATFORM_MEMORY_FENCE is undefined for this ARM architecture.
 		#endif
-	#elif defined(__M_X64) || defined(__aarch64__) || defined(_M_IX86) || defined(_X86_)
+	#elif defined(__M_X64) || defined(__aarch64__) || defined(_M_IX86) || defined(_X86_) || defined(__i386__) || defined(i386)
 		#define PLATFORM_MEMORY_FENCE() asm volatile("" ::: "memory")
 	#else
 		#error PLATFORM_MEMORY_FENCE is undefined for this architecture.
