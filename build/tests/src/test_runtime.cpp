@@ -299,7 +299,7 @@ struct atomic
 	value_type value;
 
 	atomic(const T& initial_value = T())
-	: value(initial_value)
+		: value(initial_value)
 	{
 	}
 
@@ -360,11 +360,13 @@ namespace gemini
 		};
 
 	private:
+		static const size_t MAX_QUEUE_ITEMS = 256;
+
 		atomic<int32_t> total_jobs;
 		atomic<int32_t> next_entry;
 		atomic<int32_t> jobs_completed;
 
-		job queue[256];
+		job queue[MAX_QUEUE_ITEMS];
 		Array<worker_data> workers;
 
 		platform::Semaphore* semaphore;
@@ -613,7 +615,7 @@ int main(int, char**)
 	job_queue jq;
 	jq.create_workers(MAX_THREADS);
 
-	for (size_t index = 0; index < 5; ++index)
+	for (size_t index = 0; index < 1; ++index)
 	{
 		jq.push_back(print_string, "ALPHA: 0");
 		jq.push_back(print_string, "ALPHA: 1");
