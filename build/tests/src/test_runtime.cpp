@@ -347,7 +347,7 @@ namespace gemini
 			uint32_t worker_index;
 			platform::Thread* thread;
 			class job_queue* queue;
-			atomic<int32_t> is_active;
+			int32_t is_active;
 		};
 
 		typedef void (*process_job)(const char* user_data);
