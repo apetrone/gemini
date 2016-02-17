@@ -236,10 +236,13 @@ namespace gemini
 		};
 
 	private:
-		static const size_t MAX_QUEUE_ITEMS = 256;
+		// this must be a power of two
+		static const size_t MAX_QUEUE_ITEMS = 16;
+		static_assert(((MAX_QUEUE_ITEMS - 1) & MAX_QUEUE_ITEMS) == 0, "MAX_QUEUE_ITEMS must be a power of two!");
 
 		atomic<int32_t> total_jobs;
-		atomic<int32_t> next_entry;
+		atomic<int32_t> next_write_index;
+		atomic<int32_t> next_read_index;
 		atomic<int32_t> jobs_completed;
 
 		job queue[MAX_QUEUE_ITEMS];
@@ -248,11 +251,12 @@ namespace gemini
 		platform::Semaphore* semaphore;
 
 	public:
-		job_queue()
-			: total_jobs(0)
-			, next_entry(0)
-			, jobs_completed(0)
-			, semaphore(nullptr)
+		job_queue() :
+			total_jobs(0),
+			next_write_index(0),
+			next_read_index(0),
+			jobs_completed(0),
+			semaphore(nullptr)
 		{
 		}
 
@@ -334,9 +338,9 @@ namespace gemini
 			else if (worker->is_active) // can this thread sleep?
 			{
 				// no available jobs. wait for signal.
-				LOGV("---------------> thread 0x%x going to sleep...\n", platform::thread_id());
+//				LOGV("---------------> thread 0x%x going to sleep...\n", platform::thread_id());
 				worker->queue->sleep_worker();
-				LOGV("---------------> thread 0x%x waking up...\n", platform::thread_id());
+//				LOGV("---------------> thread 0x%x waking up...\n", platform::thread_id());
 			}
 		}
 
@@ -420,16 +424,21 @@ namespace gemini
 
 	void job_queue::push_back(process_job execute_function, const char* data)
 	{
-		// this is only intended to be called from a single thread.
-		// otherwise, this should have a load/acquire barrier
+		// This is only intended to be called from a single thread.
+		int32_t write_index = (next_write_index + 1) % (MAX_QUEUE_ITEMS - 1);
 
-		int32_t index = total_jobs;
-		job* entry = &queue[static_cast<size_t>(index)];
+		// The queue is full. Attempting to write at this stage
+		// would invalidate the queue's state.
+		assert(write_index != next_read_index);
+
+		job* entry = &queue[static_cast<size_t>(next_write_index)];
 		entry->execute = execute_function;
 		entry->data = data;
+		entry->valid = 1;
 
 		// Needed because the compiler OR processor could re-order writes.
 		PLATFORM_MEMORY_FENCE();
+		next_write_index = write_index;
 		++total_jobs;
 
 		wake_workers();
@@ -442,15 +451,16 @@ namespace gemini
 		entry.execute = nullptr;
 		entry.valid = 0;
 
-		int32_t next_index = next_entry;
-		if (next_index < total_jobs)
+		int32_t read_index = next_read_index;
+		int32_t incremented_read_index = (read_index + 1) & (MAX_QUEUE_ITEMS - 1);
+		if (read_index != next_write_index)
 		{
-			if (atom_compare_and_swap32(&next_entry, next_index + 1, next_index))
+			if (atom_compare_and_swap32(&next_read_index, incremented_read_index, read_index))
 			{
-				job_queue::job& item = queue[next_index];
+				job_queue::job& item = queue[read_index];
 				entry.data = item.data;
 				entry.execute = item.execute;
-				entry.valid = 1;
+				entry.valid = item.valid;
 				PLATFORM_MEMORY_FENCE();
 			}
 		}
@@ -493,7 +503,7 @@ int main(int, char**)
 	job_queue jq;
 	jq.create_workers(MAX_THREADS);
 
-	for (size_t index = 0; index < 1; ++index)
+	for (size_t index = 0; index < 64; ++index)
 	{
 		jq.push_back(print_string, "ALPHA: 0");
 		jq.push_back(print_string, "ALPHA: 1");
@@ -518,9 +528,9 @@ int main(int, char**)
 		jq.push_back(print_string, "BETA: 7");
 		jq.push_back(print_string, "BETA: 8");
 		jq.push_back(print_string, "BETA: 9");
-	}
 
-	jq.wait_for_jobs_to_complete();
+		jq.wait_for_jobs_to_complete();
+	}
 
 	LOGV("destroying workers...\n");
 	jq.destroy_workers();
