@@ -209,18 +209,6 @@ namespace gemini
 	}
 }
 
-//#define GEMINI_USE_STD_ATOMIC 1
-
-#if defined(GEMINI_USE_STD_ATOMIC)
-#include <atomic>
-
-#define complete_past_writes_before_future_writes() std::atomic_thread_fence(std::memory_order_release)
-#define complete_past_reads_before_future_reads() std::atomic_thread_fence(std::memory_order_acquire)
-
-#endif
-
-
-
 // C11 atomics
 // https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
 
@@ -235,8 +223,6 @@ int32_t atom_increment32(volatile int32_t* destination);
 // There are four types of memory barriers.
 // Jeff Preshing has an excellent series of articles
 // on his blog regarding these.
-
-#if !defined(GEMINI_USE_STD_ATOMIC)
 
 #if defined(PLATFORM_APPLE)
 	#include <pthread.h>
@@ -287,10 +273,13 @@ int32_t atom_increment32(volatile int32_t* destination);
 
 #else
 	#error No atomics defined for this platform.
-#endif
-#endif // GEMINI_USE_STD_ATOMIC
 
-// memory write ordering (guaranteed on some processors, but compiler won't).
+//#include <atomic>
+//
+//#define complete_past_writes_before_future_writes() std::atomic_thread_fence(std::memory_order_release)
+//#define complete_past_reads_before_future_reads() std::atomic_thread_fence(std::memory_order_acquire)
+
+#endif
 
 template <class T>
 struct atomic
@@ -506,7 +495,7 @@ namespace gemini
 		for (worker_data& worker : workers)
 		{
 			// wait for the threads to join in a timely fashion
-			platform::thread_join(worker.thread, 2.5 * MillisecondsPerSecond);
+			platform::thread_join(worker.thread, 2500);
 
 			// cleanup memory
 			platform::thread_destroy(worker.thread);
