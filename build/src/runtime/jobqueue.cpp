@@ -28,8 +28,8 @@
 #include <platform/platform.h>
 #include <core/logging.h>
 
-#define JQDEBUG NULL_MACRO
-//#define JQDEBUG JQDEBUG
+#define JQDEBUG(...) NULL_MACRO
+//#define JQDEBUG LOGV
 
 namespace gemini
 {
