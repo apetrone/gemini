@@ -127,6 +127,6 @@ namespace gemini
 		};
 
 
-		DECLARE_INTERFACE(IPhysicsInterface);
+		GEMINI_DECLARE_INTERFACE(IPhysicsInterface);
 	} // namespace physics
 } // namespace gemini

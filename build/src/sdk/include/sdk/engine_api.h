@@ -106,6 +106,6 @@ namespace gemini
 
 	namespace engine
 	{
-		DECLARE_INTERFACE(IEngineInterface);
+		GEMINI_DECLARE_INTERFACE(IEngineInterface);
 	}
 } // namespace gemini

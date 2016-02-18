@@ -28,6 +28,6 @@ namespace gemini
 {
 	namespace audio
 	{
-		IMPLEMENT_INTERFACE(IAudioInterface)
+		GEMINI_IMPLEMENT_INTERFACE(IAudioInterface)
 	} // namespace audio
 } // namespace gemini

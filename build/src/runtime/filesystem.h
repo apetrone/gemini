@@ -74,7 +74,7 @@ namespace core
 		};
 
 
-		DECLARE_INTERFACE(IFileSystem);
+		GEMINI_DECLARE_INTERFACE(IFileSystem);
 
 
 		// read an audio file to memory

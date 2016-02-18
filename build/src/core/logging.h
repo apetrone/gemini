@@ -113,6 +113,6 @@ namespace core
 //			virtual void shutdown() = 0;
 		}; // ILog
 
-		DECLARE_INTERFACE(ILog);
+		GEMINI_DECLARE_INTERFACE(ILog);
 	} // namespace logging
 } // namespace core
