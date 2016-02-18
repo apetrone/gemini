@@ -112,6 +112,24 @@ class TestRender : public kernel::IKernel,
 		render2::Texture* notexture;
 
 		size_t total_font_vertices;
+
+		TestRenderState() :
+			native_window(nullptr),
+			other_window(nullptr),
+			device(nullptr),
+			pipeline(nullptr),
+			texture_pipeline(nullptr),
+			font_pipeline(nullptr),
+			line_pipeline(nullptr),
+			vertex_buffer(nullptr),
+			textured_buffer(nullptr),
+			font_buffer(nullptr),
+			line_buffer(nullptr),
+			checker(nullptr),
+			notexture(nullptr),
+			total_font_vertices(0)
+		{
+		}
 	};
 
 	typedef void (*test_state_callback)(TestRenderState& state);
