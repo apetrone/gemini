@@ -34,8 +34,8 @@ namespace render2
 	class ConstantBuffer
 	{
 	public:
-		LIBRARY_EXPORT void set(const char* name, const void* data);
-		LIBRARY_EXPORT const void* get(const char* name);
+		void set(const char* name, const void* data);
+		const void* get(const char* name);
 
 	private:
 		typedef HashSet< ::core::StackString<32>, const void* > hashset_type;

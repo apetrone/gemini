@@ -287,7 +287,7 @@ namespace renderer
 
 namespace render2
 {
-	LIBRARY_EXPORT ResourceProvider::~ResourceProvider()
+	ResourceProvider::~ResourceProvider()
 	{
 	}
 
@@ -391,12 +391,12 @@ namespace render2
 		MEMORY_DELETE(device, core::memory::global_allocator());
 	}
 
-	LIBRARY_EXPORT void set_resource_provider(ResourceProvider* provider)
+	void set_resource_provider(ResourceProvider* provider)
 	{
 		detail::resource_provider = provider;
 	}
 
-	LIBRARY_EXPORT ResourceProvider* get_resource_provider()
+	ResourceProvider* get_resource_provider()
 	{
 		// If you hit this, there was no valid resource_provider set.
 		assert(detail::resource_provider != nullptr);

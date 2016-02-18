@@ -151,7 +151,7 @@ namespace kernel
 		short wheel_direction;
 		bool is_down;
 
-		LIBRARY_EXPORT MouseEvent() :
+		MouseEvent() :
 			button(0),
 			mx(0),
 			my(0),
@@ -186,11 +186,11 @@ namespace kernel
 		bool is_down;
 
 
-		LIBRARY_EXPORT float normalized_value() const;
+		float normalized_value() const;
 	}; // GameControllerEvent
 
-	LIBRARY_EXPORT void assign_listener_for_eventtype(kernel::EventType type, void * listener);
-	LIBRARY_EXPORT void* find_listener_for_eventtype(kernel::EventType type);
+	void assign_listener_for_eventtype(kernel::EventType type, void * listener);
+	void* find_listener_for_eventtype(kernel::EventType type);
 
 	//
 	// event support classes

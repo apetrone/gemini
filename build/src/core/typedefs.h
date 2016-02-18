@@ -34,27 +34,6 @@
 // Ex: #define MyMacro(x) NULL_MACRO
 #define NULL_MACRO (void(0))
 
-//
-// Import / Export Macros
-//
-#if defined(PLATFORM_WINDOWS)
-	#define LIBRARY_EXPORT __declspec(dllexport)
-	#define LIBRARY_IMPORT __declspec(dllimport)
-	#define LIBRARY_CEXPORT extern "C" __declspec(dllexport)
-#else
-	#define LIBRARY_EXPORT
-	#define LIBRARY_IMPORT
-	#define LIBRARY_CEXPORT extern "C"
-#endif
-
-#if defined (LIBRARY_SDK)
-	#define	LIBRARY_SDK_EXPORT LIBRARY_EXPORT
-	#define LIBRARY_SDK_CEXPORT LIBRARY_CEXPORT
-#else
-	#define LIBRARY_SDK_EXPORT LIBRARY_IMPORT
-	#define LIBRARY_SDK_CEXPORT
-#endif
-
 // unit <desired> per <have>
 const double SecondsPerMillisecond = 1.0e-3;
 const double MillisecondsPerSecond = 1.0e3;

@@ -275,19 +275,19 @@ namespace input
 		uint8_t state;
 
 		// handle a press or release event
-		LIBRARY_EXPORT void press_release( bool is_down );
+		void press_release( bool is_down );
 
 		// update this button state for this frame
-		LIBRARY_EXPORT void update();
+		void update();
 
 		// returns whether the button is down or not this frame
-		LIBRARY_EXPORT bool is_down() const;
+		bool is_down() const;
 
 		// returns whether or not the button was just pressed
-		LIBRARY_EXPORT bool was_pressed() const;
+		bool was_pressed() const;
 
 		// returns whether or not the button was just released
-		LIBRARY_EXPORT bool was_released() const;
+		bool was_released() const;
 	}; // ButtonState
 
 
@@ -300,10 +300,10 @@ namespace input
 	class InputDevice
 	{
 	public:
-		LIBRARY_EXPORT virtual ~InputDevice();
+		virtual ~InputDevice();
 
-		LIBRARY_EXPORT virtual void reset() = 0;
-		LIBRARY_EXPORT virtual void update() = 0;
+		virtual void reset() = 0;
+		virtual void update() = 0;
 	}; // InputDevice
 
 	class KeyboardInput : public InputDevice
@@ -311,10 +311,10 @@ namespace input
 		ButtonState keys[ BUTTON_COUNT ];
 
 	public:
-		LIBRARY_EXPORT virtual void reset();
-		LIBRARY_EXPORT virtual void update();
+		virtual void reset();
+		virtual void update();
 
-		LIBRARY_EXPORT void inject_key_event(int key, bool is_down);
+		void inject_key_event(int key, bool is_down);
 
 		inline const ButtonState& get_key(input::Button key) { return keys[key]; }
 
@@ -338,24 +338,24 @@ namespace input
 
 
 	public:
-		LIBRARY_EXPORT virtual void reset();
-		LIBRARY_EXPORT virtual void update();
+		virtual void reset();
+		virtual void update();
 
-		LIBRARY_EXPORT void inject_mouse_move(int absolute_x, int absolute_y);
-		LIBRARY_EXPORT void inject_mouse_delta(int dx, int dy);
-		LIBRARY_EXPORT void inject_mouse_button( MouseButton button_id, bool is_down );
-		LIBRARY_EXPORT void inject_mouse_wheel( int direction );
+		void inject_mouse_move(int absolute_x, int absolute_y);
+		void inject_mouse_delta(int dx, int dy);
+		void inject_mouse_button( MouseButton button_id, bool is_down );
+		void inject_mouse_wheel( int direction );
 
 		//
 		// Accessors
-		LIBRARY_EXPORT bool is_down(MouseButton button);
-		LIBRARY_EXPORT bool was_released(MouseButton button);
+		bool is_down(MouseButton button);
+		bool was_released(MouseButton button);
 
 		// retrieve the current mouse position in screen coordinates
-		LIBRARY_EXPORT void mouse_position(int& x, int& y);
+		void mouse_position(int& x, int& y);
 
-		LIBRARY_EXPORT void mouse_delta(int& dx, int& dy);
-		LIBRARY_EXPORT void reset_delta()
+		void mouse_delta(int& dx, int& dy);
+		void reset_delta()
 		{
 			cursor_delta[0] = cursor_delta[1] = 0;
 		}
@@ -379,16 +379,16 @@ namespace input
 		TouchState touches[ MAX_INPUTSTATE_TOUCHES ];
 
 	public:
-		LIBRARY_EXPORT virtual void reset();
-		LIBRARY_EXPORT virtual void update();
+		virtual void reset();
+		virtual void update();
 
-		LIBRARY_EXPORT void touch_began( int touchid, int x, int y );
-		LIBRARY_EXPORT void touch_drag( int touchid, int x, int y );
+		void touch_began( int touchid, int x, int y );
+		void touch_drag( int touchid, int x, int y );
 		//	void touch_canceled( int touchid, int x, int y );
-		LIBRARY_EXPORT void touch_end( int touchid, int x, int y );
+		void touch_end( int touchid, int x, int y );
 
 		// retrieve touch from index
-		LIBRARY_EXPORT void touch_at_index( TouchState & touch, int touch_id );
+		void touch_at_index( TouchState & touch, int touch_id );
 	}; // TouchInput
 
 
@@ -406,16 +406,16 @@ namespace input
 		ButtonState buttons[MAX_JOYSTICK_BUTTONS];
 		AxisState axes[MAX_JOYSTICK_AXES];
 
-		LIBRARY_EXPORT virtual void reset();
-		LIBRARY_EXPORT virtual void update();
+		virtual void reset();
+		virtual void update();
 	}; // JoystickInput
 
 
-	LIBRARY_EXPORT void startup(void);
-	LIBRARY_EXPORT void shutdown(void);
-	LIBRARY_EXPORT void update(void);
+	void startup(void);
+	void shutdown(void);
+	void update(void);
 
-	LIBRARY_EXPORT const char* mouse_button_name(unsigned int button);
-	LIBRARY_EXPORT const char* key_name(unsigned int key);
-	LIBRARY_EXPORT const char* gamepad_name(unsigned int button);
+	const char* mouse_button_name(unsigned int button);
+	const char* key_name(unsigned int key);
+	const char* gamepad_name(unsigned int button);
 } // namespace input

@@ -40,6 +40,6 @@ namespace gemini
 	// This is called after the filesystem instance is created, but before
 	// any other operations. It allows the caller to setup the filesystem
 	// paths in a custom fashion.
-	LIBRARY_EXPORT platform::Result runtime_startup(const char* application_data_path, std::function<void(const char*)> custom_path_setup = nullptr);
-	LIBRARY_EXPORT void runtime_shutdown();
+	platform::Result runtime_startup(const char* application_data_path, std::function<void(const char*)> custom_path_setup = nullptr);
+	void runtime_shutdown();
 } // namespace gemini

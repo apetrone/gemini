@@ -89,7 +89,7 @@ namespace gemini
 
 	namespace debugdraw
 	{
-		DECLARE_INTERFACE(IDebugDraw);
+		GEMINI_DECLARE_INTERFACE(IDebugDraw);
 	} // namespace debugdraw
 
 } // namespace gemini

@@ -55,7 +55,7 @@ namespace render2
 		void* data[2];
 		size_t params[4];
 
-		LIBRARY_EXPORT Command(CommandType command_type = COMMAND_INVALID,
+		Command(CommandType command_type = COMMAND_INVALID,
 				void* data0 = 0,
 				void* data1 = 0,
 				size_t param0 = 0,
@@ -69,7 +69,7 @@ namespace render2
 	// ---------------------------------------------------------------------
 	struct Pass
 	{
-		LIBRARY_EXPORT Pass() :
+		Pass() :
 			target(nullptr),
 			clear_color(false),
 			clear_depth(false),
@@ -80,7 +80,7 @@ namespace render2
 			color(0, 0, 0, 0);
 		}
 
-		LIBRARY_EXPORT void color(float red, float green, float blue, float alpha);
+		void color(float red, float green, float blue, float alpha);
 
 		// color attachments (4)
 		// depth attachment
@@ -103,8 +103,8 @@ namespace render2
 		Pass pass;
 		Array<Command> commands;
 
-		LIBRARY_EXPORT CommandQueue(const Pass& pass = Pass());
-		LIBRARY_EXPORT void add_command(const Command& command);
-		LIBRARY_EXPORT void reset();
+		CommandQueue(const Pass& pass = Pass());
+		void add_command(const Command& command);
+		void reset();
 	};
 } // namespace render2

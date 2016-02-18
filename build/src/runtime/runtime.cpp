@@ -92,7 +92,7 @@ namespace gemini
 
 	// initialize handlers
 
-	LIBRARY_EXPORT platform::Result runtime_startup(const char* application_data_path, std::function<void(const char*)> custom_path_setup)
+	platform::Result runtime_startup(const char* application_data_path, std::function<void(const char*)> custom_path_setup)
 	{
 		platform::PathString root_path = platform::get_program_directory();
 		platform::PathString content_path = platform::fs_content_directory();
@@ -157,7 +157,7 @@ namespace gemini
 		return platform::Result::success();
 	}
 
-	LIBRARY_EXPORT void runtime_shutdown()
+	void runtime_shutdown()
 	{
 		core::filesystem::instance()->shutdown();
 

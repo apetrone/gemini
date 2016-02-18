@@ -71,21 +71,21 @@ namespace gui
 		void draw_float(Renderer* renderer, float value, const Point& pt, const gemini::Color& color, gui::render::CommandList& render_commands);
 
 	public:
-		LIBRARY_EXPORT Graph(Panel* parent);
-		LIBRARY_EXPORT virtual ~Graph();
+		Graph(Panel* parent);
+		virtual ~Graph();
 
-		LIBRARY_EXPORT void create_samples(uint32_t max_samples, uint32_t max_channels);
-		LIBRARY_EXPORT void configure_channel(uint32_t channel_index, const gemini::Color& color/*, const gemini::Color& min, const gemini::Color& max*/);
-		LIBRARY_EXPORT void enable_baseline(bool enabled, float value = 0.0f, const gemini::Color& color = gemini::Color());
-		LIBRARY_EXPORT bool channel_in_range(uint32_t channel_index) const;
-		LIBRARY_EXPORT void record_value(float value, uint32_t channel_index);
-		LIBRARY_EXPORT void set_range(float min_range, float max_range);
+		void create_samples(uint32_t max_samples, uint32_t max_channels);
+		void configure_channel(uint32_t channel_index, const gemini::Color& color/*, const gemini::Color& min, const gemini::Color& max*/);
+		void enable_baseline(bool enabled, float value = 0.0f, const gemini::Color& color = gemini::Color());
+		bool channel_in_range(uint32_t channel_index) const;
+		void record_value(float value, uint32_t channel_index);
+		void set_range(float min_range, float max_range);
 
-		LIBRARY_EXPORT void set_font(const char* filename, size_t pixel_size);
-		LIBRARY_EXPORT virtual void set_background_color(const gemini::Color& color);
-		LIBRARY_EXPORT virtual void set_foreground_color(const gemini::Color& color);
+		void set_font(const char* filename, size_t pixel_size);
+		virtual void set_background_color(const gemini::Color& color);
+		virtual void set_foreground_color(const gemini::Color& color);
 
 		// Panel overrides
-		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
+		virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 	}; // Graph
 } // namespace gui

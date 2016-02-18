@@ -35,15 +35,15 @@ namespace gui
 	class Slider : public gui::Panel
 	{
 	public:
-		LIBRARY_EXPORT Slider(Panel* parent);
+		Slider(Panel* parent);
 
-		LIBRARY_EXPORT virtual void handle_event(gui::EventArgs& args) override;
+		virtual void handle_event(gui::EventArgs& args) override;
 
-		LIBRARY_EXPORT virtual void update(gui::Compositor* compositor, float delta_seconds) override;
-		LIBRARY_EXPORT virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands);
+		virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands);
 
-		LIBRARY_EXPORT virtual void set_value(float new_value);
-		LIBRARY_EXPORT virtual float get_value() const { return current_value; }
+		virtual void set_value(float new_value);
+		virtual float get_value() const { return current_value; }
 
 		gemini::DelegateHandler<float> on_value_changed;
 

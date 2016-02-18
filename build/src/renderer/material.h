@@ -81,7 +81,7 @@ namespace renderer
 		// to this material such that the correct shader can be found and used when rendering
 		void calculate_requirements();
 
-		MaterialParameter * parameter_by_name(const std::string& name);
+		MaterialParameter* parameter_by_name(const std::string& name);
 
 		void set_parameter_name( unsigned int id, const char * name );
 		void set_parameter_vec4( unsigned int id, const glm::vec4 & vec );

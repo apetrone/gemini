@@ -86,28 +86,28 @@ namespace gemini
 		}
 
 		// create max_workers
-		LIBRARY_EXPORT void create_workers(uint32_t max_workers);
+		void create_workers(uint32_t max_workers);
 
 		// destroys all workers
-		LIBRARY_EXPORT void destroy_workers();
+		void destroy_workers();
 
 		// wake up worker threads
-		LIBRARY_EXPORT void wake_workers(bool all_workers = false);
+		void wake_workers(bool all_workers = false);
 
 		// puts this worker thread to sleep
-		LIBRARY_EXPORT void sleep_worker();
+		void sleep_worker();
 
 		// push back a new job onto the queue
-		LIBRARY_EXPORT void push_back(JobExecuteFunction execute_function, const char* data);
+		void push_back(JobExecuteFunction execute_function, const char* data);
 
 		// Pop an available job off the queue
 		// Check Job's valid flag before operating on it.
-		LIBRARY_EXPORT Job pop();
+		Job pop();
 
 		// block waiting for all queued jobs to complete
-		LIBRARY_EXPORT void wait_for_jobs_to_complete();
+		void wait_for_jobs_to_complete();
 
 		// explicitly mark a job as complete. TODO: ugh, get rid of this.
-		LIBRARY_EXPORT void complete_job(const JobQueue::Job& job);
+		void complete_job(const JobQueue::Job& job);
 	}; // class JobQueue
 } // namespace gemini

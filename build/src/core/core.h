@@ -36,7 +36,7 @@ namespace gemini
 {
 	// These have individual startup functions to allow flexibility
 	// in configuring the file system
-	LIBRARY_EXPORT platform::Result core_startup();
+	platform::Result core_startup();
 
-	LIBRARY_EXPORT void core_shutdown();
+	void core_shutdown();
 } // namespace gemini

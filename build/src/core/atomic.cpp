@@ -36,12 +36,12 @@ namespace gemini
 		return OSAtomicCompareAndSwap32Barrier(
 			static_cast<int32_t>(comparand),
 			static_cast<int32_t>(new_value),
-			static_cast<volatile int32_t*>(destination));
+			reinterpret_cast<volatile int32_t*>(destination));
 	}
 
 	uint32_t atom_increment32(volatile uint32_t* destination)
 	{
-		return static_cast<uint32_t>(OSAtomicIncrement32(static_cast<volatile int32_t*>(destination)));
+		return static_cast<uint32_t>(OSAtomicIncrement32(reinterpret_cast<volatile int32_t*>(destination)));
 	}
 #elif defined(PLATFORM_WINDOWS)
 	bool atom_compare_and_swap32(volatile uint32_t* destination, uint32_t new_value, uint32_t comparand)

@@ -40,10 +40,10 @@ namespace gui
 	{
 	public:
 		ScrollablePanel(gui::Panel* parent);
-		LIBRARY_EXPORT virtual void update(gui::Compositor* compositor, float delta_seconds) override;
-		LIBRARY_EXPORT virtual void handle_event(gui::EventArgs& args);
+		virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+		virtual void handle_event(gui::EventArgs& args);
 
-		LIBRARY_EXPORT void scroll_to_bottom();
+		void scroll_to_bottom();
 
 	protected:
 		void update_scrollbars();

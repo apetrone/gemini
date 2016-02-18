@@ -55,13 +55,13 @@ namespace render2
 		unsigned char total_attributes;
 		InputDescription description[ MAX_VERTEX_DESCRIPTORS ];
 
-		LIBRARY_EXPORT VertexDescriptor();
-		LIBRARY_EXPORT VertexDescriptor(const VertexDescriptor& other);
-		LIBRARY_EXPORT void add(const char* name, const VertexDataType& type, size_t element_count);
-		LIBRARY_EXPORT const InputDescription& operator[](size_t index) const;
-		LIBRARY_EXPORT void reset();
-		LIBRARY_EXPORT size_t size() const;
+		VertexDescriptor();
+		VertexDescriptor(const VertexDescriptor& other);
+		void add(const char* name, const VertexDataType& type, size_t element_count);
+		const InputDescription& operator[](size_t index) const;
+		void reset();
+		size_t size() const;
 
-		LIBRARY_EXPORT const VertexDescriptor& operator=(const VertexDescriptor& other);
+		const VertexDescriptor& operator=(const VertexDescriptor& other);
 	}; // VertexDescriptor
 } // namespace render2

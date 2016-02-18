@@ -36,20 +36,20 @@ namespace gui
 	class Button : public Panel
 	{
 	public:
-		LIBRARY_EXPORT Button(Panel* parent);
-		LIBRARY_EXPORT virtual ~Button();
+		Button(Panel* parent);
+		virtual ~Button();
 
-		LIBRARY_EXPORT virtual void set_hover_color(const gemini::Color& hover) { hover_color = hover; }
-		LIBRARY_EXPORT virtual void set_pressed_color(const gemini::Color& pressed) { pressed_color = pressed; }
+		virtual void set_hover_color(const gemini::Color& hover) { hover_color = hover; }
+		virtual void set_pressed_color(const gemini::Color& pressed) { pressed_color = pressed; }
 
-		LIBRARY_EXPORT virtual void handle_event(EventArgs& args) override;
+		virtual void handle_event(EventArgs& args) override;
 
-		LIBRARY_EXPORT virtual void update(Compositor* compositor, float delta_seconds) override;
-		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands) override;
+		virtual void update(Compositor* compositor, float delta_seconds) override;
+		virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands) override;
 
-		LIBRARY_EXPORT virtual void set_font(const char* filename, size_t pixel_size);
-		LIBRARY_EXPORT virtual void set_text(const std::string& text);
-		LIBRARY_EXPORT virtual bool is_button() const override { return true; }
+		virtual void set_font(const char* filename, size_t pixel_size);
+		virtual void set_text(const std::string& text);
+		virtual bool is_button() const override { return true; }
 
 		gemini::DelegateHandler<EventArgs&> on_click;
 

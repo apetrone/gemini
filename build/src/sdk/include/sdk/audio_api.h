@@ -45,6 +45,6 @@ namespace gemini
 
 	namespace audio
 	{
-		DECLARE_INTERFACE(IAudioInterface);
+		GEMINI_DECLARE_INTERFACE(IAudioInterface);
 	} // namespace audio
 } // namespace gemini

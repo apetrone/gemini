@@ -28,17 +28,17 @@ namespace core
 {
 
 // Explicit template instantiation would require us to do this in two separate steps as well.
-#define DECLARE_INTERFACE(type)\
-		LIBRARY_EXPORT type* instance();\
-		LIBRARY_EXPORT void set_instance(type* instance)
+#define GEMINI_DECLARE_INTERFACE(type)\
+		type* instance();\
+		void set_instance(type* instance)
 
-#define IMPLEMENT_INTERFACE(type)\
+#define GEMINI_IMPLEMENT_INTERFACE(type)\
 		type* _instance = 0;\
-		LIBRARY_EXPORT type* instance()\
+		type* instance()\
 		{\
 			return _instance;\
 		}\
-		LIBRARY_EXPORT void set_instance(type* instance)\
+		void set_instance(type* instance)\
 		{\
 			_instance = instance;\
 		}

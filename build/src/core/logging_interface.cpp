@@ -110,6 +110,6 @@ namespace core
 
 	namespace logging
 	{
-		IMPLEMENT_INTERFACE(ILog)
+		GEMINI_IMPLEMENT_INTERFACE(ILog)
 	} // namespace logging
 } // namespace core

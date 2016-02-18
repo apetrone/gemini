@@ -38,7 +38,7 @@ namespace gui
 	extern gui_malloc _gmalloc;
 	extern gui_free _gfree;
 
-	void LIBRARY_EXPORT set_allocator(gui_malloc malloc_fn, gui_free free_fn);
+	void set_allocator(gui_malloc malloc_fn, gui_free free_fn);
 
 	typedef float real;
 
@@ -87,21 +87,21 @@ namespace gui
 	class ResourceCache
 	{
 	public:
-		LIBRARY_EXPORT virtual ~ResourceCache();
+		virtual ~ResourceCache();
 
-		LIBRARY_EXPORT virtual FontHandle create_font(const char* filename, size_t pixel_size) = 0;
+		virtual FontHandle create_font(const char* filename, size_t pixel_size) = 0;
 
 		// destroy a font
-		LIBRARY_EXPORT virtual void destroy_font(const FontHandle& handle) = 0;
+		virtual void destroy_font(const FontHandle& handle) = 0;
 
 		/// Fetch the texture handle used by handle
 		/// @param handle FontHandle used to fetch texture from
 		/// @param texture Texture handle associated with this font
 		/// @return the texture used by this font
-		LIBRARY_EXPORT virtual TextureHandle texture_for_font(const FontHandle& handle) = 0;
+		virtual TextureHandle texture_for_font(const FontHandle& handle) = 0;
 
-		LIBRARY_EXPORT virtual TextureHandle create_texture(const char* filename) = 0;
-		LIBRARY_EXPORT virtual void destroy_texture(const TextureHandle& handle) = 0;
+		virtual TextureHandle create_texture(const char* filename) = 0;
+		virtual void destroy_texture(const TextureHandle& handle) = 0;
 	};
 } // namespace gui
 
