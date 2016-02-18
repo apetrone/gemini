@@ -497,16 +497,23 @@ void print_string(const char* data)
 // configloader
 // ---------------------------------------------------------------------
 
-int main(int, char** argv)
+int main(int argc, char** argv)
 {
 	gemini::core_startup();
 	gemini::runtime_startup("arcfusion.net/gemini/test_runtime");
 
-	size_t max_iterations = atoi(argv[1]);
-	if (max_iterations > 6)
-		max_iterations = 6;
+	// if specified, get iterations from command line.
+	size_t max_iterations = 6;
+	if (argc > 1)
+	{
+		max_iterations = static_cast<size_t>(atoi(argv[1]));
 
-	LOGV("using iterations: %i (capped at 5)\n", max_iterations);
+		if (max_iterations > 6)
+		{
+			max_iterations = 6;
+		}
+		LOGV("using iterations: %i (capped at 5)\n", max_iterations);
+	}
 
 	using namespace gemini;
 
