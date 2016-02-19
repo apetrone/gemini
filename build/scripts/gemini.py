@@ -1171,6 +1171,6 @@ def products(arguments, **kwargs):
 		libruntime,
 		libcore,
 		libsdk,
-		#rnd,
+		rnd,
 		gemini] + tools + tests
 
