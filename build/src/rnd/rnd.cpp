@@ -4,6 +4,7 @@
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
 
+
 #include <core/core.h>
 #include <core/logging.h>
 #include <core/typedefs.h>
@@ -28,41 +29,6 @@
 using namespace std;
 
 #include "common.h"
-
-template< typename T>
-void fill( vector<int>& v, T done )
-{
-	int i = 0;
-	while(!done())
-	{
-		v.push_back(i++);
-	}
-}
-
-
-
-void test_function()
-{
-//	[](){ printf("hello\n"); }();
-
-	vector<int> v;
-
-	// capture by reference
-	fill(v, [&](){ return v.size() >= 8; } );
-
-
-	fill(v,
-		 [&](){ int sum = 0;
-			 for_each(begin(v), end(v), [&](int i){ sum+= 1; });
-			 return sum >= 10;
-		 }
-	 );
-
-	int loop = 0;
-	for_each(begin(v), end(v), [&](int i){
-		printf("%i -> %i\n", loop++, i);
-	});
-}
 
 #if defined(PLATFORM_POSIX)
 	#include <unistd.h>
@@ -189,135 +155,6 @@ void test_maths()
 	LOGV("angle is: %2.2f\n", mathlib::radians_to_degrees(t));
 
 }
-
-
-#define REFLECTION_BEGIN(class_name) static ClassProperty* reflection_fields(size_t& total_properties)\
-	{\
-		typedef class_name reflection_class_type;\
-		static ClassProperty properties[] = {
-
-#define REFLECTION_END() };\
-	static size_t property_count = sizeof(properties)/sizeof(ClassProperty);\
-	total_properties = property_count;\
-	return properties;\
-	}
-
-#define REFLECTION_PROPERTY(property) ClassProperty(#property, offsetof(reflection_class_type, property))
-
-
-
-template <class T>
-struct TypeInfo
-{
-
-};
-
-struct ClassProperty
-{
-	const char* name;
-
-	size_t offset;
-
-	ClassProperty(const char* property_name, size_t property_offset) :
-		name(property_name),
-		offset(property_offset)
-	{
-	}
-};
-
-
-namespace serialization
-{
-	template <class T>
-	class Archive
-	{
-	public:
-		template <class X>
-		void serialize(X* object)
-		{
-			object->serialize(*this, 0);
-		}
-	};
-
-
-	class TestArchive : public Archive<TestArchive>
-	{
-	public:
-		template <class T>
-		void serialize(T* object)
-		{
-			object->serialize(*this, 0);
-		}
-	};
-
-
-	template <>
-	void TestArchive::serialize(unsigned int* value)
-	{
-		fprintf(stdout, "serialize: unsigned int %p\n", value);
-	}
-
-	template <>
-	void TestArchive::serialize(float* value)
-	{
-		fprintf(stdout, "serialize: float %p\n", value);
-	}
-}
-
-
-struct TestObject
-{
-	uint32_t type;
-	float weight;
-
-	REFLECTION_BEGIN(TestObject)
-			REFLECTION_PROPERTY(type),
-			REFLECTION_PROPERTY(weight)
-	REFLECTION_END()
-
-	template <class Archive>
-	void serialize(Archive& a, size_t version)
-	{
-		a.serialize(&type);
-		a.serialize(&weight);
-	}
-};
-
-
-
-void test_serialization()
-{
-	TestObject object;
-	object.type = 30;
-
-	serialization::TestArchive a;
-	a.serialize(&object);
-}
-
-void test_reflection()
-{
-	size_t total_properties = 0;
-	ClassProperty* properties = 0;
-
-
-	properties = TestObject::reflection_fields(total_properties);
-	for (size_t index = 0; index < total_properties; ++index)
-	{
-		ClassProperty* p = &properties[index];
-		fprintf(stdout, "property: %zu, name: '%s', offset: %zu\n",
-			index,
-			p->name,
-			p->offset);
-	}
-}
-
-
-struct Rectangle
-{
-	unsigned width;
-	unsigned height;
-};
-
 
 #include <platform/platform.h>
 
@@ -1453,8 +1290,8 @@ platform::Result test_wasapi()
 	test_load_wav(loaded_sound, "sound.wav");
 
 
-	HANDLE task_handle;
-	DWORD task_index = 0;
+	//HANDLE task_handle;
+	//DWORD task_index = 0;
 
 
 	// We must initialize COM first. This requires objbase.h and ole32.lib.
@@ -1624,10 +1461,9 @@ platform::Result test_wasapi()
 	}
 
 
-	task_handle = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &task_index);
-	assert(task_handle != NULL);
-
-	LOGV("setup thread for task: %i\n", task_index);
+	//task_handle = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &task_index);
+	//assert(task_handle != NULL);
+	//LOGV("setup thread for task: %i\n", task_index);
 
 	BYTE* buffer_data;
 	HRESULT get_buffer_result = render_client->GetBuffer(
@@ -1700,7 +1536,7 @@ platform::Result test_wasapi()
 		CloseHandle(event_handle);
 	}
 
-	AvRevertMmThreadCharacteristics(task_handle);
+	//AvRevertMmThreadCharacteristics(task_handle);
 
 	// shutdown
 	safe_release(&default_capture_device);
