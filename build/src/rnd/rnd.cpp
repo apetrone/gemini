@@ -1107,10 +1107,6 @@ struct mytest
 
 void test_bsdiff()
 {
-	//
-
-
-
 	char buffer[64] = { 0 };
 
 	bsdiff_stream stream;
@@ -1134,6 +1130,11 @@ void test_bsdiff()
 	b.quantity = 2.3f;
 
 	int val = bsdiff((const uint8_t*)&a, sizeof(mytest), (const uint8_t*)&b, sizeof(mytest), &stream);
+	int ret = bspatch((const uint8_t*)&a, sizeof(mytest), (uint8_t*)&c, sizeof(mytest), &ps);
+
+	assert(c.value == b.value);
+	assert(c.quantity == b.quantity);
+
 
 	bspatch_stream ps;
 	ps.read = read_data;
@@ -1141,15 +1142,8 @@ void test_bsdiff()
 
 	mytest c;
 	bd.index = 0;
-
-	int ret = bspatch((const uint8_t*)&a, sizeof(mytest), (uint8_t*)&c, sizeof(mytest), &ps);
-
-	assert(c.value == b.value);
-	assert(c.quantity == b.quantity);
 }
-#endif
-
-
+#endif // ENABLE_BSDIFF
 void test_endian()
 {
 	uint8_t buffer[4] = { 0 };
@@ -1164,30 +1158,6 @@ void test_endian()
 
 }
 
-
-
-
-
-
-void test_spherical()
-{
-	// 1. convert spherical to Cartesian
-	glm::vec3 direction;
-	mathlib::spherical_to_cartesian(2.0f, (mathlib::PI / 4.0f), (mathlib::PI / 3.0f), direction);
-
-	const float TEST = sqrt(6.0f) / 2.0f;
-
-	assert(direction.x == TEST);
-	assert(direction.y == TEST);
-	assert(direction.z > (1.0f - FLT_EPSILON) && direction.z < (1.0f + FLT_EPSILON));
-
-	// 2. convert Cartesian to spherical
-	float rho, theta, phi;
-	mathlib::cartesian_to_spherical(glm::vec3(0.0f, 2 * sqrt(3.0f), -2.0f), rho, theta, phi);
-	assert(rho == 4.0f);
-	assert(theta == mathlib::PI/2.0f);
-	assert(phi == (2 * mathlib::PI) / 3.0f);
-}
 
 int main(int, char**)
 {
