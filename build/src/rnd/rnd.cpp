@@ -1199,13 +1199,14 @@ HRESULT report_error(HRESULT input)
 }
 
 static uint32_t t = 0;
+static float t_sin = 0.0f;
 Array<int16_t> loaded_sound;
 
 // sample_rate_hz == 1 second.
 // 260 cycles per second
 // sample_rate_hz / 260
 
-void fill_buffer(BYTE* data, UINT32 frames_available, const UINT32 engine_sample_size, const UINT32 block_align)
+void fill_buffer(BYTE* data, UINT32 frames_available, uint32_t sample_rate_hz)
 {
 	// frame_size = channels (two) * sample_size (two bytes)
 	// frame_size is 4 bytes; multiply by frames_available is your buffer size.
@@ -1227,7 +1228,7 @@ void fill_buffer(BYTE* data, UINT32 frames_available, const UINT32 engine_sample
 	// generate a square wave
 	const float volume = 0.25f;
 
-	const UINT32 frames_per_period = 44100 / 256;
+	const UINT32 frames_per_period = sample_rate_hz / 256;
 	const UINT32 half_period = frames_per_period / 2;
 	const UINT32 total_frames = frames_available;
 
@@ -1246,9 +1247,34 @@ void fill_buffer(BYTE* data, UINT32 frames_available, const UINT32 engine_sample
 		}
 	}
 #endif
+
+#if 1
+	// generate a sin wave
+	const float volume = 0.25f;
+	const float wave_period = (sample_rate_hz / 128);
+	const float sin_per = 2.0f * mathlib::PI;
+
+	int16_t* buffer = reinterpret_cast<int16_t*>(data);
+	for (UINT32 frame = 0; frame < frames_available; ++frame)
+	{
+		float sin_value = sinf(t_sin);
+		short value = sin_value * 6000;
+		uint32_t index = frame * 2;
+		buffer[index + 0] = static_cast<short>(value * volume);
+		buffer[index + 1] = static_cast<short>(value * volume);
+
+		// increment the t_sin value
+		t_sin += (1.0 * sin_per) / wave_period;
+
+		// make sure it wraps to avoid glitches.
+		if (t_sin > sin_per)
+		{
+			t_sin -= sin_per;
+		}
+	}
+#endif
 }
 
-#include <avrt.h>
 
 platform::Result test_wasapi()
 {
@@ -1288,11 +1314,6 @@ platform::Result test_wasapi()
 
 	// load a test wav.
 	test_load_wav(loaded_sound, "sound.wav");
-
-
-	//HANDLE task_handle;
-	//DWORD task_index = 0;
-
 
 	// We must initialize COM first. This requires objbase.h and ole32.lib.
 	if (FAILED(CoInitializeEx(0, COINIT_MULTITHREADED)))
@@ -1402,9 +1423,8 @@ platform::Result test_wasapi()
 	//double period_seconds = (default_device_period / 1.0e7);
 	//const UINT32 frames_per_period = static_cast<UINT32>(sample_rate_hz * period_seconds + 0.5);
 
-	const double BUFFER_SECONDS = 1.0;
-	//REFERENCE_TIME buffer_duration = static_cast<REFERENCE_TIME>(BUFFER_SECONDS * static_cast<double>(4096) / (sample_rate_hz * 1.0e-7));
-	REFERENCE_TIME buffer_duration = 1.0e7;
+	REFERENCE_TIME buffer_duration = static_cast<REFERENCE_TIME>(static_cast<double>(2048) / (sample_rate_hz * 1.0e-7));
+	//REFERENCE_TIME buffer_duration = 1.0e7;
 
 
 	const DWORD stream_flags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
@@ -1461,10 +1481,6 @@ platform::Result test_wasapi()
 	}
 
 
-	//task_handle = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &task_index);
-	//assert(task_handle != NULL);
-	//LOGV("setup thread for task: %i\n", task_index);
-
 	BYTE* buffer_data;
 	HRESULT get_buffer_result = render_client->GetBuffer(
 		buffer_frame_count,
@@ -1475,7 +1491,7 @@ platform::Result test_wasapi()
 		return platform::Result::failure("Failed to get initial buffer data");
 	}
 
-	fill_buffer(buffer_data, buffer_frame_count, mix_sample_size, block_align);
+	fill_buffer(buffer_data, buffer_frame_count, sample_rate_hz);
 
 	const DWORD release_flags = 0;
 	HRESULT release_buffer_result = render_client->ReleaseBuffer(
@@ -1518,7 +1534,7 @@ platform::Result test_wasapi()
 		assert(report_error(get_buffer_result) == S_OK);
 
 		// fill the buffer
-		fill_buffer(new_buffer, frames_available, mix_sample_size, block_align);
+		fill_buffer(new_buffer, frames_available, sample_rate_hz);
 
 		release_buffer_result = render_client->ReleaseBuffer(frames_available, 0);
 		assert(report_error(release_buffer_result) == S_OK);
@@ -1535,8 +1551,6 @@ platform::Result test_wasapi()
 	{
 		CloseHandle(event_handle);
 	}
-
-	//AvRevertMmThreadCharacteristics(task_handle);
 
 	// shutdown
 	safe_release(&default_capture_device);
