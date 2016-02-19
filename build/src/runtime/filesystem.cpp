@@ -46,7 +46,7 @@ namespace core
 		}
 
 
-		IMPLEMENT_INTERFACE(IFileSystem)
+		GEMINI_IMPLEMENT_INTERFACE(IFileSystem)
 
 #if defined(PLATFORM_IPHONEOS)
 

@@ -189,7 +189,7 @@ namespace core
 
 				if (file_size > 0)
 				{
-					buffer.resize(file_size+1, 0);
+					buffer.resize(file_size, 0);
 				}
 
 				platform::fs_read(handle, &buffer[0], 1, file_size);
