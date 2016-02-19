@@ -24,6 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <core/stackstring.h>
+
+
+
 namespace gemini
 {
 	namespace audio
@@ -60,15 +64,6 @@ namespace gemini
 			SF_PLAYING 		= 1,
 			SF_STOP			= 2,
 		};
-	#if 0
-		enum
-		{
-			EF_NONE,
-			EF_STREAM,
-			EF_OPEN
-		};
-	#endif
-
 
 		// generic interface for audio-decoding
 		class IAudioDecoder

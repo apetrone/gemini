@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2016- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -10,7 +10,7 @@
 //		* Redistributions in binary form must reproduce the above copyright notice,
 //		this list of conditions and the following disclaimer in the documentation
 //		and/or other materials provided with the distribution.
-
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,35 +24,50 @@
 // -------------------------------------------------------------
 #pragma once
 
+#if defined(GEMINI_ENABLE_AUDIO)
+
 #include "config.h"
+#include "platform.h"
 
-//
-// Helpful Macros
-//
+#include <core/mem.h>
 
-// This can be used to essentially remove macros by setting a macro's definition to this instead
-// Ex: #define MyMacro(x) NULL_MACRO
-#define NULL_MACRO (void(0))
+namespace platform
+{
+	enum class AudioDeviceType
+	{
+		Output,	// speakers, headphones, etc.
+		Input	// microphones, capture, etc.
+	}; // AudioDeviceType
 
-// unit <desired> per <have>
-const double SecondsPerMillisecond = 1.0e-3;
-const double SecondsPerMicrosecond = 1.0e-6;
-const double SecondsPerNanosecond = 1.0e-9;
+	struct audio_device
+	{
+		core::StackString<128> name;
+		AudioDeviceType type;
+		void* opaque; // internal use only.
+	}; // audio_device
 
-const double MillisecondsPerSecond = 1.0e3;
-const double MillisecondsPerMicrosecond = 1.0e-3;
+	typedef void (*audio_sound_callback)(void* buffer_frames, size_t buffer_frame_count, size_t sample_rate_hz, void* context);
 
-const double MicrosecondsPerMillisecond = 1.0e3;
-const double MicrosecondsPerSecond = 1.0e6;
-const double MicrosecondsPerNanosecond = 1.0e-3;
+	// This should list the default device first
+	platform::Result audio_enumerate_devices(Array<audio_device>& devices);
 
-const double NanosecondsPerSecond = 1.0e9;
-const double NanosecondsPerMicrosecond = 1.0e3;
+	// open audio output device
+	platform::Result audio_open_output_device(const audio_device& device);
 
-#include "mem.h"
+	// close active output device
+	void audio_close_output_device();
 
-// prefer the C99 types
-#include <stdint.h>
+	// lifetime control for the audio engine
+	platform::Result audio_startup();
+	void audio_shutdown();
 
-#include <assert.h>
+	// set a sound callback for an audio device
+	// This will be called by the audio engine when the primary buffer should be filled.
+	void audio_set_callback(audio_sound_callback callback, void* context);
 
+	// Get the current frame count from the device.
+	/// @returns The number of frames played since the device started playing.
+	uint64_t audio_frame_position();
+} // namespace platform
+
+#endif // GEMINI_ENABLE_AUDIO

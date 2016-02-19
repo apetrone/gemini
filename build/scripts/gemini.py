@@ -95,10 +95,10 @@ def setup_common_variables(arguments, target_platform, product):
 def setup_common_tool(product):
 
 	product.root = "../"
-	product.sources += [
-		"src/tools/%s/*.cpp" % product.name,
-		"src/tools/%s/*.h" % product.name
-	]
+	# product.sources += [
+	# 	"src/tools/%s/*.cpp" % product.name,
+	# 	"src/tools/%s/*.h" % product.name
+	# ]
 
 	product.includes += [
 		"src/tools/%s" % product.name,
@@ -223,6 +223,12 @@ def setup_driver(arguments, product, target_platform):
 			"PLATFORM_OPENGL_SUPPORT=1"
 		]
 
+	# Enable audio module
+	if arguments.enable_audio:
+		product.defines += [
+			"GEMINI_ENABLE_AUDIO=1"
+		]
+
 	gcc_flags = [
 		# We need exceptions for jsoncpp.
 		#"-fno-exceptions",
@@ -332,6 +338,12 @@ def setup_driver(arguments, product, target_platform):
 		"Gdi32"		# for ChoosePixelFormat, SetPixelFormat
 	]
 
+	# For COM use.
+	if arguments.enable_audio:
+		windows_debug.links += [
+			"ole32"
+		]
+
 	windows_release = product.layout(platform="windows", configuration="release")
 	windows_release.driver.generate_debug_info = "no"
 	windows_release.links += [
@@ -340,6 +352,13 @@ def setup_driver(arguments, product, target_platform):
 		"OpenGL32", # for wglGetProcAddress
 		"Gdi32"		# for ChoosePixelFormat, SetPixelFormat
 	]
+
+	# For COM use.
+	if arguments.enable_audio:
+		windows_release.links += [
+			"ole32"
+		]
+
 def get_tools(arguments, libruntime, librenderer, libcore, libsdk, **kwargs):
 	#
 	#
@@ -391,6 +410,10 @@ def get_libcore(arguments, target_platform):
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c")
 	]
 
+	if arguments.enable_audio:
+		libcore.sources += [
+			"src/core/platform/audio.h"
+		]
 
 	libcore.includes += [
 		"src",
@@ -571,6 +594,12 @@ def get_libcore(arguments, target_platform):
 		"src/core/platform/window/win32/win32_window_provider.h"
 	]
 
+	if arguments.enable_audio:
+		windows.sources += [
+			# audio
+			"src/core/platform/audio/windows/win32_wasapi.cpp"
+		]
+
 	return libcore
 
 
@@ -650,6 +679,9 @@ def get_libruntime(arguments, target_platform, librenderer):
 		"src/runtime/*.cpp",
 		"src/runtime/*.h",
 
+		"src/runtime/audio_mixer.cpp",
+		"src/runtime/audio_mixer.h",
+
 		"src/ui/**.c*",
 		"src/ui/**.h",
 
@@ -722,7 +754,8 @@ def get_rnd(arguments, links, **kwargs):
 	rnd_linux = rnd.layout(platform="linux")
 	rnd_linux.links += [
 		"GL",
-		"udev"
+		"udev",
+		"asound" # TODO: Only if ALSA is found!
 	]
 
 	# Fix undefined reference for SysFreeString
@@ -843,6 +876,8 @@ def arguments(parser):
 
 	parser.add_argument("--with-game", dest="with_game", help="Build with support for external game", default=None)
 
+	parser.add_argument("--enable-audio", dest="enable_audio", help="Enables Audio Module", default=True)
+
 def products(arguments, **kwargs):
 
 	# if arguments.with_tools:
@@ -889,6 +924,8 @@ def products(arguments, **kwargs):
 		4127,	# conditional expression is constant
 				# This is caused by while(true) statements, which I
 				# prefer over for(;;).
+		4464,	# relative include path contains '..'
+				# glm is a big proponent of this; so ignore these for now.
 		4514, 	# : unreferenced inline function has been removed
 				# stl and various other third-party libraries spew this.
 		4668, 	# '_WIN32_WINNT_WINTHRESHOLD' is not defined as a

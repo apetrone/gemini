@@ -31,6 +31,7 @@
 #include <runtime/runtime.h>
 #include <runtime/guirenderer.h>
 #include <runtime/standaloneresourcecache.h>
+#include <runtime/audio_mixer.h>
 
 #include <platform/platform.h>
 #include <platform/window.h>
@@ -63,6 +64,9 @@ using namespace renderer;
 #define GEMINI_TEST_TABCONTROL		1 // 9 draw calls
 #define GEMINI_TEST_BUTTON			1 // 6 draw calls (2 per button)
 #define GEMINI_TEST_SLIDER			1 // 5 draw calls
+
+// enable this to enable and test audio
+#define TEST_AUDIO 1
 
 // ---------------------------------------------------------------------
 // gui
@@ -110,6 +114,123 @@ struct MyVertex
 	}
 };
 
+
+namespace gui
+{
+	class DebugWaveformPanel : public gui::Panel
+	{
+	private:
+		float read_marker;
+		float write_marker;
+
+	public:
+		DebugWaveformPanel(Panel* parent);
+		virtual ~DebugWaveformPanel();
+
+		//void create_samples(uint32_t max_samples, uint32_t max_channels);
+		//void configure_channel(uint32_t channel_index, const gemini::Color& color/*, const gemini::Color& min, const gemini::Color& max*/);
+		//void enable_baseline(bool enabled, float value = 0.0f, const gemini::Color& color = gemini::Color());
+		//bool channel_in_range(uint32_t channel_index) const;
+		//void record_value(float value, uint32_t channel_index);
+		//void set_range(float min_range, float max_range);
+
+		//void set_font(const char* filename, size_t pixel_size);
+		//virtual void set_background_color(const gemini::Color& color);
+		//virtual void set_foreground_color(const gemini::Color& color);
+
+		// normalize positions inside the buffer
+		void set_buffer_position(float readpos, float writepos);
+
+		// Panel overrides
+		virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands) override;
+		virtual void update(Compositor* compositor, float delta_seconds) override;
+	}; // DebugWaveformPanel
+
+
+	DebugWaveformPanel::DebugWaveformPanel(Panel* parent)
+		: Panel(parent)
+	{
+		flags |= Flag_CanMove;
+
+		read_marker = 0.0f;
+		write_marker = 0.0f;
+	}
+
+	DebugWaveformPanel::~DebugWaveformPanel()
+	{
+	}
+
+	void DebugWaveformPanel::set_buffer_position(float readpos, float writepos)
+	{
+		read_marker = readpos;
+		write_marker = writepos;
+	}
+
+	void DebugWaveformPanel::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
+	{
+		Panel::render(compositor, renderer, render_commands);
+		const gemini::Color read_color(1.0f, 0.0f, 0.0f);
+		const gemini::Color write_color(0.0f, 1.0f, 0.0f);
+
+		{
+			gui::Point pt[2];
+			pt[0] = gui::Point(read_marker * size.get_width(), 0.0f);
+			pt[1] = gui::Point(read_marker * size.get_width(), size.height);
+			pt[0] = gui::transform_point(get_transform(0), pt[0]);
+			pt[1] = gui::transform_point(get_transform(0), pt[1]);
+			render_commands.add_line(pt[0], pt[1], read_color, 2.0f);
+		}
+
+		{
+			gui::Point pt[2];
+			pt[0] = gui::Point(write_marker * size.get_width(), 0.0f);
+			pt[1] = gui::Point(write_marker * size.get_width(), size.height);
+			pt[0] = gui::transform_point(get_transform(0), pt[0]);
+			pt[1] = gui::transform_point(get_transform(0), pt[1]);
+			render_commands.add_line(pt[0], pt[1], write_color, 2.0f);
+		}
+	}
+
+	void DebugWaveformPanel::update(Compositor* compositor, float delta_seconds)
+	{
+		Panel::update(compositor, delta_seconds);
+	}
+} // namespace gui
+
+
+class TestUIListener : public gui::Listener
+{
+public:
+	gemini::audio::SoundHandle focus_sound;
+	gemini::audio::SoundHandle hot_sound;
+
+	TestUIListener()
+	{
+		hot_sound = gemini::audio::load_sound("sounds/select.wav");
+		focus_sound = gemini::audio::load_sound("sounds/confirm.wav");
+	}
+
+	virtual void focus_changed(gui::Panel* old_focus, gui::Panel* new_focus)
+	{
+
+	}
+
+	virtual void hot_changed(gui::Panel* old_hot, gui::Panel* new_hot)
+	{
+		hot_sound = gemini::audio::load_sound("sounds/select.wav");
+		gemini::audio::play_sound(hot_sound, 0);
+	}
+
+	virtual void handle_event(const gui::EventArgs& event)
+	{
+		if (event.type == gui::Event_Click)
+		{
+			focus_sound = gemini::audio::load_sound("sounds/confirm.wav");
+			gemini::audio::play_sound(focus_sound, 0);
+		}
+	}
+};
+
 // ---------------------------------------------------------------------
 // TestUi
 // ---------------------------------------------------------------------
@@ -122,6 +243,7 @@ class TestUi : public kernel::IKernel,
 	platform::window::NativeWindow* native_window;
 	gui::Compositor* compositor;
 	gui::Graph* graph;
+	gui::DebugWaveformPanel* waveform;
 	gui::Label* label;
 	gui::Slider* slider;
 	gui::Label* slider_label;
@@ -132,6 +254,13 @@ class TestUi : public kernel::IKernel,
 	glm::mat4 projection_matrix;
 
 	float countdown;
+
+#if defined(TEST_AUDIO)
+	gemini::audio::SoundHandle music;
+#endif
+
+	gui::Listener* listener;
+
 public:
 	virtual void event(kernel::KeyboardEvent& event)
 	{
@@ -327,6 +456,32 @@ public:
 
 		// setup the frame rate graph
 #if GEMINI_TEST_GRAPH
+		listener = MEMORY_NEW(TestUIListener, core::memory::global_allocator());
+		compositor->set_listener(listener);
+#endif
+
+#if defined(TEST_AUDIO) && 1
+		// load audio
+		music = gemini::audio::load_sound("sounds/time_travel.wav");
+
+		const char* names[] = {
+			"sounds/warneverchanges.wav",
+			"sounds/sound.wav",
+			"sounds/sine.wav"
+		};
+
+		for (int i = 0; i < 3; ++i)
+		{
+			gemini::audio::SoundHandle h = gemini::audio::load_sound(names[i]);
+			gemini::audio::play_sound(h, 0);
+		}
+
+
+		gemini::audio::play_sound(music, 0);
+#endif
+
+		// setup the framerate graph
+#if 1
 		graph = new gui::Graph(compositor);
 		graph->set_origin(width - 250, 24);
 		graph->set_dimensions(graph->dimensions_from_pixels(gui::Point(250, 100)));
@@ -338,6 +493,14 @@ public:
 		graph->configure_channel(0, gemini::Color::from_rgba(0, 255, 0, 255));
 		graph->set_range(0.0f, 33.3f);
 		graph->enable_baseline(true, 16.6f, gemini::Color::from_rgba(255, 0, 255, 255));
+#endif
+
+#if 1
+		waveform = new gui::DebugWaveformPanel(compositor);
+		waveform->set_origin(width - 250, 120);
+		waveform->set_dimensions(waveform->dimensions_from_pixels(gui::Point(250, 100)));
+		waveform->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
+
 #endif
 
 		// test tab panel
@@ -471,6 +634,12 @@ public:
 
 		platform::window::focus(native_window);
 
+#if defined(TEST_AUDIO)
+		// startup audio
+		gemini::audio::startup();
+#endif
+
+
 		// initialize render device
 		render2::RenderParameters render_parameters;
 		render_parameters["rendering_backend"] = "default";
@@ -595,6 +764,16 @@ public:
 			graph->record_value(kernel::parameters().framedelta_milliseconds, 0);
 		}
 
+#if defined(TEST_AUDIO) && 0
+		if (waveform)
+		{
+			const float buffer_size = static_cast<float>(gemini::audio::buffer_size());
+			float readpos = (gemini::audio::buffer_read_position() / buffer_size);
+			float writepos = (gemini::audio::buffer_write_position() / buffer_size);
+			waveform->set_buffer_position(readpos, writepos);
+		}
+#endif
+
 		// sanity check
 		assert(device);
 		assert(pipeline);
@@ -621,7 +800,7 @@ public:
 		compositor->tick(kernel::parameters().framedelta_seconds);
 		PROFILE_END("compositor_tick");
 
-#if 0
+#if 1
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
 		assert(render_pass.target->width != 0 && render_pass.target->height != 0);
@@ -673,6 +852,9 @@ public:
 
 	virtual void shutdown()
 	{
+		compositor->set_listener(nullptr);
+		MEMORY_DELETE(listener, core::memory::global_allocator());
+
 		// shutdown/destroy the gui
 		delete compositor;
 
@@ -692,6 +874,10 @@ public:
 
 #if defined(GEMINI_ENABLE_PROFILER)
 		gemini::profiler::report(ui_profile_output);
+#endif
+
+#if defined(TEST_AUDIO)
+		gemini::audio::shutdown();
 #endif
 
 		gemini::runtime_shutdown();

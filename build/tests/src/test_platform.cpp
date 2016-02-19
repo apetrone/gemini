@@ -29,7 +29,122 @@
 
 #include <platform/platform.h>
 
+#include <platform/audio.h>
+
 using namespace platform;
+
+#if defined(GEMINI_ENABLE_AUDIO)
+// ---------------------------------------------------------------------
+// audio
+// ---------------------------------------------------------------------
+
+#include <core/mathlib.h>
+struct audio_generator_data
+{
+	uint32_t time_period;
+	float t_sin;
+	uint32_t wave_type; // 0 for square wave, 1 for sine wave
+};
+
+void test_callback(void* data, size_t frames_available, size_t sample_rate_hz, void* context)
+{
+	audio_generator_data* agd = static_cast<audio_generator_data*>(context);
+
+	if (agd->wave_type == 0)
+	{
+		// generate a square wave
+		const float volume = 0.5f;
+
+		const uint32_t frames_per_period = sample_rate_hz / 256;
+		const uint32_t half_period = frames_per_period / 2;
+		const uint32_t total_frames = frames_available;
+
+		int16_t* buffer = reinterpret_cast<int16_t*>(data);
+		for (uint32_t frame = 0; frame < total_frames; ++frame)
+		{
+			short value = ((agd->time_period / half_period) % 2) ? 3000 : -3000;
+			uint32_t index = frame * 2;
+			buffer[index + 0] = static_cast<short>(value * volume);
+			buffer[index + 1] = static_cast<short>(value * volume);
+
+			agd->time_period += 1;
+			if (agd->time_period > frames_per_period)
+			{
+				agd->time_period -= frames_per_period;
+			}
+		}
+	}
+	else if (agd->wave_type == 1)
+	{
+		// generate a sin wave
+		const float volume = 0.5f;
+		const float wave_period = (sample_rate_hz / 440.0f);
+		const float sin_per = 2.0f * mathlib::PI;
+
+		int16_t* buffer = reinterpret_cast<int16_t*>(data);
+		for (uint32_t frame = 0; frame < frames_available; ++frame)
+		{
+			float sin_value = sinf(agd->t_sin);
+			short value = static_cast<short>(sin_value * 6000);
+			uint32_t index = frame * 2;
+			buffer[index + 0] = static_cast<short>(value * volume);
+			buffer[index + 1] = static_cast<short>(value * volume);
+
+			// increment the t_sin value
+			agd->t_sin += static_cast<float>((1.0 * sin_per) / wave_period);
+
+			// make sure it wraps to avoid glitches.
+			if (agd->t_sin > sin_per)
+			{
+				agd->t_sin -= sin_per;
+			}
+		}
+	}
+}
+
+UNITTEST(audio)
+{
+	audio_startup();
+
+	audio_generator_data agd;
+	agd.time_period = 0;
+	agd.t_sin = 0.0f;
+	agd.wave_type = 0;
+
+	Array<audio_device> devices;
+	audio_enumerate_devices(devices);
+
+	LOGV("total audio devices: %i\n", devices.size());
+	for (size_t index = 0; index < devices.size(); ++index)
+	{
+		const audio_device& device = devices[index];
+		LOGV("device: %s\n", device.name());
+	}
+
+	// try to open the device
+	platform::Result res = audio_open_output_device(devices[0]);
+
+	audio_set_callback(test_callback, &agd);
+
+	// play a square wave
+	for (size_t index = 0; index < 500; ++index)
+	{
+		thread_sleep(2);
+	}
+
+	// play a sine wave
+	agd.wave_type = 1;
+	for (size_t index = 0; index < 500; ++index)
+	{
+		thread_sleep(2);
+	}
+
+	audio_close_output_device();
+
+	audio_shutdown();
+}
+
+#endif // GEMINI_ENABLE_AUDIO
 
 // ---------------------------------------------------------------------
 // platform
@@ -219,8 +334,6 @@ UNITTEST(datetime)
 
 	LOGV("ticks: %zu\n", time_ticks());
 }
-
-
 
 int main(int, char**)
 {

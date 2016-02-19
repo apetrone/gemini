@@ -35,6 +35,8 @@
 
 #include <assert.h>
 
+#include <core/mathlib.h>
+
 // ---------------------------------------------------------------------
 // jobqueue
 // ---------------------------------------------------------------------
@@ -176,6 +178,7 @@ int main(int, char**)
 	using namespace gemini;
 
 	unittest::UnitTest::execute();
+
 	gemini::runtime_shutdown();
 	gemini::core_shutdown();
 	return 0;

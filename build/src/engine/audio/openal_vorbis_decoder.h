@@ -364,7 +364,7 @@ extern "C" {
 #endif
 
 
-#include "audio.h"
+#include "engine/audio.h"
 
 class stb_vorbis_decoder : public gemini::audio::IAudioDecoder
 {

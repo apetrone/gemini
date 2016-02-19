@@ -26,13 +26,14 @@
 
 #include <core/argumentparser.h>
 #include <core/array.h>
+#include <core/core.h>
 #include <core/datastream.h>
 #include <core/fixedarray.h>
 #include <core/fixedsizequeue.h>
 #include <core/hashset.h>
 #include <core/mathlib.h>
-#include <core/core.h>
 #include <core/mem.h>
+#include <core/linearfreelist.h>
 #include <core/str.h>
 #include <core/stackstring.h>
 #include <core/threadsafequeue.h>
@@ -547,6 +548,42 @@ UNITTEST(stackstring)
 	TEST_ASSERT(s1.startswith("orion"), startswith);
 }
 
+// ---------------------------------------------------------------------
+// linear free list
+// ---------------------------------------------------------------------
+UNITTEST(linearfreelist)
+{
+	LinearFreeList<int> abc;
+	LinearFreeList<int>::Handle value = abc.acquire();
+	if (abc.is_valid(value))
+	{
+		int* beh = abc.from_handle(value);
+		*beh = 73;
+
+		// done with that, return it to the free list.
+		abc.release(value);
+
+		// try to acquire another (should be the same as beh was).
+		value = abc.acquire();
+
+		int* foo = abc.from_handle(value);
+		*foo = 42;
+		TEST_ASSERT(foo == beh, acquire_and_release);
+	}
+
+	size_t valid_handles = 0;
+	for (size_t index = 0; index < abc.size(); ++index)
+	{
+		if (abc.is_valid(index))
+		{
+			int* p = abc.from_handle(index);
+			LOGV("index: %i, ptr: %p %i\n", index, p, *p);
+			++valid_handles;
+		}
+	}
+
+	TEST_ASSERT(valid_handles == 1, is_valid);
+}
 
 // ---------------------------------------------------------------------
 // str

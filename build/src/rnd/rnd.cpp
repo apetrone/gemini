@@ -2,6 +2,7 @@
 #include <platform/input.h>
 
 #include <runtime/filesystem.h>
+#include <runtime/runtime.h>
 
 
 #include <core/core.h>
@@ -23,7 +24,7 @@
 #include <functional>
 #include <vector>
 #include <algorithm>
-#include <thread>
+//#include <thread>
 
 using namespace std;
 
@@ -912,8 +913,6 @@ void test_devices()
 
 #endif
 
-
-
 // test out reading BNO055.
 
 struct DataInput
@@ -1061,7 +1060,6 @@ void test_bno055()
 	}
 }
 
-
 //#define ENABLE_BSDIFF 1
 
 #if defined(ENABLE_BSDIFF)
@@ -1144,6 +1142,7 @@ void test_bsdiff()
 	bd.index = 0;
 }
 #endif // ENABLE_BSDIFF
+
 void test_endian()
 {
 	uint8_t buffer[4] = { 0 };
@@ -1154,14 +1153,762 @@ void test_endian()
 	buffer[1] = 0xF0 & mz;
 
 	uint32_t* val = reinterpret_cast<uint32_t*>(buffer);
-
-
 }
 
+namespace audio
+{
+	// [design questions]
+	// 1. I want to support large music files? How do we stream these in?
+	// 2. Create an audio thread for the sole purpose of filling the OS buffer
+	//	  to send to the driver when required.
+	// 3.
+
+	struct SoundInstance
+	{
+		uint32_t samples_played;
+		uint32_t total_samples;
+		uint16_t channels;
+		uint16_t repeats;
+
+		// allocated for each channel, packed.
+		float* volume;
+
+		// total_samples * channels
+		float* samples;
+
+		SoundInstance() :
+			samples_played(0),
+			total_samples(0),
+			channels(0),
+			repeats(0),
+			volume(nullptr),
+			samples(nullptr)
+		{
+		}
+	}; // SoundInstance
+} // namespace audio
+
+// code for reading and writing WAVE files
+namespace wav
+{
+	// http://www-mmsp.ece.mcgill.ca/documents/audioformats/wave/wave.html
+	// http://soundfile.sapp.org/doc/WaveFormat/
+#define MAKE_RIFF_CODE(a) static_cast<uint32_t>(((a[0]) << 0 | (a[1]) << 8 | (a[2]) << 16 | (a[3]) << 24))
+#ifndef WAVE_FORMAT_PCM
+	const size_t WAVE_FORMAT_PCM = 0x001;
+	const size_t WAVE_FORMAT_IEEE_FLOAT = 0x0003;
+	const size_t WAVE_FORMAT_ALAW = 0x0006;
+	const size_t WAVE_FORMAT_MULAW = 0x0007;
+	const size_t WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
+#endif
+
+	const uint32_t RIFF_CHUNK_ID = MAKE_RIFF_CODE("RIFF");
+	const uint32_t RIFF_WAVE_FORMAT = MAKE_RIFF_CODE("WAVE");
+	const uint32_t WAVE_FORMAT_CHUNK_ID = MAKE_RIFF_CODE("fmt ");
+	const uint32_t WAVE_DATA_CHUNK_ID = MAKE_RIFF_CODE("data");
+
+	// riff header
+	struct wave_chunk_descriptor
+	{
+		uint32_t chunk_id; // should be 'RIFF'
+		uint32_t chunk_size;
+		uint32_t format; // should be 'WAVE'
+
+		uint32_t advance_size() const
+		{
+			return 8 + 4;
+		}
+	};
+
+	struct wave_format_chunk
+	{
+		uint32_t chunk_id; // should be 'fmt '
+		uint32_t chunk_size; // should be 16, 18, or 40.
+		uint16_t format_code; // format tag
+		uint16_t total_channels; // number of interleaved channels
+		uint32_t sample_rate; // blocks per second
+		uint32_t data_rate; // avg bytes per sec
+		uint16_t block_align; // data block size (bytes)
+		uint16_t bits_per_sample;
+		uint16_t extended_size; // size of extension (0 or 22)
+		uint16_t valid_bits_per_sample; // number of valid bits
+		uint32_t channel_mask; // speaker position mask
+		uint8_t subformat[16]; // GUID including the data format code
+
+		uint32_t advance_size() const
+		{
+			return 8 + chunk_size;
+		}
+	};
+
+	struct wave_data_chunk
+	{
+		uint32_t chunk_id; // should be 'data'
+		uint32_t chunk_size; // == num_samples * num_channels * bits_per_sample / 8
+
+		uint32_t advance_size() const
+		{
+			return 8;
+		}
+	};
+} // namespace wav
+
+
+
+void test_load_wav(Array<int16_t>& samples, const char* path)
+{
+	using namespace wav;
+
+	Array<unsigned char> filecontents;
+	core::filesystem::instance()->virtual_load_file(filecontents, path);
+
+	LOGV("loaded %s\n", path);
+	LOGV("file size: %i bytes\n", filecontents.size());
+
+
+	unsigned char* wavedata = static_cast<unsigned char*>(&filecontents[0]);
+	wave_chunk_descriptor* desc = reinterpret_cast<wave_chunk_descriptor*>(wavedata);
+	if (desc->chunk_id != RIFF_CHUNK_ID)
+	{
+		LOGV("Is not a valid RIFF file\n");
+		return;
+	}
+
+	if (desc->format != RIFF_WAVE_FORMAT)
+	{
+		LOGV("Is not a valid WAVE file format\n");
+		return;
+	}
+
+	wave_format_chunk* format = reinterpret_cast<wave_format_chunk*>(
+		reinterpret_cast<char*>(desc) + desc->advance_size()
+		);
+	if (format->chunk_id != WAVE_FORMAT_CHUNK_ID)
+	{
+		LOGV("Expected WAVE 'fmt ' chunk!\n");
+		return;
+	}
+
+	// We only support PCM.
+	assert(format->format_code == wav::WAVE_FORMAT_PCM);
+
+	// Only support our sample rate of 44.1KHz.
+	assert(format->sample_rate == 44100);
+
+	// Support mono and stereo sounds.
+	assert(format->total_channels == 1 || format->total_channels == 2);
+
+	wave_data_chunk* data = reinterpret_cast<wave_data_chunk*>(
+		reinterpret_cast<char*>(format) + format->advance_size()
+		);
+	if (data->chunk_id != WAVE_DATA_CHUNK_ID)
+	{
+		LOGV("Expected WAVE 'data' chunk!\n");
+		return;
+	}
+
+	// this describes how long in seconds the file is.
+	// data->chunk_size / format->data_rate;
+
+	const bool has_pad_byte = ((data->chunk_size + 1) & ~1) == 0;
+
+	const uint32_t total_samples = (data->chunk_size / format->block_align);
+
+	samples.resize(total_samples * 2);
+	int16_t* sample_data = reinterpret_cast<int16_t*>(reinterpret_cast<char*>(data) + data->advance_size());
+	for (size_t sample = 0; sample < total_samples * 2; ++sample)
+	{
+		samples[sample] = sample_data[sample];
+	}
+}
+
+
+void test_write_wav(Array<int16_t>& samples, const char* path)
+{
+	FILE* f = fopen(path, "wb");
+
+	wav::wave_chunk_descriptor desc;
+	desc.chunk_id = MAKE_RIFF_CODE("RIFF");
+	desc.format = MAKE_RIFF_CODE("WAVE");
+	// TODO: fill out desc with the total file size - 8
+
+	wav::wave_format_chunk format;
+	format.chunk_id = MAKE_RIFF_CODE("fmt ");
+	format.chunk_size = 16;
+	format.format_code = wav::WAVE_FORMAT_PCM;
+	format.total_channels = 2;
+	format.sample_rate = 44100;
+	format.bits_per_sample = 16;
+	format.data_rate = format.sample_rate * format.total_channels * (format.bits_per_sample / 8);
+	format.block_align = static_cast<uint16_t>((format.total_channels * format.bits_per_sample) / 8);
+
+	wav::wave_data_chunk data;
+	data.chunk_id = MAKE_RIFF_CODE("data");
+	data.chunk_size = static_cast<uint32_t>((samples.size() * format.bits_per_sample) / 8);
+	desc.chunk_size = data.chunk_size + 36;
+
+	if (f)
+	{
+		fwrite(&desc, 1, desc.advance_size(), f);
+		fwrite(&format, 1, format.advance_size(), f);
+		fwrite(&data, 1, data.advance_size(), f);
+		fwrite(&samples[0], 2, samples.size(), f);
+
+		// see if we need to write a padding byte.
+		if (((data.chunk_size + 1) & ~1) == 0)
+		{
+			char padding = '\0';
+			fwrite(&padding, 1, 1, f);
+		}
+		fclose(f);
+	}
+}
+
+// potential test code for reading/writing wav files
+#if 0
+void test_wav()
+{
+	Array<int16_t> samples;
+	test_load_wav(samples, "sounds/sound.wav");
+
+	test_write_wav(samples, "sounds/output.wav");
+
+	Array<int16_t> input;
+	test_load_wav(input, "sounds/output.wav");
+}
+#endif
+
+Array<int16_t> loaded_sound;
+
+#if defined(PLATFORM_LINUX)
+// use the newer alsa api
+#define ALSA_PCM_NEW_HW_PARAMS_API
+
+// The old sys/asoundlib is deprecated in favor of this.
+#include <alsa/asoundlib.h>
+
+
+// /usr/share/sounds/alsa/Front_Center.wav
+
+
+// REFERENCES:
+// http://www.linuxjournal.com/article/6735?page=0,1
+
+int check_alsa_error(int result, const char* action)
+{
+	if (result < 0)
+	{
+		LOGW("Failed on '%s', error: '%s'\n", action,
+			snd_strerror(result)
+		);
+		assert(0);
+	}
+
+	return result;
+}
+
+#include <core/mathlib.h>
+
+static float t_sin = 0.0f;
+void fill_buffer(char* data, uint32_t frames_available, uint32_t sample_rate_hz)
+{
+	// generate a sin wave
+	const float volume = 0.5f;
+	const float wave_period = (sample_rate_hz / 256);
+	const float sin_per = 2.0f * mathlib::PI;
+
+	int16_t* buffer = reinterpret_cast<int16_t*>(data);
+	for (uint32_t frame = 0; frame < frames_available; ++frame)
+	{
+		float sin_value = sinf(t_sin);
+		short value = sin_value * 0x7fff;
+		uint32_t index = frame * 2;
+		buffer[index + 0] = static_cast<short>(value * volume);
+		buffer[index + 1] = static_cast<short>(value * volume);
+
+		// increment the t_sin value
+		t_sin += (1.0 * sin_per) / wave_period;
+
+		// make sure it wraps to avoid glitches.
+		if (t_sin > sin_per)
+		{
+			t_sin -= sin_per;
+		}
+	}
+}
+
+platform::Result test_alsa()
+{
+	snd_pcm_t* handle = 0;
+	int open_result = snd_pcm_open(&handle,
+		"default",
+		SND_PCM_STREAM_PLAYBACK,
+		0
+	);
+	if (open_result < 0)
+	{
+		LOGE("snd_pcm_open failed with '%s'\n", snd_strerror(open_result));
+		if (open_result == -ENOENT)
+		{
+			LOGW("ENOENT: Please make sure you have permissions.\n");
+		}
+		return platform::Result::failure("snd_pcm_open failed");
+	}
+	assert(open_result == 0);
+
+
+
+	// allocate new hwparams
+	snd_pcm_hw_params_t* params;
+	snd_pcm_hw_params_alloca(&params);
+
+	// populate it with default values
+	check_alsa_error(snd_pcm_hw_params_any(handle, params), "set defaults");
+
+	// interleaved mode
+	check_alsa_error(snd_pcm_hw_params_set_access(handle,
+		params,
+		SND_PCM_ACCESS_RW_INTERLEAVED
+		),
+		"set interleaved"
+	);
+
+	// signed 16-bit little-endian format
+	check_alsa_error(snd_pcm_hw_params_set_format(handle,
+		params,
+		SND_PCM_FORMAT_S16_LE),
+		"set format"
+	);
+
+	// set two channels
+	check_alsa_error(snd_pcm_hw_params_set_channels(handle,
+		params,
+		2),
+		"set channels"
+	);
+
+	// set sample rate
+	uint32_t sample_rate = 44100;
+	int32_t subunit_direction;
+	check_alsa_error(snd_pcm_hw_params_set_rate_near(handle,
+		params,
+		&sample_rate,
+		&subunit_direction),
+		"set sample rate"
+	);
+
+
+	{
+		snd_pcm_uframes_t frames = 32;
+		snd_pcm_hw_params_set_period_size_near(handle,
+			params,
+			&frames,
+			&subunit_direction);
+	}
+
+
+
+	// write params to the driver
+	int write_result = check_alsa_error(
+		snd_pcm_hw_params(handle, params),
+		"write params"
+	);
+	if (write_result < 0)
+	{
+		return platform::Result::failure("Unable to set params on driver");
+	}
+
+
+	// display PCM interface details
+	LOGV("name: %s\n", snd_pcm_name(handle));
+	LOGV("state: %s\n", snd_pcm_state_name(snd_pcm_state(handle)));
+	snd_pcm_access_t access_value;
+	snd_pcm_hw_params_get_access(params, &access_value);
+	LOGV("access: %s\n", snd_pcm_access_name(static_cast<snd_pcm_access_t>(access_value)));
+
+	uint32_t channels;
+	snd_pcm_hw_params_get_channels(params, &channels);
+	LOGV("channels: %i\n", channels);
+
+
+
+
+	snd_pcm_uframes_t period_frames;
+	int subunit;
+	check_alsa_error(snd_pcm_hw_params_get_period_size(params,
+		&period_frames,
+		&subunit),
+		"get_period_size"
+	);
+	LOGV("period_frames: %i, subunit: %i\n", period_frames, subunit);
+
+	uint32_t period_time;
+	check_alsa_error(snd_pcm_hw_params_get_period_time(params,
+		&period_time,
+		&subunit),
+		"get_period_time"
+	);
+	LOGV("period_time: %i\n", period_time);
+
+	int buffer_size = period_frames * 4; // 2 bytes per sample * 2 channels
+	char* buffer = static_cast<char*>(
+		MEMORY_ALLOC(buffer_size,
+			core::memory::global_allocator())
+	);
+
+	// 2 seconds over period time
+	long loops = (2 * MicrosecondsPerSecond) / period_time;
+
+	memset(buffer, 0, buffer_size);
+
+
+
+	while (loops > 0)
+	{
+		loops--;
+
+
+		// for (size_t index = 0; index < period_frames; ++index)
+		// {
+		// 	short* ptr = reinterpret_cast<short*>(&buffer[index * 2]);
+		// 	ptr[0] = 3000;
+		// 	ptr[1] = 3000;
+		// 	++ptr;
+		// }
+
+		fill_buffer(buffer, period_frames, sample_rate);
+
+		int res = snd_pcm_writei(handle, buffer, period_frames);
+
+		if (res == -EPIPE)
+		{
+			LOGW("Buffer underrun occurred\n");
+			snd_pcm_prepare(handle);
+		}
+		check_alsa_error(res, "snd_pcm_writei");
+	}
+
+	// finish playing sound samples
+	snd_pcm_drain(handle);
+
+	int close_result = snd_pcm_close(handle);
+	assert(close_result == 0);
+
+	MEMORY_DEALLOC(buffer, core::memory::global_allocator());
+
+	return platform::Result::success();
+}
+#endif // defined(PLATFORM_WINDOWS)
+
+
+#if defined(PLATFORM_APPLE)
+// REFERENCES:
+// http://kaniini.dereferenced.org/2014/08/31/CoreAudio-sucks.html
+// https://github.com/jarikomppa/soloud/blob/master/src/backend/coreaudio/soloud_coreaudio.cpp
+// https://gist.github.com/hngrhorace/1360885
+// http://www.cocoawithlove.com/2010/10/ios-tone-generator-introduction-to.html
+// http://atastypixel.com/blog/using-remoteio-audio-unit/
+
+#include <AudioToolbox/AudioToolbox.h>
+
+// Needs frameworks:
+// - AudioToolbox
+
+struct coreaudio_data
+{
+	uint32_t is_running;
+	uint32_t buffer_size;
+};
+
+void coreaudio_fill_buffer(void* user_data, AudioQueueRef audio_queue, AudioQueueBufferRef buffer)
+{
+	coreaudio_data* data = reinterpret_cast<coreaudio_data*>(user_data);
+	if (data->is_running)
+	{
+		LOGV("coreaudio_fill_buffer!\n");
+
+		memset(buffer->mAudioData, 0x7fff, data->buffer_size);
+
+		buffer->mAudioDataByteSize = data->buffer_size;
+		OSStatus queue_status = AudioQueueEnqueueBuffer(audio_queue, buffer, 0, nil);
+		if (queue_status == kAudioQueueErr_EnqueueDuringReset)
+		{
+			// System doesn't allow you to enqueue buffers during a:
+			// AudioQueueReset, AudioQueueStop, or AudioQueueDispose operation.
+		}
+		else
+		{
+			assert(queue_status == 0);
+		}
+	}
+}
+
+void listener_proc(void* /*user_data*/, AudioQueueRef audio_queue, AudioQueuePropertyID property)
+{
+	if (property == kAudioQueueProperty_IsRunning)
+	{
+		uint32_t output;
+		uint32_t data_size = sizeof(uint32_t);
+		AudioQueueGetProperty(audio_queue, property, &output, &data_size);
+		LOGV("audio queue is %s!\n", output ? "running" : "stopped");
+	}
+}
+
+#define NO_RUN_LOOP 1
+
+platform::Result test_coreaudio()
+{
+	AudioQueueRef audio_queue = nullptr;
+
+	coreaudio_data ad;
+	ad.is_running = 1;
+	ad.buffer_size = 4096;
+	const uint32_t total_channels = 2;
+
+	// startup
+	AudioStreamBasicDescription format;
+	format.mSampleRate = 44100;
+	format.mFormatID = kAudioFormatLinearPCM;
+	format.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+	// "In uncompressed audio, a Packet is
+	// one frame, (mFramesPerPacket == 1)"
+	format.mFramesPerPacket = 1;
+	format.mBytesPerFrame = 4;
+	format.mChannelsPerFrame = total_channels;
+	format.mBitsPerChannel = sizeof(short) * 8;
+	format.mBytesPerPacket = format.mBytesPerFrame * format.mFramesPerPacket;
+	format.mReserved = 0;
+
+	OSStatus result = AudioQueueNewOutput(&format,
+		coreaudio_fill_buffer,
+		&ad,
+
+#if NO_RUN_LOOP
+		nil,
+		nil,
+#else
+		CFRunLoopGetCurrent(),
+		kCFRunLoopCommonModes,
+>>>>>>> cb8582a... [wip] initial pass at AudioQueue (not yet working)
+#endif
+		0, // reserved: must be 0.
+		&audio_queue
+	);
+
+	if (result != 0)
+	{
+		assert(!"Unable to create new audio queue");
+	}
+
+	Float32 volume = 0;
+	AudioQueueGetParameter(audio_queue, kAudioQueueParam_Volume, &volume);
+
+	// allocate and prime audio buffers
+	for (size_t index = 0; index < 3; ++index)
+	{
+		AudioQueueBufferRef buffer;
+		OSStatus buffer_result = AudioQueueAllocateBuffer(audio_queue,
+			ad.buffer_size,
+			&buffer
+		);
+		assert(buffer_result == 0);
+		coreaudio_fill_buffer(&ad, audio_queue, buffer);
+	}
+
+
+	// setup audio queue property listener
+	AudioQueueAddPropertyListener(audio_queue, kAudioQueueProperty_IsRunning, listener_proc, &ad);
+
+	OSStatus play_result = AudioQueueStart(audio_queue, nil);
+	assert(play_result == 0);
+
+	const size_t max_iterations = 200;
+#if NO_RUN_LOOP
+	for (size_t iter = 0; iter < max_iterations; ++iter)
+	{
+		platform::thread_sleep(10);
+		// do stuff?
+	}
+#else
+//	size_t iterations = max_iterations;
+//	do
+//	{
+//		if (iterations == 0)
+//		{
+//			ad.is_running = 0;
+//		}
+//
+//		CFRunLoopRunInMode(kCFRunLoopDefaultMode,
+//			0.16,
+//			false
+//		);
+//
+//		--iterations;
+//	} while (ad.is_running);
+	CFRunLoopRun();
+#endif
+
+	// shutdown
+	AudioQueueStop(audio_queue, true);
+	AudioQueueDispose(audio_queue, false);
+
+	return platform::Result::success();
+}
+#endif // defined(PLATFORM_APPLE)
+
+
+
+#if defined(PLATFORM_APPLE)
+// REFERENCES:
+// http://kaniini.dereferenced.org/2014/08/31/CoreAudio-sucks.html
+// https://github.com/jarikomppa/soloud/blob/master/src/backend/coreaudio/soloud_coreaudio.cpp
+// https://gist.github.com/hngrhorace/1360885
+// http://www.cocoawithlove.com/2010/10/ios-tone-generator-introduction-to.html
+// http://atastypixel.com/blog/using-remoteio-audio-unit/
+
+#include <AudioToolbox/AudioToolbox.h>
+
+// Needs frameworks:
+// - AudioToolbox
+
+struct coreaudio_data
+{
+	uint32_t is_running;
+	uint32_t buffer_size;
+};
+
+void coreaudio_fill_buffer(void* user_data, AudioQueueRef audio_queue, AudioQueueBufferRef buffer)
+{
+	coreaudio_data* data = reinterpret_cast<coreaudio_data*>(user_data);
+	if (data->is_running)
+	{
+		LOGV("coreaudio_fill_buffer!\n");
+
+		memset(buffer->mAudioData, 0x7fff, data->buffer_size);
+
+		buffer->mAudioDataByteSize = data->buffer_size;
+		OSStatus queue_status = AudioQueueEnqueueBuffer(audio_queue, buffer, 0, nil);
+		if (queue_status == kAudioQueueErr_EnqueueDuringReset)
+		{
+			// System doesn't allow you to enqueue buffers during a:
+			// AudioQueueReset, AudioQueueStop, or AudioQueueDispose operation.
+		}
+		else
+		{
+			assert(queue_status == 0);
+		}
+	}
+}
+
+void listener_proc(void* /*user_data*/, AudioQueueRef audio_queue, AudioQueuePropertyID property)
+{
+	if (property == kAudioQueueProperty_IsRunning)
+	{
+		uint32_t output;
+		uint32_t data_size = sizeof(uint32_t);
+		AudioQueueGetProperty(audio_queue, property, &output, &data_size);
+		LOGV("audio queue is %s!\n", output ? "running" : "stopped");
+	}
+}
+
+#define NO_RUN_LOOP 1
+
+platform::Result test_coreaudio()
+{
+	AudioQueueRef audio_queue = nullptr;
+
+	coreaudio_data ad;
+	ad.is_running = 1;
+	ad.buffer_size = 4096;
+	const uint32_t total_channels = 2;
+
+	// startup
+	AudioStreamBasicDescription format;
+	format.mSampleRate = 44100;
+	format.mFormatID = kAudioFormatLinearPCM;
+	format.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+	// "In uncompressed audio, a Packet is
+	// one frame, (mFramesPerPacket == 1)"
+	format.mFramesPerPacket = 1;
+	format.mBytesPerFrame = 4;
+	format.mChannelsPerFrame = total_channels;
+	format.mBitsPerChannel = sizeof(short) * 8;
+	format.mBytesPerPacket = format.mBytesPerFrame * format.mFramesPerPacket;
+	format.mReserved = 0;
+
+	OSStatus result = AudioQueueNewOutput(&format,
+		coreaudio_fill_buffer,
+		&ad,
+
+#if NO_RUN_LOOP
+		nil,
+		nil,
+#else
+		CFRunLoopGetCurrent(),
+		kCFRunLoopCommonModes,
+#endif
+		0, // reserved: must be 0.
+		&audio_queue
+	);
+
+	if (result != 0)
+	{
+		assert(!"Unable to create new audio queue");
+	}
+
+	Float32 volume = 0;
+	AudioQueueGetParameter(audio_queue, kAudioQueueParam_Volume, &volume);
+
+	// allocate and prime audio buffers
+	for (size_t index = 0; index < 3; ++index)
+	{
+		AudioQueueBufferRef buffer;
+		OSStatus buffer_result = AudioQueueAllocateBuffer(audio_queue,
+			ad.buffer_size,
+			&buffer
+		);
+		assert(buffer_result == 0);
+		coreaudio_fill_buffer(&ad, audio_queue, buffer);
+	}
+
+
+	// setup audio queue property listener
+	AudioQueueAddPropertyListener(audio_queue, kAudioQueueProperty_IsRunning, listener_proc, &ad);
+
+	OSStatus play_result = AudioQueueStart(audio_queue, nil);
+	assert(play_result == 0);
+
+	const size_t max_iterations = 200;
+#if NO_RUN_LOOP
+	for (size_t iter = 0; iter < max_iterations; ++iter)
+	{
+		platform::thread_sleep(10);
+		// do stuff?
+	}
+#else
+//	size_t iterations = max_iterations;
+//	do
+//	{
+//		if (iterations == 0)
+//		{
+//			ad.is_running = 0;
+//		}
+//
+//		CFRunLoopRunInMode(kCFRunLoopDefaultMode,
+//			0.16,
+//			false
+//		);
+//
+//		--iterations;
+//	} while (ad.is_running);
+	CFRunLoopRun();
+#endif
+#endif // PLATFORM_APPLE
 
 int main(int, char**)
 {
 	gemini::core_startup();
+	gemini::runtime_startup("arcfusion.net/gemini/rnd");
 
 //	test_memory();
 //	test_maths();
@@ -1177,6 +1924,20 @@ int main(int, char**)
 #endif
 
 	test_bno055();
+
+#if defined(PLATFORM_LINUX)
+	platform::Result test_alsa();
+	platform::Result test = test_alsa();
+	assert(test.succeeded());
+#endif
+
+#if defined(PLATFORM_APPLE)
+	platform::Result test_coreaudio();
+	platform::Result test = test_coreaudio();
+	assert(test.succeeded());
+#endif
+
+	gemini::runtime_shutdown();
 
 	gemini::core_shutdown();
 
