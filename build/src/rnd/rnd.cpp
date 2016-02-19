@@ -2,6 +2,7 @@
 #include <platform/input.h>
 
 #include <runtime/filesystem.h>
+#include <runtime/runtime.h>
 
 #include <core/core.h>
 #include <core/logging.h>
@@ -329,9 +330,6 @@ struct Rectangle
 
 
 #include <libudev.h>
-
-
-#endif
 
 //idVendor:idProduct
 // 045e:028e -- Xbox360 controller
@@ -1049,10 +1047,682 @@ void test_devices()
 	test::shutdown();
 }
 
+#endif
+
+
+// code for reading and writing WAVE files
+namespace wav
+{
+	// http://www-mmsp.ece.mcgill.ca/documents/audioformats/wave/wave.html
+	// http://soundfile.sapp.org/doc/WaveFormat/
+#define MAKE_RIFF_CODE(a) ((a[0]) << 0 | (a[1]) << 8 | (a[2]) << 16 | (a[3]) << 24)
+#ifndef WAVE_FORMAT_PCM
+	const size_t WAVE_FORMAT_PCM = 0x001;
+	const size_t WAVE_FORMAT_IEEE_FLOAT = 0x0003;
+	const size_t WAVE_FORMAT_ALAW = 0x0006;
+	const size_t WAVE_FORMAT_MULAW = 0x0007;
+	const size_t WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
+#endif
+
+	const size_t RIFF_CHUNK_ID = MAKE_RIFF_CODE("RIFF");
+	const size_t RIFF_WAVE_FORMAT = MAKE_RIFF_CODE("WAVE");
+	const size_t WAVE_FORMAT_CHUNK_ID = MAKE_RIFF_CODE("fmt ");
+	const size_t WAVE_DATA_CHUNK_ID = MAKE_RIFF_CODE("data");
+
+	// riff header
+	struct wave_chunk_descriptor
+	{
+		uint32_t chunk_id; // should be 'RIFF'
+		uint32_t chunk_size;
+		uint32_t format; // should be 'WAVE'
+
+		uint32_t advance_size() const
+		{
+			return 8 + 4;
+		}
+	};
+
+	struct wave_format_chunk
+	{
+		uint32_t chunk_id; // should be 'fmt '
+		uint32_t chunk_size; // should be 16, 18, or 40.
+		uint16_t format_code; // format tag
+		uint16_t total_channels; // number of interleaved channels
+		uint32_t sample_rate; // blocks per second
+		uint32_t data_rate; // avg bytes per sec
+		uint16_t block_align; // data block size (bytes)
+		uint16_t bits_per_sample;
+		uint16_t extended_size; // size of extension (0 or 22)
+		uint16_t valid_bits_per_sample; // number of valid bits
+		uint32_t channel_mask; // speaker position mask
+		uint8_t subformat[16]; // GUID including the data format code
+
+		uint32_t advance_size() const
+		{
+			return 8 + chunk_size;
+		}
+	};
+
+	struct wave_data_chunk
+	{
+		uint32_t chunk_id; // should be 'data'
+		uint32_t chunk_size; // == num_samples * num_channels * bits_per_sample / 8
+
+		uint32_t advance_size() const
+		{
+			return 8;
+		}
+	};
+} // namespace wav
+
+
+
+void test_load_wav(Array<int16_t>& samples, const char* path)
+{
+	using namespace wav;
+
+	Array<unsigned char> filecontents;
+	core::filesystem::instance()->virtual_load_file(filecontents, path);
+
+	LOGV("loaded %s\n", path);
+	LOGV("file size: %i bytes\n", filecontents.size());
+
+
+	unsigned char* wavedata = static_cast<unsigned char*>(&filecontents[0]);
+	wave_chunk_descriptor* desc = reinterpret_cast<wave_chunk_descriptor*>(wavedata);
+	if (desc->chunk_id != RIFF_CHUNK_ID)
+	{
+		LOGV("Is not a valid RIFF file\n");
+		return;
+	}
+
+	if (desc->format != RIFF_WAVE_FORMAT)
+	{
+		LOGV("Is not a valid WAVE file format\n");
+		return;
+	}
+
+	wave_format_chunk* format = reinterpret_cast<wave_format_chunk*>(
+		reinterpret_cast<char*>(desc) + desc->advance_size()
+		);
+	if (format->chunk_id != WAVE_FORMAT_CHUNK_ID)
+	{
+		LOGV("Expected WAVE 'fmt ' chunk!\n");
+		return;
+	}
+
+	// We only support PCM.
+	assert(format->format_code == wav::WAVE_FORMAT_PCM);
+
+	// Only support our sample rate of 44.1KHz.
+	assert(format->sample_rate == 44100);
+
+	// Support mono and stereo sounds.
+	assert(format->total_channels == 1 || format->total_channels == 2);
+
+	wave_data_chunk* data = reinterpret_cast<wave_data_chunk*>(
+		reinterpret_cast<char*>(format) + format->advance_size()
+		);
+	if (data->chunk_id != WAVE_DATA_CHUNK_ID)
+	{
+		LOGV("Expected WAVE 'data' chunk!\n");
+		return;
+	}
+
+	// this describes how long in seconds the file is.
+	// data->chunk_size / format->data_rate;
+
+	const bool has_pad_byte = ((data->chunk_size + 1) & ~1) == 0;
+
+	const uint32_t total_samples = (data->chunk_size / format->block_align);
+	const uint32_t sample_size_bytes = (format->block_align / format->total_channels);
+
+	samples.resize(total_samples * 2);
+	int16_t* sample_data = reinterpret_cast<int16_t*>(reinterpret_cast<char*>(data) + data->advance_size());
+	for (size_t sample = 0; sample < total_samples * 2; ++sample)
+	{
+		samples[sample] = sample_data[sample];
+	}
+}
+
+
+void test_write_wav(Array<int16_t>& samples, const char* path)
+{
+	FILE* f = fopen(path, "wb");
+
+	wav::wave_chunk_descriptor desc;
+	desc.chunk_id = MAKE_RIFF_CODE("RIFF");
+	desc.format = MAKE_RIFF_CODE("WAVE");
+	// TODO: fill out desc with the total file size - 8
+
+	wav::wave_format_chunk format;
+	format.chunk_id = MAKE_RIFF_CODE("fmt ");
+	format.chunk_size = 16;
+	format.format_code = wav::WAVE_FORMAT_PCM;
+	format.total_channels = 2;
+	format.sample_rate = 44100;
+	format.bits_per_sample = 16;
+	format.data_rate = format.sample_rate * format.total_channels * (format.bits_per_sample / 8);
+	format.block_align = (format.total_channels * format.bits_per_sample) / 8;
+
+	wav::wave_data_chunk data;
+	data.chunk_id = MAKE_RIFF_CODE("data");
+	data.chunk_size = (samples.size() * format.bits_per_sample) / 8;
+	desc.chunk_size = data.chunk_size + 36;
+
+	if (f)
+	{
+		fwrite(&desc, 1, desc.advance_size(), f);
+		fwrite(&format, 1, format.advance_size(), f);
+		fwrite(&data, 1, data.advance_size(), f);
+		fwrite(&samples[0], 2, samples.size(), f);
+
+		// see if we need to write a padding byte.
+		if ((data.chunk_size + 1) & ~1 == 0)
+		{
+			char padding = '\0';
+			fwrite(&padding, 1, 1, f);
+		}
+		fclose(f);
+	}
+}
+
+// potential test code for reading/writing wav files
+#if 0
+void test_wav()
+{
+	Array<int16_t> samples;
+	test_load_wav(samples, "sound.wav");
+
+	test_write_wav(samples, "output.wav");
+
+	Array<int16_t> input;
+	test_load_wav(input, "output.wav");
+}
+#endif
+
+// test windows audio
+#if defined(PLATFORM_WINDOWS)
+#include <core/logging.h>
+#include <platform/platform.h> // for dylib manipulation
+
+#pragma warning(push)
+// Cleanup after messy windows headers.
+#pragma warning(disable: 4917) // a GUID can only be associated with a class, interface or namespace
+#include <mmdeviceapi.h>
+#include <Audioclient.h>
+#include <AudioSessionTypes.h>
+#include <functiondiscoverykeys_devpkey.h> // for endpoint device property keys
+#pragma warning(pop)
+
+#include <objbase.h>
+
+template <class T>
+void safe_release(T** ptr)
+{
+	if (*ptr)
+	{
+		(*ptr)->Release();
+		*ptr = nullptr;
+	}
+}
+
+void enumerate_devices(IMMDeviceCollection* device_collection)
+{
+	UINT device_count;
+	device_collection->GetCount(&device_count);
+	for (UINT index = 0; index < device_count; ++index)
+	{
+		IMMDevice* device;
+		if (SUCCEEDED(device_collection->Item(index, &device)))
+		{
+			// uuid of device
+			//wchar_t* name;
+			//if (SUCCEEDED(device->GetId(&name)))
+			//{
+			//	CoTaskMemFree(name);
+			//}
+
+			IPropertyStore* properties;
+			if (SUCCEEDED(device->OpenPropertyStore(STGM_READ, &properties)))
+			{
+				//PROPVARIANT friendly_name;
+				//PropVariantInit(&friendly_name);
+				//if (SUCCEEDED(properties->GetValue(PKEY_DeviceInterface_FriendlyName, &friendly_name)))
+				//{
+				//	LOGV("endpoint: %i '%S'\n", index, friendly_name.pwszVal);
+				//	PropVariantClear(&friendly_name);
+				//}
+
+				//PROPVARIANT device_desc;
+				//PropVariantInit(&device_desc);
+				//if (SUCCEEDED(properties->GetValue(PKEY_Device_DeviceDesc, &device_desc)))
+				//{
+				//	LOGV("endpoint: %i '%S'\n", index, device_desc.pwszVal);
+				//	PropVariantClear(&device_desc);
+				//}
+
+				// combined: FriendlyName (DeviceInterface)
+				PROPVARIANT device_name;
+				PropVariantInit(&device_name);
+				if (SUCCEEDED(properties->GetValue(PKEY_Device_FriendlyName, &device_name)))
+				{
+					LOGV("endpoint: %i '%S'\n", index, device_name.pwszVal);
+					PropVariantClear(&device_name);
+				}
+
+				safe_release(&properties);
+			}
+		}
+	}
+}
+
+HRESULT report_error(HRESULT input)
+{
+	switch (input)
+	{
+		// No error.
+	case S_OK:
+		break;
+
+	case AUDCLNT_E_ALREADY_INITIALIZED:
+		LOGV("AudioClient is already initialized\n");
+		break;
+
+	case AUDCLNT_E_BUFFER_ERROR:
+		LOGV("GetBuffer failed to retrieve a data buffer\n");
+		break;
+
+	case AUDCLNT_E_WRONG_ENDPOINT_TYPE:
+		LOGV("Wrong Endpoint Type\n");
+		break;
+
+	case AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED:
+		LOGV("BufferSize is not aligned\n");
+		break;
+
+	case AUDCLNT_E_BUFFER_SIZE_ERROR:
+		LOGV("Buffer duration for exclusive mode is out of range\n");
+		break;
+
+	case AUDCLNT_E_UNSUPPORTED_FORMAT:
+		LOGV("Unsupported format\n");
+		break;
+
+	case AUDCLNT_E_BUFFER_TOO_LARGE:
+		LOGV("NumFramesRequested value exceeds available buffer space (buffer size minus padding size)\n");
+		break;
+
+	default:
+		LOGV("Unknown Error\n");
+		break;
+	}
+
+	return input;
+}
+
+static uint32_t t = 0;
+Array<int16_t> loaded_sound;
+
+// sample_rate_hz == 1 second.
+// 260 cycles per second
+// sample_rate_hz / 260
+
+void fill_buffer(BYTE* data, UINT32 frames_available, const UINT32 engine_sample_size, const UINT32 block_align)
+{
+	// frame_size = channels (two) * sample_size (two bytes)
+	// frame_size is 4 bytes; multiply by frames_available is your buffer size.
+
+
+	// load a wave
+#if 0
+	int16_t* buffer = reinterpret_cast<int16_t*>(data);
+	for (UINT32 frame = 0; frame < frames_available; ++frame)
+	{
+		buffer[frame * 2] = loaded_sound[t];
+		t += 2;
+		if (t > loaded_sound.size() - 1)
+			t = 0;
+	}
+#endif
+
+#if 0
+	// generate a square wave
+	const float volume = 0.25f;
+
+	const UINT32 frames_per_period = 44100 / 256;
+	const UINT32 half_period = frames_per_period / 2;
+	const UINT32 total_frames = frames_available;
+
+	int16_t* buffer = reinterpret_cast<int16_t*>(data);
+	for (UINT32 frame = 0; frame < total_frames; ++frame)
+	{
+		short value = ((t / half_period) % 2) ? 3000 : -3000;
+		uint32_t index = frame * 2;
+		buffer[index + 0] = static_cast<short>(value * volume);
+		buffer[index + 1] = static_cast<short>(value * volume);
+
+		t += 1;
+		if (t > frames_per_period)
+		{
+			t -= frames_per_period;
+		}
+	}
+#endif
+}
+
+#include <avrt.h>
+
+platform::Result test_wasapi()
+{
+	// After a brief look at XAudio2 here's my conclusion:
+	// - a. There are three different versions for Windows 7, 8, and 10.
+	//		Headers that ship with Windows 8.1 kit (which can be installed
+	//		on Windows 7 via VS2015, link to XAudio2_8.dll by default.
+	//		This requires that the application load the XAudio2_7.dll at
+	//		runtime and dynamically link the functions.
+	// - b. This leads down the rabbit hole of having to duplicate what the
+	//		June 2010 DX SDK headers do for XAudio2Create
+	//		via COM, initializing the instance, etc.
+	// - c. On top of that awful bit, XAudio2 is limited in that it cannot
+	//		capture audio from devices -- such as a Microphone.
+	// - d. WASAPI still leaves the door open for Windows Store and
+	//		Phone Apps (in case that ever needs to be a thing).
+
+	// Therefore, I'm going to attempt to use the WASAPI which debuted with
+	// Windows Vista. If there's ever a need to support Windows XP, I can hook
+	// up DirectSound later on.
+
+	//
+	// REFERENCES
+	//
+	// Sample rate conversion is not performed inside WASAPI.
+	// Exclusive mode vs Shared mode with the device. Exclusive is a direct
+	// connection -- no other applications can use the device.
+	// http://mark-dot-net.blogspot.com/2008/06/what-up-with-wasapi.html
+
+	// Need to add in a bit of latency when writing audio
+	// https://hero.handmadedev.org/forum/code-discussion/442-using-wasapi-for-sound#2902
+
+	// REFERENCE_TIME is in hundreds of nanoseconds.
+	// https://blogs.windows.com/buildingapps/2014/05/15/real-time-audio-in-windows-store-and-windows-phone-apps/
+
+	platform::Result result;
+
+	// load a test wav.
+	test_load_wav(loaded_sound, "sound.wav");
+
+
+	HANDLE task_handle;
+	DWORD task_index = 0;
+
+
+	// We must initialize COM first. This requires objbase.h and ole32.lib.
+	if (FAILED(CoInitializeEx(0, COINIT_MULTITHREADED)))
+	{
+		assert(!"COM initialization failed");
+		return platform::Result::failure("COM initialization failed");
+	}
+
+
+	// try to create the device enumerator instance.
+	IMMDeviceEnumerator* device_enumerator;
+	HRESULT create_enumerator_result = CoCreateInstance(
+		__uuidof(MMDeviceEnumerator),
+		0,
+		CLSCTX_ALL,
+		__uuidof(IMMDeviceEnumerator),
+		reinterpret_cast<LPVOID*>(&device_enumerator)
+		);
+	if (FAILED(create_enumerator_result))
+	{
+		return platform::Result::failure("IMMDeviceEnumerator creation failed");
+	}
+
+	// let's enumerate the audio endpoint devices.
+	const EDataFlow device_type = eRender; // eRender, eCapture, eAll.
+	const DWORD state_mask = DEVICE_STATE_ACTIVE;
+	IMMDeviceCollection* device_collection;
+	HRESULT enum_result = device_enumerator->EnumAudioEndpoints(device_type, state_mask, &device_collection);
+	if (FAILED(enum_result))
+	{
+		return platform::Result::failure("Failed to enumerate devices");
+	}
+	else
+	{
+		//enumerate_devices(device_collection);
+		safe_release(&device_collection);
+	}
+
+	IMMDevice* default_render_device;
+	if (FAILED(device_enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &default_render_device)))
+	{
+		return platform::Result::failure("Get default render device failed");
+	}
+
+	IMMDevice* default_capture_device;
+	if (FAILED(device_enumerator->GetDefaultAudioEndpoint(eCapture, eConsole, &default_capture_device)))
+	{
+		return platform::Result::failure("Get default capture device failed");
+	}
+
+	IAudioClient* audio_client;
+	// try to activate the render device.
+	if (FAILED(default_render_device->Activate(__uuidof(IAudioClient),
+		CLSCTX_ALL,
+		0,
+		reinterpret_cast<LPVOID*>(&audio_client))))
+	{
+		return platform::Result::failure("Output device Activation failed");
+	}
+
+
+	WAVEFORMATEX* mix_format;
+	audio_client->GetMixFormat(&mix_format);
+
+	const UINT32 mix_sample_size = mix_format->nBlockAlign;
+
+
+
+	const DWORD sample_rate_hz = 44100;  // 44.1KHz
+	assert(mix_format->nSamplesPerSec == sample_rate_hz);
+	WAVEFORMATEX waveformat;
+	memset(&waveformat, 0, sizeof(WAVEFORMATEX));
+	waveformat.nChannels = 2;
+	waveformat.wFormatTag = WAVE_FORMAT_PCM;
+	waveformat.nSamplesPerSec = sample_rate_hz;
+	waveformat.wBitsPerSample = 16;
+	waveformat.nBlockAlign = (waveformat.nChannels * waveformat.wBitsPerSample) / 8;
+	waveformat.nAvgBytesPerSec = (waveformat.nSamplesPerSec * waveformat.nBlockAlign);
+	waveformat.cbSize = 0;
+
+	const UINT32 block_align = mix_sample_size * waveformat.nBlockAlign;
+
+	//
+	// Check to see if the format is supported in a certain share mode.
+	//
+	//WAVEFORMATEX* shared_format;
+	//HRESULT format_supported = audio_client->IsFormatSupported(AUDCLNT_SHAREMODE_SHARED, &waveformat, &shared_format);
+	//if (SUCCEEDED(format_supported))
+	//{
+	//	LOGV("format IS supported. setting...\n");
+	//	CoTaskMemFree(shared_format);
+	//}
+	//else
+	//{
+	//	// format is NOT supported for EXCLUSIVE mode.
+	//	assert(0);
+	//}
+
+	//
+	// Initialize an audio stream
+	//
+
+	REFERENCE_TIME default_device_period;
+	REFERENCE_TIME min_device_period;
+	assert(S_OK == report_error(audio_client->GetDevicePeriod(&default_device_period, &min_device_period)));
+
+	//double period_seconds = (default_device_period / 1.0e7);
+	//const UINT32 frames_per_period = static_cast<UINT32>(sample_rate_hz * period_seconds + 0.5);
+
+	const double BUFFER_SECONDS = 1.0;
+	//REFERENCE_TIME buffer_duration = static_cast<REFERENCE_TIME>(BUFFER_SECONDS * static_cast<double>(4096) / (sample_rate_hz * 1.0e-7));
+	REFERENCE_TIME buffer_duration = 1.0e7;
+
+
+	const DWORD stream_flags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
+	HRESULT stream_initialize = audio_client->Initialize(
+		AUDCLNT_SHAREMODE_SHARED,
+		stream_flags,
+		buffer_duration,
+		0, // always zero in SHARED mode.
+		&waveformat,
+		NULL
+		);
+	assert(report_error(stream_initialize) == S_OK);
+
+	// create the event and set it on the audio client
+	HANDLE event_handle = CreateEvent(
+		NULL,
+		FALSE,
+		FALSE,
+		NULL
+		);
+
+	HRESULT set_event_result = audio_client->SetEventHandle(event_handle);
+	if (set_event_result != S_OK)
+	{
+		return platform::Result::failure("failed to set the audio client event handle");
+	}
+
+	UINT32 buffer_frame_count;
+	HRESULT get_buffer_size_result = audio_client->GetBufferSize(&buffer_frame_count);
+	if (get_buffer_size_result != S_OK)
+	{
+		return platform::Result::failure("Failed to GetBufferSize");
+	}
+
+	LOGV("buffer_frame_count = %i\n", buffer_frame_count);
+
+	REFERENCE_TIME actual_duration = static_cast<double>(
+		1.0e7 * (buffer_frame_count / static_cast<double>(mix_format->nSamplesPerSec))
+		);
+
+
+	// clean up mix format
+	CoTaskMemFree(mix_format);
+
+
+	IAudioRenderClient* render_client;
+	HRESULT get_service_result = audio_client->GetService(
+		__uuidof(IAudioRenderClient),
+		reinterpret_cast<LPVOID*>(&render_client)
+		);
+	if (get_service_result != S_OK)
+	{
+		return platform::Result::failure("Failed to GetService: IAudioRenderClient");
+	}
+
+
+	task_handle = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &task_index);
+	assert(task_handle != NULL);
+
+	LOGV("setup thread for task: %i\n", task_index);
+
+	BYTE* buffer_data;
+	HRESULT get_buffer_result = render_client->GetBuffer(
+		buffer_frame_count,
+		&buffer_data
+		);
+	if (get_buffer_result != S_OK)
+	{
+		return platform::Result::failure("Failed to get initial buffer data");
+	}
+
+	fill_buffer(buffer_data, buffer_frame_count, mix_sample_size, block_align);
+
+	const DWORD release_flags = 0;
+	HRESULT release_buffer_result = render_client->ReleaseBuffer(
+		buffer_frame_count,
+		release_flags
+		);
+	if (release_buffer_result != S_OK)
+	{
+		return platform::Result::failure("Unable to release initial buffer");
+	}
+
+	// https://msdn.microsoft.com/en-us/library/windows/desktop/dd316756(v=vs.85).aspx
+
+	HRESULT start_result = audio_client->Start();
+	assert(start_result == S_OK);
+
+	size_t iterations = 300;
+
+	LOGV("begin sound processing...\n");
+
+	for (size_t iter = 0; iter < iterations; ++iter)
+	{
+		// block until the next audio buffer is signaled
+		WaitForSingleObject(event_handle, INFINITE);
+
+		UINT32 padding_frames = 0;
+		UINT32 frames_available = 0;
+
+		// get padding in existing buffer
+		assert(S_OK == audio_client->GetCurrentPadding(&padding_frames));
+
+		BYTE* new_buffer;
+
+		// get available frames
+		frames_available = buffer_frame_count - padding_frames;
+		get_buffer_result = render_client->GetBuffer(
+			frames_available,
+			&new_buffer
+			);
+		assert(report_error(get_buffer_result) == S_OK);
+
+		// fill the buffer
+		fill_buffer(new_buffer, frames_available, mix_sample_size, block_align);
+
+		release_buffer_result = render_client->ReleaseBuffer(frames_available, 0);
+		assert(report_error(release_buffer_result) == S_OK);
+	}
+
+	LOGV("finished sound processing...\n");
+
+	audio_client->Stop();
+
+	safe_release(&render_client);
+
+	safe_release(&audio_client);
+	if (event_handle)
+	{
+		CloseHandle(event_handle);
+	}
+
+	AvRevertMmThreadCharacteristics(task_handle);
+
+	// shutdown
+	safe_release(&default_capture_device);
+	safe_release(&default_render_device);
+	safe_release(&device_enumerator);
+
+
+	CoUninitialize();
+
+
+	return platform::Result::success();
+}
+#endif
+
+
+
+
 
 int main(int argc, char** argv)
 {
 	gemini::core_startup();
+	gemini::runtime_startup("arcfusion.net/gemini/rnd");
 
 //	test_memory();
 //	test_maths();
@@ -1067,6 +1737,13 @@ int main(int argc, char** argv)
 	test_devices();
 #endif
 
+#if defined(PLATFORM_WINDOWS)
+	platform::Result test_wasapi();
+	platform::Result test = test_wasapi();
+	assert(test.succeeded());
+#endif
+
+	gemini::runtime_shutdown();
 	gemini::core_shutdown();
 
 	return 0;
