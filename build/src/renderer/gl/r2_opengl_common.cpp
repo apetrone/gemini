@@ -821,6 +821,11 @@ namespace render2
 		resource_provider->load_file(fragment_shader_source, fragment_shader_path());
 		assert(!fragment_shader_source.empty());
 
+		// Tack on a terminator since we're passing these to GL functions
+		// which expect a proper C-string.
+		vertex_shader_source.push_back('\0');
+		fragment_shader_source.push_back('\0');
+
 		GLShader* shader = MEMORY_NEW(GLShader, core::memory::global_allocator());
 		shader->build_from_source(
 		  (char*)&vertex_shader_source[0],
