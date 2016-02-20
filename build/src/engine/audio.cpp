@@ -279,7 +279,9 @@ namespace gemini
 			IAudioInterface* audio_instance = MEMORY_NEW(AudioInterface, core::memory::global_allocator());
 			audio::set_instance(audio_instance);
 
+#if defined(PLATFORM_APPLE) || defined(PLATFORM_LINUX)
 			factory.register_class( DRIVER_CREATOR, DRIVER_NAME );
+#endif
 
 			AudioDriverFactory::Record * record = factory.find_class( DRIVER_NAME );
 			if ( record )

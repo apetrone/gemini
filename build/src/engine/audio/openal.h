@@ -29,8 +29,8 @@
 #include <core/factory.h> // for DECLARE_FACTORY_CLASS
 
 #if PLATFORM_WINDOWS
-	#include <al.h>
-	#include <alc.h>
+	//#include <al.h>
+	//#include <alc.h>
 #elif PLATFORM_LINUX
 	#include <AL/al.h>
 	#include <AL/alc.h>
@@ -43,7 +43,7 @@ namespace gemini
 {
 	namespace audio
 	{
-
+#if defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE)
 		class OpenAL : public audio::IAudioDriver
 		{
 			DECLARE_FACTORY_CLASS( OpenAL, audio::IAudioDriver );
@@ -68,5 +68,6 @@ namespace gemini
 			virtual void stop_source( AudioSource * source );
 			virtual void clean_source( AudioSource * source );
 		}; // OpenAL
+#endif
 	} // namespace audio
 } // namespace gemini
