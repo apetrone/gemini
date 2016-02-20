@@ -79,15 +79,15 @@ namespace core
 
 		// read an audio file to memory
 		// this provides an abstraction between platforms; but likely needs to belong elsewhere?
-		void* audiofile_to_buffer(const char* filename, size_t& buffer_length);
+		LIBRARY_EXPORT void* audiofile_to_buffer(const char* filename, size_t& buffer_length);
 
 		LIBRARY_EXPORT void truncate_string_at_path(char* path, const char* substr);
 
 //		LIBRARY_EXPORT int read_file_stats(const char* fullpath, FileStats& file_stats);
 
 
-		void absolute_path_from_relative(::platform::PathString& fullpath, const char* relative_path, const ::platform::PathString& content_path);
-		void relative_path_from_absolute(::platform::PathString& relative_path, const char* absolute_path, const ::platform::PathString& content_path);
+		LIBRARY_EXPORT void absolute_path_from_relative(::platform::PathString& fullpath, const char* relative_path, const ::platform::PathString& content_path);
+		LIBRARY_EXPORT void relative_path_from_absolute(::platform::PathString& relative_path, const char* absolute_path, const ::platform::PathString& content_path);
 	}
 
 

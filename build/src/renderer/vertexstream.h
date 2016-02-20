@@ -49,23 +49,23 @@ namespace renderer
 
 		VertexDescriptor desc;
 
-		VertexStream();
-		~VertexStream();
-		void alloc( IndexType max_vertices, IndexType max_indices = 0 );
-		void reset();
-		void dealloc();
-		unsigned int bytes_used();
-		VertexType * request( IndexType num_vertices, int dont_advance_pointer = 0 );
-		VertexType * operator[](int index);
-		void append_indices( IndexType * inIndices, IndexType num_indices );
-		bool has_room( unsigned int num_vertices, unsigned int num_indices ) const;
+		LIBRARY_EXPORT VertexStream();
+		LIBRARY_EXPORT ~VertexStream();
+		LIBRARY_EXPORT void alloc( IndexType max_vertices, IndexType max_indices = 0 );
+		LIBRARY_EXPORT void reset();
+		LIBRARY_EXPORT void dealloc();
+		LIBRARY_EXPORT unsigned int bytes_used();
+		LIBRARY_EXPORT VertexType * request( IndexType num_vertices, int dont_advance_pointer = 0 );
+		LIBRARY_EXPORT VertexType * operator[](int index);
+		LIBRARY_EXPORT void append_indices( IndexType * inIndices, IndexType num_indices );
+		LIBRARY_EXPORT bool has_room( unsigned int num_vertices, unsigned int num_indices ) const;
 
-		void create( IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC );
-		void destroy();
-		void update();
-		void draw_elements();
-		void draw();
-		void fill_data( VertexType * vertex_source, unsigned int vertex_count, IndexType * index_source, unsigned int index_count );
+		LIBRARY_EXPORT void create( IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC );
+		LIBRARY_EXPORT void destroy();
+		LIBRARY_EXPORT void update();
+		LIBRARY_EXPORT void draw_elements();
+		LIBRARY_EXPORT void draw();
+		LIBRARY_EXPORT void fill_data( VertexType * vertex_source, unsigned int vertex_count, IndexType * index_source, unsigned int index_count );
 
 	}; // VertexStream
 

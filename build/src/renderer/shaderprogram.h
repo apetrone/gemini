@@ -62,14 +62,14 @@ namespace renderer
 
 		unsigned int object;
 
-		ShaderProgram() : frag_data_location("out_color"), object(0) {}
-		virtual ~ShaderProgram();
-		ShaderProgram& operator=(const ShaderProgram& other);
+		LIBRARY_EXPORT ShaderProgram() : frag_data_location("out_color"), object(0) {}
+		LIBRARY_EXPORT virtual ~ShaderProgram();
+		LIBRARY_EXPORT ShaderProgram& operator=(const ShaderProgram& other);
 
-		int get_uniform_location( const char * name );
+		LIBRARY_EXPORT int get_uniform_location( const char * name );
 
-		void show_uniforms();
-		void show_attributes();
+		LIBRARY_EXPORT void show_uniforms();
+		LIBRARY_EXPORT void show_attributes();
 	}; // ShaderProgram
 
 

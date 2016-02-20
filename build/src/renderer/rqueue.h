@@ -96,12 +96,12 @@ namespace renderer
 
 		RenderList render_list;
 
-		RenderQueue() {}
-		~RenderQueue() {}
+		LIBRARY_EXPORT RenderQueue() {}
+		LIBRARY_EXPORT ~RenderQueue() {}
 
-		void insert(const RenderBlock& block);
-		void sort();
-		void clear();
-		size_t size() const;
+		LIBRARY_EXPORT void insert(const RenderBlock& block);
+		LIBRARY_EXPORT void sort();
+		LIBRARY_EXPORT void clear();
+		LIBRARY_EXPORT size_t size() const;
 	};
 } // namespace renderer
