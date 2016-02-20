@@ -17,6 +17,14 @@ COMMON_PROJECT_ROOT = "_projects"
 
 # dependencies
 
+def get_library_type(target_platform):
+	# StaticLibraries should be preferred on Windows.
+	# Dynamic Libraries are preferred on all other platforms.
+	if target_platform.matches("windows"):
+		return ProductType.StaticLibrary
+
+	return ProductType.DynamicLibrary
+
 libglm = Dependency(file="glm.py")
 librecastnavigation = Dependency(file="recastnavigation.py")
 libfreetype = Dependency(file="freetype.py")
@@ -384,7 +392,7 @@ def get_tools(arguments, libruntime, librenderer, libcore, libsdk, **kwargs):
 
 
 def get_libcore(arguments, target_platform):
-	libcore = Product(name="core", output=ProductType.DynamicLibrary)
+	libcore = Product(name="core", output=get_library_type(target_platform))
 	setup_driver(arguments, libcore, target_platform)
 	libcore.project_root = COMMON_PROJECT_ROOT
 	libcore.root = "../"
@@ -608,7 +616,7 @@ def get_libcore(arguments, target_platform):
 
 
 def get_librenderer(arguments, target_platform):
-	librenderer = Product(name="renderer", output=ProductType.DynamicLibrary)
+	librenderer = Product(name="renderer", output=get_library_type(target_platform))
 	setup_driver(arguments, librenderer, target_platform)
 	librenderer.project_root = COMMON_PROJECT_ROOT
 	librenderer.root = "../"
@@ -674,7 +682,7 @@ def get_librenderer(arguments, target_platform):
 	return librenderer
 
 def get_libruntime(arguments, target_platform, librenderer):
-	libruntime = Product(name="runtime", output=ProductType.DynamicLibrary)
+	libruntime = Product(name="runtime", output=get_library_type(target_platform))
 	setup_driver(arguments, libruntime, target_platform)
 	libruntime.project_root = COMMON_PROJECT_ROOT
 	libruntime.root = "../"
@@ -707,7 +715,7 @@ def get_sdk(arguments, links, **kwargs):
 	global_params = kwargs.get("global_params")
 	target_platform = kwargs.get("target_platform")
 
-	sdk = Product(name="sdk", output=ProductType.DynamicLibrary)
+	sdk = Product(name="sdk", output=get_library_type(target_platform))
 	sdk.project_root = COMMON_PROJECT_ROOT
 	sdk.root = "../"
 	sdk.sources += [
@@ -760,7 +768,6 @@ def get_rnd(arguments, links, **kwargs):
 	rnd_windows = rnd.layout(platform="windows")
 	rnd_windows.links += [
 		"OpenGL32",
-		#"OpenAL32",
 		"gdi32",
 		"winspool",
 		"comdlg32",
@@ -1129,7 +1136,6 @@ def products(arguments, **kwargs):
 		windows = gemini.layout(platform="windows")
 		windows.links += [
 			"OpenGL32",
-			"OpenAL32",
 			"gdi32",
 			"winspool",
 			"comdlg32",
