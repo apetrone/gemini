@@ -1563,7 +1563,162 @@ platform::Result test_wasapi()
 
 	return platform::Result::success();
 }
+#endif // defined(PLATFORM_WINDOWS)
+
+
+#if defined(PLATFORM_APPLE)
+// REFERENCES:
+// http://kaniini.dereferenced.org/2014/08/31/CoreAudio-sucks.html
+// https://github.com/jarikomppa/soloud/blob/master/src/backend/coreaudio/soloud_coreaudio.cpp
+// https://gist.github.com/hngrhorace/1360885
+// http://www.cocoawithlove.com/2010/10/ios-tone-generator-introduction-to.html
+// http://atastypixel.com/blog/using-remoteio-audio-unit/
+
+#include <AudioToolbox/AudioToolbox.h>
+
+// Needs frameworks:
+// - AudioToolbox
+
+struct coreaudio_data
+{
+	uint32_t is_running;
+	uint32_t buffer_size;
+};
+
+void coreaudio_fill_buffer(void* user_data, AudioQueueRef audio_queue, AudioQueueBufferRef buffer)
+{
+	coreaudio_data* data = reinterpret_cast<coreaudio_data*>(user_data);
+	if (data->is_running)
+	{
+		LOGV("coreaudio_fill_buffer!\n");
+
+		memset(buffer->mAudioData, 0x7fff, data->buffer_size);
+
+		buffer->mAudioDataByteSize = data->buffer_size;
+		OSStatus queue_status = AudioQueueEnqueueBuffer(audio_queue, buffer, 0, nil);
+		if (queue_status == kAudioQueueErr_EnqueueDuringReset)
+		{
+			// System doesn't allow you to enqueue buffers during a:
+			// AudioQueueReset, AudioQueueStop, or AudioQueueDispose operation.
+		}
+		else
+		{
+			assert(queue_status == 0);
+		}
+	}
+}
+
+void listener_proc(void* /*user_data*/, AudioQueueRef audio_queue, AudioQueuePropertyID property)
+{
+	if (property == kAudioQueueProperty_IsRunning)
+	{
+		uint32_t output;
+		uint32_t data_size = sizeof(uint32_t);
+		AudioQueueGetProperty(audio_queue, property, &output, &data_size);
+		LOGV("audio queue is %s!\n", output ? "running" : "stopped");
+	}
+}
+
+#define NO_RUN_LOOP 1
+
+platform::Result test_coreaudio()
+{
+	AudioQueueRef audio_queue = nullptr;
+
+	coreaudio_data ad;
+	ad.is_running = 1;
+	ad.buffer_size = 4096;
+	const uint32_t total_channels = 2;
+
+	// startup
+	AudioStreamBasicDescription format;
+	format.mSampleRate = 44100;
+	format.mFormatID = kAudioFormatLinearPCM;
+	format.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+	// "In uncompressed audio, a Packet is
+	// one frame, (mFramesPerPacket == 1)"
+	format.mFramesPerPacket = 1;
+	format.mBytesPerFrame = 4;
+	format.mChannelsPerFrame = total_channels;
+	format.mBitsPerChannel = sizeof(short) * 8;
+	format.mBytesPerPacket = format.mBytesPerFrame * format.mFramesPerPacket;
+	format.mReserved = 0;
+
+	OSStatus result = AudioQueueNewOutput(&format,
+		coreaudio_fill_buffer,
+		&ad,
+
+#if NO_RUN_LOOP
+		nil,
+		nil,
+#else
+		CFRunLoopGetCurrent(),
+		kCFRunLoopCommonModes,
 #endif
+		0, // reserved: must be 0.
+		&audio_queue
+	);
+
+	if (result != 0)
+	{
+		assert(!"Unable to create new audio queue");
+	}
+
+	Float32 volume = 0;
+	AudioQueueGetParameter(audio_queue, kAudioQueueParam_Volume, &volume);
+
+	// allocate and prime audio buffers
+	for (size_t index = 0; index < 3; ++index)
+	{
+		AudioQueueBufferRef buffer;
+		OSStatus buffer_result = AudioQueueAllocateBuffer(audio_queue,
+			ad.buffer_size,
+			&buffer
+		);
+		assert(buffer_result == 0);
+		coreaudio_fill_buffer(&ad, audio_queue, buffer);
+	}
+
+
+	// setup audio queue property listener
+	AudioQueueAddPropertyListener(audio_queue, kAudioQueueProperty_IsRunning, listener_proc, &ad);
+
+	OSStatus play_result = AudioQueueStart(audio_queue, nil);
+	assert(play_result == 0);
+
+	const size_t max_iterations = 200;
+#if NO_RUN_LOOP
+	for (size_t iter = 0; iter < max_iterations; ++iter)
+	{
+		platform::thread_sleep(10);
+		// do stuff?
+	}
+#else
+//	size_t iterations = max_iterations;
+//	do
+//	{
+//		if (iterations == 0)
+//		{
+//			ad.is_running = 0;
+//		}
+//
+//		CFRunLoopRunInMode(kCFRunLoopDefaultMode,
+//			0.16,
+//			false
+//		);
+//
+//		--iterations;
+//	} while (ad.is_running);
+	CFRunLoopRun();
+#endif
+
+	// shutdown
+	AudioQueueStop(audio_queue, true);
+	AudioQueueDispose(audio_queue, false);
+
+	return platform::Result::success();
+}
+#endif // defined(PLATFORM_APPLE)
 
 
 
@@ -1590,6 +1745,12 @@ int main(int argc, char** argv)
 #if defined(PLATFORM_WINDOWS)
 	platform::Result test_wasapi();
 	platform::Result test = test_wasapi();
+	assert(test.succeeded());
+#endif
+
+#if defined(PLATFORM_APPLE)
+	platform::Result test_coreaudio();
+	platform::Result test = test_coreaudio();
 	assert(test.succeeded());
 #endif
 
