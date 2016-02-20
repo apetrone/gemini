@@ -62,6 +62,7 @@ namespace gemini
 
 	namespace audio
 	{
+#if defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE)
 		OpenAL::OpenAL()
 		{
 			device = alcOpenDevice( 0 );
@@ -388,5 +389,7 @@ namespace gemini
 			alDeleteSources( 1, &source->source_id );
 			check_al_error( "OpenAL::clean_source - alDeleteSources" );
 		} // clean_source
+
+#endif
 	} // namespace audio
 } // namespace gemini
