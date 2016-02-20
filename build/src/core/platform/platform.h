@@ -56,6 +56,7 @@
 
 	struct android_app;
 
+	#include <pthread.h>
 	namespace platform
 	{
 		typedef pthread_t ThreadId;
