@@ -67,7 +67,7 @@ namespace platform
 		return posix_get_environment_variable("HOME");
 	} // posix_get_user_directory
 
-	core::StackString<MAX_PATH_SIZE> posix_make_absolute_path(const char* path)
+	PathString posix_make_absolute_path(const char* path)
 	{
 		core::StackString<MAX_PATH_SIZE> output;
 		if (path[0] == '~')

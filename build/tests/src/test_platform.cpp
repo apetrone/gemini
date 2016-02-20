@@ -125,6 +125,10 @@ UNITTEST(filesystem)
 
 	platform::PathString temp_directory = platform::get_user_temp_directory();
 	TEST_ASSERT(!temp_directory.is_empty(), get_user_temp_directory);
+
+	platform::PathString abs_path = platform::make_absolute_path("./test");
+	TEST_ASSERT(abs_path.size() > 5, make_absolute_path);
+
 }
 
 // ---------------------------------------------------------------------

@@ -304,7 +304,7 @@ namespace platform
 	// This should expand environment variables.
 	// It should also account for leading tilde (~), which denotes the
 	// special $(HOME) environment variable on Linux systems.
-	LIBRARY_EXPORT core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path);
+	LIBRARY_EXPORT PathString make_absolute_path(const char* path);
 
 
 	LIBRARY_EXPORT platform::File fs_open(const char* path, FileMode mode = FileMode_Read);
