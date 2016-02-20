@@ -81,7 +81,7 @@ namespace platform
 		return cocoa::nsstring_to_stackstring<PathString>(user_temp_directory);
 	}
 
-	core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path)
+	PathString make_absolute_path(const char* path)
 	{
 		return posix_make_absolute_path(path);
 	}

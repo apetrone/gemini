@@ -113,7 +113,7 @@ namespace platform
 		return temp_path;
 	}
 
-	core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path)
+	PathString make_absolute_path(const char* path)
 	{
 		return posix_make_absolute_path(path);
 	}
