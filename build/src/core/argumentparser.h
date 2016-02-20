@@ -485,15 +485,15 @@ namespace core
 		public:
 
 
-			LIBRARY_EXPORT ArgumentParser();
-			LIBRARY_EXPORT ~ArgumentParser();
+			ArgumentParser();
+			~ArgumentParser();
 
-			LIBRARY_EXPORT void print_docstring() const;
+			void print_docstring() const;
 
-			LIBRARY_EXPORT std::vector<std::string> split_tokens(int argc, char** argv);
-			LIBRARY_EXPORT std::vector<std::string> split_tokens(const char* commandline);
+			std::vector<std::string> split_tokens(int argc, char** argv);
+			std::vector<std::string> split_tokens(const char* commandline);
 
-			LIBRARY_EXPORT bool parse(const char* docstring_source, std::vector<std::string> tokens, VariableMap& vm, const char* version_string = "");
+			bool parse(const char* docstring_source, std::vector<std::string> tokens, VariableMap& vm, const char* version_string = "");
 		}; // ArgumentParser
 
 

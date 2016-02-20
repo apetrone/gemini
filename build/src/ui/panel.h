@@ -47,8 +47,8 @@ namespace gui
 	{
 	public:
 		// memory overrides
-		LIBRARY_EXPORT void* operator new(size_t bytes);
-		LIBRARY_EXPORT void operator delete(void* memory);
+		void* operator new(size_t bytes);
+		void operator delete(void* memory);
 
 	public:
 
@@ -71,74 +71,74 @@ namespace gui
 		gemini::Color background_color;
 		gemini::Color foreground_color;
 
-		LIBRARY_EXPORT Panel(Panel* parent);
-		LIBRARY_EXPORT virtual ~Panel();
+		Panel(Panel* parent);
+		virtual ~Panel();
 
-		LIBRARY_EXPORT virtual void set_bounds(const ScreenInt x, const ScreenInt y, const DimensionType width, const DimensionType height);
-		LIBRARY_EXPORT virtual void set_bounds(const Rect& bounds);
+		virtual void set_bounds(const ScreenInt x, const ScreenInt y, const DimensionType width, const DimensionType height);
+		virtual void set_bounds(const Rect& bounds);
 
-		LIBRARY_EXPORT virtual void set_dimensions(float x, float y);
-		LIBRARY_EXPORT virtual void set_dimensions(const Point& dimensions);
+		virtual void set_dimensions(float x, float y);
+		virtual void set_dimensions(const Point& dimensions);
 
 		// compute content bounds (may exceed compositor bounds)
-		LIBRARY_EXPORT virtual void get_content_bounds(Rect& bounds) const;
+		virtual void get_content_bounds(Rect& bounds) const;
 
-		LIBRARY_EXPORT virtual void add_child(Panel* panel);
-		LIBRARY_EXPORT virtual void remove_child(Panel* panel);
-		LIBRARY_EXPORT virtual void handle_event(EventArgs& args);
-		LIBRARY_EXPORT virtual void update(Compositor* compositor, float delta_seconds);
-		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
-		LIBRARY_EXPORT virtual void render_children(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
-		LIBRARY_EXPORT virtual void set_background_image(Compositor* compositor, const char* path);
-		LIBRARY_EXPORT virtual void set_background_color(const gemini::Color& color);
-		LIBRARY_EXPORT virtual void set_foreground_color(const gemini::Color& color);
-		LIBRARY_EXPORT virtual void set_visible(bool is_visible);
-		LIBRARY_EXPORT virtual bool is_visible() const;
+		virtual void add_child(Panel* panel);
+		virtual void remove_child(Panel* panel);
+		virtual void handle_event(EventArgs& args);
+		virtual void update(Compositor* compositor, float delta_seconds);
+		virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
+		virtual void render_children(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
+		virtual void set_background_image(Compositor* compositor, const char* path);
+		virtual void set_background_color(const gemini::Color& color);
+		virtual void set_foreground_color(const gemini::Color& color);
+		virtual void set_visible(bool is_visible);
+		virtual bool is_visible() const;
 
 		// ---------------------------------------------------------------------
 		// hit tests
 		// ---------------------------------------------------------------------
-		LIBRARY_EXPORT virtual bool hit_test_local(const Point& local_point) const;
+		virtual bool hit_test_local(const Point& local_point) const;
 
 		// determine if this panel can become the foreground window (if it can be the first Z-ordered window)
-		LIBRARY_EXPORT virtual bool can_send_to_front() const { return true; }
+		virtual bool can_send_to_front() const { return true; }
 
 		// use this until we get a better system in place for type checks / registration
-		LIBRARY_EXPORT virtual bool is_label() const { return false; }
-		LIBRARY_EXPORT virtual bool is_button() const { return false; }
+		virtual bool is_label() const { return false; }
+		virtual bool is_button() const { return false; }
 
-		LIBRARY_EXPORT virtual bool has_flags(const uint32_t& test_flags) const { return (flags & test_flags) == test_flags; }
-		LIBRARY_EXPORT virtual void set_flags(uint32_t new_flags) { flags = new_flags; }
-		LIBRARY_EXPORT virtual uint32_t get_flags() const { return flags; }
+		virtual bool has_flags(const uint32_t& test_flags) const { return (flags & test_flags) == test_flags; }
+		virtual void set_flags(uint32_t new_flags) { flags = new_flags; }
+		virtual uint32_t get_flags() const { return flags; }
 
 		// ---------------------------------------------------------------------
 		// transforms
 		// ---------------------------------------------------------------------
-		LIBRARY_EXPORT void set_rotation(const float radians);
-		LIBRARY_EXPORT void set_scale(const glm::vec2& scale);
+		void set_rotation(const float radians);
+		void set_scale(const glm::vec2& scale);
 
 		// ---------------------------------------------------------------------
 		// other utils
 		// ---------------------------------------------------------------------
 		// traverse the hierarchy and find the parent compositor
-		LIBRARY_EXPORT Compositor* get_compositor();
+		Compositor* get_compositor();
 
-		LIBRARY_EXPORT Point pixels_from_dimensions(const Point& dimensions) const;
-		LIBRARY_EXPORT Point dimensions_from_pixels(const Point& pixels) const;
+		Point pixels_from_dimensions(const Point& dimensions) const;
+		Point dimensions_from_pixels(const Point& pixels) const;
 
-		LIBRARY_EXPORT const Point& get_origin() const { return origin; }
-		LIBRARY_EXPORT virtual void set_origin(float x, float y);
+		const Point& get_origin() const { return origin; }
+		virtual void set_origin(float x, float y);
 
-		LIBRARY_EXPORT const Size& get_size() const { return size; }
-		LIBRARY_EXPORT void set_size(const Size& new_size) { size = new_size; }
+		const Size& get_size() const { return size; }
+		void set_size(const Size& new_size) { size = new_size; }
 
-		LIBRARY_EXPORT const char* get_name() { return debug_name(); }
-		LIBRARY_EXPORT void set_name(const char* name) { debug_name = name; }
+		const char* get_name() { return debug_name(); }
+		void set_name(const char* name) { debug_name = name; }
 
 		// convert compositor coordinates to local panel coordinates
-		LIBRARY_EXPORT Point compositor_to_local(const Point& location);
+		Point compositor_to_local(const Point& location);
 
-		LIBRARY_EXPORT glm::mat3 get_transform(size_t index) const;
+		glm::mat3 get_transform(size_t index) const;
 		
 
 	protected:

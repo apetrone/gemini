@@ -47,28 +47,28 @@ namespace renderer
 		unsigned int num_commands;
 		core::util::MemoryStream stream;
 
-		LIBRARY_EXPORT RenderStream( unsigned int max_bytes = MAX_RENDERER_STREAM_BYTES, unsigned int max_commands = MAX_RENDERER_STREAM_COMMANDS );
+		RenderStream( unsigned int max_bytes = MAX_RENDERER_STREAM_BYTES, unsigned int max_commands = MAX_RENDERER_STREAM_COMMANDS );
 
-		LIBRARY_EXPORT void save_offset( long & offset );
-		LIBRARY_EXPORT void load_offset( long offset );
+		void save_offset( long & offset );
+		void load_offset( long offset );
 
-		LIBRARY_EXPORT void rewind();
-		LIBRARY_EXPORT RenderState * new_render_state();
-		LIBRARY_EXPORT void run_commands();
-		LIBRARY_EXPORT void add_command( int type );
-		LIBRARY_EXPORT void add_clearcolor( float r, float g, float b, float a );
-		LIBRARY_EXPORT void add_clear( unsigned int bitflags );
-		LIBRARY_EXPORT void add_cullmode( renderer::CullMode mode );
-		LIBRARY_EXPORT void add_viewport( int x, int y, int width, int height );
-		LIBRARY_EXPORT void add_uniform1i( int uniform_location, int value );
-		LIBRARY_EXPORT void add_sampler2d( int uniform_location, int texture_unit, renderer::Texture* texture );
-		LIBRARY_EXPORT void add_state( renderer::DriverState state, int enable );
-		LIBRARY_EXPORT void add_blendfunc( renderer::RenderBlendType source, renderer::RenderBlendType destination );
-		LIBRARY_EXPORT void add_shader( renderer::ShaderProgram * shader );
-		LIBRARY_EXPORT void add_uniform3f( int location, const glm::vec3 * data );
-		LIBRARY_EXPORT void add_uniform4f( int location, const glm::vec4 * data );
-		LIBRARY_EXPORT void add_uniform_matrix4( int location, const glm::mat4 * data, uint8_t count = 1 );
-		LIBRARY_EXPORT void add_draw_call( renderer::VertexBuffer * vertexbuffer );
-		LIBRARY_EXPORT void add_material( renderer::Material * material, renderer::ShaderProgram * shader );
+		void rewind();
+		RenderState * new_render_state();
+		void run_commands();
+		void add_command( int type );
+		void add_clearcolor( float r, float g, float b, float a );
+		void add_clear( unsigned int bitflags );
+		void add_cullmode( renderer::CullMode mode );
+		void add_viewport( int x, int y, int width, int height );
+		void add_uniform1i( int uniform_location, int value );
+		void add_sampler2d( int uniform_location, int texture_unit, renderer::Texture* texture );
+		void add_state( renderer::DriverState state, int enable );
+		void add_blendfunc( renderer::RenderBlendType source, renderer::RenderBlendType destination );
+		void add_shader( renderer::ShaderProgram * shader );
+		void add_uniform3f( int location, const glm::vec3 * data );
+		void add_uniform4f( int location, const glm::vec4 * data );
+		void add_uniform_matrix4( int location, const glm::mat4 * data, uint8_t count = 1 );
+		void add_draw_call( renderer::VertexBuffer * vertexbuffer );
+		void add_material( renderer::Material * material, renderer::ShaderProgram * shader );
 	}; // RenderStream
 } // namespace renderer

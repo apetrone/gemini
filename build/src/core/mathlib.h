@@ -89,22 +89,22 @@ namespace mathlib
 	const real D2R_PI180 = (PI / 180.0f);
 	const real R2D_180PI = (180.0f / PI);
 
-	LIBRARY_EXPORT inline real degrees_to_radians(real degrees)
+	inline real degrees_to_radians(real degrees)
 	{
 		return degrees * D2R_PI180;
 	}
 
-	LIBRARY_EXPORT inline real radians_to_degrees(real radians)
+	inline real radians_to_degrees(real radians)
 	{
 		return radians * R2D_180PI;
 	}
 
 
 	// pitch and yaw are in degrees; internally converted to radians
-	LIBRARY_EXPORT void basis_vectors_from_pitch_yaw(float pitch, float yaw, glm::vec3& right, glm::vec3& view, bool invert_y_axis = true);
+	void basis_vectors_from_pitch_yaw(float pitch, float yaw, glm::vec3& right, glm::vec3& view, bool invert_y_axis = true);
 
 
-	LIBRARY_EXPORT bool point_in_radius(const glm::vec3& p0, const glm::vec3& p1, float radius = 3.0f);
+	bool point_in_radius(const glm::vec3& p0, const glm::vec3& p1, float radius = 3.0f);
 }
 
 #if 0

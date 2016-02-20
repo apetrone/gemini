@@ -42,9 +42,6 @@
 	#define PATH_SEPARATOR '\\'
 	#define PATH_SEPARATOR_STRING "\\"
 
-	#define PLATFORM_LIBRARY_EXPORT __declspec(dllexport)
-	#define PLATFORM_LIBRARY_IMPORT __declspec(dllimport)
-
 	namespace platform
 	{
 		typedef DWORD ThreadId;
@@ -55,9 +52,6 @@
 	#define MAX_PATH_SIZE PATH_MAX
 	#define PATH_SEPARATOR '/'
 	#define PATH_SEPARATOR_STRING "/"
-
-	#define PLATFORM_LIBRARY_EXPORT
-	#define PLATFORM_LIBRARY_IMPORT
 
 	struct android_app;
 
@@ -91,7 +85,7 @@ namespace platform
 	{
 		char* commandline;
 
-		LIBRARY_EXPORT MainParameters(char* commandline_string = nullptr) :
+		MainParameters(char* commandline_string = nullptr) :
 			commandline(commandline_string)
 		{
 		}
@@ -156,26 +150,26 @@ namespace platform
 		const char* message;
 		int status;
 
-		LIBRARY_EXPORT Result(int result_status = 0, const char* result_message = "") :
+		Result(int result_status = 0, const char* result_message = "") :
 			message(result_message),
 			status(result_status)
 		{
 		}
 
-		LIBRARY_EXPORT inline bool succeeded() const { return status == 0; }
-		LIBRARY_EXPORT inline bool failed() const { return status != 0; }
+		inline bool succeeded() const { return status == 0; }
+		inline bool failed() const { return status != 0; }
 
-		LIBRARY_EXPORT inline static Result success()
+		inline static Result success()
 		{
 			return Result(0);
 		}
 
-		LIBRARY_EXPORT inline static Result failure(const char* result_message)
+		inline static Result failure(const char* result_message)
 		{
 			return Result(-1, result_message);
 		}
 
-		LIBRARY_EXPORT inline static Result warning(const char* result_message)
+		inline static Result warning(const char* result_message)
 		{
 			return Result(1, result_message);
 		}
@@ -183,22 +177,22 @@ namespace platform
 
 
 	/// @brief Starts low level system services. Calls core::memory::startup.
-	LIBRARY_EXPORT Result startup();
+	Result startup();
 
 	/// @brief Shutdown low level system services. Calls core::memory::shutdown.
-	LIBRARY_EXPORT void shutdown();
+	void shutdown();
 
-	LIBRARY_EXPORT int run_application(kernel::IKernel* instance);
-	LIBRARY_EXPORT void set_mainparameters(const MainParameters& params);
-	LIBRARY_EXPORT const MainParameters& get_mainparameters();
+	int run_application(kernel::IKernel* instance);
+	void set_mainparameters(const MainParameters& params);
+	const MainParameters& get_mainparameters();
 
 	namespace path
 	{
 		// normalize a path to the host platform's notation
-		LIBRARY_EXPORT void normalize(char* path);
+		void normalize(char* path);
 
 		// make all non-existent directories along a normalized_path
-		LIBRARY_EXPORT void make_directories(const char* normalized_path);
+		void make_directories(const char* normalized_path);
 	} // namespace path
 
 	struct DynamicLibrary
@@ -253,19 +247,19 @@ namespace platform
 
 	/// @brief load a dynamic library at library_path
 	/// @returns A pointer to a DynamicLibrary object on success; 0 on failure
-	LIBRARY_EXPORT DynamicLibrary* dylib_open(const char* library_path);
+	DynamicLibrary* dylib_open(const char* library_path);
 
 	/// @brief close a library handle
-	LIBRARY_EXPORT void dylib_close(DynamicLibrary* library);
+	void dylib_close(DynamicLibrary* library);
 
 	/// @brief Tries to load a symbol from a dynamic library
 	/// @returns A valid pointer to the symbol or null on failure
-	LIBRARY_EXPORT DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name);
+	DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name);
 
 	/// @brief Returns the extension on this platform for a dynamiclibrary.
 	/// @returns ".dylib", ".so", or ".dll" for Mac/Linux/Windows.
 	/// NOTE: This MUST return the period character if required by the platform!
-	LIBRARY_EXPORT const char* dylib_extension();
+	const char* dylib_extension();
 
 	// ---------------------------------------------------------------------
 	// filesystem
@@ -275,28 +269,28 @@ namespace platform
 	/// on Linux and Windows platforms, it returns the folder where the binary exists
 	/// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
 	/// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
-	LIBRARY_EXPORT PathString get_program_directory();
+	PathString get_program_directory();
 
 	/// @brief Make directory on disk
-	LIBRARY_EXPORT Result make_directory(const char* path);
+	Result make_directory(const char* path);
 
 	/// @brief Remove a directory from disk
-	LIBRARY_EXPORT Result remove_directory(const char* path);
+	Result remove_directory(const char* path);
 
 	/// @brief Returns the value of the environment variable passed in
 	/// or NULL, if it was not set.
 	/// DO NOT include platform specific tokens: e.g. use 'HOME', not '$HOME'
-	LIBRARY_EXPORT const char* get_environment_variable(const char* name);
+	const char* get_environment_variable(const char* name);
 
 	/// @brief Returns the current user's directory;
 	/// @returns The $(HOME) environment variable in Linux or %HOMEPATH% on Windows
-	LIBRARY_EXPORT PathString get_user_directory();
+	PathString get_user_directory();
 
 	// long-term storage for applications
-	LIBRARY_EXPORT PathString get_user_application_directory(const char* application_data_path);
+	PathString get_user_application_directory(const char* application_data_path);
 
 	// temporary storage; can be wiped by the OS
-	LIBRARY_EXPORT PathString get_user_temp_directory();
+	PathString get_user_temp_directory();
 
 
 	// this accepts a path entered by the user (possibly on the commandline)
@@ -304,22 +298,22 @@ namespace platform
 	// This should expand environment variables.
 	// It should also account for leading tilde (~), which denotes the
 	// special $(HOME) environment variable on Linux systems.
-	LIBRARY_EXPORT PathString make_absolute_path(const char* path);
+	PathString make_absolute_path(const char* path);
 
 
-	LIBRARY_EXPORT platform::File fs_open(const char* path, FileMode mode = FileMode_Read);
-	LIBRARY_EXPORT void fs_close(platform::File file);
-	LIBRARY_EXPORT size_t fs_read(platform::File handle, void* destination, size_t size, size_t count);
-	LIBRARY_EXPORT size_t fs_write(platform::File handle, const void* source, size_t size, size_t count);
-	LIBRARY_EXPORT int32_t fs_seek(platform::File handle, long int offset, FileSeek origin);
-	LIBRARY_EXPORT long int fs_tell(platform::File handle);
-	LIBRARY_EXPORT bool fs_file_exists(const char* path);
-	LIBRARY_EXPORT bool fs_directory_exists(const char* path);
+	platform::File fs_open(const char* path, FileMode mode = FileMode_Read);
+	void fs_close(platform::File file);
+	size_t fs_read(platform::File handle, void* destination, size_t size, size_t count);
+	size_t fs_write(platform::File handle, const void* source, size_t size, size_t count);
+	int32_t fs_seek(platform::File handle, long int offset, FileSeek origin);
+	long int fs_tell(platform::File handle);
+	bool fs_file_exists(const char* path);
+	bool fs_directory_exists(const char* path);
 
 	/// @brief Construct this platform's content directory
 	/// @returns A string pointing to the absolute path for content on this platform
 	/// example: On Mac/iOS/TVOS <AppBundle>/Content/Resources directory is the 'content' directory.
-	LIBRARY_EXPORT PathString fs_content_directory();
+	PathString fs_content_directory();
 
 	// ---------------------------------------------------------------------
 	// process
@@ -330,14 +324,14 @@ namespace platform
 		virtual ~Process();
 	};
 
-	LIBRARY_EXPORT Process* process_create(
+	Process* process_create(
 		const char* executable_path,			// the path to the new process
 		const Array<PathString>& arguments,		// arguments as strings
 		const char* working_directory = nullptr	// startup working directory
 	);
 
-	LIBRARY_EXPORT void process_destroy(Process* process);
-	LIBRARY_EXPORT bool process_is_running(Process* process);
+	void process_destroy(Process* process);
+	bool process_is_running(Process* process);
 
 	// ---------------------------------------------------------------------
 	// serial
@@ -347,34 +341,34 @@ namespace platform
 	{
 	};
 
-	LIBRARY_EXPORT Serial* serial_open(const char* device, uint32_t baud_rate);
-	LIBRARY_EXPORT void serial_close(Serial* serial);
+	Serial* serial_open(const char* device, uint32_t baud_rate);
+	void serial_close(Serial* serial);
 
 	/// @brief Read bytes to buffer from serial device
 	/// @param total_bytes The maximum number of bytes to read into buffer
 	/// @returns Total bytes read
-	LIBRARY_EXPORT int serial_read(Serial* serial, void* buffer, int total_bytes);
+	int serial_read(Serial* serial, void* buffer, int total_bytes);
 
 	/// @brief Write bytes from buffer to serial device
 	/// @param total_bytes The maximum number of bytes to write from the buffer
 	/// @returns Total bytes read
-	LIBRARY_EXPORT int serial_write(Serial* serial, const void* buffer, int total_bytes);
+	int serial_write(Serial* serial, const void* buffer, int total_bytes);
 
 	// ---------------------------------------------------------------------
 	// system
 	// ---------------------------------------------------------------------
 
 	/// @brief Return the platform's pagesize in bytes
-	LIBRARY_EXPORT size_t system_pagesize_bytes();
+	size_t system_pagesize_bytes();
 
 	/// @brief Return the number of physical CPUs in the system
-	LIBRARY_EXPORT size_t system_processor_count();
+	size_t system_processor_count();
 
 	/// @brief Return the system's uptime (time since boot) in seconds
-	LIBRARY_EXPORT double system_uptime_seconds();
+	double system_uptime_seconds();
 
 	/// @brief Return a human readable version string for logging
-	LIBRARY_EXPORT core::StackString<64> system_version_string();
+	core::StackString<64> system_version_string();
 
 	// ---------------------------------------------------------------------
 	// thread
@@ -399,10 +393,10 @@ namespace platform
 
 	/// @brief Creates a thread with entry point
 	/// This sets up signals, thread names, thread id and states.
-	LIBRARY_EXPORT Thread* thread_create(ThreadEntry entry, void* data);
+	Thread* thread_create(ThreadEntry entry, void* data);
 
 	/// @brief Destroys a thread created by thread_create
-	LIBRARY_EXPORT void thread_destroy(Thread* thread);
+	void thread_destroy(Thread* thread);
 
 	/// @brief Wait for a thread to complete.
 	/// @param thread The target thread to wait on.
@@ -413,31 +407,31 @@ namespace platform
 	/// the thread is forcibly closed.
 	/// The consequences of this behavior for each platform still remain.
 	/// @returns 0 on success non-zero on failure (abnormal termination)
-	LIBRARY_EXPORT int thread_join(Thread* thread, uint32_t timeout = 0);
+	int thread_join(Thread* thread, uint32_t timeout = 0);
 
 	/// @brief Allows the calling thread to sleep
-	LIBRARY_EXPORT void thread_sleep(int milliseconds);
+	void thread_sleep(int milliseconds);
 
 	/// @brief Get the calling thread's id
 	/// @returns The calling thread's platform designated id
-	LIBRARY_EXPORT ThreadId thread_id();
+	ThreadId thread_id();
 
 	/// @brief Get the target thread's current status
 	/// @returns ThreadStatus enum for thread.
-	LIBRARY_EXPORT ThreadStatus thread_status(const Thread* thread);
+	ThreadStatus thread_status(const Thread* thread);
 
 	/// @brief Determine if the platform thread is still active.
 	/// This will return false when the thread should terminate (determined
 	/// by OS-specific mechanisms). Otherwise, work can continue like normal.
 	/// If this returns false, your thread must exit shortly thereafter.
 	/// This should only be called from created Threads.
-	LIBRARY_EXPORT bool thread_is_active(Thread* thread);
+	bool thread_is_active(Thread* thread);
 
 
-	LIBRARY_EXPORT void mutex_create();
-	LIBRARY_EXPORT void mutex_destroy();
-	LIBRARY_EXPORT void mutex_lock();
-	LIBRARY_EXPORT void mutex_unlock();
+	void mutex_create();
+	void mutex_destroy();
+	void mutex_lock();
+	void mutex_unlock();
 
 
 	struct Semaphore
@@ -446,16 +440,16 @@ namespace platform
 
 
 	/// @brief Create a new semaphore
-	LIBRARY_EXPORT Semaphore* semaphore_create(uint32_t initial_count, uint32_t max_count);
+	Semaphore* semaphore_create(uint32_t initial_count, uint32_t max_count);
 
 	/// @brief Wait indefinitely on a semaphore signal
-	LIBRARY_EXPORT void semaphore_wait(Semaphore* sem);
+	void semaphore_wait(Semaphore* sem);
 
 	/// @brief Signal the semaphore
-	LIBRARY_EXPORT void semaphore_signal(Semaphore* sem, uint32_t count = 1);
+	void semaphore_signal(Semaphore* sem, uint32_t count = 1);
 
 	/// @brief Destroy this semaphore
-	LIBRARY_EXPORT void semaphore_destroy(Semaphore* sem);
+	void semaphore_destroy(Semaphore* sem);
 
 	// ---------------------------------------------------------------------
 	// time
@@ -463,14 +457,14 @@ namespace platform
 
 	/// @brief Fetches the current time in microseconds
 	/// @returns The current time in microseconds since the application started
-	LIBRARY_EXPORT uint64_t microseconds();
+	uint64_t microseconds();
 
 	/// @brief Fetch the tick count
 	/// @returns The current tick count of the CPU of the calling thread
-	LIBRARY_EXPORT uint64_t time_ticks();
+	uint64_t time_ticks();
 
 	/// @brief Populates the DateTime struct with the system's current date and time
-	LIBRARY_EXPORT void datetime(DateTime& datetime);
+	void datetime(DateTime& datetime);
 
 
 	// ---------------------------------------------------------------------
@@ -485,6 +479,6 @@ namespace platform
 		constexpr uint8_t CanChooseFiles		= 16;	// files can be selected
 	} // namespace OpenDialogFlags
 
-	LIBRARY_EXPORT Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths);
+	Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths);
 
 } // namespace platform

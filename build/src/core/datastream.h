@@ -36,28 +36,28 @@ namespace core
 		class DataStream
 		{
 		public:
-			LIBRARY_EXPORT virtual ~DataStream();
+			virtual ~DataStream();
 
 			// fetch data pointer
-			LIBRARY_EXPORT virtual uint8_t* get_data() const = 0;
+			virtual uint8_t* get_data() const = 0;
 
 			// get data length; 0 if not known
-			LIBRARY_EXPORT virtual size_t get_data_size() const = 0;
+			virtual size_t get_data_size() const = 0;
 
 			// read a number of bytes into the destination buffer
 			// returns the number of bytes read
-			LIBRARY_EXPORT virtual size_t read(void* destination, size_t length) = 0;
+			virtual size_t read(void* destination, size_t length) = 0;
 
 			// write data to the stream
 			// returns the number of bytes written
-			LIBRARY_EXPORT virtual size_t write(const void* data, size_t length) = 0;
+			virtual size_t write(const void* data, size_t length) = 0;
 
 			// seek to an offset location within the stream
 			// if is_absolute is false, the seek happens relative to the current position
-			LIBRARY_EXPORT virtual void seek(size_t offset, bool is_absolute) = 0;
+			virtual void seek(size_t offset, bool is_absolute) = 0;
 
 			// flush the data stream
-			LIBRARY_EXPORT virtual void flush() = 0;
+			virtual void flush() = 0;
 		};
 
 		class MemoryStream : public DataStream
@@ -67,32 +67,32 @@ namespace core
 			size_t data_length;
 			size_t offset;
 
-			LIBRARY_EXPORT MemoryStream() : data(0), data_length(0), offset(0) {}
-			LIBRARY_EXPORT virtual ~MemoryStream() {}
+			MemoryStream() : data(0), data_length(0), offset(0) {}
+			virtual ~MemoryStream() {}
 
-			LIBRARY_EXPORT void init(void* buffer, size_t buffer_length);
-			LIBRARY_EXPORT void rewind();
-			LIBRARY_EXPORT void clear();
-			LIBRARY_EXPORT size_t current_offset() const;
+			void init(void* buffer, size_t buffer_length);
+			void rewind();
+			void clear();
+			size_t current_offset() const;
 
 			template <class Type>
-			LIBRARY_EXPORT size_t write(const Type & value)
+			size_t write(const Type & value)
 			{
 				return write(&value, sizeof(Type));
 			}
 
 			template <class Type>
-			LIBRARY_EXPORT size_t read(Type & destination)
+			size_t read(Type & destination)
 			{
 				return read(&destination, sizeof(Type));
 			}
 
-			LIBRARY_EXPORT virtual uint8_t* get_data() const;
-			LIBRARY_EXPORT virtual size_t get_data_size() const;
-			LIBRARY_EXPORT virtual size_t read(void* destination, size_t length);
-			LIBRARY_EXPORT virtual size_t write(const void* data, size_t length);
-			LIBRARY_EXPORT virtual void seek(size_t offset, bool is_absolute);
-			LIBRARY_EXPORT virtual void flush() {}
+			virtual uint8_t* get_data() const;
+			virtual size_t get_data_size() const;
+			virtual size_t read(void* destination, size_t length);
+			virtual size_t write(const void* data, size_t length);
+			virtual void seek(size_t offset, bool is_absolute);
+			virtual void flush() {}
 		};
 
 		class ResizableMemoryStream : public MemoryStream
@@ -101,14 +101,14 @@ namespace core
 			size_t offset;
 
 		public:
-			LIBRARY_EXPORT ResizableMemoryStream() : offset(0) {}
+			ResizableMemoryStream() : offset(0) {}
 
-			LIBRARY_EXPORT virtual uint8_t* get_data() const;
-			LIBRARY_EXPORT virtual size_t get_data_size() const;
-			LIBRARY_EXPORT virtual size_t read(void* destination, size_t length);
-			LIBRARY_EXPORT virtual size_t write(const void* data, size_t length);
-			LIBRARY_EXPORT virtual void seek(size_t offset, bool is_absolute);
-			LIBRARY_EXPORT virtual void flush() {}
+			virtual uint8_t* get_data() const;
+			virtual size_t get_data_size() const;
+			virtual size_t read(void* destination, size_t length);
+			virtual size_t write(const void* data, size_t length);
+			virtual void seek(size_t offset, bool is_absolute);
+			virtual void flush() {}
 		};
 	} // namespace util
 } // namespace core

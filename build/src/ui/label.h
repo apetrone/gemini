@@ -38,16 +38,16 @@ namespace gui
 	class Label : public ScrollablePanel
 	{
 	public:
-		LIBRARY_EXPORT Label(Panel* parent);
+		Label(Panel* parent);
 
-		LIBRARY_EXPORT virtual void get_content_bounds(Rect& bounds) const;
-		LIBRARY_EXPORT virtual void update(Compositor* compositor, float delta_seconds) override;
-		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands) override;
-		LIBRARY_EXPORT virtual void set_font(const char* filename, size_t pixel_size);
-		LIBRARY_EXPORT virtual void set_text(const std::string& text);
-		LIBRARY_EXPORT virtual bool is_label() const override { return true; }
+		virtual void get_content_bounds(Rect& bounds) const;
+		virtual void update(Compositor* compositor, float delta_seconds) override;
+		virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands) override;
+		virtual void set_font(const char* filename, size_t pixel_size);
+		virtual void set_text(const std::string& text);
+		virtual bool is_label() const override { return true; }
 
-		LIBRARY_EXPORT void append_text(const char* message);
+		void append_text(const char* message);
 
 	protected:
 

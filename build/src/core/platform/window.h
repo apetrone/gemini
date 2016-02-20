@@ -62,7 +62,7 @@ namespace platform
 			float width;
 			float height;
 
-			LIBRARY_EXPORT Frame() :
+			Frame() :
 				x(0),
 				y(0),
 				width(0),
@@ -87,7 +87,7 @@ namespace platform
 
 			uint8_t opacity;
 
-			LIBRARY_EXPORT BackbufferConfig() :
+			BackbufferConfig() :
 				red_size(8),
 				green_size(8),
 				blue_size(8),
@@ -123,7 +123,7 @@ namespace platform
 			// wait for vertical sync
 			bool enable_vsync;
 
-			LIBRARY_EXPORT Parameters() :
+			Parameters() :
 				titlebar_height(0),
 				window_title(0),
 				enable_fullscreen(false),
@@ -132,7 +132,7 @@ namespace platform
 			{
 			}
 
-			LIBRARY_EXPORT virtual ~Parameters();
+			virtual ~Parameters();
 		};
 
 		enum class DestroyWindowBehavior
@@ -143,33 +143,33 @@ namespace platform
 
 		struct NativeWindow
 		{
-			LIBRARY_EXPORT NativeWindow() :
+			NativeWindow() :
 				graphics_data(nullptr)
 			{
 			}
 
-			LIBRARY_EXPORT virtual ~NativeWindow();
+			virtual ~NativeWindow();
 
 			/// @brief returns this platform's native window handle.
 			/// @returns A pointer to a native window handle.
-			LIBRARY_EXPORT virtual void* get_native_handle() = 0;
+			virtual void* get_native_handle() = 0;
 
 			/// @brief Update the visual for this window
 			/// when the native visual id has been changed.
 			/// @param[in] visual The new native visual id.
-			LIBRARY_EXPORT virtual void update_visual(int) {}
+			virtual void update_visual(int) {}
 
 			/// @brief Update the size for this window.
 			/// @param[in] width The new window's width in pixels.
 			/// @param[in] height The new window's height in pixels.
-			LIBRARY_EXPORT virtual void update_size(int, int) {}
+			virtual void update_size(int, int) {}
 
-			LIBRARY_EXPORT virtual void set_destroy_behavior(DestroyWindowBehavior behavior)
+			virtual void set_destroy_behavior(DestroyWindowBehavior behavior)
 			{
 				destroy_behavior = behavior;
 			}
 
-			LIBRARY_EXPORT virtual DestroyWindowBehavior get_destroy_behavior() const
+			virtual DestroyWindowBehavior get_destroy_behavior() const
 			{
 				return destroy_behavior;
 			}
@@ -184,25 +184,25 @@ namespace platform
 		class InputProvider
 		{
 		public:
-			LIBRARY_EXPORT virtual ~InputProvider();
+			virtual ~InputProvider();
 
 			// capture the mouse
-			LIBRARY_EXPORT virtual void capture_mouse(bool capture) = 0;
+			virtual void capture_mouse(bool capture) = 0;
 
 			// warp the mouse to a position
-			LIBRARY_EXPORT virtual void warp_mouse(int x, int y) = 0;
+			virtual void warp_mouse(int x, int y) = 0;
 
 			// get the current mouse position
-			LIBRARY_EXPORT virtual void get_mouse(int& x, int& y) = 0;
+			virtual void get_mouse(int& x, int& y) = 0;
 
 			// toggle mouse visibility
-			LIBRARY_EXPORT virtual void show_mouse(bool show) = 0;
+			virtual void show_mouse(bool show) = 0;
 		};
 
 		// common utility functions?
 
 		// given a screen and target window dimensions, return a centered frame
-		LIBRARY_EXPORT Frame centered_window_frame(size_t screen_index, size_t width, size_t height);
+		Frame centered_window_frame(size_t screen_index, size_t width, size_t height);
 
 
 
@@ -211,56 +211,56 @@ namespace platform
 
 		/// @brief startup the window backend
 		/// @returns Result Success or Failure with a message
-		LIBRARY_EXPORT Result startup(RenderingBackend backend);
+		Result startup(RenderingBackend backend);
 
 		/// @brief safely shutdown the window backend
-		LIBRARY_EXPORT void shutdown();
+		void shutdown();
 
 		/// @brief Call this once per frame in your application
 		/// To allow the system backend to handle and dispatch window events
-		LIBRARY_EXPORT void dispatch_events();
+		void dispatch_events();
 
-		LIBRARY_EXPORT NativeWindow* create(const Parameters& window_parameters);
-		LIBRARY_EXPORT void destroy(NativeWindow* window, DestroyWindowBehavior behavior = DestroyWindowBehavior::None);
+		NativeWindow* create(const Parameters& window_parameters);
+		void destroy(NativeWindow* window, DestroyWindowBehavior behavior = DestroyWindowBehavior::None);
 
 		// activate this window for rendering
-		LIBRARY_EXPORT void activate_context(NativeWindow* window);
+		void activate_context(NativeWindow* window);
 
 		// deactivate this window for rendering
-		LIBRARY_EXPORT void deactivate_context(NativeWindow* window);
+		void deactivate_context(NativeWindow* window);
 
 		// swap buffers on this window
-		LIBRARY_EXPORT void swap_buffers(NativeWindow* window);
+		void swap_buffers(NativeWindow* window);
 
 		// return the window size in screen coordinates
-		LIBRARY_EXPORT Frame get_frame(NativeWindow* window);
+		Frame get_frame(NativeWindow* window);
 
 		// return the renderable window surface in pixels
-		LIBRARY_EXPORT Frame get_render_frame(NativeWindow* window);
+		Frame get_render_frame(NativeWindow* window);
 
 		// total number of screens detected on this system
-		LIBRARY_EXPORT size_t screen_count();
+		size_t screen_count();
 
 		/// @brief get the specified screen's rect (origin, width, and height) in pixels
-		LIBRARY_EXPORT Frame screen_frame(size_t screen_index);
+		Frame screen_frame(size_t screen_index);
 
 		// bring window to focus
-		LIBRARY_EXPORT void focus(NativeWindow* window);
+		void focus(NativeWindow* window);
 
 		// show or hide the mouse cursor
-		LIBRARY_EXPORT void show_cursor(bool enable);
+		void show_cursor(bool enable);
 
 		// set the cursor position in screen coordinates (origin is top left)
-		LIBRARY_EXPORT void set_cursor(float x, float y);
+		void set_cursor(float x, float y);
 
 		// get the cursor position in screen coordinates (origin is top left)
-		LIBRARY_EXPORT void get_cursor(float& x, float& y);
+		void get_cursor(float& x, float& y);
 
 		// if enabled, the OS will generate delta mouse movement events
-		LIBRARY_EXPORT void set_relative_mouse_mode(bool enable);
+		void set_relative_mouse_mode(bool enable);
 
 		// if enabled, mouse events generated outside of window bounds will be dispatched
 		// default: off
-		LIBRARY_EXPORT void set_mouse_tracking(bool enable);
+		void set_mouse_tracking(bool enable);
 	} // namespace window
 } // namespace platform

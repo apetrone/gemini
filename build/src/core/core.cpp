@@ -38,7 +38,7 @@ namespace gemini
 	// For this, we'll allocate this in static memory.
 	core::memory::static_memory<core::logging::LogInterface> log_system_data;
 
-	LIBRARY_EXPORT platform::Result core_startup()
+	platform::Result core_startup()
 	{
 		// create an instance of the log system
 		core::logging::ILog* log_system = new (log_system_data.memory) core::logging::LogInterface;
@@ -56,7 +56,7 @@ namespace gemini
 		return platform::Result::success();
 	}
 
-	LIBRARY_EXPORT void core_shutdown()
+	void core_shutdown()
 	{
 		platform::shutdown();
 

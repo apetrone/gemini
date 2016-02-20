@@ -58,20 +58,20 @@ namespace gui
 	public:
 		typedef ReturnVal ( *callback_type )( EventArgsType );
 
-		LIBRARY_EXPORT EventHandler()
+		EventHandler()
 		{
 			_handler = 0;
 		}
 
-		LIBRARY_EXPORT virtual ~EventHandler() {}
+		virtual ~EventHandler() {}
 
-		LIBRARY_EXPORT void operator = ( callback_type _fn )
+		void operator = ( callback_type _fn )
 		{
 			_handler = _fn;
 		}
 
 		// call a specific function with the args if specified, otherwise fires the event with given args
-		LIBRARY_EXPORT ReturnVal operator() ( EventArgsType args, callback_type _fn = 0 )
+		ReturnVal operator() ( EventArgsType args, callback_type _fn = 0 )
 		{
 			if ( _fn != 0 )
 			{
@@ -98,14 +98,14 @@ namespace gui
 	{
 		DimensionType width, height;
 
-		LIBRARY_EXPORT Size(DimensionType _width = 0, DimensionType _height = 0);
-		LIBRARY_EXPORT void set_width(DimensionType in_width);
-		LIBRARY_EXPORT DimensionType get_width() const;
+		Size(DimensionType _width = 0, DimensionType _height = 0);
+		void set_width(DimensionType in_width);
+		DimensionType get_width() const;
 	}; // Size
 
 	//
 	// Point
-//	struct LIBRARY_EXPORT Point
+//	struct Point
 //	{
 //		ScreenInt x, y;
 //
@@ -136,28 +136,28 @@ namespace gui
 		Point origin;
 		Size size;
 
-		LIBRARY_EXPORT Rect(const Point& _origin, const Size& _size);
-		LIBRARY_EXPORT Rect(DimensionType left = 0, DimensionType top = 0, DimensionType width = 0, DimensionType height = 0);
+		Rect(const Point& _origin, const Size& _size);
+		Rect(DimensionType left = 0, DimensionType top = 0, DimensionType width = 0, DimensionType height = 0);
 
-		LIBRARY_EXPORT Size& get_size();
-		LIBRARY_EXPORT Point& get_origin();
+		Size& get_size();
+		Point& get_origin();
 
-		LIBRARY_EXPORT void set(DimensionType x, DimensionType y, DimensionType width, DimensionType height);
-		LIBRARY_EXPORT DimensionType width() const;
-		LIBRARY_EXPORT DimensionType height() const;
+		void set(DimensionType x, DimensionType y, DimensionType width, DimensionType height);
+		DimensionType width() const;
+		DimensionType height() const;
 
-		LIBRARY_EXPORT bool fits_inside(const Rect& other) const;
-		LIBRARY_EXPORT bool is_point_inside( const glm::vec2& pt) const;
+		bool fits_inside(const Rect& other) const;
+		bool is_point_inside( const glm::vec2& pt) const;
 
 		// Expand this rect by unioning this rect and other
-		LIBRARY_EXPORT void expand(const Rect& other);
+		void expand(const Rect& other);
 	}; // Rect
 
 
 
 	// -------------------------------------------------------------------------------------------------------------
 
-	struct LIBRARY_EXPORT InputState
+	struct InputState
 	{
 		virtual ~InputState() {}
 
@@ -166,7 +166,7 @@ namespace gui
 	};
 
 	// -------------------------------------------------------------------------------------------------------------
-	struct LIBRARY_EXPORT KeyState
+	struct KeyState
 	{
 		// the state follows this logic:
 		// (state & 1) -> isDown this update
@@ -211,13 +211,13 @@ namespace gui
 	}
 
 	// generate a 2D rotation matrix
-	LIBRARY_EXPORT glm::mat2 rotation_matrix(const float z_radians);
+	glm::mat2 rotation_matrix(const float z_radians);
 
 	// generate a 2D scale matrix
-	LIBRARY_EXPORT glm::mat2 scale_matrix(const Point& scale);
+	glm::mat2 scale_matrix(const Point& scale);
 
 	// generate a 3D homogeneous coordinate matrix
-	LIBRARY_EXPORT glm::mat3 translate_matrix(const Point& translation);
+	glm::mat3 translate_matrix(const Point& translation);
 
-	LIBRARY_EXPORT glm::vec2 transform_point(const glm::mat3& transform, const Point& point);
+	glm::vec2 transform_point(const glm::mat3& transform, const Point& point);
 } // namespace gui

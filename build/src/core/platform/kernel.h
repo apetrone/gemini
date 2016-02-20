@@ -93,41 +93,41 @@ namespace kernel
 		// has a valid window
 		bool has_window;
 
-		LIBRARY_EXPORT Parameters();
+		Parameters();
 	}; // Params
 
-	LIBRARY_EXPORT Parameters& parameters();
+	Parameters& parameters();
 
 	class IKernel
 	{
 	public:
-		LIBRARY_EXPORT virtual ~IKernel();
+		virtual ~IKernel();
 
-		LIBRARY_EXPORT virtual bool is_active() const = 0;
-		LIBRARY_EXPORT virtual void set_active(bool isactive) = 0;
+		virtual bool is_active() const = 0;
+		virtual void set_active(bool isactive) = 0;
 
 		// called first thing during setup; useful for initializing libraries
-		LIBRARY_EXPORT virtual Error startup() = 0;
+		virtual Error startup() = 0;
 
-		LIBRARY_EXPORT virtual void tick() = 0;
+		virtual void tick() = 0;
 
 		// called right before control returns to the main entry point
-		LIBRARY_EXPORT virtual void shutdown() = 0;
+		virtual void shutdown() = 0;
 	};
 
 	// call this on application startup
-	LIBRARY_EXPORT Error startup();
+	Error startup();
 
 	// call this when the application will be terminated
-	LIBRARY_EXPORT void shutdown();
+	void shutdown();
 
 	// called once per frame, preferably in a loop
-	LIBRARY_EXPORT void tick();
+	void tick();
 
-	LIBRARY_EXPORT int run_application();
+	int run_application();
 
-	LIBRARY_EXPORT IKernel* instance();
-	LIBRARY_EXPORT void set_instance(IKernel* instance);
+	IKernel* instance();
+	void set_instance(IKernel* instance);
 
 	// this is used by the kernel to dispatch events to the IApplication's event listeners
 	template <class Type>

@@ -81,7 +81,7 @@ namespace render2
 class GUIRenderer : public gui::Renderer
 {
 public:
-	LIBRARY_EXPORT GUIRenderer(CommonResourceCache& cache)
+	GUIRenderer(CommonResourceCache& cache)
 		: device(nullptr)
 		, vertex_buffer(nullptr)
 		, gui_pipeline(nullptr)
@@ -90,30 +90,30 @@ public:
 		, resource_cache(cache)
 	{}
 
-	LIBRARY_EXPORT void set_device(render2::Device* render_device) { device = render_device; }
+	void set_device(render2::Device* render_device) { device = render_device; }
 
-	LIBRARY_EXPORT virtual void increment_depth();
+	virtual void increment_depth();
 
-	LIBRARY_EXPORT virtual void startup(gui::Compositor* target_compositor);
-	LIBRARY_EXPORT virtual void shutdown(gui::Compositor* target_compositor);
+	virtual void startup(gui::Compositor* target_compositor);
+	virtual void shutdown(gui::Compositor* target_compositor);
 
-	LIBRARY_EXPORT virtual void begin_frame(gui::Compositor* target_compositor);
-	LIBRARY_EXPORT virtual void end_frame();
+	virtual void begin_frame(gui::Compositor* target_compositor);
+	virtual void end_frame();
 
-	LIBRARY_EXPORT virtual gui::TextureResult texture_create(const char* path, gui::TextureHandle& handle);
-	LIBRARY_EXPORT virtual void texture_destroy(const gui::TextureHandle& handle);
-	LIBRARY_EXPORT virtual gui::TextureResult texture_info(const gui::TextureHandle& handle, uint32_t& width, uint32_t& height, uint8_t& channels);
-	LIBRARY_EXPORT virtual gui::FontResult font_create(const char* path, gui::FontHandle& handle);
-	LIBRARY_EXPORT virtual void font_destroy(const gui::FontHandle& handle);
-	LIBRARY_EXPORT virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, size_t string_length, gui::Rect& bounds);
-	LIBRARY_EXPORT virtual void font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender);
-	LIBRARY_EXPORT virtual size_t font_draw(const gui::FontHandle& handle, const char* string, size_t string_length, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t buffer_size);
-	LIBRARY_EXPORT virtual size_t font_count_vertices(const gui::FontHandle& handle, size_t string_length);
-//	LIBRARY_EXPORT virtual gui::TextureHandle font_get_texture(const gui::FontHandle& handle);
-//	LIBRARY_EXPORT virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
-	LIBRARY_EXPORT virtual void draw_commands(gui::render::CommandList* command_list, Array<gui::render::Vertex>& vertex_buffer);
+	virtual gui::TextureResult texture_create(const char* path, gui::TextureHandle& handle);
+	virtual void texture_destroy(const gui::TextureHandle& handle);
+	virtual gui::TextureResult texture_info(const gui::TextureHandle& handle, uint32_t& width, uint32_t& height, uint8_t& channels);
+	virtual gui::FontResult font_create(const char* path, gui::FontHandle& handle);
+	virtual void font_destroy(const gui::FontHandle& handle);
+	virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, size_t string_length, gui::Rect& bounds);
+	virtual void font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender);
+	virtual size_t font_draw(const gui::FontHandle& handle, const char* string, size_t string_length, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t buffer_size);
+	virtual size_t font_count_vertices(const gui::FontHandle& handle, size_t string_length);
+//	virtual gui::TextureHandle font_get_texture(const gui::FontHandle& handle);
+//	virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
+	virtual void draw_commands(gui::render::CommandList* command_list, Array<gui::render::Vertex>& vertex_buffer);
 
-	LIBRARY_EXPORT GUIRenderer& operator=(const GUIRenderer& other) = delete;
+	GUIRenderer& operator=(const GUIRenderer& other) = delete;
 
 private:
 	gui::Compositor* compositor;

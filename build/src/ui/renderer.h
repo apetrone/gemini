@@ -70,22 +70,22 @@ namespace gui
 			CommandList(Compositor* compositor_instance, Array<Vertex>* buffer);
 			Vertex* write_pointer;
 
-			LIBRARY_EXPORT void reset();
-			LIBRARY_EXPORT void clear();
+			void reset();
+			void clear();
 
-			LIBRARY_EXPORT void push_clip_rect(const Rect& clip_rect);
-			LIBRARY_EXPORT void pop_clip_rect();
+			void push_clip_rect(const Rect& clip_rect);
+			void pop_clip_rect();
 
-			LIBRARY_EXPORT void add_drawcall();
+			void add_drawcall();
 
 			// primitive functions
-			LIBRARY_EXPORT void primitive_reserve(size_t count);
-			LIBRARY_EXPORT void primitive_quad(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color);
+			void primitive_reserve(size_t count);
+			void primitive_quad(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color);
 
-			LIBRARY_EXPORT void add_line(const Point& start, const Point& end, const gemini::Color& color, float thickness = 1.0f);
+			void add_line(const Point& start, const Point& end, const gemini::Color& color, float thickness = 1.0f);
 			// these points should be in counter-clockwise order
-			LIBRARY_EXPORT void add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color);
-			LIBRARY_EXPORT void add_font(const FontHandle& font, const char* utf8, size_t string_length, const Rect& bounds, const gemini::Color& color);
+			void add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color);
+			void add_font(const FontHandle& font, const char* utf8, size_t string_length, const Rect& bounds, const gemini::Color& color);
 		};
 	}
 
@@ -98,22 +98,22 @@ namespace gui
 	class Renderer
 	{
 	public:
-		LIBRARY_EXPORT virtual ~Renderer() {}
+		virtual ~Renderer() {}
 
 		/// This is called once a compositor 'sets' a new renderer
 		/// @param compositor The compositor which set this as the renderer
-		LIBRARY_EXPORT virtual void startup( Compositor * compositor ) = 0;
+		virtual void startup( Compositor * compositor ) = 0;
 
 		/// Shutdown is called when the compositor is being destroyed
 		/// @param compositor The compositor which is being destroyed
-		LIBRARY_EXPORT virtual void shutdown( Compositor * compositor ) = 0;
+		virtual void shutdown( Compositor * compositor ) = 0;
 
 		/// This is called just before rendering is performed
 		/// @param compositor The compositor about to be render
-		LIBRARY_EXPORT virtual void begin_frame( Compositor * Compositor ) = 0;
+		virtual void begin_frame( Compositor * Compositor ) = 0;
 
 		/// end_frame is called after the compositor completed has rendering
-		LIBRARY_EXPORT virtual void end_frame() = 0;
+		virtual void end_frame() = 0;
 
 
 
@@ -125,12 +125,12 @@ namespace gui
 		/// @param path utf-8 encoded path to texture file
 		/// @param handle Output texture handle id
 		/// @return TextureResult error code
-		LIBRARY_EXPORT virtual TextureResult texture_create( const char * path, TextureHandle & handle ) = 0;
+		virtual TextureResult texture_create( const char * path, TextureHandle & handle ) = 0;
 
 
 		/// Release a texture
 		/// @param handle TextureHandle obtained from texture_create
-		LIBRARY_EXPORT virtual void texture_destroy( const TextureHandle & handle ) = 0;
+		virtual void texture_destroy( const TextureHandle & handle ) = 0;
 
 		/// Fetch info for a texture handle
 		/// @param handle A valid texture handle retrieved from texture_create
@@ -138,7 +138,7 @@ namespace gui
 		/// @param height The image height in pixels
 		/// @param channels The channels (or bytes per pixel). Typically 3 or 4 (with alpha)
 		/// @return TextureResult error code
-		LIBRARY_EXPORT virtual TextureResult texture_info( const TextureHandle & handle, uint32_t & width, uint32_t & height, uint8_t & channels ) = 0;
+		virtual TextureResult texture_info( const TextureHandle & handle, uint32_t & width, uint32_t & height, uint8_t & channels ) = 0;
 
 		// ---------------------------------------------------------------------
 		// fonts
@@ -148,23 +148,23 @@ namespace gui
 		/// @param handle FontHandle to use for this operation
 		/// @param string utf-8 encoded string to measure
 		/// @param bounds Output bounds of string
-		LIBRARY_EXPORT virtual FontResult font_measure_string(const FontHandle& handle, const char* string, size_t string_length, gui::Rect& bounds) = 0;
+		virtual FontResult font_measure_string(const FontHandle& handle, const char* string, size_t string_length, gui::Rect& bounds) = 0;
 
-		LIBRARY_EXPORT virtual void font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender) = 0;
+		virtual void font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender) = 0;
 
 		// ---------------------------------------------------------------------
 		// command list drawing
 		// ---------------------------------------------------------------------
-		LIBRARY_EXPORT virtual void draw_commands(render::CommandList* command_list, Array<gui::render::Vertex>& vertex_buffer) = 0;
+		virtual void draw_commands(render::CommandList* command_list, Array<gui::render::Vertex>& vertex_buffer) = 0;
 
 		/// Render a font
 		/// @param handle FontHandle to use for this operation
 		/// @param bounds Bounding rectangle to draw within
 		/// @param color PACK_RGBA'd color value
-		LIBRARY_EXPORT virtual size_t font_draw(const gui::FontHandle& handle, const char* string, size_t string_length, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t buffer_size) = 0;
+		virtual size_t font_draw(const gui::FontHandle& handle, const char* string, size_t string_length, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t buffer_size) = 0;
 
 		/// @param string_length The length of the string
 		/// @returns Total vertices needed to draw the string
-		LIBRARY_EXPORT virtual size_t font_count_vertices(const gui::FontHandle& handle, size_t string_length) = 0;
+		virtual size_t font_count_vertices(const gui::FontHandle& handle, size_t string_length) = 0;
 	}; // Renderer
 } // namespace gui

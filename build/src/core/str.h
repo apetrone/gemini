@@ -40,30 +40,30 @@ namespace core
 
 		// returns a mutable buffer of characters; works in the style
 		// of printf.
-		LIBRARY_EXPORT char* format(const char* format, ...);
+		char* format(const char* format, ...);
 
 		// cross platform functions
-		LIBRARY_EXPORT int sprintf(char* destination, size_t destination_max_size, const char* format, ...);
-		LIBRARY_EXPORT int vsnprintf(char* destination, size_t destination_max_size, const char* format, va_list arg);
+		int sprintf(char* destination, size_t destination_max_size, const char* format, ...);
+		int vsnprintf(char* destination, size_t destination_max_size, const char* format, va_list arg);
 
 		// pass 0 for source_bytes in order to count the source string; (runs len on it)
-		LIBRARY_EXPORT char* copy(char* destination, const char* source, size_t source_bytes);
-		LIBRARY_EXPORT size_t len(const char* str);
-		LIBRARY_EXPORT char* cat(char* destination, const char* source);
-		LIBRARY_EXPORT char* ncat(char* destination, const char* source, size_t destination_size);
+		char* copy(char* destination, const char* source, size_t source_bytes);
+		size_t len(const char* str);
+		char* cat(char* destination, const char* source);
+		char* ncat(char* destination, const char* source, size_t destination_size);
 
 		// use count = 0 to mean: pick the smallest string
-		LIBRARY_EXPORT int case_insensitive_compare(const char* s1, const char* s2, size_t count);
-		LIBRARY_EXPORT const char* strstr(const char* s1, const char* s2);
+		int case_insensitive_compare(const char* s1, const char* s2, size_t count);
+		const char* strstr(const char* s1, const char* s2);
 
 		// this accepts a path entered by the user (possibly on the commandline)
 		// and returns an expanded absolute path for use.
 		// this should take into account leading tilde (~), which denotes the
 		// special $(HOME) environment variable.
-		LIBRARY_EXPORT std::string make_absolute_path(const std::string& path);
+		std::string make_absolute_path(const std::string& path);
 
 
-		LIBRARY_EXPORT std::vector<std::string> split(const std::string& input, const std::string& substring);
-		LIBRARY_EXPORT std::string trim_left(const std::string& input, const std::string& chars = "\t ");
+		std::vector<std::string> split(const std::string& input, const std::string& substring);
+		std::string trim_left(const std::string& input, const std::string& chars = "\t ");
 	} // namespace str
 } // namespace core

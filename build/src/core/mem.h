@@ -106,8 +106,8 @@ namespace core
 		// ---------------------------------------------------------------------
 		// utility functions
 		// ---------------------------------------------------------------------
-		LIBRARY_EXPORT void* aligned_malloc(size_t bytes, size_t alignment);
-		LIBRARY_EXPORT void aligned_free(void* pointer);
+		void* aligned_malloc(size_t bytes, size_t alignment);
+		void aligned_free(void* pointer);
 
 		// ---------------------------------------------------------------------
 		// allocator
@@ -148,16 +148,16 @@ namespace core
 		// ---------------------------------------------------------------------
 		// interface
 		// ---------------------------------------------------------------------
-		LIBRARY_EXPORT void startup();
-		LIBRARY_EXPORT void shutdown();
+		void startup();
+		void shutdown();
 
 
 		typedef SystemAllocator<DefaultTrackingPolicy> SystemAllocatorType;
-		LIBRARY_EXPORT SystemAllocatorType& system_allocator();
+		SystemAllocatorType& system_allocator();
 
 		typedef HeapAllocator<DefaultTrackingPolicy> GlobalAllocatorType;
-		LIBRARY_EXPORT GlobalAllocatorType& global_allocator();
-		LIBRARY_EXPORT void global_allocator(GlobalAllocatorType& allocator);
+		GlobalAllocatorType& global_allocator();
+		void global_allocator(GlobalAllocatorType& allocator);
 
 		// ---------------------------------------------------------------------
 		// template functions

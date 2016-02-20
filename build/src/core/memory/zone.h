@@ -65,32 +65,32 @@ namespace core
 			void report();
 
 		public:
-			LIBRARY_EXPORT Zone(const char* zone_name, size_t max_budget_bytes = 0);
-			LIBRARY_EXPORT ~Zone();
+			Zone(const char* zone_name, size_t max_budget_bytes = 0);
+			~Zone();
 
 			/// The name of this zone
-			LIBRARY_EXPORT const char* name() const { return zone_name; }
+			const char* name() const { return zone_name; }
 
 			/// Track an allocation in this zone.
 			/// @param size The size of the allocation in bytes
 			/// @returns A value of 0 on success. Non-zero indicates failure.
-			LIBRARY_EXPORT int add_allocation(size_t size);
+			int add_allocation(size_t size);
 
 			/// Untrack an allocation in this zone
 			/// @param size The size of the allocation in bytes
-			LIBRARY_EXPORT void remove_allocation(size_t size);
+			void remove_allocation(size_t size);
 
-			LIBRARY_EXPORT size_t next_allocation_id() { return current_allocation++; }
+			size_t next_allocation_id() { return current_allocation++; }
 
 			// public accessors
-			LIBRARY_EXPORT size_t get_total_allocations() const { return total_allocations; }
-			LIBRARY_EXPORT size_t get_total_bytes() const { return total_bytes; }
-			LIBRARY_EXPORT size_t get_active_allocations() const { return active_allocations; }
-			LIBRARY_EXPORT size_t get_active_bytes() const { return active_bytes; }
-			LIBRARY_EXPORT size_t get_high_watermark() const { return high_watermark; }
-			LIBRARY_EXPORT size_t get_smallest_allocation() const { return smallest_allocation; }
-			LIBRARY_EXPORT size_t get_largest_allocation() const { return largest_allocation; }
-			LIBRARY_EXPORT size_t get_budget_bytes() const { return budget_bytes; }
+			size_t get_total_allocations() const { return total_allocations; }
+			size_t get_total_bytes() const { return total_bytes; }
+			size_t get_active_allocations() const { return active_allocations; }
+			size_t get_active_bytes() const { return active_bytes; }
+			size_t get_high_watermark() const { return high_watermark; }
+			size_t get_smallest_allocation() const { return smallest_allocation; }
+			size_t get_largest_allocation() const { return largest_allocation; }
+			size_t get_budget_bytes() const { return budget_bytes; }
 		}; // class Zone
 	} // namespace memory
 } // namespace core

@@ -68,19 +68,19 @@ namespace font
 	{
 		int ref;
 
-		LIBRARY_EXPORT Handle(int reference = -1) :
+		Handle(int reference = -1) :
 			ref(reference)
 		{
 		}
 
-		LIBRARY_EXPORT bool is_valid() const;
+		bool is_valid() const;
 
-		LIBRARY_EXPORT unsigned int point_size() const
+		unsigned int point_size() const
 		{
 			return 0; //return get_point_size(*this);
 		}
 
-		LIBRARY_EXPORT operator int() const
+		operator int() const
 		{
 			return ref;
 		}
@@ -88,37 +88,37 @@ namespace font
 
 
 	// setup resources the font library might need
-	LIBRARY_EXPORT void startup(render2::Device* device);
+	void startup(render2::Device* device);
 
 	// cleanup any used resources
-	LIBRARY_EXPORT void shutdown();
+	void shutdown();
 
 	// load font from memory with the desired pixel size
-	LIBRARY_EXPORT Handle load_from_memory(const void* data, size_t data_size, size_t pixel_size, Type target_type = FONT_TYPE_BITMAP);
+	Handle load_from_memory(const void* data, size_t data_size, size_t pixel_size, Type target_type = FONT_TYPE_BITMAP);
 
 	// called to purge memory used by handle's font
-	LIBRARY_EXPORT void destroy_font(Handle& handle);
+	void destroy_font(Handle& handle);
 
 	// return the point size for the font
-	LIBRARY_EXPORT unsigned int get_pixel_size(Handle handle);
+	unsigned int get_pixel_size(Handle handle);
 
 	// retrieve metrics for this font
-	LIBRARY_EXPORT void get_font_metrics(Handle handle, Metrics& out_metrics);
+	void get_font_metrics(Handle handle, Metrics& out_metrics);
 
 	// fetch metrics for a single glyph; if available (return == 0)
-	LIBRARY_EXPORT int get_glyph_metrics(Handle handle, uint32_t codepoint, glm::vec2& mins, glm::vec2& maxs, int* advance);
+	int get_glyph_metrics(Handle handle, uint32_t codepoint, glm::vec2& mins, glm::vec2& maxs, int* advance);
 
 	// fetch metrics for a string
-	LIBRARY_EXPORT int get_string_metrics(Handle handle, const char* utf8, size_t string_length, glm::vec2& mins, glm::vec2& maxs);
+	int get_string_metrics(Handle handle, const char* utf8, size_t string_length, glm::vec2& mins, glm::vec2& maxs);
 
 	// populate vertices with the transformed vertices for drawing a string to the screen
 	// returns the number of vertices used
-	LIBRARY_EXPORT size_t draw_string(Handle handle, FontVertex* vertices, const char* utf8, size_t string_length, const gemini::Color& color);
+	size_t draw_string(Handle handle, FontVertex* vertices, const char* utf8, size_t string_length, const gemini::Color& color);
 
 	// retrieve the font texture used by a font
-	LIBRARY_EXPORT render2::Texture* get_font_texture(Handle handle);
+	render2::Texture* get_font_texture(Handle handle);
 
 	/// @returns The number of vertices required to render string with
 	/// string_length in characters.
-	LIBRARY_EXPORT size_t count_vertices(Handle handle, size_t string_length);
+	size_t count_vertices(Handle handle, size_t string_length);
 } // namespace font

@@ -79,15 +79,15 @@ namespace renderer
 
 		// this will generate a value based on the parameters applied
 		// to this material such that the correct shader can be found and used when rendering
-		LIBRARY_EXPORT void calculate_requirements();
+		void calculate_requirements();
 
-		LIBRARY_EXPORT MaterialParameter* parameter_by_name(const std::string& name);
+		MaterialParameter* parameter_by_name(const std::string& name);
 
-		LIBRARY_EXPORT void set_parameter_name( unsigned int id, const char * name );
-		LIBRARY_EXPORT void set_parameter_vec4( unsigned int id, const glm::vec4 & vec );
+		void set_parameter_name( unsigned int id, const char * name );
+		void set_parameter_vec4( unsigned int id, const glm::vec4 & vec );
 
-		LIBRARY_EXPORT void add_parameter(const renderer::MaterialParameter& param);
+		void add_parameter(const renderer::MaterialParameter& param);
 
-		LIBRARY_EXPORT void print_parameters();
+		void print_parameters();
 	};
 } // namespace renderer

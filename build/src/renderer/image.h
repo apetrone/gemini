@@ -105,19 +105,19 @@ namespace image
 		// can be raw pixel data, or compressed data, etc.
 		FixedArray<uint8_t> pixels;
 
-		LIBRARY_EXPORT Image();
-		LIBRARY_EXPORT Image& operator=(const Image& other);
-		LIBRARY_EXPORT void create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels);
-		LIBRARY_EXPORT void fill(const gemini::Color& color);
+		Image();
+		Image& operator=(const Image& other);
+		void create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels);
+		void fill(const gemini::Color& color);
 
 		// copy an image from a target buffer
-		LIBRARY_EXPORT void copy(const uint8_t* pixels, const uint32_t& width, const uint32_t& height, const uint32_t& pitch, uint32_t border = 0);
+		void copy(const uint8_t* pixels, const uint32_t& width, const uint32_t& height, const uint32_t& pitch, uint32_t border = 0);
 	};
 
-	LIBRARY_EXPORT void generate_checker_pattern(Image& image, const gemini::Color& color1, const gemini::Color& color2);
-	LIBRARY_EXPORT void generate_checker_image(unsigned char* pixels, int width, int height, const gemini::Color& color1, const gemini::Color& color2);
-	LIBRARY_EXPORT void flip_image_vertically(int width, int height, int components, unsigned char* pixels);
-	LIBRARY_EXPORT renderer::Texture* load_default_texture(Image& image);
+	void generate_checker_pattern(Image& image, const gemini::Color& color1, const gemini::Color& color2);
+	void generate_checker_image(unsigned char* pixels, int width, int height, const gemini::Color& color1, const gemini::Color& color2);
+	void flip_image_vertically(int width, int height, int components, unsigned char* pixels);
+	renderer::Texture* load_default_texture(Image& image);
 
 	//
 	// image manipulation functions
@@ -126,9 +126,9 @@ namespace image
 //	bool LoadCubemap( const char ** filenames, unsigned int & texID, unsigned int flags, unsigned int * out_width = 0, unsigned int * out_height = 0 );
 //	unsigned char * AllocImageFromFile( const char * filename, unsigned int * width, unsigned int * height, unsigned int * format, bool path_is_relative=true );
 
-	LIBRARY_EXPORT Image load_from_memory(unsigned char* data, unsigned int data_size);
-	LIBRARY_EXPORT unsigned char* load_image_from_memory(unsigned char* data, unsigned int dataSize, unsigned int* width, unsigned int* height, unsigned int* channels);
+	Image load_from_memory(unsigned char* data, unsigned int data_size);
+	unsigned char* load_image_from_memory(unsigned char* data, unsigned int dataSize, unsigned int* width, unsigned int* height, unsigned int* channels);
 //	void save_image_to_file( const char * filename, unsigned int width, unsigned int height, unsigned int channels, unsigned char * pixels, int imageType );
-	LIBRARY_EXPORT void free_image(unsigned char* pixels);
+	void free_image(unsigned char* pixels);
 
 } // namespace image

@@ -54,12 +54,12 @@ namespace gui
 	public:
 		Scrollbar(Panel* parent, uint32_t direction);
 
-		LIBRARY_EXPORT virtual void handle_event(EventArgs& args) override;
+		virtual void handle_event(EventArgs& args) override;
 
 		// set the button dimensions on this scrollbar
 		// can be used by ScrollablePanels to set the side of the buttons
 		// depending on the content size.
-		LIBRARY_EXPORT void set_button_dimensions(float x, float y);
+		void set_button_dimensions(float x, float y);
 
 		void set_scroll_value(float new_value);
 
