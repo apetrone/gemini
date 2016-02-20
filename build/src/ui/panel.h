@@ -178,7 +178,6 @@ namespace gui
 
 		glm::mat3 get_transform(size_t index) const;
 
-
 		Layout* get_layout() const { return layout; }
 		void set_layout(Layout* layout_instance);
 
