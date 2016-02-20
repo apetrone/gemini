@@ -347,13 +347,6 @@ def setup_driver(arguments, product, target_platform):
 	windows_release = product.layout(platform="windows", configuration="release")
 	windows_release.driver.generate_debug_info = "no"
 
-	if target_platform.matches("windows"):
-		""" On Windows, we need to make sure the built DLLs will be written
-		directly to the product root -- because the build steps will never
-		be called for projects that don't change and if we hide dependency
-		copies in this build step, they'll never be executed and code will be stale.
-		"""
-		product.product_root = COMMON_PRODUCT_ROOT
 
 def get_tools(arguments, libruntime, librenderer, libcore, libsdk, **kwargs):
 	#

@@ -47,6 +47,7 @@
 		typedef DWORD ThreadId;
 	} // namespace platform
 
+	#define GEMINI_EXPORT __declspec(dllexport)
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE) || defined(PLATFORM_ANDROID)
 	#include <limits.h>
 	#define MAX_PATH_SIZE PATH_MAX
@@ -60,6 +61,7 @@
 		typedef pthread_t ThreadId;
 	} // namespace platform
 
+	#define GEMINI_EXPORT
 #else
 	#error Unknown platform!
 #endif

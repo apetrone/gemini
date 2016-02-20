@@ -794,17 +794,63 @@ namespace core
 		std::vector<std::string> ArgumentParser::split_tokens(const char* commandline)
 		{
 			std::string source_commandline(commandline);
-			std::regex rgx("(-*[\\\\:/a-zA-Z-]+)|(\"[\\\\:/a-zA-Z ]+\")");
-			std::sregex_token_iterator iter(source_commandline.begin(),
-				source_commandline.end(),
-				rgx,
-				1);
-			std::sregex_token_iterator end;
-
+			const char* iter = commandline;
 			std::vector<std::string> tokens;
-			for (; iter != end; ++iter)
+			const char* outer = iter;
+			uint32_t flags = 0;
+			// 1: reading a token
+			// 2: reading double-quoted string
+
+			for (;;)
 			{
-				tokens.push_back((*iter).str());
+				if (*iter)
+				{
+					// If not reading a token and not reading a string...
+					if (((flags & 3) == 0) && *iter == '\"')
+					{
+						// Started reading double-quotes as a token.
+						flags |= 3;
+						++iter;
+						outer = iter;
+						continue;
+					}
+					else if ((flags & 3) && *iter == '\"')
+					{
+						// Already reading a double-quoted string,
+						// this will be the terminating double-quote.
+						flags &= ~3;
+						std::string token = std::string(source_commandline,
+							static_cast<size_t>(outer - commandline),
+							static_cast<size_t>(iter - outer));
+						tokens.push_back(token);
+						++iter;
+						outer = iter;
+						continue;
+					}
+					else if ((flags & 1) && *iter == ' ')
+					{
+						std::string token = std::string(source_commandline,
+							static_cast<size_t>(outer - commandline),
+							static_cast<size_t>(iter - outer));
+						tokens.push_back(token);
+						++iter;
+						outer = iter;
+						flags &= ~1; // no longer reading a token
+						continue;
+					}
+					else if ((flags & 1) == 0)
+					{
+						// started reading a token
+						flags |= 1;
+						outer = iter;
+					}
+				}
+				else
+				{
+					break;
+				}
+
+				++iter;
 			}
 
 			return tokens;
