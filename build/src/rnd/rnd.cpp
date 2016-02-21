@@ -24,7 +24,7 @@
 #include <functional>
 #include <vector>
 #include <algorithm>
-#include <thread>
+//#include <thread>
 
 using namespace std;
 
@@ -886,6 +886,36 @@ void test_devices()
 
 #endif
 
+namespace audio
+{
+	struct SoundInstance
+	{
+		uint32_t samples_played;
+		uint32_t total_samples;
+		uint16_t channels;
+		uint16_t repeats;
+
+		// allocated for each channel, packed.
+		float* volume;
+
+		// total_samples * channels
+		float* samples;
+
+		SoundInstance() :
+			samples_played(0),
+			total_samples(0),
+			channels(0),
+			repeats(0),
+			volume(nullptr),
+			samples(nullptr)
+		{
+		}
+	}; // SoundInstance
+} // namespace audio
+
+
+
+
 
 // code for reading and writing WAVE files
 namespace wav
@@ -1069,12 +1099,12 @@ void test_write_wav(Array<int16_t>& samples, const char* path)
 void test_wav()
 {
 	Array<int16_t> samples;
-	test_load_wav(samples, "sound.wav");
+	test_load_wav(samples, "sounds/sound.wav");
 
-	test_write_wav(samples, "output.wav");
+	test_write_wav(samples, "sounds/output.wav");
 
 	Array<int16_t> input;
-	test_load_wav(input, "output.wav");
+	test_load_wav(input, "sounds/output.wav");
 }
 #endif
 
@@ -1313,7 +1343,7 @@ platform::Result test_wasapi()
 	platform::Result result;
 
 	// load a test wav.
-	test_load_wav(loaded_sound, "sound.wav");
+	test_load_wav(loaded_sound, "sounds/sound.wav");
 
 	// We must initialize COM first. This requires objbase.h and ole32.lib.
 	if (FAILED(CoInitializeEx(0, COINIT_MULTITHREADED)))

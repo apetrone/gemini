@@ -105,18 +105,18 @@ def setup_datamodel(product):
 def setup_common_tool(product):
 
 	product.root = "../"
-	product.sources += [
-		"src/tools/%s/*.cpp" % product.name,
-		"src/tools/%s/*.h" % product.name
-	]
+	# product.sources += [
+	# 	"src/tools/%s/*.cpp" % product.name,
+	# 	"src/tools/%s/*.h" % product.name
+	# ]
 
-	setup_datamodel(product)
+	#setup_datamodel(product)
 
 	product.includes += [
 		"src/tools/%s" % product.name,
 		"src/tools/",
-		"src/tools/common",
-		"src/tools/datamodel"
+		# "src/tools/common",
+		# "src/tools/datamodel"
 	]
 
 
