@@ -1565,6 +1565,227 @@ platform::Result test_wasapi()
 }
 #endif // defined(PLATFORM_WINDOWS)
 
+#if defined(PLATFORM_LINUX)
+// use the newer alsa api
+#define ALSA_PCM_NEW_HW_PARAMS_API
+
+// The old sys/asoundlib is deprecated in favor of this.
+#include <alsa/asoundlib.h>
+
+
+// /usr/share/sounds/alsa/Front_Center.wav
+
+
+// REFERENCES:
+// http://www.linuxjournal.com/article/6735?page=0,1
+
+int check_alsa_error(int result, const char* action)
+{
+	if (result < 0)
+	{
+		LOGW("Failed on '%s', error: '%s'\n", action,
+			snd_strerror(result)
+		);
+		assert(0);
+	}
+
+	return result;
+}
+
+#include <core/mathlib.h>
+
+static float t_sin = 0.0f;
+void fill_buffer(char* data, uint32_t frames_available, uint32_t sample_rate_hz)
+{
+	// generate a sin wave
+	const float volume = 0.5f;
+	const float wave_period = (sample_rate_hz / 256);
+	const float sin_per = 2.0f * mathlib::PI;
+
+	int16_t* buffer = reinterpret_cast<int16_t*>(data);
+	for (uint32_t frame = 0; frame < frames_available; ++frame)
+	{
+		float sin_value = sinf(t_sin);
+		short value = sin_value * 0x7fff;
+		uint32_t index = frame * 2;
+		buffer[index + 0] = static_cast<short>(value * volume);
+		buffer[index + 1] = static_cast<short>(value * volume);
+
+		// increment the t_sin value
+		t_sin += (1.0 * sin_per) / wave_period;
+
+		// make sure it wraps to avoid glitches.
+		if (t_sin > sin_per)
+		{
+			t_sin -= sin_per;
+		}
+	}
+}
+
+platform::Result test_alsa()
+{
+	snd_pcm_t* handle = 0;
+	int open_result = snd_pcm_open(&handle,
+		"default",
+		SND_PCM_STREAM_PLAYBACK,
+		0
+	);
+	if (open_result < 0)
+	{
+		LOGE("snd_pcm_open failed with '%s'\n", snd_strerror(open_result));
+		if (open_result == -ENOENT)
+		{
+			LOGW("ENOENT: Please make sure you have permissions.\n");
+		}
+		return platform::Result::failure("snd_pcm_open failed");
+	}
+	assert(open_result == 0);
+
+
+
+	// allocate new hwparams
+	snd_pcm_hw_params_t* params;
+	snd_pcm_hw_params_alloca(&params);
+
+	// populate it with default values
+	check_alsa_error(snd_pcm_hw_params_any(handle, params), "set defaults");
+
+	// interleaved mode
+	check_alsa_error(snd_pcm_hw_params_set_access(handle,
+		params,
+		SND_PCM_ACCESS_RW_INTERLEAVED
+		),
+		"set interleaved"
+	);
+
+	// signed 16-bit little-endian format
+	check_alsa_error(snd_pcm_hw_params_set_format(handle,
+		params,
+		SND_PCM_FORMAT_S16_LE),
+		"set format"
+	);
+
+	// set two channels
+	check_alsa_error(snd_pcm_hw_params_set_channels(handle,
+		params,
+		2),
+		"set channels"
+	);
+
+	// set sample rate
+	uint32_t sample_rate = 44100;
+	int32_t subunit_direction;
+	check_alsa_error(snd_pcm_hw_params_set_rate_near(handle,
+		params,
+		&sample_rate,
+		&subunit_direction),
+		"set sample rate"
+	);
+
+
+	{
+		snd_pcm_uframes_t frames = 32;
+		snd_pcm_hw_params_set_period_size_near(handle,
+			params,
+			&frames,
+			&subunit_direction);
+	}
+
+
+
+	// write params to the driver
+	int write_result = check_alsa_error(
+		snd_pcm_hw_params(handle, params),
+		"write params"
+	);
+	if (write_result < 0)
+	{
+		return platform::Result::failure("Unable to set params on driver");
+	}
+
+
+	// display PCM interface details
+	LOGV("name: %s\n", snd_pcm_name(handle));
+	LOGV("state: %s\n", snd_pcm_state_name(snd_pcm_state(handle)));
+	snd_pcm_access_t access_value;
+	snd_pcm_hw_params_get_access(params, &access_value);
+	LOGV("access: %s\n", snd_pcm_access_name(static_cast<snd_pcm_access_t>(access_value)));
+
+	uint32_t channels;
+	snd_pcm_hw_params_get_channels(params, &channels);
+	LOGV("channels: %i\n", channels);
+
+
+
+
+	snd_pcm_uframes_t period_frames;
+	int subunit;
+	check_alsa_error(snd_pcm_hw_params_get_period_size(params,
+		&period_frames,
+		&subunit),
+		"get_period_size"
+	);
+	LOGV("period_frames: %i, subunit: %i\n", period_frames, subunit);
+
+	uint32_t period_time;
+	check_alsa_error(snd_pcm_hw_params_get_period_time(params,
+		&period_time,
+		&subunit),
+		"get_period_time"
+	);
+	LOGV("period_time: %i\n", period_time);
+
+	int buffer_size = period_frames * 4; // 2 bytes per sample * 2 channels
+	char* buffer = static_cast<char*>(
+		MEMORY_ALLOC(buffer_size,
+			core::memory::global_allocator())
+	);
+
+	// 2 seconds over period time
+	long loops = (2 * MicrosecondsPerSecond) / period_time;
+
+	memset(buffer, 0, buffer_size);
+
+
+
+	while (loops > 0)
+	{
+		loops--;
+
+
+		// for (size_t index = 0; index < period_frames; ++index)
+		// {
+		// 	short* ptr = reinterpret_cast<short*>(&buffer[index * 2]);
+		// 	ptr[0] = 3000;
+		// 	ptr[1] = 3000;
+		// 	++ptr;
+		// }
+
+		fill_buffer(buffer, period_frames, sample_rate);
+
+		int res = snd_pcm_writei(handle, buffer, period_frames);
+
+		if (res == -EPIPE)
+		{
+			LOGW("Buffer underrun occurred\n");
+			snd_pcm_prepare(handle);
+		}
+		check_alsa_error(res, "snd_pcm_writei");
+	}
+
+	// finish playing sound samples
+	snd_pcm_drain(handle);
+
+	int close_result = snd_pcm_close(handle);
+	assert(close_result == 0);
+
+	MEMORY_DEALLOC(buffer, core::memory::global_allocator());
+
+	return platform::Result::success();
+}
+#endif
+
+
 
 #if defined(PLATFORM_APPLE)
 // REFERENCES:
@@ -1745,6 +1966,12 @@ int main(int argc, char** argv)
 #if defined(PLATFORM_WINDOWS)
 	platform::Result test_wasapi();
 	platform::Result test = test_wasapi();
+	assert(test.succeeded());
+#endif
+
+#if defined(PLATFORM_LINUX)
+	platform::Result test_alsa();
+	platform::Result test = test_alsa();
 	assert(test.succeeded());
 #endif
 

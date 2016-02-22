@@ -754,7 +754,8 @@ def get_rnd(arguments, links, **kwargs):
 	rnd_linux = rnd.layout(platform="linux")
 	rnd_linux.links += [
 		"GL",
-		"udev"
+		"udev",
+		"asound" # TODO: Only if ALSA is found!
 	]
 
 	# Fix undefined reference for SysFreeString
