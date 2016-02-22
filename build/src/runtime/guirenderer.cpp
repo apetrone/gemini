@@ -52,7 +52,7 @@ struct GUIVertex
 	}
 };
 
-const size_t MAX_VERTICES = 8192;
+const size_t MAX_VERTICES = 16384;
 
 
 void GUIRenderer::increment_depth()

@@ -68,14 +68,16 @@ namespace gui
 		void draw();
 
 		// panel accessors
-		Panel* get_focus() { return this->focus; }
-		void set_focus(Panel* panel) { this->focus = panel; }
+		Panel* get_focus() { return focus; }
+		void set_focus(Panel* panel);
 
-		Panel* get_hot() { return this->hot; }
-		void set_hot(Panel* panel) { this->hot = panel; }
+		Panel* get_hot() { return hot; }
+		void set_hot(Panel* panel) { hot = panel; }
 
-		Panel* get_capture() { return this->capture; }
-		void set_capture(Panel* panel) { this->capture = panel; }
+		Panel* get_capture() { return capture; }
+		void set_capture(Panel* panel) { capture = panel; }
+
+		const Point& get_cursor_position() const { return last_cursor; }
 
 		Renderer* get_renderer() const { return renderer; }
 
@@ -94,6 +96,7 @@ namespace gui
 		void key_event(uint32_t unicode, bool is_down, uint32_t character, uint16_t modifiers);
 
 		void resize(ScreenInt width, ScreenInt height);
+		void resize(const Size&) {}
 
 		// location is in compositor coordinates with the origin (0, 0) in the upper left
 		Panel* find_panel_at_location(const Point& location, uint32_t flags);

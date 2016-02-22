@@ -252,6 +252,80 @@ UNITTEST(DataStream)
 	}
 }
 
+// ---------------------------------------------------------------------
+// Delegate
+// ---------------------------------------------------------------------
+class SomeType
+{
+public:
+	void	vv_foo()				{}
+	void	vi_foo(int input)		{}
+	int		iv_foo()				{ return 42; }
+	int		ii_foo(int x)			{ return x + 10; }
+	int		iii_foo(int a, int b)	{ return (a + b); }
+	void	vii_foo(int a, int b)	{}
+};
+
+static void vv_foo()				{}
+static void vi_foo(int input)		{}
+static void vii_foo(int a, int b)	{}
+static int iv_foo()					{ return 42; }
+static int ii_foo(int x)			{ return x + 10; }
+static int iii_foo(int a, int b)	{ return (a + b); }
+
+UNITTEST(Delegate)
+{
+	using namespace gemini;
+	SomeType st;
+
+	Delegate<void()> bx = MAKE_STATIC_DELEGATE(void(), vv_foo);
+	bx();
+
+	Delegate<void()> a;
+	a.bind<vv_foo>();
+	a();
+	a.bind<SomeType, &SomeType::vv_foo>(&st);
+	a();
+
+	Delegate<void(int)> b;
+	b.bind<vi_foo>();
+	b(42);
+	b.bind<SomeType, &SomeType::vi_foo>(&st);
+	b(41);
+
+	Delegate<int()> c;
+	c.bind<iv_foo>();
+	int c_result = c();
+	TEST_ASSERT(c_result == 42, delegate_int_return);
+	c.bind<SomeType, &SomeType::iv_foo>(&st);
+	c_result = c();
+	TEST_ASSERT(c_result == 42, delegate_member_int_return);
+
+	Delegate<void(int, int)> e;
+	e.bind<vii_foo>();
+	e(42, 41);
+	e.bind<SomeType, &SomeType::vii_foo>(&st);
+	e(30, 20);
+
+	Delegate<int(int, int)> f;
+	f.bind<iii_foo>();
+	int f_result = f(10, 20);
+	TEST_ASSERT(f_result == 30, delegate_int_sum_one);
+	f.bind<SomeType, &SomeType::iii_foo>(&st);
+	f_result = f(10, 20);
+	TEST_ASSERT(f_result == 30, delegate_member_int_sum_one);
+
+	Delegate<int(int)> g;
+	g.bind<ii_foo>();
+	int g_result = g(50);
+	TEST_ASSERT(g_result == 60, delegate_int_sum_two);
+	g.bind<SomeType, &SomeType::ii_foo>(&st);
+	g_result = g(50);
+	TEST_ASSERT(g_result == 60, delegate_member_int_sum_two);
+
+	Delegate<int(int)> z = MAKE_MEMBER_DELEGATE(int(int), SomeType, &SomeType::ii_foo, &st);
+}
+
 
 // ---------------------------------------------------------------------
 // FixedArray

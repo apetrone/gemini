@@ -67,33 +67,39 @@ namespace gui
 		if (text.empty())
 			return;
 
+		const int32_t upper_bound = (LABEL_TOP_MARGIN - font_height);
+		const int32_t lower_bound = (LABEL_TOP_MARGIN + size.height + font_height);
+
 		// draw cache items
+		float item_offset = 0.0f;
 		for (const font_cache_entry& item : font_cache)
 		{
 			Rect current_rect;
-			current_rect.origin = Point(LABEL_LEFT_MARGIN, LABEL_TOP_MARGIN);
+			current_rect.origin = item.origin - scroll_offset;
 			current_rect.size = size;
-			current_rect.origin += transform_point(local_transform, item.origin);
-			current_rect.origin -= scroll_offset;
 
-			// don't draw text above the panel
-			if (current_rect.origin.y < origin.y)
+			// Don't draw text above the panel. This shouldn't overlap
+			// by more than a single line -- clipping will take care of it.
+			if (current_rect.origin.y < upper_bound)
 				continue;
 
-			// don't draw text below the panel
-			if (current_rect.origin.y > (origin.y+size.height+font_height))
+			// Don't draw text below the panel. This shouldn't overlap
+			// by more than a single line -- clipping will take care of it.
+			if ((current_rect.origin.y+item.height) > (lower_bound + item.height))
 				break;
+
+			current_rect.origin = transform_point(get_transform(0), current_rect.origin);
 
 			render_commands.add_font(font_handle, &text[item.start], item.length, current_rect, foreground_color);
 		}
 
-//		const bool content_larger_than_bounds = content_bounds.height() > size.height;
-//		if (content_larger_than_bounds)
-//		{
-//			Point start(origin.x, origin.y + content_bounds.height());
-//			Point end(origin.x + size.width, origin.y + content_bounds.height());
-//			render_commands.add_line(start, end, gemini::Color::from_rgba(0, 255, 0, 255));
-//		}
+		//const bool content_larger_than_bounds = content_bounds.height() > size.height;
+		//if (content_larger_than_bounds)
+		//{
+		//	Point start(origin.x, origin.y + content_bounds.height());
+		//	Point end(origin.x + size.width, origin.y + content_bounds.height());
+		//	render_commands.add_line(start, end, gemini::Color::from_rgba(0, 255, 0, 255));
+		//}
 
 		render_children(compositor, renderer, render_commands);
 	}
@@ -156,12 +162,14 @@ namespace gui
 						cs.start = last_start;
 						cs.length = (index - last_start);
 						cs.origin = origin_offset;
+
 						last_start = index;
 
 						Rect text_bounds;
 						renderer->font_measure_string(font_handle, &text[cs.start], cs.length, text_bounds);
 						best_height = glm::max(static_cast<float>(font_height), text_bounds.height());
 
+						cs.height = font_height + best_height;
 						font_cache.push_back(cs);
 						origin_offset.x = LABEL_LEFT_MARGIN;
 						origin_offset.y += font_height + best_height;

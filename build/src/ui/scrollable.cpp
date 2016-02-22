@@ -35,14 +35,14 @@ namespace gui
 		: gui::Panel(parent)
 	{
 		// horizontal_bar = new Scrollbar(this, 0);
-		// horizontal_bar->on_scroll_value_changed.connect(&ScrollablePanel::on_horizontal_scroll, this);
+		// horizontal_bar->on_scroll_value_changed.bind<ScrollablePanel, &ScrollablePanel::on_horizontal_scroll>(this);
 		// horizontal_bar->set_visible(false);
 		// horizontal_bar->set_name("horizontal_scrollbar");
 
 		horizontal_bar = nullptr;
 
 		vertical_bar = new Scrollbar(this, 1);
-		vertical_bar->on_scroll_value_changed.connect(&ScrollablePanel::on_vertical_scroll, this);
+		vertical_bar->on_scroll_value_changed.bind<ScrollablePanel, &ScrollablePanel::on_vertical_scroll>(this);
 		vertical_bar->set_visible(false);
 		vertical_bar->set_name("vertical_scrollbar");
 	}

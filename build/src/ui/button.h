@@ -51,7 +51,8 @@ namespace gui
 		virtual void set_text(const std::string& text);
 		virtual bool is_button() const override { return true; }
 
-		gemini::DelegateHandler<EventArgs&> on_click;
+		gemini::Delegate<void(EventArgs&)> on_click;
+		gemini::Delegate<void(EventArgs&)> on_pressed;
 
 	protected:
 		gemini::Color hover_color;

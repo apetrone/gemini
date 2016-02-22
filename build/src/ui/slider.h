@@ -45,7 +45,7 @@ namespace gui
 		virtual void set_value(float new_value);
 		virtual float get_value() const { return current_value; }
 
-		gemini::DelegateHandler<float> on_value_changed;
+		gemini::Delegate<void (float)> on_value_changed;
 
 	protected:
 

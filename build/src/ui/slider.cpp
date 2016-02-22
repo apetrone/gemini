@@ -43,6 +43,7 @@ namespace gui
 		const uint32_t handle_flags = drag_handle->get_flags();
 		drag_handle->set_flags(handle_flags & ~Flag_CursorEnabled);
 		drag_handle->set_origin(0, 0);
+		drag_handle->set_dimensions(1.0f, 1.0f);
 	}
 
 	void Slider::handle_event(gui::EventArgs &args)
@@ -70,14 +71,19 @@ namespace gui
 			// compute the new value as it should be in our usable_width
 			current_value = glm::clamp(((slider_origin - kLeftMargin) / usable_width), 0.0f, 1.0f);
 
+			// set pressed color
+			drag_handle->set_background_color(gemini::Color::from_rgba(255, 128, 0, 255));
+
 			if (old_value != current_value)
 			{
 				on_value_changed(current_value);
 			}
+			args.handled = true;
 		}
 		else if (args.type == gui::Event_KeyButtonReleased)
 		{
 			// TODO: handle home/end + various other keys
+			args.handled = true;
 		}
 		else if (args.type == gui::Event_CursorMove)
 		{
@@ -90,10 +96,13 @@ namespace gui
 			{
 				drag_handle->set_background_color(gemini::Color::from_rgba(0, 255, 0, 255));
 			}
+
+			args.handled = true;
 		}
 		else if (args.type == gui::Event_CursorExit)
 		{
 			drag_handle->set_background_color(gemini::Color::from_rgba(0, 255, 0, 255));
+			args.handled = true;
 		}
 	}
 

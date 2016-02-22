@@ -34,6 +34,7 @@
 #include <stddef.h>
 #include <vector>
 
+
 namespace gui
 {
 	class Compositor;
@@ -42,6 +43,31 @@ namespace gui
 	class Panel;
 
 	typedef std::vector<Panel*> PanelVector;
+
+	class Layout
+	{
+	public:
+		Layout();
+		virtual ~Layout();
+		virtual void update(Panel* parent, PanelVector& children) = 0;
+
+		// memory overrides
+		void* operator new(size_t bytes);
+		void operator delete(void* memory);
+	}; // class Layout
+
+	class HBoxLayout : public Layout
+	{
+	private:
+		float left_margin;
+		float right_margin;
+		float top_margin;
+	public:
+		HBoxLayout();
+		~HBoxLayout();
+
+		virtual void update(Panel* parent, PanelVector& children) override;
+	}; // class HBoxLayout
 
 	class Panel
 	{
@@ -59,7 +85,9 @@ namespace gui
 			Flag_IsVisible			= 2,
 			Flag_CanMove			= 4,
 
-			Flag_TransformIsDirty	= 16
+			Flag_TransformIsDirty	= 16,
+			Flag_NeedsLayout		= 32,
+			Flag_AlwaysOnTop		= 64
 		};
 
 		size_t z_depth;
@@ -79,6 +107,7 @@ namespace gui
 
 		virtual void set_dimensions(float x, float y);
 		virtual void set_dimensions(const Point& dimensions);
+		virtual const Point& get_dimensions() const { return dimensions; }
 
 		// compute content bounds (may exceed compositor bounds)
 		virtual void get_content_bounds(Rect& bounds) const;
@@ -94,6 +123,14 @@ namespace gui
 		virtual void set_foreground_color(const gemini::Color& color);
 		virtual void set_visible(bool is_visible);
 		virtual bool is_visible() const;
+
+		// Return the minimum size of this panel
+		virtual void measure(Size& size) const;
+
+		// Sets the size of this panel to the requested_size.
+		virtual void resize(const Size& requested_size);
+
+		void set_maximum_size(const Size& max_size);
 
 		// ---------------------------------------------------------------------
 		// hit tests
@@ -132,7 +169,7 @@ namespace gui
 		const Size& get_size() const { return size; }
 		void set_size(const Size& new_size);
 
-		const char* get_name() { return debug_name(); }
+		const char* get_name() const { return debug_name(); }
 		void set_name(const char* name) { debug_name = name; }
 
 		// convert compositor coordinates to local panel coordinates
@@ -141,9 +178,12 @@ namespace gui
 		glm::mat3 get_transform(size_t index) const;
 
 
+		Layout* get_layout() const { return layout; }
+		void set_layout(Layout* layout_instance);
+
 	protected:
 
-		void update_size_from_dimensions(Panel* parent);
+		void update_size_from_dimensions();
 
 		void update_transform(Compositor*);
 
@@ -157,6 +197,11 @@ namespace gui
 
 		// size expressed in actual pixels (computed during an update)
 		Size size;
+
+		// Maximum size for this panel.
+		// 0 == no maximum. Can be a combination (0, 400) to limit in only
+		// the vertical direction.
+		Size maximum_size;
 
 		// normalized panel dimensions [0,1] as a percentage
 		// of the parent's dimensions.
@@ -180,5 +225,7 @@ namespace gui
 		real z_rotation;
 
 		glm::vec2 geometry[4];
+
+		Layout* layout;
 	}; // class Panel
 } // namespace gui

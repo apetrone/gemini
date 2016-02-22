@@ -63,7 +63,7 @@ namespace gui
 
 		void set_scroll_value(float new_value);
 
-		gemini::DelegateHandler<float> on_scroll_value_changed;
+		gemini::Delegate<void (float)> on_scroll_value_changed;
 
 	protected:
 

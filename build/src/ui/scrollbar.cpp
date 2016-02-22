@@ -64,6 +64,7 @@ namespace gui
 				const float max_y = (size.height - bootun->get_size().height);
 				const float new_y = glm::clamp(args.local.y - initial_click.y, 0.0f, max_y);
 				set_scroll_value((new_y / max_y));
+				args.handled = true;
 			}
 		}
 		else if (args.type == gui::Event_CursorButtonPressed)
@@ -74,12 +75,14 @@ namespace gui
 				initial_click = pos;
 				is_dragging = true;
 				bootun->set_background_color(gemini::Color::from_rgba(128, 64, 0, 255));
+				args.handled = true;
 			}
 		}
 		else if (args.type == gui::Event_CursorButtonReleased)
 		{
 			is_dragging = false;
 			bootun->set_background_color(gemini::Color::from_rgba(255, 128, 0, 255));
+			args.handled = true;
 		}
 		if (args.type == Event_CursorMove || args.type == Event_CursorExit)
 		{
@@ -92,7 +95,11 @@ namespace gui
 			{
 				bootun->set_background_color(gemini::Color::from_rgba(120, 120, 120, 255));
 			}
+
+			args.handled = true;
 		}
+
+		Panel::handle_event(args);
 	}
 
 	void Scrollbar::set_button_dimensions(float x, float y)
@@ -107,7 +114,10 @@ namespace gui
 		const float max_y = (size.height - bootun->get_size().height);
 		const float vertical_position = new_value * max_y;
 		bootun->set_origin(0, vertical_position);
-		on_scroll_value_changed(new_value);
+		if (on_scroll_value_changed.is_valid())
+		{
+			on_scroll_value_changed(new_value);
+		}
 		flags |= Flag_TransformIsDirty;
 	}
 } // namespace gui

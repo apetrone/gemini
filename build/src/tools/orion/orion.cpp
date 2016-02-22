@@ -115,7 +115,7 @@ namespace gui
 			scrubber->set_origin(0.0f, 0.0f);
 		}
 
-		gemini::DelegateHandler<size_t> on_scrubber_changed;
+		gemini::Delegate<void (size_t)> on_scrubber_changed;
 
 		virtual void handle_event(EventArgs& args) override
 		{
@@ -143,7 +143,7 @@ namespace gui
 					current_frame = total_frames-1;
 				}
 
-				if (last_frame != current_frame)
+				if ((last_frame != current_frame) && on_scrubber_changed.is_valid())
 				{
 					on_scrubber_changed(current_frame);
 				}
@@ -260,14 +260,17 @@ namespace gui
 
 		virtual void render(gui::Compositor* /*compositor*/, gui::Renderer* /*renderer*/, gui::render::CommandList& render_commands) override
 		{
-			on_render_content(target);
+			if (on_render_content.is_valid())
+			{
+				on_render_content(target);
+			}
 
 			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], handle, gemini::Color::from_rgba(255, 255, 255, 255));
 		}
 
 		// invoked when the handler should render its content to the render
 		// target.
-		gemini::DelegateHandler<render2::RenderTarget*> on_render_content;
+		gemini::Delegate<void (render2::RenderTarget*)> on_render_content;
 
 	private:
 		//
@@ -609,14 +612,14 @@ public:
 			gui::Timeline* timeline = new gui::Timeline(compositor);
 			timeline->set_bounds(0, 550, 800, 50);
 			timeline->set_frame_range(0, 30);
-			timeline->on_scrubber_changed.connect(&EditorKernel::timeline_scrubber_changed, this);
+			Timeline->on_scrubber_changed.bind<EditorKernel, &EditorKernel::timeline_scrubber_changed>(this);
 			timeline->set_frame(10);
 #endif
 
 #if 0
 			gui::RenderableSurface* surface = new gui::RenderableSurface(compositor);
 			surface->set_bounds(0, 0, 512, 512);
-			surface->on_render_content.connect(&EditorKernel::render_main_content, this);
+			surface->on_render_content.bind<EditorKernel, &EditorKernel::render_main_content>(this);
 
 			image::Image checker_pattern;
 			checker_pattern.create(512, 512, 3);

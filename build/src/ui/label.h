@@ -59,7 +59,8 @@ namespace gui
 		{
 			glm::vec2 origin;
 			size_t start;
-			size_t length;
+			uint32_t length;
+			int32_t height;
 		};
 
 		std::string text;

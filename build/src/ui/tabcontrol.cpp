@@ -49,7 +49,7 @@ namespace gui
 
 		TabButton* new_tab = new TabButton(this, name);
 		new_tab->set_panel(panel);
-		new_tab->on_click.connect(&TabControl::tab_clicked, this);
+		new_tab->on_click.bind<TabControl, &TabControl::tab_clicked>(this);
 
 		// TODO: should get this from style
 		new_tab->set_font("fonts/debug.ttf", 16);

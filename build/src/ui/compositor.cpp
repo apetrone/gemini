@@ -32,14 +32,24 @@ namespace gui
 {
 	struct ZSort_Panel_Descending
 	{
-		bool operator() (Panel * left, Panel * right)
+		bool operator()(Panel* left, Panel* right)
 		{
-			return left->z_depth < right->z_depth;
+			// This must obey strict weak ordering; so we'll have to come up
+			// with another plan.
+			return (left->z_depth < right->z_depth);
 		}
 	}; // ZSort_Panel_Descending
 
+	struct ZSort_Panel_AlwaysOnTop_Descending
+	{
+		bool operator()(Panel* left, Panel* right)
+		{
+			return (left->get_flags() & Panel::Flag_AlwaysOnTop) && !(right->get_flags() & Panel::Flag_AlwaysOnTop);
+		}
+	}; // ZSort_Panel_AlwaysOnTop_Descending
+
 	Compositor::Compositor(ScreenInt width, ScreenInt height, ResourceCache* cache, Renderer* renderer) :
-		Panel(0),
+		Panel(nullptr),
 		command_list(this, &vertex_buffer),
 		resource_cache(cache),
 		renderer(renderer)
@@ -48,16 +58,19 @@ namespace gui
 		size.height = height;
 		set_origin(0, 0);
 
-		this->last_cursor = Point(0, 0);
+		last_cursor = Point(0, 0);
 
-		this->set_focus(0);
-		this->set_hot(0);
-		this->set_capture(0);
+		focus = nullptr;
+		hot = nullptr;
+		capture = nullptr;
 
-		this->next_z_depth = 0;
-		this->listener = 0;
+		set_hot(0);
+		set_capture(0);
 
-		this->key_modifiers = 0;
+		next_z_depth = 0;
+		listener = 0;
+
+		key_modifiers = 0;
 
 		next_message = 0;
 
@@ -86,7 +99,6 @@ namespace gui
 		}
 
 		process_events();
-
 		flags &= ~Flag_TransformIsDirty;
 	} // update
 
@@ -97,22 +109,49 @@ namespace gui
 		command_list.reset();
 		vertex_buffer.resize(0);
 
-		this->renderer->begin_frame(this);
-
+		renderer->begin_frame(this);
 		for(PanelVector::reverse_iterator it = zsorted.rbegin(); it != zsorted.rend(); ++it)
 		{
 			Panel* panel = (*it);
 			if (panel->is_visible())
 			{
-				panel->render(this, this->renderer, command_list);
+				panel->render(this, renderer, command_list);
+			}
+		}
+		renderer->draw_commands(&command_list, vertex_buffer);
+		renderer->end_frame();
+	} // draw
+
+	void Compositor::set_focus(Panel* panel)
+	{
+		EventArgs focus_args(this, Event_FocusLost);
+		focus_args.focus = panel;
+		focus_args.hot = panel;
+		focus_args.capture = panel;
+		// TODO: Can panels be focused with other buttons?
+		focus_args.cursor_button = CursorButton::Left;
+		focus_args.cursor = last_cursor;
+		focus_args.sender = this;
+		focus_args.target = focus;
+
+		if (focus != panel)
+		{
+			if (focus)
+			{
+				focus_args.type = Event_FocusLost;
+				focus->handle_event(focus_args);
+			}
+
+			if (panel)
+			{
+				focus_args.type = Event_FocusGain;
+				focus_args.target = panel;
+				panel->handle_event(focus_args);
 			}
 		}
 
-		this->renderer->draw_commands(&command_list, vertex_buffer);
-
-		this->renderer->end_frame();
-	} // draw
-
+		focus = panel;
+	}
 
 	void Compositor::send_to_front(Panel* panel)
 	{
@@ -124,7 +163,7 @@ namespace gui
 
 	void Compositor::sort_zorder(Panel* panel)
 	{
-		if ( !panel )
+		if (!panel)
 		{
 			return;
 		}
@@ -134,31 +173,30 @@ namespace gui
 		// search the zlist for the top window
 		for( PanelVector::iterator it = zsorted.begin(); it != zsorted.end(); ++it )
 		{
-			Panel * p = (*it);
+			Panel* target = (*it);
 
-			if ( p->z_depth == old_z )
+			if (target->z_depth == old_z)
 			{
-				p->z_depth = 0;
+				target->z_depth = 0;
 				break;
 			}
 			else
 			{
-				p->z_depth++;
+				target->z_depth++;
 			}
 		}
 
-
 		std::sort(zsorted.begin(), zsorted.end(), ZSort_Panel_Descending());
-
+		std::sort(zsorted.begin(), zsorted.end(), ZSort_Panel_AlwaysOnTop_Descending());
 	} // sort_zorder
 
-	void Compositor::add_child( Panel * panel )
+	void Compositor::add_child(Panel* panel)
 	{
-		Panel::add_child( panel );
+		Panel::add_child(panel);
 
-		zsorted.push_back( panel );
+		zsorted.push_back(panel);
 		panel->z_depth = next_z_depth++;
-		this->sort_zorder( panel );
+		sort_zorder(panel);
 	} // add_child
 
 	void Compositor::remove_child(Panel* panel)
@@ -181,7 +219,7 @@ namespace gui
 
 	void Compositor::find_new_hot(ScreenInt dx, ScreenInt dy)
 	{
-		Panel* last_hot = this->hot;
+		Panel* last_hot = hot;
 
 		Point cursor(last_cursor.x, last_cursor.y);
 		Panel* newhot = get_capture();
@@ -213,6 +251,8 @@ namespace gui
 					args.delta.x = dx;
 					args.delta.y = dy;
 					args.local = last_hot->compositor_to_local(cursor);
+					args.sender = this;
+					args.target = last_hot;
 					last_hot->handle_event(args);
 				}
 
@@ -227,6 +267,8 @@ namespace gui
 					args.delta.x = dx;
 					args.delta.y = dy;
 					args.local = hot->compositor_to_local(cursor);
+					args.sender = this;
+					args.target = hot;
 					hot->handle_event(args);
 				}
 			}
@@ -244,6 +286,8 @@ namespace gui
 			args.delta.x = dx;
 			args.delta.y = dy;
 			args.local = focus->compositor_to_local(cursor);
+			args.sender = this;
+			args.target = get_capture();
 
 			if (target)
 			{
@@ -261,7 +305,8 @@ namespace gui
 			args.delta.x = dx;
 			args.delta.y = dy;
 			args.local = hot->compositor_to_local(cursor);
-
+			args.sender = this;
+			args.target = hot;
 			hot->handle_event(args);
 		}
 	}
@@ -282,54 +327,67 @@ namespace gui
 
 	void Compositor::cursor_button( CursorButton::Type button, bool is_down )
 	{
-		if ( is_down )
+		if (is_down)
 		{
-			EventArgs args( this, Event_CursorButtonPressed );
-			args.focus = get_focus();
-			args.hot = get_hot();
-			args.capture = get_capture();
-			args.cursor_button = button;
-			args.cursor = last_cursor;
-
+			// We must report the focus panel has lost focus FIRST.
 			Panel* panel = get_hot();
 
-			if ( panel )
+			// Then we have to dispatch the button press to the new panel.
+			EventArgs args(this, Event_CursorButtonPressed);
+			args.focus = get_focus();
+			args.hot = panel;
+			args.capture = panel;
+			args.cursor_button = button;
+			args.cursor = last_cursor;
+			args.sender = this;
+
+			if (panel)
 			{
+				args.target = panel;
 				args.local = panel->compositor_to_local(last_cursor);
-				panel->handle_event( args );
+				panel->handle_event(args);
 			}
 
-			// capture
-			this->set_focus( panel );
-			this->set_hot( panel );
-			this->set_capture(panel);
+			// Lastly, can dispatch the FocusGain message to the new panel.
+			if (panel != focus)
+			{
+				set_focus(panel);
+			}
+
+
+			set_hot(panel);
+			set_capture(panel);
 
 			send_to_front(panel);
 		}
 		else
 		{
-			EventArgs args( this, Event_CursorButtonReleased );
+			EventArgs args(this, Event_CursorButtonReleased);
 			args.focus = get_focus();
 			args.hot = get_hot();
 			args.capture = get_capture();
 			args.cursor_button = button;
 			assert(button != CursorButton::None);
 			args.cursor = last_cursor;
+			args.sender = this;
 
-			if ( args.focus )
+
+			if (args.focus)
 			{
+				args.target = get_focus();
 				args.local = args.focus->compositor_to_local(last_cursor);
-				args.focus->handle_event( args );
+				args.focus->handle_event(args);
 			}
 
 			if (get_capture())
 			{
+				args.target = get_capture();
 				args.type = Event_CursorExit;
 				args.capture = nullptr;
 				get_capture()->handle_event(args);
 			}
 
-			this->set_capture(0);
+			set_capture(0);
 			find_new_hot(0, 0);
 		}
 	} // cursor_button
@@ -343,10 +401,12 @@ namespace gui
 		args.cursor = last_cursor;
 		args.modifiers = key_modifiers;
 		args.wheel = direction;
+		args.sender = this;
 
 		Panel* panel = args.hot;
 		if (panel)
 		{
+			args.target = panel;
 			args.local = panel->compositor_to_local(last_cursor);
 			panel->handle_event(args);
 		}
@@ -362,11 +422,13 @@ namespace gui
 		args.capture = get_capture();
 		args.cursor = last_cursor;
 		args.modifiers = key_modifiers;
+		args.sender = this;
 
 		// key events are directed to the panel in focus
 		Panel* panel = args.focus;
 		if (panel)
 		{
+			args.target = panel;
 			args.local = panel->compositor_to_local(last_cursor);
 			panel->handle_event(args);
 		}
@@ -406,22 +468,18 @@ namespace gui
 
 	Panel* Compositor::find_panel_at_location(const Point& location, uint32_t option_flags)
 	{
-		Panel* closest_panel = nullptr;
-
-		// reset hot and try to find a new one
-		this->hot = 0;
-
-		for(PanelVector::reverse_iterator it = zsorted.rbegin(); it != zsorted.rend(); ++it)
+		// This must go front to back traversal to find panels.
+		for(PanelVector::iterator it = zsorted.begin(); it != zsorted.end(); ++it)
 		{
 			Panel* hit_panel = find_deepest_panel_at_location((*it), location, option_flags);
 			if (hit_panel)
 			{
-				closest_panel = hit_panel;
+				return hit_panel;
 			}
 		}
 
-		return closest_panel;
-	} // find_panel_at_point
+		return nullptr;
+	} // find_panel_at_location
 
 	Panel* Compositor::find_deepest_panel_at_location(Panel* root, const gui::Point& location, uint32_t option_flags)
 	{

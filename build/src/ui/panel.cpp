@@ -30,6 +30,180 @@
 
 namespace gui
 {
+	Layout::Layout()
+	{
+	}
+
+	Layout::~Layout()
+	{
+	}
+
+	void* Layout::operator new(size_t bytes)
+	{
+		return _gmalloc(bytes);
+	} // new
+
+		void Layout::operator delete(void *memory)
+	{
+		_gfree(memory);
+	} // delete
+
+	struct LayoutInfo
+	{
+		Point origin;
+		Size size;
+		Panel* panel;
+	};
+
+	HBoxLayout::HBoxLayout()
+		: left_margin(4.0f)
+		, right_margin(4.0f)
+		, top_margin(4.0f)
+	{
+	}
+
+	HBoxLayout::~HBoxLayout()
+	{
+	}
+
+	void arrange_panels(Array<LayoutInfo>& layout_data,
+		const Size& parent_size,
+		size_t row_width,
+		size_t available_height,
+		size_t first_row_panel,
+		size_t last_row_panel,
+		Point& origin)
+	{
+		// divide this by the number of panels on this row
+		const float per_child_space = (row_width / static_cast<float>(last_row_panel - first_row_panel));
+		float max_height = 0.0f;
+
+		for (size_t current_index = first_row_panel; current_index < last_row_panel; ++current_index)
+		{
+			LayoutInfo& edit = layout_data[current_index];
+			edit.size.width += per_child_space;
+			edit.panel->set_origin(origin.x, origin.y);
+			edit.panel->set_dimensions(
+				edit.size.width / parent_size.width,
+				edit.size.height / parent_size.height
+			);
+			origin.x += edit.size.width;
+			max_height = glm::max(edit.size.height, max_height);
+		}
+
+		origin.y += max_height;
+		available_height -= static_cast<size_t>(max_height);
+	}
+
+	void HBoxLayout::update(Panel* parent, PanelVector& children)
+	{
+		const Size parent_size = parent->get_size();
+		const size_t total_children = children.size();
+		const float per_child = 1.0f / static_cast<float>(total_children);
+		Size remaining_fill = parent->get_size();
+
+		DimensionType row_width = 0;
+		size_t available_height = 0;
+
+		remaining_fill.width -= (left_margin + right_margin);
+		remaining_fill.height -= top_margin;
+
+		available_height = static_cast<size_t>(remaining_fill.height);
+
+		if (!children.empty())
+		{
+			Point origin(left_margin, top_margin);
+
+			Array<LayoutInfo> layout_data;
+			layout_data.resize(total_children);
+
+			size_t index = 0;
+			for (Panel* child : children)
+			{
+				LayoutInfo& info = layout_data[index];
+				child->measure(info.size);
+				info.panel = child;
+				row_width += info.size.width;
+				++index;
+			}
+
+			// calculate target_sizes
+
+			index = 0;
+			size_t first_row_panel = 0;
+			size_t last_row_panel = 0;
+			row_width = remaining_fill.width;
+
+			Point row_origin(left_margin, top_margin);
+
+			for (size_t panel_index = 0; panel_index < total_children; ++panel_index)
+			{
+				LayoutInfo& info = layout_data[index];
+
+				if ((origin.y + info.size.height) > available_height)
+				{
+					// This layout cannot fit any more panels vertically.
+					// TODO: Perhaps add a scrollable panel, instead?
+					assert(0);
+				}
+
+				// If we can fit this panel in the row...
+				if (row_width >= info.size.width)
+				{
+					row_width -= info.size.width;
+					info.panel->set_origin(origin.x, origin.y);
+					info.panel->set_dimensions(
+						info.size.width / parent_size.width,
+						info.size.height / parent_size.height
+					);
+				}
+				else
+				{
+					// We cannot fit this panel. Re-arrange the previous items
+					// in the row.
+					arrange_panels(layout_data,
+						parent_size,
+						static_cast<size_t>(row_width),
+						available_height,
+						first_row_panel,
+						last_row_panel,
+						origin
+					);
+
+					// reset the origin.x
+					origin.x = left_margin;
+
+					row_width = remaining_fill.width;
+
+					// try to fit this panel again.
+					first_row_panel = panel_index;
+					panel_index--;
+					last_row_panel = panel_index;
+					continue;
+				}
+
+				++index;
+				last_row_panel = index;
+			}
+
+			// re-arrange the last row since it didn't fit as snugly.
+			if (row_width > 0)
+			{
+				arrange_panels(layout_data,
+					parent_size,
+					static_cast<size_t>(row_width),
+					available_height,
+					first_row_panel,
+					last_row_panel,
+					origin
+				);
+			}
+		}
+	}
+}
+
+namespace gui
+{
 	void* Panel::operator new(size_t bytes)
 	{
 		return _gmalloc(bytes);
@@ -40,18 +214,23 @@ namespace gui
 		_gfree(memory);
 	} // delete
 
-	Panel::Panel(Panel* parent)
+	Panel::Panel(Panel* parent_panel)
 	{
-		this->z_rotation = 0.0;
+		z_rotation = 0.0;
 		scale[0] = 1;
 		scale[1] = 1;
-		this->z_depth = 0;
-		this->parent = parent;
-		this->userdata = 0;
-		this->background_color = gemini::Color(1.0f, 1.0f, 1.0f, 1.0f);
-		this->foreground_color = gemini::Color(0.0f, 0.0f, 0.0f, 1.0f);
-		this->flags = (Flag_CursorEnabled | Flag_TransformIsDirty);
+		z_depth = 0;
+		parent = parent_panel;
+		userdata = 0;
+		background_color = gemini::Color(1.0f, 1.0f, 1.0f, 1.0f);
+		foreground_color = gemini::Color(0.0f, 0.0f, 0.0f, 1.0f);
+		flags = (Flag_CursorEnabled | Flag_TransformIsDirty | Flag_NeedsLayout);
 		set_visible(true);
+		layout = nullptr;
+		set_dimensions(1.0f, 1.0f);
+
+		// default: no maximum size
+		maximum_size = Size(0, 0);
 
 		if (parent)
 		{
@@ -72,6 +251,13 @@ namespace gui
 		}
 
 		children.clear();
+
+		if (layout)
+		{
+			layout->~Layout();
+			gui::_gfree(layout);
+			layout = nullptr;
+		}
 	} // ~Panel
 
 	void Panel::set_bounds(const ScreenInt x, const ScreenInt y, const DimensionType width, const DimensionType height)
@@ -91,14 +277,12 @@ namespace gui
 
 	void Panel::set_dimensions(float x, float y)
 	{
+		assert(x <= 1.0f);
+		assert(y <= 1.0f);
 		dimensions.x = x;
 		dimensions.y = y;
 
-		assert(parent);
-
-		assert(x <= 1.0f);
-		assert(y <= 1.0f);
-		update_size_from_dimensions(parent);
+		update_size_from_dimensions();
 
 		flags |= Flag_TransformIsDirty;
 	} // set_dimensions
@@ -109,7 +293,7 @@ namespace gui
 
 		assert(parent);
 
-		update_size_from_dimensions(parent);
+		update_size_from_dimensions();
 
 		flags |= Flag_TransformIsDirty;
 	} // set_dimensions
@@ -169,26 +353,27 @@ namespace gui
 					origin.x += args.delta.x;
 					origin.y += args.delta.y;
 					flags |= Flag_TransformIsDirty;
+					args.handled = true;
 				}
 			}
-			else if (args.type == Event_CursorButtonReleased)
-			{
-				if (args.cursor_button == gui::CursorButton::Middle)
-				{
-					LOGV("bounds = {%2.2f, %2.2f, %g, %g}\n",
-						origin.x,
-						origin.y,
-						size.width,
-						size.height
-					);
-				}
-			}
+		}
+
+		// send event up the chain
+		if (!args.handled && parent)
+		{
+			parent->handle_event(args);
 		}
 	} // handle_event
 
 	void Panel::update(Compositor* compositor, float delta_seconds)
 	{
 		update_transform(compositor);
+
+		if (layout && (flags & Flag_NeedsLayout))
+		{
+			layout->update(this, children);
+			flags &= ~Flag_NeedsLayout;
+		}
 
 		for(PanelVector::iterator it = children.begin(); it != children.end(); ++it)
 		{
@@ -278,6 +463,41 @@ namespace gui
 		return this->visible;
 	} // is_visible
 
+	void Panel::measure(Size& minimum_size) const
+	{
+		static size_t index = 0;
+		minimum_size.width = 100;
+		minimum_size.height = 30;
+
+		index++;
+	}
+
+	void Panel::resize(const Size& requested_size)
+	{
+		if (parent)
+		{
+			const Size& parent_size = parent->get_size();
+			set_dimensions(
+				(requested_size.width / parent_size.width),
+				(requested_size.height / parent_size.height)
+			);
+		}
+		else
+		{
+			set_dimensions(1.0f, 1.0f);
+		}
+
+		size = requested_size;
+	}
+
+	void Panel::set_maximum_size(const Size& max_size)
+	{
+		assert(parent != nullptr);
+
+
+		maximum_size = max_size;
+	}
+
 	bool Panel::hit_test_local(const Point& local_point) const
 	{
 		// Don't use 'bounds' here because those are
@@ -344,15 +564,31 @@ namespace gui
 		return local_transform;
 	}
 
-	void Panel::update_size_from_dimensions(Panel* parent)
+	void Panel::update_size_from_dimensions()
 	{
 		// Uh-oh, did you forget to set_dimensions on this panel?
 		assert(dimensions.x > 0 && dimensions.y > 0);
-		size.width = (dimensions.x * parent->size.width);
-		size.height = (dimensions.y * parent->size.height);
+
+		// Most panels have a parent, but the compositor does NOT.
+		Size parent_size = size;
+		if (parent)
+		{
+			parent_size = parent->size;
+		}
+		size.width = (dimensions.x * parent_size.width);
+		size.height = (dimensions.y * parent_size.height);
 	}
 
-	void Panel::update_transform(Compositor* compositor)
+	void Panel::set_layout(Layout* layout_instance)
+	{
+		// If you hit this, this panel already has a layout.
+		// What should we do here? Replace the old one?
+		assert(layout == nullptr);
+
+		layout = layout_instance;
+	}
+
+	void Panel::update_transform(Compositor*)
 	{
 		// Really? How do you not have a parent?
 		assert(parent);
@@ -366,12 +602,32 @@ namespace gui
 
 			// update the local_transform matrix
 			glm::mat3 parent_transform;
-			if (parent && parent != compositor)
+			if (parent)
 			{
 				parent_transform = parent->get_transform(0);
+
+				// recalculate the size based on dimensions
+				assert(dimensions.x > mathlib::EPSILON);
+				size.width = (dimensions.x * parent->size.width);
+				assert(size.width != 0);
+
+				assert(dimensions.y > mathlib::EPSILON);
+				size.height = (dimensions.y * parent->size.height);
+				assert(size.height != 0);
 			}
 
-			update_size_from_dimensions(parent);
+			update_size_from_dimensions();
+
+			// make sure we clamp the dimensions here
+			if (maximum_size.width != 0)
+			{
+				size.width = glm::min(size.width, maximum_size.width);
+			}
+
+			if (maximum_size.height != 0)
+			{
+				size.height = glm::min(size.height, maximum_size.height);
+			}
 
 			// the points have to be rotated around the center pivot
 			Point center(size.width/2, size.height/2);

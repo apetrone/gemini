@@ -71,6 +71,8 @@ namespace gui
 		Invalid = 0,
 		Event_CursorEnter,
 		Event_CursorExit,
+		Event_FocusGain,
+		Event_FocusLost,
 		Event_CursorMove,
 		Event_CursorDrag,
 		Event_CursorScroll,
@@ -94,7 +96,12 @@ namespace gui
 		Panel* focus; // this has focus
 		Panel* hot; // mouse is on top of this
 		Panel* capture; // captured panel
-		//		Panel* sender;
+
+		// The panel from which this event originated.
+		Panel* sender;
+
+		// The panel to which this event is intended.
+		Panel* target;
 
 		Point cursor;	// compositor coordinates
 		Point delta;	// delta coordinates
@@ -118,6 +125,8 @@ namespace gui
 			, focus(nullptr)
 			, hot(nullptr)
 			, capture(nullptr)
+			, sender(nullptr)
+			, target(nullptr)
 			, modifiers(0)
 			, cursor_button(CursorButton::None)
 			, wheel(0)
@@ -135,18 +144,20 @@ namespace gui
 
 		const EventArgs& operator=(const EventArgs& other)
 		{
-			this->type = other.type;
-			this->focus = other.focus;
-			this->hot = other.hot;
+			handled = other.handled;
+			type = other.type;
+			focus = other.focus;
+			hot = other.hot;
+			capture = other.capture;
+			sender = other.sender;
+			target = other.target;
 
-			this->cursor = other.cursor;
-			this->delta = other.delta;
-			this->local = other.local;
+			cursor = other.cursor;
+			delta = other.delta;
+			local = other.local;
 
-			this->handled = other.handled;
-
-			this->cursor_button = other.cursor_button;
-			this->compositor = other.compositor;
+			cursor_button = other.cursor_button;
+			compositor = other.compositor;
 
 			return *this;
 		}

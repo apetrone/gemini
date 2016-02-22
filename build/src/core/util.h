@@ -174,101 +174,209 @@ namespace gemini
 	// ---------------------------------------------------------------------
 	// event handling / delegate
 	// ---------------------------------------------------------------------
-	template <class T>
-	class DelegateHandler
+	// It is the responsibility of the caller to make sure the delegate is_valid
+	// before invoking it.
+
+	// This design is based in part on:
+	// http://blog.coldflake.com/posts/C++-delegates-on-steroids/
+	// The above was in turn, inspired by this original article:
+	// http://www.jeremyong.com/blog/2014/01/10/interfacing-lua-with-templates-in-c-plus-plus-11/
+	// After toying with the above, I couldn't add the features I wanted.
+	// Namely, variadic types and support for void in return/parameter types.
+	// Eventually, I found Stefan Reinalter's post:
+	// http://blog.molecular-matters.com/2011/09/19/generic-type-safe-delegates-and-events-in-c/
+	// This opened my eyes to a much better way of using the template types
+	// with much less code than what I had originally.
+
+	// I have created these macros for occasions where you want less verbose
+	// code.
+	#define MAKE_STATIC_DELEGATE(T, F) (gemini::Delegate<T>().bind<F>())
+	#define MAKE_MEMBER_DELEGATE(T, C, F, P) (gemini::Delegate<T>().bind<C, F>(P))
+
+	// base template
+	template <typename T>
+	class Delegate {};
+
+	// fully templatized
+	template <typename R, typename... P>
+	class Delegate<R(P...)>
 	{
-		// inspirations:
-		// boost::signals
-		// Don Clugston's Fast Delegate
-		// function and bind
+		void* class_instance;
+		typedef R(*function_type)(void*, P...);
+		function_type delegate_stub;
 
-		// Requirements:
-		// + must handle arbitrary arguments or struct type
-		// + need to bind a member function pointer or free (static) function
-		// - should be able to support delayed invocation
-		//	 This is possible, but not implemented at this time.
-
-		// std::function has deleted operator==; therefore
-		// we cannot implement a disconnect function as the backing
-		// store of delegate<T> is an std::function.
 	public:
-
-		// connect overloads
-		template <class C>
-		void connect(void (C::*function_ptr)(T), C* instance)
+		Delegate()
+			: class_instance(nullptr)
+			, delegate_stub(nullptr)
 		{
-			Delegate func;
-			func.set(function_ptr, instance);
-			connections.push_back(func);
 		}
 
-		template <class C>
-		void connect(void (C::*function_ptr)(T) const, C* instance)
+		//
+		// stub functions
+		//
+		template <R(*function)(P...)>
+		static inline R static_stub(void*, P... parameters)
 		{
-			Delegate func;
-			func.set(function_ptr, instance);
-			connections.push_back(func);
+			return function(parameters...);
 		}
 
-		void connect(void (*function_ptr)(T))
+		template <class C, R(C::*function)(P...)>
+		static inline R member_stub(void* instance, P... parameters)
 		{
-			Delegate func;
-			func.set(function_ptr);
-			connections.push_back(func);
+			C* cl = reinterpret_cast<C*>(instance);
+			return (cl->*function)(parameters...);
 		}
 
-		// emit event to all connections
-		void operator()(T value) const
+		//
+		// bind functions
+		//
+		template <R(*function)(P...)>
+		Delegate& bind()
 		{
-			for (size_t index = 0; index < connections.size(); ++index)
-			{
-				const Delegate& connection = connections[index];
-				connection.invoke(value);
-			}
+			class_instance = nullptr;
+			delegate_stub = &static_stub<function>;
+			return *this;
 		}
 
-		// remove all connections from this event
-		void clear_connections()
+		template <class C, R(C::*function)(P...)>
+		Delegate& bind(C* instance)
 		{
-			connections.clear();
+			class_instance = instance;
+			delegate_stub = &member_stub<C, function>;
+			return *this;
 		}
 
-	private:
-		class Delegate
+		R operator()(P... parameters)
 		{
-		public:
-			template <class C>
-			void set(void (C::*function_ptr)(T), C* instance)
-			{
-				function_pointer = std::bind(function_ptr, instance, std::placeholders::_1);
-			}
-
-			template <class C>
-			void set(void (C::*function_ptr)(T) const, C* instance)
-			{
-				function_pointer = std::bind(function_ptr, instance, std::placeholders::_1);
-			}
-
-			void set(void (*function_ptr)(T))
-			{
-				function_pointer = std::bind(function_ptr, std::placeholders::_1);
-			}
-
-			void invoke(T value) const
-			{
-				assert(function_pointer != nullptr);
-				function_pointer(value);
-			}
-
-		private:
-			std::function<void (T)> function_pointer;
-		};
-
-		void remove_if_found(const Delegate& func)
-		{
-			connections.erase(func);
+			return delegate_stub(class_instance, parameters...);
 		}
 
-		Array< Delegate > connections;
+		bool is_valid() const
+		{
+			return (delegate_stub != nullptr);
+		}
+	};
+
+	// templatized return value, no parameters
+	template <typename R>
+	class Delegate<R()>
+	{
+		void* class_instance;
+		typedef R(*function_type)(void*);
+		function_type delegate_stub;
+
+	public:
+		Delegate()
+			: class_instance(nullptr)
+			, delegate_stub(nullptr)
+		{
+		}
+
+		//
+		// stub functions
+		//
+		template <R(*function)()>
+		static inline R static_stub(void*)
+		{
+			return function();
+		}
+
+		template <class C, R(C::*function)()>
+		static inline R member_stub(void* instance)
+		{
+			C* cl = reinterpret_cast<C*>(instance);
+			return (cl->*function)();
+		}
+
+		//
+		// bind functions
+		//
+		template <R(*function)()>
+		Delegate& bind()
+		{
+			class_instance = nullptr;
+			delegate_stub = &static_stub<function>;
+			return *this;
+		}
+
+		template <class C, R(C::*function)()>
+		Delegate& bind(C* instance)
+		{
+			class_instance = instance;
+			delegate_stub = &member_stub<C, function>;
+			return *this;
+		}
+
+		R operator()()
+		{
+			return delegate_stub(class_instance);
+		}
+
+		bool is_valid() const
+		{
+			return (delegate_stub != nullptr);
+		}
+	};
+
+	// void return, no parameters
+	template <>
+	class Delegate<void()>
+	{
+		void* class_instance;
+		typedef void(*function_type)(void*);
+		function_type delegate_stub;
+
+	public:
+		Delegate()
+			: class_instance(nullptr)
+			, delegate_stub(nullptr)
+		{
+		}
+
+		//
+		// stub functions
+		//
+		template <void(*function)()>
+		static inline void static_stub(void*)
+		{
+			function();
+		}
+
+		template <class C, void (C::*function)()>
+		static inline void member_stub(void* instance)
+		{
+			C* cl = reinterpret_cast<C*>(instance);
+			(cl->*function)();
+		}
+
+		//
+		// bind functions
+		//
+		template <void(*function)()>
+		Delegate& bind()
+		{
+			class_instance = nullptr;
+			delegate_stub = &static_stub<function>;
+			return *this;
+		}
+
+		template <class C, void(C::*function)()>
+		Delegate& bind(C* instance)
+		{
+			class_instance = instance;
+			delegate_stub = &member_stub<C, function>;
+			return *this;
+		}
+
+		void operator()()
+		{
+			delegate_stub(class_instance);
+		}
+
+		bool is_valid() const
+		{
+			return (delegate_stub != nullptr);
+		}
 	};
 } // namespace gemini

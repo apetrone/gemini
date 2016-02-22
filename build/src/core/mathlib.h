@@ -88,6 +88,7 @@ namespace mathlib
 	const real PI = (float)3.14159265358979323846f;
 	const real D2R_PI180 = (PI / 180.0f);
 	const real R2D_180PI = (180.0f / PI);
+	const real EPSILON = FLT_EPSILON;
 
 	inline real degrees_to_radians(real degrees)
 	{

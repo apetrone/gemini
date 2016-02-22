@@ -98,7 +98,7 @@ namespace platform
 		return statement
 
 	#define PLATFORM_MAIN\
-		 int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandline, int show)
+		 int WINAPI WinMain(HINSTANCE /*instance*/, HINSTANCE /*prev_instance*/, LPSTR commandline, int /*show*/)
 
 	#define PLATFORM_IMPLEMENT_PARAMETERS()\
 		platform::set_mainparameters(platform::MainParameters(commandline))

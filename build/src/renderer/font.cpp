@@ -513,7 +513,8 @@ namespace font
 		mins = glm::vec2(0.0f);
 		maxs = glm::vec2(0.0f);
 
-		float largest = 0;
+		float largest_width = 0;
+		float largest_height = 0;
 
 		for (size_t index = 0; index < string_length; ++index)
 		{
@@ -521,8 +522,8 @@ namespace font
 			GlyphData gd;
 			get_gylph_info(font->face, codepoint, gd);
 
-			if (gd.height > largest)
-				largest = static_cast<float>(gd.height);
+			if (gd.height > largest_height)
+				largest_height = static_cast<float>(gd.height);
 
 			if (previous_codepoint != 0 && font->has_kerning)
 			{
@@ -534,10 +535,12 @@ namespace font
 
 			pen.x += gd.advancex;
 			previous_codepoint = gd.index;
+			if (pen.x > largest_width)
+				largest_width = static_cast<float>(pen.x);
 		}
 
-		maxs = pen;
-		maxs.y = largest;
+		maxs.x = largest_width;
+		maxs.y = largest_height;
 
 		return 0;
 	}

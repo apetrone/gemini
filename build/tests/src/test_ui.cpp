@@ -56,6 +56,20 @@
 
 using namespace renderer;
 
+// The simplest of all tests -- see what happens when we create a new panel
+// and put it on the compositor.
+#define GEMINI_TEST_PANEL			1
+#define GEMINI_TEST_GRAPH			1
+#define GEMINI_TEST_MENU			1
+#define GEMINI_TEST_TABCONTROL		1
+#define GEMINI_TEST_BUTTON			1
+#define GEMINI_TEST_SLIDER			1
+
+// investigate two pass method for layouts:
+// measure + arrange
+// http://www.gamedev.net/topic/673813-gui-elements-whose-positions-depend-on-one-another/?hl=%2Bgui+%2Blayout#entry5266332
+// MSDN's documentation on the WPF layout system
+
 // ---------------------------------------------------------------------
 // gui
 // ---------------------------------------------------------------------
@@ -91,6 +105,414 @@ struct MyVertex
 };
 
 
+namespace gui
+{
+	class MenuButton : public gui::Button
+	{
+	public:
+
+		MenuButton(gui::Panel* parent)
+			: gui::Button(parent)
+		{
+		}
+
+		virtual void handle_event(EventArgs& args) override
+		{
+			// events that propagate from this should point to the parent
+			// (menu) as the target.
+			args.target = parent;
+			Panel::handle_event(args);
+		}
+	};
+
+	// This uses a render target to present data
+	class Menu : public gui::Panel
+	{
+		gui::MenuButton* item;
+
+		enum MenuItemType
+		{
+			MenuItem_Invalid,
+			MenuItem_Item,
+			MenuItem_Menu,
+			MenuItem_Separator
+		};
+
+		struct MenuItem
+		{
+			MenuItemType type;
+			const char* label;
+			class Menu* menu;
+			float height;
+			Rect hit_rect;
+			gemini::Delegate<void()> action;
+
+			MenuItem()
+				: type(MenuItem_Invalid)
+				, label(nullptr)
+				, menu(nullptr)
+				, height(0.0)
+			{
+			}
+		};
+
+		Array<MenuItem> items;
+		uint32_t menu_is_expanded;
+
+		gui::Point menu_origin;
+		FontHandle font_handle;
+		int32_t font_height;
+
+		Rect expanded_rect;
+
+		static const uint32_t MENU_ITEM_BORDER = 2;
+		static const uint32_t MENU_ITEM_SEPARATOR_HEIGHT = 1;
+
+	public:
+		Menu(const char* label, Panel* parent)
+			: Panel(parent)
+			, menu_is_expanded(0)
+		{
+			flags |= Flag_CursorEnabled;
+			set_name(label);
+			item = new gui::MenuButton(this);
+
+			set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
+
+			item->set_font("fonts/debug.ttf", 16);
+			item->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
+			item->set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
+			item->set_hover_color(gemini::Color(0.2f, 0.2f, 0.2f, 1.0f));
+			item->set_origin(0, 0);
+			item->set_dimensions(1.0f, 1.0f);
+			item->set_text(label);
+
+			font_handle = get_compositor()->get_resource_cache()->create_font("fonts/debug.ttf", 16);
+
+			int ascender, descender;
+			size_t height;
+			get_compositor()->get_renderer()->font_metrics(font_handle, height, ascender, descender);
+			font_height = static_cast<int32_t>(ascender + descender);
+
+			Rect name_bounds;
+			get_compositor()->get_renderer()->font_measure_string(font_handle, label, core::str::len(label), name_bounds);
+			float dimx = (name_bounds.width() + 8.0) / parent->get_size().width;
+			set_dimensions(dimx, 1.0f);
+		}
+
+		void add_item(const char* name, const gemini::Delegate<void()>& action)
+		{
+			MenuItem item;
+			item.type = MenuItem_Item;
+			item.label = name;
+			item.action = action;
+			items.push_back(item);
+		}
+
+		void add_menu(Menu* menu)
+		{
+			MenuItem item;
+			item.type = MenuItem_Menu;
+			item.menu = menu;
+			items.push_back(item);
+		}
+
+		void add_separator()
+		{
+			MenuItem item;
+			item.type = MenuItem_Separator;
+			item.height = MENU_ITEM_SEPARATOR_HEIGHT;
+			items.push_back(item);
+		}
+
+		void update_color()
+		{
+			if (menu_is_expanded)
+			{
+				set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 1.0f));
+				item->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 1.0f));
+				item->set_hover_color(gemini::Color(0.0f, 0.0f, 0.0f, 1.0f));
+			}
+			else
+			{
+				set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
+				item->set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
+				item->set_hover_color(gemini::Color(0.2f, 0.2f, 0.2f, 1.0f));
+			}
+		}
+
+		void show()
+		{
+			menu_is_expanded = 1;
+			update_color();
+		}
+
+		void hide()
+		{
+			menu_is_expanded = 0;
+			update_color();
+		}
+
+		void toggle()
+		{
+			menu_is_expanded = !menu_is_expanded;
+			update_color();
+		}
+
+		bool is_open() const
+		{
+			return menu_is_expanded;
+		}
+
+		gui::Button* get_button() { return item; }
+
+		virtual void handle_event(EventArgs& args) override
+		{
+			if (args.type == Event_FocusGain)
+			{
+				show();
+			}
+			else if (args.type == Event_FocusLost)
+			{
+				hide();
+			}
+			else if (args.type == Event_CursorButtonReleased)
+			{
+				MenuItem* found_item = nullptr;
+				Point local_cursor = compositor_to_local(args.cursor) - Point(0, size.height);
+				Rect test_rect;
+				for (MenuItem& item : items)
+				{
+					if (item.hit_rect.is_point_inside(local_cursor))
+					{
+						found_item = &item;
+						break;
+					}
+				}
+
+				if (found_item)
+				{
+					get_compositor()->set_focus(nullptr);
+
+					assert(found_item->action.is_valid());
+					found_item->action();
+
+					args.handled = true;
+				}
+			}
+
+			// don't handle anything; just pass this on.
+			Panel::handle_event(args);
+		}
+
+		virtual bool hit_test_local(const Point& local_point) const override
+		{
+			if (menu_is_expanded)
+			{
+				if (expanded_rect.is_point_inside(local_point))
+				{
+					return true;
+				}
+			}
+
+			return Panel::hit_test_local(local_point);
+		}
+
+		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
+		{
+			if (menu_is_expanded)
+			{
+				// local menu offset
+				Point local_offset = Point(0, size.height);//  compositor_to_local(menu_origin);
+				const Point padding(8, 16);
+
+				// first pass, we need the maximum width of the menu items.
+				Size max_menu_size;
+				for (MenuItem& item : items)
+				{
+					if (item.type == MenuItem_Item)
+					{
+						gui::Rect string_bounds;
+						compositor->get_renderer()->font_measure_string(font_handle, item.label, core::str::len(item.label), string_bounds);
+						max_menu_size.width = glm::max(max_menu_size.width, string_bounds.width()+padding.x+padding.x);
+						max_menu_size.height += item.height = string_bounds.height() + 16; // add some padding to the height
+					}
+					else if (item.type == MenuItem_Separator)
+					{
+						max_menu_size.height += item.height;
+					}
+				}
+
+				expanded_rect = Rect(local_offset, max_menu_size);
+
+				// draw the background of the menu
+				{
+
+					Point data[4];
+					data[0] = local_offset;
+					data[1] = local_offset + Point(0, max_menu_size.height);
+					data[2] = local_offset + Point(max_menu_size.width, max_menu_size.height);
+					data[3] = local_offset + Point(max_menu_size.width, 0);
+
+					render_commands.add_rectangle(
+						transform_point(get_transform(0), data[0]),
+						transform_point(get_transform(0), data[1]),
+						transform_point(get_transform(0), data[2]),
+						transform_point(get_transform(0), data[3]),
+						-1,
+						gemini::Color(0.0f, 0.0f, 0.0f, 1.0f)
+					);
+				}
+
+				// calculate the local cursor in this menu's space
+				const Point& composite_cursor = compositor->get_cursor_position();
+
+				// we have to factor in the menu_origin in local space.
+				Point local_cursor = compositor_to_local(composite_cursor) - local_offset;
+
+				expanded_rect = Rect(local_offset, max_menu_size);
+				float current_item_offset = 0;
+				size_t index = 0;
+				for (MenuItem& item : items)
+				{
+					if (item.type == MenuItem_Item)
+					{
+						Size menu_size;
+						menu_size.width = max_menu_size.width;
+						menu_size.height = item.height;
+
+						Point data[4];
+						data[0] = local_offset + Point(MENU_ITEM_BORDER, MENU_ITEM_BORDER);
+						data[1] = local_offset + Point(MENU_ITEM_BORDER, menu_size.height-MENU_ITEM_BORDER);
+						data[2] = local_offset + Point(menu_size.width-MENU_ITEM_BORDER, menu_size.height-MENU_ITEM_BORDER);
+						data[3] = local_offset + Point(menu_size.width-MENU_ITEM_BORDER, MENU_ITEM_BORDER);
+
+						item.hit_rect.origin.y = current_item_offset;
+						item.hit_rect.size = menu_size;
+
+						gemini::Color draw_color = gemini::Color(0.0f, 0.0f, 0.0f, 1.0f);
+						gemini::Color font_color = gemini::Color(1.0f, 1.0f, 1.0f);
+						if (item.hit_rect.is_point_inside(local_cursor))
+						{
+							draw_color = gemini::Color(0.2f, 0.2f, 0.2f, 1.0f);
+						}
+
+						render_commands.add_rectangle(
+							transform_point(get_transform(0), data[0]),
+							transform_point(get_transform(0), data[1]),
+							transform_point(get_transform(0), data[2]),
+							transform_point(get_transform(0), data[3]),
+							-1,
+							draw_color
+						);
+
+						if (item.label)
+						{
+							Rect font_rect;
+							font_rect.origin = transform_point(get_transform(0), local_offset);
+							font_rect.size = menu_size;
+							font_rect.origin.x += 8;
+							font_rect.origin.y += font_height+8;
+							render_commands.add_font(font_handle, item.label, core::str::len(item.label), font_rect, font_color);
+						}
+
+						current_item_offset += item.height;
+						local_offset.y += item.height;
+					}
+					else if (item.type == MenuItem_Separator)
+					{
+						Point start(0, local_offset.y);
+						Point end(max_menu_size.width, local_offset.y);
+						render_commands.add_line(
+							transform_point(get_transform(0), start),
+							transform_point(get_transform(0), end), gemini::Color(0.2f, 0.2f, 0.2f));
+						current_item_offset += item.height;
+						local_offset.y += item.height;
+					}
+
+					index++;
+				}
+			}
+
+			Panel::render(compositor, renderer, render_commands);
+		}
+
+		const gui::Rect& get_expanded_rect() const { return expanded_rect; }
+	}; // Menu
+
+
+
+	class MenuBar : public Panel
+	{
+		float next_origin;
+		Menu* last_menu;
+
+		// is the menu bar currently showing an open menu?
+		bool is_displaying_menu;
+
+	public:
+		MenuBar(Panel* parent)
+			: Panel(parent)
+			, next_origin(4.0f)
+			, last_menu(nullptr)
+			, is_displaying_menu(false)
+		{
+			flags |= Flag_CursorEnabled | Flag_AlwaysOnTop;
+			set_name("MenuBar");
+		}
+
+		void add_menu(Menu* menu)
+		{
+			const Point& dimensions = menu->get_dimensions();
+
+			menu->set_origin(next_origin, 0.0f);
+			next_origin += (dimensions.x * size.width);
+		}
+
+		virtual void handle_event(EventArgs& args) override
+		{
+			if (args.target != this)
+			{
+				Menu* menu = static_cast<Menu*>(args.target);
+				if (args.type == Event_CursorButtonPressed)
+				{
+					// Pressing a top-level menu item should
+					// toggle the menu show/hide.
+					menu->toggle();
+					last_menu = menu;
+				}
+				else if (args.type == Event_CursorEnter)
+				{
+					// When the cursor hovers over an expanded menu item,
+					// it must switch focus to that menu.
+					if (last_menu && (last_menu != menu) && last_menu->is_open())
+					{
+						get_compositor()->set_focus(menu);
+					}
+
+					last_menu = menu;
+				}
+			}
+
+			args.handled = 1;
+		}
+
+		virtual bool hit_test_local(const Point& local_point) const override
+		{
+			if (last_menu && last_menu->is_open())
+			{
+				gui::Rect expanded_rect = last_menu->get_expanded_rect();
+				expanded_rect.origin += last_menu->get_origin();
+				if (expanded_rect.is_point_inside(local_point))
+				{
+					return true;
+				}
+			}
+
+			return Panel::hit_test_local(local_point);
+		}
+	}; // class MenuBar
+}
 
 
 
@@ -211,8 +633,35 @@ public:
 		fprintf(stdout, "test_button_clicked\n");
 	}
 
+	void on_new_project()
+	{
+	}
+
+	void on_open_project(void)
+	{
+	}
+
+	void on_quit(void)
+	{
+		set_active(false);
+	}
+
+
+	void on_package()
+	{
+		LOGV("package called\n");
+	}
+
+	void on_package_and_run()
+	{
+		LOGV("package and run\n");
+	}
+
 	void setup_gui(int width, int height)
 	{
+		graph = nullptr;
+		label = nullptr;
+		slider = nullptr;
 		renderer.set_device(device);
 
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
@@ -231,11 +680,62 @@ public:
 		const size_t dev_font_size = 16;
 		const size_t menu_font_size = 48;
 
-		// setup the framerate graph
-#if 1
+
+		// test the menu bar
+#if GEMINI_TEST_MENU
+		gui::MenuBar* menubar = new gui::MenuBar(compositor);
+		menubar->set_origin(0, 0);
+		menubar->set_size(gui::Size(frame.width, 24));
+		menubar->set_maximum_size(gui::Size(frame.width, 24));
+		menubar->set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
+
+		gui::Menu* filemenu = new gui::Menu("File", menubar);
+		filemenu->add_item("New Project", MAKE_MEMBER_DELEGATE(void(), TestUi, &TestUi::on_new_project, this));
+		filemenu->add_item("Open Project...", MAKE_MEMBER_DELEGATE(void(), TestUi, &TestUi::on_open_project, this));
+		filemenu->add_separator();
+		filemenu->add_item("Quit", MAKE_MEMBER_DELEGATE(void(), TestUi, &TestUi::on_quit, this));
+		menubar->add_menu(filemenu);
+
+		gui::Menu* deploymenu = new gui::Menu("Deploy", menubar);
+		deploymenu->add_item("Package...", MAKE_MEMBER_DELEGATE(void(), TestUi, &TestUi::on_package, this));
+		deploymenu->add_separator();
+		deploymenu->add_item("Package and Run", MAKE_MEMBER_DELEGATE(void(), TestUi, &TestUi::on_package_and_run, this));
+		menubar->add_menu(deploymenu);
+
+		gui::Menu* helpmenu = new gui::Menu("Help", menubar);
+		helpmenu->add_item("About...", gemini::Delegate<void()>());
+		menubar->add_menu(helpmenu);
+#endif
+
+#if GEMINI_TEST_PANEL
+		gui::HBoxLayout* panel_layout = new gui::HBoxLayout();
+
+		gui::Panel* test_panel = new gui::Panel(compositor);
+		test_panel->set_origin(0, 24);
+		test_panel->set_maximum_size(gui::Size(400, 400));
+		//test_panel->set_rotation(mathlib::degrees_to_radians(-15));
+		test_panel->set_background_color(gemini::Color(0.5f, 0.0f, 0.5f, 1.0f));
+		test_panel->set_layout(panel_layout);
+
+		const size_t TOTAL_BUTTONS = 32;
+		const float COLOR_INCREMENT = (1.0f / TOTAL_BUTTONS);
+		for (size_t index = 0; index < TOTAL_BUTTONS; ++index)
+		{
+			gui::Button* button0 = new gui::Button(test_panel);
+			const float inc = COLOR_INCREMENT * index;
+			button0->set_background_color(gemini::Color(inc, 0.5f + (inc < 0.5) ? inc : -0.5f, (1.0f - (COLOR_INCREMENT*index))));
+			button0->set_font("fonts/debug.ttf", 16);
+			button0->set_text(core::str::format("button %i", index));
+			button0->set_name("button");
+		}
+#endif
+
+		// setup the frame rate graph
+#if GEMINI_TEST_GRAPH
 		graph = new gui::Graph(compositor);
-		graph->set_origin(width - 250, 0);
+		graph->set_origin(width - 250, 24);
 		graph->set_dimensions(graph->dimensions_from_pixels(gui::Point(250, 100)));
+		graph->set_maximum_size(gui::Size(250, 100));
 		graph->set_font(dev_font, dev_font_size);
 		graph->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
 		graph->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
@@ -246,9 +746,9 @@ public:
 #endif
 
 		// test tab panel
-
+#if GEMINI_TEST_TABCONTROL
 		gui::TabControl* tab = new gui::TabControl(compositor);
-		tab->set_origin(10, 10);
+		tab->set_origin(425, 30);
 		tab->set_dimensions(tab->dimensions_from_pixels(gui::Point(250, 250)));
 		tab->set_name("tab_panel");
 
@@ -258,7 +758,12 @@ public:
 		label->set_background_color(gemini::Color::from_rgba(32, 32, 32, 255));
 		label->set_foreground_color(gemini::Color::from_rgba(0, 255, 0, 255));
 		label->set_font(dev_font, dev_font_size);
-		label->set_text("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+		const char str[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n";
+		const size_t MAX_LABEL_LINES = 26;
+		for (size_t index = 0; index < MAX_LABEL_LINES; ++index)
+		{
+			label->append_text(str);
+		}
 
 		tab->add_tab(0, "test", label);
 
@@ -272,9 +777,9 @@ public:
 			label->set_text("adam 0123456789");
 			tab->add_tab(1, "test2", label);
 		}
-
+#endif
 		// test buttons
-#if 1
+#if GEMINI_TEST_BUTTON
 		gemini::Color button_background = gemini::Color::from_rgba(128, 128, 128, 255);
 		gemini::Color button_hover = gemini::Color::from_rgba(255, 255, 128, 255);
 
@@ -304,7 +809,7 @@ public:
 			button->set_text(captions[index]);
 			button->set_background_color(button_background);
 			button->set_hover_color(button_hover);
-			button->on_click.connect(&TestUi::test_button_clicked, this);
+			button->on_click.bind<TestUi, &TestUi::test_button_clicked>(this);
 
 			origin_y += button_height + button_spacing;
 			buttons[index] = button;
@@ -317,28 +822,31 @@ public:
 
 		// test slider
 
+#if GEMINI_TEST_SLIDER
 		// slider label to check value
 		slider_label = new gui::Label(compositor);
-		slider_label->set_origin(230, 300);
+		slider_label->set_origin(230, 450);
 		slider_label->set_dimensions(slider_label->dimensions_from_pixels(gui::Point(40, 30)));
 		slider_label->set_background_color(gemini::Color::from_rgba(0, 0, 0, 0));
 		slider_label->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
 		slider_label->set_text("empty");
 		slider_label->set_font("fonts/debug.ttf", 16);
 
+		gui::Size slider_size(200, 30);
 		slider = new gui::Slider(compositor);
-		slider->set_origin(20, 300);
+		slider->set_origin(20, 450);
 		slider->set_dimensions(slider->dimensions_from_pixels(gui::Point(200, 40)));
 		slider->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
 		slider->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
-		slider->on_value_changed.connect(&TestUi::slider_value_changed, this);
+		slider->on_value_changed.bind<TestUi, &TestUi::slider_value_changed>(this);
 		slider->set_value(0.5f);
+#endif
 
 	}
 
 	virtual kernel::Error startup()
 	{
-		gemini::runtime_startup("arcfusion.net/gemini/test_render");
+		gemini::runtime_startup("arcfusion.net/gemini/test_ui");
 
 		input::startup();
 
@@ -457,13 +965,13 @@ public:
 		while(accumulator >= params.step_interval_seconds)
 		{
 			// subtract the interval from the accumulator
-			accumulator -= params.step_interval_seconds;
+			accumulator -= static_cast<float>(params.step_interval_seconds);
 
 			// increment tick counter
 			params.current_tick++;
 		}
 
-		params.step_alpha = accumulator / params.step_interval_seconds;
+		params.step_alpha = static_cast<float>(accumulator / params.step_interval_seconds);
 		if ( params.step_alpha >= 1.0f )
 		{
 			params.step_alpha -= 1.0f;
@@ -512,6 +1020,7 @@ public:
 #if 1
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
+		assert(render_pass.target->width != 0 && render_pass.target->height != 0);
 		render_pass.color(0.0f, 0.0f, 0.0f, 1.0f);
 		render_pass.clear_color = true;
 		render_pass.clear_depth = true;
@@ -573,6 +1082,21 @@ private:
 	render2::Pipeline* pipeline;
 	render2::Buffer* vertex_buffer;
 };
+
+// Rule of three governs if you implement any ONE of the following,
+// then you should implement ALL  three.
+// - destructor
+// - copy constructor
+// - copy assignment operator
+
+// The rule of five (C++11) governs that if you implement any ONE of the following,
+// you should implement ALL five.
+// - destructor
+// - copy constructor
+// - copy assignment operator
+// - move constructor
+// - move assignment operator
+
 
 PLATFORM_MAIN
 {

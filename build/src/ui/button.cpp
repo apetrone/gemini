@@ -51,6 +51,19 @@ namespace gui
 				args.compositor->set_focus(this);
 				current_color = pressed_color;
 				state = 1;
+
+				EventArgs message = args;
+				message.type = Event_CursorButtonPressed;
+
+				// TODO: Do we still need the queue event stuff?
+				//args.compositor->queue_event(message);
+
+				if (on_pressed.is_valid())
+				{
+					on_pressed(message);
+				}
+
+				args.handled = true;
 			}
 		}
 		else if (args.type == Event_CursorButtonReleased)
@@ -65,7 +78,11 @@ namespace gui
 					message.type = Event_Click;
 					args.compositor->queue_event(message);
 					state = 0;
-					on_click(message);
+					if (on_click.is_valid())
+					{
+						on_click(message);
+					}
+					args.handled = true;
 				}
 			}
 		}
@@ -75,8 +92,11 @@ namespace gui
 			{
 				current_color = background_color;
 				state = 0;
+				args.handled = true;
 			}
 		}
+
+		Panel::handle_event(args);
 	} // handle_event
 
 	void Button::update(Compositor* compositor, float delta_seconds)
