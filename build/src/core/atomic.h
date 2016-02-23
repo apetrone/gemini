@@ -57,7 +57,7 @@
 		#else
 			#error PLATFORM_MEMORY_FENCE is undefined for this ARM architecture.
 		#endif
-	#elif defined(__M_X64) || defined(__aarch64__) || defined(_M_IX86) || defined(_X86_) || defined(__i386__) || defined(i386)
+	#elif defined(__x86_64) || defined(__M_X64) || defined(__aarch64__) || defined(_M_IX86) || defined(_X86_) || defined(__i386__) || defined(i386)
 		#define PLATFORM_MEMORY_FENCE() asm volatile("" ::: "memory")
 	#else
 		#error PLATFORM_MEMORY_FENCE is undefined for this architecture.
