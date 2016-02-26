@@ -1824,7 +1824,10 @@ platform::Result test_alsa()
 // https://gist.github.com/hngrhorace/1360885
 // http://www.cocoawithlove.com/2010/10/ios-tone-generator-introduction-to.html
 // http://atastypixel.com/blog/using-remoteio-audio-unit/
-
+// http://fdiv.net/2008/08/12/nssound-setplaybackdeviceidentifier-coreaudio-output-device-enumeration
+// http://stackoverflow.com/questions/8950727/how-to-get-the-computers-current-volume-level
+// http://stackoverflow.com/questions/4863811/how-to-use-audioqueue-to-play-a-sound-for-mac-osx-in-c
+// moving off deprecated HAL APIs https://developer.apple.com/library/mac/technotes/tn2223/_index.html
 #include <AudioToolbox/AudioToolbox.h>
 
 // Needs frameworks:
@@ -1836,6 +1839,34 @@ struct coreaudio_data
 	uint32_t buffer_size;
 };
 
+static float t_sin = 0.0f;
+void fill_buffer(char* data, uint32_t frames_available, uint32_t sample_rate_hz)
+{
+	// generate a sin wave
+	const float volume = 0.5f;
+	const float wave_period = (sample_rate_hz / 256);
+	const float sin_per = 2.0f * mathlib::PI;
+
+	int16_t* buffer = reinterpret_cast<int16_t*>(data);
+	for (uint32_t frame = 0; frame < frames_available; ++frame)
+	{
+		float sin_value = sinf(t_sin);
+		short value = sin_value * 0x7fff;
+		uint32_t index = frame * 2;
+		buffer[index + 0] = static_cast<short>(value * volume);
+		buffer[index + 1] = static_cast<short>(value * volume);
+
+		// increment the t_sin value
+		t_sin += (1.0 * sin_per) / wave_period;
+
+		// make sure it wraps to avoid glitches.
+		if (t_sin > sin_per)
+		{
+			t_sin -= sin_per;
+		}
+	}
+}
+
 void coreaudio_fill_buffer(void* user_data, AudioQueueRef audio_queue, AudioQueueBufferRef buffer)
 {
 	coreaudio_data* data = reinterpret_cast<coreaudio_data*>(user_data);
@@ -1843,7 +1874,8 @@ void coreaudio_fill_buffer(void* user_data, AudioQueueRef audio_queue, AudioQueu
 	{
 		LOGV("coreaudio_fill_buffer!\n");
 
-		memset(buffer->mAudioData, 0x7fff, data->buffer_size);
+		fill_buffer((char*)buffer->mAudioData, buffer->mAudioDataByteSize/(sizeof(short)*2), 44100);
+//		memset(buffer->mAudioData, 0x7fff, data->buffer_size);
 
 		buffer->mAudioDataByteSize = data->buffer_size;
 		OSStatus queue_status = AudioQueueEnqueueBuffer(audio_queue, buffer, 0, nil);
@@ -1918,6 +1950,8 @@ platform::Result test_coreaudio()
 	Float32 volume = 0;
 	AudioQueueGetParameter(audio_queue, kAudioQueueParam_Volume, &volume);
 
+	AudioQueueSetParameter(audio_queue, kAudioQueueParam_Volume, 1.0f);
+
 	// allocate and prime audio buffers
 	for (size_t index = 0; index < 3; ++index)
 	{
@@ -1969,6 +2003,214 @@ platform::Result test_coreaudio()
 
 	return platform::Result::success();
 }
+
+#include <CoreAudio/CoreAudio.h>
+#include <CoreServices/CoreServices.h>
+#include <AudioUnit/AudioUnit.h>
+
+//kAudioUnitRenderAction_PostRender
+
+
+void fill_buffer_float(char* data, uint32_t frames_available, uint32_t sample_rate_hz)
+{
+	// generate a sin wave
+	const float volume = 0.5f;
+	const float wave_period = (static_cast<float>(sample_rate_hz) / 256.0f);
+	const float sin_per = 2.0f * mathlib::PI;
+
+	float* buffer = reinterpret_cast<float*>(data);
+	for (uint32_t frame = 0; frame < frames_available; ++frame)
+	{
+		float sin_value = sinf(t_sin);
+		uint32_t index = frame;
+		buffer[index + 0] = sin_value * volume;
+		buffer[index + 1] = sin_value * volume;
+
+		// increment the t_sin value
+		t_sin += (1.0 * sin_per) / wave_period;
+
+		// make sure it wraps to avoid glitches.
+		if (t_sin > sin_per)
+		{
+			t_sin -= sin_per;
+		}
+	}
+}
+
+
+OSStatus render_callback(void* output_unit, AudioUnitRenderActionFlags* action_flags, const AudioTimeStamp* in_timestamp, UInt32 busnumber, UInt32 frames, AudioBufferList* io_data)
+{
+	// bus 0 for output
+	// bus 1 for input
+	assert(busnumber == 0);
+
+	if (*action_flags & kAudioUnitRenderAction_PostRenderError)
+	{
+		assert(0);
+	}
+
+	if (*action_flags & kAudioUnitRenderAction_OutputIsSilence)
+	{
+		assert(0);
+	}
+
+	assert(io_data->mNumberBuffers > 0);
+	for (size_t buffer_index = 0; buffer_index < io_data->mNumberBuffers; ++buffer_index)
+	{
+		AudioBuffer* buffer = &io_data->mBuffers[buffer_index];
+		fill_buffer_float((char*)buffer->mData, buffer->mDataByteSize/sizeof(float), 44100);
+	}
+
+	return 0;
+}
+
+platform::Result test_audiounit()
+{
+	OSStatus result = noErr;
+#if 1
+	AudioDeviceID the_answer = 0;
+	UInt32 the_size = sizeof(AudioDeviceID);
+	AudioObjectPropertyAddress the_address = {kAudioHardwarePropertyDefaultOutputDevice, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMaster};
+	OSStatus the_error = AudioObjectGetPropertyData(kAudioObjectSystemObject, &the_address, 0, NULL, &the_size, &the_answer);
+
+	// get device id
+	CFStringRef uid = nullptr;
+	the_size = sizeof(CFStringRef);
+	the_address.mSelector = kAudioDevicePropertyDeviceUID;
+	the_address.mScope = kAudioObjectPropertyScopeGlobal;
+	result = AudioObjectGetPropertyData(the_answer, &the_address, 0, NULL, &the_size, &uid);
+
+	CFStringRef name = nullptr;
+	the_size = sizeof(CFStringRef);
+	the_address.mSelector = kAudioObjectPropertyName;
+	the_address.mScope = kAudioObjectPropertyScopeGlobal;
+	result = AudioObjectGetPropertyData(the_answer, &the_address, 0, NULL, &the_size, &name);
+#endif
+//kAudioDevicePropertyDeviceIsAlive
+//kAudioDevicePropertyHogMode
+	AudioComponentDescription desc;
+	desc.componentType = kAudioUnitType_Output;
+	desc.componentSubType = kAudioUnitSubType_DefaultOutput;
+	desc.componentFlags = 0;
+	desc.componentFlagsMask = 0;
+	desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+
+	AudioComponent output = AudioComponentFindNext(nullptr, &desc);
+	assert(output);
+
+	AudioComponentInstance instance;
+	OSStatus create_instance_status = AudioComponentInstanceNew(output, &instance);
+	assert(create_instance_status == 0);
+
+
+
+	AURenderCallbackStruct audiounit_callback;
+	memset(&audiounit_callback, 0, sizeof(AURenderCallbackStruct));
+	audiounit_callback.inputProc = render_callback;
+	audiounit_callback.inputProcRefCon = 0;
+
+	result = AudioUnitSetProperty(instance, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &audiounit_callback, sizeof(AURenderCallbackStruct));
+	assert(result == 0);
+
+//	result = AudioUnitSetProperty(instance, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Output, 0, &the_answer, sizeof(AudioDeviceID));
+//	assert(result == noErr);
+
+	typedef float SoundType;
+	AudioStreamBasicDescription format;
+	memset(&format, 0, sizeof(AudioStreamBasicDescription));
+	format.mSampleRate = 44100;
+	format.mFormatID = kAudioFormatLinearPCM;
+	format.mFormatFlags = kAudioFormatFlagIsNonInterleaved | kAudioFormatFlagsNativeFloatPacked;
+	format.mFramesPerPacket = 1;
+	format.mChannelsPerFrame = 1;
+	format.mBitsPerChannel = sizeof(SoundType) * 8;
+	format.mBytesPerFrame = 4;
+	format.mBytesPerPacket = 4;
+
+
+#if 1
+	UInt32 size;
+	Boolean out_writable;
+	// get size of stream format property and see if it is mutable
+	result = AudioUnitGetPropertyInfo(instance, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &size, &out_writable);
+	assert(result == noErr);
+
+	// get the current stream format of the output
+	result = AudioUnitGetProperty(instance, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &format, &size);
+	LOGV("channels: %i\n", format.mChannelsPerFrame);
+	LOGV("bits per channel: %i\n", format.mBitsPerChannel);
+	LOGV("bytes per frame: %i\n", format.mBytesPerFrame);
+	LOGV("bytes per packet: %i\n", format.mBytesPerPacket);
+	if (format.mFormatFlags & kAudioFormatFlagIsFloat)
+	{
+		LOGV("format is float\n");
+	}
+	if (format.mFormatFlags & kAudioFormatFlagIsBigEndian)
+	{
+		LOGV("format is big endian\n");
+	}
+	if (format.mFormatFlags & kAudioFormatFlagIsSignedInteger)
+	{
+		LOGV("format is signed integer\n");
+	}
+	if (format.mFormatFlags & kAudioFormatFlagIsPacked)
+	{
+		LOGV("format is packed\n");
+	}
+	if (format.mFormatFlags & kAudioFormatFlagIsAlignedHigh)
+	{
+		LOGV("format is aligned high\n");
+	}
+	if (format.mFormatFlags & kAudioFormatFlagIsNonInterleaved)
+	{
+		LOGV("format is non interleaved\n");
+	}
+	if (format.mFormatFlags & kAudioFormatFlagIsNonMixable)
+	{
+		LOGV("format is non mixable\n");
+	}
+	if (format.mFormatFlags & kAudioFormatFlagsAreAllClear)
+	{
+		LOGV("format flags are clear\n");
+	}
+	assert(result == noErr);
+
+	// set the stream format of the output to match the input
+	result = AudioUnitSetProperty(instance, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &format, size);
+	assert(result == noErr);
+#endif
+
+//	result = AudioUnitSetProperty(instance, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &format, sizeof(AudioStreamBasicDescription));
+//	assert(result == 0);
+
+	result = AudioUnitInitialize(instance);
+	assert(result == 0);
+
+	result = AudioOutputUnitStart(instance);
+	assert(result == 0);
+
+	uint64_t start = platform::microseconds();
+
+	for (;;)
+	{
+		uint64_t delta = platform::microseconds() - start;
+
+		if (delta > (1 * MicrosecondsPerSecond))
+			break;
+
+	}
+
+	LOGV("quitting...\n");
+
+	assert(AudioOutputUnitStop(instance) == 0);
+	platform::thread_sleep(500);
+	assert(AudioUnitUninitialize(instance) == 0);
+	assert(AudioComponentInstanceDispose(instance) == 0);
+
+
+	return platform::Result::success();
+}
+
 #endif // defined(PLATFORM_APPLE)
 
 
@@ -2006,8 +2248,10 @@ int main(int argc, char** argv)
 #endif
 
 #if defined(PLATFORM_APPLE)
-	platform::Result test_coreaudio();
-	platform::Result test = test_coreaudio();
+//	platform::Result test_coreaudio();
+//	platform::Result test = test_coreaudio();
+	platform::Result test_audiounit();
+	platform::Result test = test_audiounit();
 	assert(test.succeeded());
 #endif
 
