@@ -29,6 +29,7 @@ libglm = Dependency(file="glm.py")
 librecastnavigation = Dependency(file="recastnavigation.py")
 libfreetype = Dependency(file="freetype.py")
 #rapidjson = Dependency(file="rapidjson.py")
+libopenvr = Dependency(file="openvr.py")
 
 def assert_dependency(found, message):
 	if not found:
@@ -998,7 +999,8 @@ def products(arguments, **kwargs):
 	gemini.dependencies += [
 		libruntime,
 		librenderer,
-		libfreetype
+		libfreetype,
+		libopenvr
 	]
 
 	gemini.dependencies += [

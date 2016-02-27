@@ -34,3 +34,6 @@
 [submodule "build/dependencies/freetype2"]
 	path = build/dependencies/freetype2
 	url = git://github.com/apetrone/freetype2
+[submodule "build/dependencies/openvr"]
+	path = build/dependencies/openvr
+	url = https://github.com/ValveSoftware/openvr.git

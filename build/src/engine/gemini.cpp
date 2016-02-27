@@ -68,6 +68,8 @@
 #include "hotloading.h"
 #include "navigation.h"
 
+#include <openvr.h>
+
 // uncomment this to draw bone debug information
 //#define GEMINI_DEBUG_BONES
 
@@ -1364,6 +1366,24 @@ Options:
 		LOGV("filesystem root_path = '%s'\n", filesystem->root_directory().c_str());
 		LOGV("filesystem content_path = '%s'\n", content_path.c_str());
 		LOGV("filesystem user_application_directory = '%s'\n", filesystem->user_application_directory().c_str());
+
+		// TODO@VR: Initialize OpenVR
+		if (vr::VR_IsHmdPresent())
+		{
+			LOGV("VR headset detected. Initializing OpenVR...\n");
+
+			vr::HmdError init_error;
+			vr::IVRSystem* vrsystem = vr::VR_Init(&init_error);
+			if (!vrsystem)
+			{
+				LOGE("Unable to init OpenVR!\n");
+				return kernel::Error::StartupFailed;
+			}
+		}
+		else
+		{
+			LOGV("VR headset NOT detected. Skipping OpenVR init.\n");
+		}
 
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 
