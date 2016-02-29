@@ -799,10 +799,10 @@ public:
 		newview.height = frame.height;
 
 		render_scene_from_camera(entity_list, newview, scenelink);
-
-		glm::mat4 origin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
-		::renderer::debugdraw::axes(origin, 0.25f);
-		::renderer::debugdraw::render(newview.modelview, newview.projection, newview.width, newview.height);
+// TODO@APP: Fix debug draw when rendering a viewmodel.
+//		glm::mat4 origin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
+//		::renderer::debugdraw::axes(origin, 0.25f);
+//		::renderer::debugdraw::render(newview.modelview, newview.projection, newview.width, newview.height);
 	}
 
 	virtual void render_gui()
