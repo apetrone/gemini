@@ -38,6 +38,11 @@ namespace platform
 		// cache off the frequency for later timer use.
 		QueryPerformanceFrequency(&_frequency);
 
+		// Lock this thread to a single CPU to prevent jitter when timing.
+		// This should be called from the main game thread.
+		DWORD affinity_mask = 1;
+		SetThreadAffinityMask(GetCurrentThread(), reinterpret_cast<DWORD_PTR>(&affinity_mask));
+
 		return Result::success();
 	}
 
