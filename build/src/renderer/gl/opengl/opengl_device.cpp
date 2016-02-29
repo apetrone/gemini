@@ -64,6 +64,10 @@ namespace render2
 	{
 		default_target.width = static_cast<uint32_t>(backbuffer_width);
 		default_target.height = static_cast<uint32_t>(backbuffer_height);
+
+#if defined(PLATFORM_WINDOWS)
+		gl.SwapInterval(1);
+#endif
 	}
 
 
