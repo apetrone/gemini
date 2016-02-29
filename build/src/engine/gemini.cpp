@@ -71,6 +71,9 @@
 // uncomment this to draw bone debug information
 //#define GEMINI_DEBUG_BONES
 
+// uncomment to load game from main executable as opposed to a DLL.
+#define GEMINI_STATIC_GAME 1
+
 using namespace platform;
 using namespace core;
 using namespace gemini; // for renderer
@@ -777,6 +780,7 @@ public:
 
 	virtual void render_view(const View& view, const Color& clear_color)
 	{
+#if 0
 		// TODO: need to validate this origin/orientation is allowed.
 		// otherwise, client could ask us to render from anyone's POV.
 		EntityManager* em = static_cast<EntityManager*>(engine::instance()->entities());
@@ -799,6 +803,7 @@ public:
 		newview.height = frame.height;
 
 		render_scene_from_camera(entity_list, newview, scenelink);
+#endif
 // TODO@APP: Fix debug draw when rendering a viewmodel.
 //		glm::mat4 origin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
 //		::renderer::debugdraw::axes(origin, 0.25f);
@@ -910,6 +915,14 @@ public:
 typedef gemini::IGameInterface* (*connect_engine_fn)(gemini::IEngineInterface*);
 typedef void (*disconnect_engine_fn)();
 
+#if defined(GEMINI_STATIC_GAME)
+extern "C"
+{
+	gemini::IGameInterface* connect_engine(gemini::IEngineInterface* engine_interface);
+	void disconnect_engine();
+}
+#endif
+
 class EngineKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -977,6 +990,7 @@ private:
 
 	void open_gamelibrary()
 	{
+#if !defined(GEMINI_STATIC_GAME)
 		core::filesystem::IFileSystem* fs = core::filesystem::instance();
 
 		// load game library
@@ -1020,10 +1034,21 @@ private:
 
 			game_interface->startup();
 		}
+#else
+		game_interface = ::connect_engine(gemini::engine::instance());
+		if (!game_interface)
+		{
+			LOGE("Unable to connect engine to game library\n");
+			assert(game_interface != 0);
+		}
+
+		game_interface->startup();
+#endif
 	}
 
 	void close_gamelibrary()
 	{
+#if !defined(GEMINI_STATIC_GAME)
 		// shutdown game
 		if (game_interface)
 		{
@@ -1036,6 +1061,15 @@ private:
 		}
 
 		platform::dylib_close(gamelib);
+#else
+		// shutdown game
+		if (game_interface)
+		{
+			game_interface->shutdown();
+		}
+
+		::disconnect_engine();
+#endif
 	}
 
 
@@ -1358,15 +1392,6 @@ Options:
 
 		// initialize rendering subsystems
 		{
-			scenelink = MEMORY_NEW(SceneLink, core::memory::global_allocator());
-			int render_result =	::renderer::startup(::renderer::Default, config.render_settings);
-			if ( render_result == 0 )
-			{
-				LOGE("renderer initialization failed!\n");
-				return kernel::RendererFailed;
-			}
-
-
 			render2::RenderParameters render_params;
 			// set some options
 			render_params["vsync"] = "true";
@@ -1383,6 +1408,14 @@ Options:
 
 			device = render2::create_device(render_params);
 			device->init(config.window_width, config.window_height);
+
+			scenelink = MEMORY_NEW(SceneLink, core::memory::global_allocator());
+			int render_result = ::renderer::startup(::renderer::Default, config.render_settings);
+			if (render_result == 0)
+			{
+				LOGE("renderer initialization failed!\n");
+				return kernel::RendererFailed;
+			}
 
 			assets::startup();
 
@@ -1437,7 +1470,10 @@ Options:
 		navigation::startup();
 
 		// for debugging
-		game_interface->level_load();
+		if (game_interface)
+		{
+			game_interface->level_load();
+		}
 
 
 
@@ -1459,7 +1495,7 @@ Options:
 		uint64_t current_time = platform::microseconds();
 		kernel::Parameters& params = kernel::parameters();
 
-		// calculate delta ticks in miliseconds
+		// calculate delta ticks in milliseconds
 		params.framedelta_milliseconds = (current_time - last_time)*0.001f;
 
 		// cache the value in seconds
@@ -1552,10 +1588,12 @@ Options:
 			command.back += (joystick.axes[1].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
 		}
 #endif
-
-		for (GameMessage& message : *event_queue)
+		if (game_interface)
 		{
-			game_interface->server_process_message(message);
+			for (GameMessage& message : *event_queue)
+			{
+				game_interface->server_process_message(message);
+			}
 		}
 		event_queue->resize(0);
 
@@ -1648,6 +1686,9 @@ Options:
 
 		font::shutdown();
 
+		platform::window::destroy(main_window);
+		main_window = 0;
+
 		platform::window::shutdown();
 
 		// shutdown subsystems
@@ -1657,7 +1698,6 @@ Options:
 		::renderer::debugdraw::shutdown();
 		IDebugDraw* debug_draw = gemini::debugdraw::instance();
 		MEMORY_DELETE(debug_draw, core::memory::global_allocator());
-//		font::shutdown();
 		assets::shutdown();
 		input::shutdown();
 		audio::shutdown();
@@ -1669,10 +1709,6 @@ Options:
 
 		delete event_queue;
 		event_queue = 0;
-
-		platform::window::destroy(main_window);
-
-		main_window = 0;
 
 		MEMORY_DELETE(engine_interface, core::memory::global_allocator());
 		MEMORY_DELETE(scenelink, core::memory::global_allocator());

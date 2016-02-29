@@ -237,6 +237,7 @@ namespace renderer
 			render2::ResourceProvider* resource_provider = render2::get_resource_provider();
 			if (resource_provider->load_file(buffer, shader_path))
 			{
+				buffer.push_back('\0');
 				StackString<32> version;
 				render_utilities::strip_shader_version((char*)&buffer[0], version );
 				if ( version._length == 0 )

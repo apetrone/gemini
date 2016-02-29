@@ -435,7 +435,7 @@ public:
 		static uint64_t last_time = current_time;
 		static float accumulator = 0;
 
-		// calculate delta ticks in miliseconds
+		// calculate delta ticks in milliseconds
 		params.framedelta_milliseconds = (current_time - last_time)*0.001f;
 
 		// cache the value in seconds

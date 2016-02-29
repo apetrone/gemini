@@ -129,6 +129,10 @@ namespace renderer
 
 		LOGV("Loading gl driver \"%s\"...\n", lib_name);
 
+		// If you hit this assert, gemgl_startup is being called
+		// more than once -- or without calling gemgl_shutdown in between.
+		assert(gl_interface.library == 0);
+
 		gl_interface.library = platform::dylib_open(lib_name);
 		if (gl_interface.library == 0)
 		{

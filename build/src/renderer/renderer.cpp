@@ -62,20 +62,10 @@ namespace renderer
 		// load the shader config data
 		shader_config::startup();
 
-		// link with GL lib for this platform
-		int glstartup = gemgl_startup(gl);
-		if (glstartup != 0)
-		{
-			LOGE("gemgl startup failed!\n");
-			return glstartup;
-		}
-
-
 		gemgl_config config;
 
 		// parse the GL_VERSION string and determine which renderer to use.
 		gemgl_parse_version(config.major_version, config.minor_version);
-
 #if defined(PLATFORM_OPENGL_SUPPORT)
 			if (config.major_version == 3 && config.minor_version >= 2)
 			{
@@ -103,8 +93,6 @@ namespace renderer
 		{
 			LOGV( "Initialized renderer: '%s'\n", _render_driver->description() );
 
-			gemgl_load_symbols(gl);
-
 			// init render driver settings
 			_render_driver->init_with_settings(settings);
 
@@ -125,7 +113,9 @@ namespace renderer
 			MEMORY_DELETE(_render_driver, core::memory::global_allocator());
 		}
 
-		gemgl_shutdown(gl);
+		// TODO@APP: This is no longer correct to be called here.
+		// Moved to render2 device startup/shutdown.
+		//gemgl_shutdown(gl);
 	} // shutdown
 
 

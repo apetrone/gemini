@@ -38,20 +38,20 @@ namespace gemini
 		profile_block* current_scope = nullptr;
 
 		typedef HashSet<const char*, profile_block*> profile_hash_t;
-		profile_hash_t blocks;
+		profile_hash_t* blocks;
 		gemini::stack<profile_block*> profile_stack;
 		size_t depth = 0;
 		uint64_t overhead = 0;
 
 		profile_block* find_or_create_block(const char* name)
 		{
-			if (blocks.has_key(name))
-				return blocks.get(name);
+			if (blocks->has_key(name))
+				return blocks->get(name);
 
 			profile_block* block = new profile_block();
 			block->index = static_cast<uint32_t>(scopes.size());
 			scopes.push_back(block);
-			blocks[name] = block;
+			(*blocks)[name] = block;
 			return block;
 		}
 
@@ -102,11 +102,13 @@ namespace gemini
 			profile_stack.clear(false);
 			current_scope = nullptr;
 			scopes.clear(false);
-			blocks.clear(/*false*/);
+			blocks->clear(/*false*/);
 		}
 
 		void startup()
 		{
+			blocks = MEMORY_NEW(profile_hash_t, core::memory::global_allocator());
+
 			// calculate an average overhead for ticks
 			uint64_t sum = 0;
 			for (uint64_t count = 0; count < 11; ++count)
@@ -130,7 +132,9 @@ namespace gemini
 			}
 			scopes.clear();
 			profile_stack.clear();
-			blocks.clear();
+			blocks->clear();
+
+			MEMORY_DELETE(blocks, core::memory::global_allocator());
 		}
 
 		static_assert(sizeof(profiler::profile_block) == 32, "profile_block is not aligned on cache line.");
