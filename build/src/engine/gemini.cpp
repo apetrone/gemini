@@ -1245,13 +1245,15 @@ public:
 		experimental.set_compositor(compositor);
 
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
-		root->set_bounds(0, 0, frame.width, frame.height);
+		root->set_origin(0, 0);
+		root->set_dimensions(root->dimensions_from_pixels(gui::Point(frame.width, frame.height)));
 		root->set_background_color(Color(0, 0, 0, 0));
 
 		// setup the framerate graph
 		graph = new gui::Graph(root);
 		graph->set_name("frametime_graph");
-		graph->set_bounds(width-250, 0, 250, 100);
+		graph->set_origin(width - 250, 0);
+		graph->set_dimensions(graph->dimensions_from_pixels(gui::Point(250, 100)));
 		graph->set_font("fonts/debug.ttf", 16);
 		graph->set_background_color(Color::from_rgba(10, 10, 10, 210));
 		graph->set_foreground_color(Color::from_rgba(255, 255, 255, 255));

@@ -48,6 +48,7 @@ namespace gui
 		bootun->set_hover_color(gemini::Color(0, 0, 0));
 		bootun->set_flags(0);
 		bootun->set_name("scrollbar_bootun");
+		bootun->set_visible(false);
 
 		deferred_flags = 0;
 
@@ -96,6 +97,7 @@ namespace gui
 
 	void Scrollbar::set_button_dimensions(float x, float y)
 	{
+		bootun->set_visible(true);
 		bootun->set_dimensions(x, y);
 	}
 

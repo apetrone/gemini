@@ -55,7 +55,8 @@ namespace gui
 		new_tab->set_font("fonts/debug.ttf", 16);
 
 		// TODO: handle vertical tabs?
-		new_tab->set_bounds(static_cast<ScreenInt>(current_tab * (tab_size.width)), 0, tab_size.width, tab_size.height);
+		new_tab->set_origin(static_cast<ScreenInt>(current_tab * (tab_size.width)), 0);
+		new_tab->set_dimensions(new_tab->dimensions_from_pixels(gui::Point(tab_size.width, tab_size.height)));
 		new_tab->set_name(name.c_str());
 		new_tab->set_hover_color(gemini::Color(0, 1, 1));
 
@@ -68,7 +69,7 @@ namespace gui
 		{
 			panel->parent = this;
 			panel->set_origin(0, tab_size.height);
-			panel->set_size(Size(size.width, size.height - tab_size.height));
+			panel->set_dimensions(panel->dimensions_from_pixels(gui::Point(size.width, size.height - tab_size.height)));
 		}
 	}
 
@@ -93,6 +94,7 @@ namespace gui
 		if (active_tab && active_tab->get_panel())
 		{
 			active_tab->get_panel()->set_visible(true);
+			active_tab->get_panel()->set_flags(active_tab->get_panel()->get_flags() | Flag_TransformIsDirty);
 		}
 	}
 

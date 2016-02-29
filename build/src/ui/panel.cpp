@@ -98,8 +98,7 @@ namespace gui
 
 		assert(x <= 1.0f);
 		assert(y <= 1.0f);
-		size.width = (dimensions.x * parent->size.width);
-		size.height = (dimensions.y * parent->size.height);
+		update_size_from_dimensions(parent);
 
 		flags |= Flag_TransformIsDirty;
 	} // set_dimensions
@@ -110,8 +109,7 @@ namespace gui
 
 		assert(parent);
 
-		size.width = (dimensions.x * parent->size.width);
-		size.height = (dimensions.y * parent->size.height);
+		update_size_from_dimensions(parent);
 
 		flags |= Flag_TransformIsDirty;
 	} // set_dimensions
@@ -122,6 +120,17 @@ namespace gui
 		origin.y = y;
 		flags |= Flag_TransformIsDirty;
 	} // set_origin
+
+	void Panel::set_size(const Size& new_size)
+	{
+		size = new_size;
+
+		// re-compute dimensions
+		dimensions.x = (new_size.width / parent->size.width);
+		dimensions.y = (new_size.height / parent->size.height);
+
+		flags |= Flag_TransformIsDirty;
+	}
 
 	void Panel::get_content_bounds(Rect& content_bounds) const
 	{
@@ -335,21 +344,34 @@ namespace gui
 		return local_transform;
 	}
 
+	void Panel::update_size_from_dimensions(Panel* parent)
+	{
+		// Uh-oh, did you forget to set_dimensions on this panel?
+		assert(dimensions.x > 0 && dimensions.y > 0);
+		size.width = (dimensions.x * parent->size.width);
+		size.height = (dimensions.y * parent->size.height);
+	}
+
 	void Panel::update_transform(Compositor* compositor)
 	{
-		if (parent && parent->get_flags() & Flag_TransformIsDirty)
+		// Really? How do you not have a parent?
+		assert(parent);
+
+		if (!is_visible())
+			return;
+
+		if ((parent->get_flags() & Flag_TransformIsDirty) || (flags & Flag_TransformIsDirty))
 		{
 			flags |= Flag_TransformIsDirty;
-		}
 
-		// update the local_transform matrix
-		if (flags & Flag_TransformIsDirty)
-		{
+			// update the local_transform matrix
 			glm::mat3 parent_transform;
 			if (parent && parent != compositor)
 			{
 				parent_transform = parent->get_transform(0);
 			}
+
+			update_size_from_dimensions(parent);
 
 			// the points have to be rotated around the center pivot
 			Point center(size.width/2, size.height/2);

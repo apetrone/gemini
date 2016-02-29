@@ -130,7 +130,7 @@ namespace gui
 		virtual void set_origin(float x, float y);
 
 		const Size& get_size() const { return size; }
-		void set_size(const Size& new_size) { size = new_size; }
+		void set_size(const Size& new_size);
 
 		const char* get_name() { return debug_name(); }
 		void set_name(const char* name) { debug_name = name; }
@@ -139,11 +139,11 @@ namespace gui
 		Point compositor_to_local(const Point& location);
 
 		glm::mat3 get_transform(size_t index) const;
-		
+
 
 	protected:
 
-
+		void update_size_from_dimensions(Panel* parent);
 
 		void update_transform(Compositor*);
 

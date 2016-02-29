@@ -38,17 +38,15 @@ namespace gui
 		}
 	}; // ZSort_Panel_Descending
 
-	Compositor::Compositor(ScreenInt w, ScreenInt h, ResourceCache* cache, Renderer* renderer) :
+	Compositor::Compositor(ScreenInt width, ScreenInt height, ResourceCache* cache, Renderer* renderer) :
 		Panel(0),
-		width(w),
-		height(h),
 		command_list(this, &vertex_buffer),
 		resource_cache(cache),
 		renderer(renderer)
 	{
 		size.width = width;
 		size.height = height;
-		set_bounds(0, 0, width, height);
+		set_origin(0, 0);
 
 		this->last_cursor = Point(0, 0);
 
@@ -73,9 +71,9 @@ namespace gui
 
 	Compositor::~Compositor()
 	{
-		if ( this->renderer )
+		if (renderer)
 		{
-			this->renderer->shutdown( this );
+			renderer->shutdown( this );
 		}
 	} // ~Compositor
 
@@ -89,6 +87,7 @@ namespace gui
 
 		process_events();
 
+		flags &= ~Flag_TransformIsDirty;
 	} // update
 
 	void Compositor::draw()
@@ -375,8 +374,11 @@ namespace gui
 
 	void Compositor::resize(ScreenInt new_width, ScreenInt new_height)
 	{
-		this->width = new_width;
-		this->height = new_height;
+		size.width = new_width;
+		size.height = new_height;
+
+		// force transform update for all children
+		flags |= Flag_TransformIsDirty;
 	} // resize
 
 	bool hit_test_panel(Panel* panel, const Point& location, uint32_t option_flags)

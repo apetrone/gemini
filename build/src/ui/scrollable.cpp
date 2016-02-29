@@ -39,6 +39,8 @@ namespace gui
 		// horizontal_bar->set_visible(false);
 		// horizontal_bar->set_name("horizontal_scrollbar");
 
+		horizontal_bar = nullptr;
+
 		vertical_bar = new Scrollbar(this, 1);
 		vertical_bar->on_scroll_value_changed.connect(&ScrollablePanel::on_vertical_scroll, this);
 		vertical_bar->set_visible(false);
@@ -47,6 +49,7 @@ namespace gui
 
 	void ScrollablePanel::update(gui::Compositor* compositor, float delta_seconds)
 	{
+		update_scrollbars();
 		Panel::update(compositor, delta_seconds);
 	} // update
 
@@ -97,8 +100,8 @@ namespace gui
 			vertical_bar->set_origin(size.width-SCROLL_BAR_WIDTH, 0);
 			vertical_bar->set_size(gui::Size(SCROLL_BAR_WIDTH, size.height-SCROLL_BAR_WIDTH));
 			vertical_bar->set_button_dimensions(1.0f, vratio);
-			vertical_bar->set_visible(vertical_content_overflow ? true : false);
 		}
+		vertical_bar->set_visible((vertical_content_overflow > 0) ? true : false);
 	}
 
 	void ScrollablePanel::on_vertical_scroll(float value)

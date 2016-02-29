@@ -234,7 +234,8 @@ public:
 		// setup the framerate graph
 #if 1
 		graph = new gui::Graph(compositor);
-		graph->set_bounds(width-250, 0, 250, 100);
+		graph->set_origin(width - 250, 0);
+		graph->set_dimensions(graph->dimensions_from_pixels(gui::Point(250, 100)));
 		graph->set_font(dev_font, dev_font_size);
 		graph->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
 		graph->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
@@ -247,10 +248,13 @@ public:
 		// test tab panel
 
 		gui::TabControl* tab = new gui::TabControl(compositor);
-		tab->set_bounds(10, 10, 250, 250);
+		tab->set_origin(10, 10);
+		tab->set_dimensions(tab->dimensions_from_pixels(gui::Point(250, 250)));
 		tab->set_name("tab_panel");
 
 		label = new gui::Label(tab);
+		label->set_origin(50, 115);
+		label->set_dimensions(label->dimensions_from_pixels(gui::Point(110, 40)));
 		label->set_background_color(gemini::Color::from_rgba(32, 32, 32, 255));
 		label->set_foreground_color(gemini::Color::from_rgba(0, 255, 0, 255));
 		label->set_font(dev_font, dev_font_size);
@@ -260,9 +264,10 @@ public:
 
 		{
 			label = new gui::Label(tab);
+			label->set_origin(50, 115);
+			label->set_dimensions(label->dimensions_from_pixels(gui::Point(110, 40)));
 			label->set_background_color(gemini::Color::from_rgba(32, 32, 32, 255));
 			label->set_foreground_color(gemini::Color::from_rgba(255, 0, 0, 255));
-			label->set_bounds(50, 115, 110, 40);
 			label->set_font(dev_font, dev_font_size);
 			label->set_text("adam 0123456789");
 			tab->add_tab(1, "test2", label);
@@ -278,8 +283,8 @@ public:
 		uint32_t button_spacing = 10;
 		const size_t total_buttons = 4;
 //		uint32_t vertical_offset = 0;
-		uint32_t origin_x = (compositor->width/2.0f) - (button_width/2.0f);
-		uint32_t origin_y = (compositor->height/2.0f) - ((button_height*total_buttons)/2.0f);
+		uint32_t origin_x = (compositor->get_size().width/2.0f) - (button_width/2.0f);
+		uint32_t origin_y = (compositor->get_size().height/2.0f) - ((button_height*total_buttons)/2.0f);
 
 		const char* captions[total_buttons] = {
 			"New Game",
@@ -293,7 +298,8 @@ public:
 		for (size_t index = 0; index < total_buttons; ++index)
 		{
 			gui::Button* button = new gui::Button(compositor);
-			button->set_bounds(origin_x, origin_y, button_width, button_height);
+			button->set_origin(origin_x, origin_y);
+			button->set_dimensions(button->dimensions_from_pixels(gui::Point(button_width, button_height)));
 			button->set_font(menu_font, menu_font_size);
 			button->set_text(captions[index]);
 			button->set_background_color(button_background);
@@ -313,14 +319,16 @@ public:
 
 		// slider label to check value
 		slider_label = new gui::Label(compositor);
-		slider_label->set_bounds(230, 300, 40, 30);
+		slider_label->set_origin(230, 300);
+		slider_label->set_dimensions(slider_label->dimensions_from_pixels(gui::Point(40, 30)));
 		slider_label->set_background_color(gemini::Color::from_rgba(0, 0, 0, 0));
 		slider_label->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
 		slider_label->set_text("empty");
 		slider_label->set_font("fonts/debug.ttf", 16);
 
 		slider = new gui::Slider(compositor);
-		slider->set_bounds(20, 300, 200, 40);
+		slider->set_origin(20, 300);
+		slider->set_dimensions(slider->dimensions_from_pixels(gui::Point(200, 40)));
 		slider->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
 		slider->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
 		slider->on_value_changed.connect(&TestUi::slider_value_changed, this);

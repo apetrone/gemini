@@ -252,7 +252,7 @@ void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gu
 
 	// temp limit
 	assert(total_vertices < MAX_VERTICES);
-	projection_matrix = glm::ortho(0.0f, (float)this->compositor->width, (float)this->compositor->height, 0.0f, -1.0f, 1.0f);
+	projection_matrix = glm::ortho(0.0f, (float)compositor->get_size().width, (float)compositor->get_size().height, 0.0f, -1.0f, 1.0f);
 
 	diffuse_texture = 0;
 	gui_pipeline->constants().set("projection_matrix", &projection_matrix);

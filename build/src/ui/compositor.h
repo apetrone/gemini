@@ -41,8 +41,6 @@ namespace gui
 	class Compositor : public Panel
 	{
 	public:
-		ScreenInt width;
-		ScreenInt height;
 		Panel* focus;
 		Panel* hot;
 		Panel* capture;
