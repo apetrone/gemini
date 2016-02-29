@@ -32,6 +32,9 @@ namespace platform
 	{
 		class Win32WindowProvider : public WindowProvider
 		{
+		private:
+			bool is_in_relative_mode;
+
 		public:
 			virtual Result startup() override;
 			virtual void shutdown() override;
@@ -42,6 +45,9 @@ namespace platform
 			virtual size_t get_screen_count() const override;
 			virtual Frame get_screen_frame(size_t screen_index) const override;
 			virtual void dispatch_events() override;
+
+			void set_relative_mode(bool enabled) { is_in_relative_mode = enabled; }
+			bool in_relative_mode() const { return is_in_relative_mode; }
 		};
 	} // namespace window
 } // namespace platform

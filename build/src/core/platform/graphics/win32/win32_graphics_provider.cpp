@@ -250,79 +250,12 @@ namespace platform
 			}
 
 			assert(data->render_context);
-#if 0
-			X11GraphicsData* data = data_from(window->graphics_data);
-			if (glXCreateContextAttribsARB)
-			{
-				int attributes[WINDOW_MAX_ATTRIBUTES];
-				attributes_from_backbuffer(attributes, WINDOW_MAX_ATTRIBUTES, window->backbuffer);
-
-				// create the GLXFBConfig; added in GLX version 1.3
-				int total_elements = 0;
-				GLXFBConfig* config = glXChooseFBConfig(
-					window_provider->get_display(),
-					DefaultScreen(window_provider->get_display()),
-					attributes,
-					&total_elements
-				);
-
-
-				int context_attributes[] = {
-					GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
-					GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-					GLX_CONTEXT_MINOR_VERSION_ARB, 2,
-					None
-				};
-
-				bool direct_rendering = true;
-				data->context = glXCreateContextAttribsARB(
-					window_provider->get_display(),
-					*config,
-					share_context,
-					direct_rendering,
-					context_attributes
-				);
-
-				// fall back to compatibility mode
-				if (_global_error_code != 0)
-				{
-					_global_error_code = 0;
-					context_attributes[1] = GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
-					context_attributes[2] = None;
-					data->context = glXCreateContextAttribsARB(
-						window_provider->get_display(),
-						*config,
-						share_context,
-						direct_rendering,
-						context_attributes
-					);
-
-					// We can't even get a 2.1 context!
-					assert(data->context != nullptr);
-				}
-
-
-				if (!share_context)
-				{
-					share_context = data->context;
-				}
-
-				assert(glXIsDirect(window_provider->get_display(), data->context));
-			}
-			else // fallback and use glXCreateContext
-			{
-				data->context = glXCreateContext(window_provider->get_display(), data->vi, nullptr, GL_TRUE);
-			}
-
-			assert(data->context);
-#endif
 		}
 
 		void Win32GraphicsProvider::destroy_context(NativeWindow* window)
 		{
 			Win32GraphicsData* data = data_from(window);
 			wglDeleteContext(data->render_context);
-
 			ReleaseDC(static_cast<HWND>(window->get_native_handle()), data->device_context);
 		}
 
@@ -330,15 +263,6 @@ namespace platform
 		{
 			Win32GraphicsData* data = data_from(window);
 			wglMakeCurrent(data->device_context, data->render_context);
-#if 0
-			BOOL result = wglMakeCurrent(data->device_context, data->render_context);
-			if (!result)
-			{
-				DWORD last_error = GetLastError();
-				assert(last_error = 0);
-			}
-			assert(result);
-#endif
 		}
 
 		void Win32GraphicsProvider::detach_context(NativeWindow* window)

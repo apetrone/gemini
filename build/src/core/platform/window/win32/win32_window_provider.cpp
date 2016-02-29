@@ -39,6 +39,8 @@ namespace platform
 	{
 		Win32WindowProvider* _window_provider;
 		Win32GraphicsProvider* _graphics_provider;
+		RECT default_clip_rect;
+		uint32_t disable_next_mouse_event = 0;
 
 		namespace win32
 		{
@@ -328,115 +330,208 @@ namespace platform
 					switch (message)
 					{
 						// handle mouse events
-						case WM_MOUSEMOVE:
+					case WM_MOUSEMOVE:
+					{
+						if (disable_next_mouse_event)
 						{
-							kernel::MouseEvent mevent;
-							mevent.mx = LOWORD(lparam);
-							mevent.my = HIWORD(lparam);
-							mevent.dx = (mevent.mx - last_mousex);
-							last_mousex = mevent.mx;
-							mevent.dy = (mevent.my - last_mousey);
-							last_mousey = mevent.my;
-							mevent.wheel_direction = 0;
-							mevent.window = window;
-							mevent.subtype = kernel::MouseMoved;
-							kernel::event_dispatch(mevent);
-							break;
+							disable_next_mouse_event = 0;
+							return 0;
 						}
+						int32_t prev_mouse[2] = { last_mousex, last_mousey };
+						kernel::MouseEvent mevent;
+						// According to MSDN; these coordinates
+						mevent.mx = LOWORD(lparam);
+						mevent.my = HIWORD(lparam);
+						mevent.dx = (mevent.mx - last_mousex);
+						last_mousex = mevent.mx;
+						mevent.dy = (mevent.my - last_mousey);
+						last_mousey = mevent.my;
+						mevent.wheel_direction = 0;
+						mevent.window = window;
+						mevent.subtype = _window_provider->in_relative_mode() ? kernel::MouseDelta : kernel::MouseMoved;
+						kernel::event_dispatch(mevent);
 
-
-						case WM_MOUSEWHEEL:
+						if (_window_provider->in_relative_mode())
 						{
-							// -1 is towards the user
-							// 1 is away from the user
-							kernel::MouseEvent mevent;
-							mevent.mx = LOWORD(lparam);
-							mevent.my = HIWORD(lparam);
-							mevent.dx = (mevent.mx - last_mousex);
-							last_mousex = mevent.mx;
-							mevent.dy = (mevent.my - last_mousey);
-							last_mousey = mevent.my;
-							mevent.wheel_direction = (static_cast<int16_t>(HIWORD(wparam)) > 0) ? 1 : -1;
-							mevent.window = window;
-							mevent.subtype = kernel::MouseWheelMoved;
-							kernel::event_dispatch(mevent);
-							break;
-						}
+							// Must reset the mouse coords here. However,
+							// these are in local window coordinates.
+							last_mousex = prev_mouse[0];
+							last_mousey = prev_mouse[1];
 
-						case WM_LBUTTONDBLCLK:
-						case WM_LBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_LEFT); break;
-						case WM_RBUTTONDBLCLK:
-						case WM_RBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_RIGHT); break;
-						case WM_MBUTTONDBLCLK:
-						case WM_MBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_MIDDLE); break;
-						case WM_XBUTTONDBLCLK:
-						case WM_XBUTTONDOWN:
-						{
-							const WORD button_index = HIWORD(wparam);
-							assert(button_index >= 0 && button_index <= 2);
-							handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, xmouse[button_index]);
-							break;
-						}
+							//LOGV("delta: %i, %i; old: %i, %i\n", mevent.dx, mevent.dy, last_mousex, last_mousey);
+							// We have to convert these to screen
+							// coordinates in order to use them with the
+							// win32 SetCursorPos API.
+							POINT new_mouse;
+							new_mouse.x = prev_mouse[0];
+							new_mouse.y = prev_mouse[1];
+							ClientToScreen(hwnd, &new_mouse);
 
-						case WM_LBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_LEFT); break;
-						case WM_RBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_RIGHT); break;
-						case WM_MBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_MIDDLE); break;
-						case WM_XBUTTONUP:
-						{
-							const WORD button_index = HIWORD(wparam);
-							assert(button_index >= 0 && button_index <= 2);
-							handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, xmouse[button_index]);
-							break;
+							set_cursor(static_cast<float>(new_mouse.x), static_cast<float>(new_mouse.y));
 						}
+						break;
+					}
 
-						// handle keyboard events
-						case WM_SYSKEYDOWN:
-						case WM_SYSKEYUP:
-						case WM_KEYDOWN:
-						case WM_KEYUP:
-						{
-							handle_keyboard_event(window, message, wparam, lparam);
-							break;
-						}
 
-						case WM_CHAR:
-							// TODO: We need to handle individual unicode chars here.
-							break;
+					case WM_MOUSEWHEEL:
+					{
+						// -1 is towards the user
+						// 1 is away from the user
+						kernel::MouseEvent mevent;
+						mevent.mx = LOWORD(lparam);
+						mevent.my = HIWORD(lparam);
+						mevent.dx = (mevent.mx - last_mousex);
+						last_mousex = mevent.mx;
+						mevent.dy = (mevent.my - last_mousey);
+						last_mousey = mevent.my;
+						mevent.wheel_direction = (static_cast<int16_t>(HIWORD(wparam)) > 0) ? 1 : -1;
+						mevent.window = window;
+						mevent.subtype = kernel::MouseWheelMoved;
+						kernel::event_dispatch(mevent);
+						break;
+					}
+
+					case WM_LBUTTONDBLCLK:
+					case WM_LBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_LEFT); break;
+					case WM_RBUTTONDBLCLK:
+					case WM_RBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_RIGHT); break;
+					case WM_MBUTTONDBLCLK:
+					case WM_MBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_MIDDLE); break;
+					case WM_XBUTTONDBLCLK:
+					case WM_XBUTTONDOWN:
+					{
+						const WORD button_index = HIWORD(wparam);
+						assert(button_index >= 0 && button_index <= 2);
+						handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, xmouse[button_index]);
+						break;
+					}
+
+					case WM_LBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_LEFT); break;
+					case WM_RBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_RIGHT); break;
+					case WM_MBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_MIDDLE); break;
+					case WM_XBUTTONUP:
+					{
+						const WORD button_index = HIWORD(wparam);
+						assert(button_index >= 0 && button_index <= 2);
+						handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, xmouse[button_index]);
+						break;
+					}
+
+					// handle keyboard events
+					case WM_SYSKEYDOWN:
+					case WM_SYSKEYUP:
+					case WM_KEYDOWN:
+					case WM_KEYUP:
+					{
+						handle_keyboard_event(window, message, wparam, lparam);
+						break;
+					}
+
+					case WM_CHAR:
+						// TODO: We need to handle individual unicode chars here.
+						break;
 
 						// handle system events
-						case WM_SETFOCUS:
-						case WM_KILLFOCUS:
+					case WM_SETFOCUS:
+					case WM_KILLFOCUS:
+					{
+						kernel::SystemEvent sysevent;
+						sysevent.subtype = (message == WM_KILLFOCUS) ? kernel::WindowLostFocus : kernel::WindowGainFocus;
+						sysevent.window = window;
+						kernel::event_dispatch(sysevent);
+						break;
+					}
+
+					case WM_DESTROY:
+					case WM_CLOSE:
+					{
+						if (window->get_destroy_behavior() == DestroyWindowBehavior::None)
 						{
 							kernel::SystemEvent sysevent;
-							sysevent.subtype = (message == WM_KILLFOCUS) ? kernel::WindowLostFocus : kernel::WindowGainFocus;
+							sysevent.subtype = kernel::WindowClosed;
 							sysevent.window = window;
 							kernel::event_dispatch(sysevent);
-							break;
 						}
+						break;
+					}
 
-						case WM_DESTROY:
-						case WM_CLOSE:
+					case WM_SIZE:
+					{
+						uint32_t resize_type = wparam;
+						if (resize_type == SIZE_MAXIMIZED)
 						{
-							if (window->get_destroy_behavior() == DestroyWindowBehavior::None)
+							// The window has been maximized.
+						}
+						else if (resize_type == SIZE_MINIMIZED)
+						{
+							// The window has been minimized.
+						}
+						else if (resize_type == SIZE_RESTORED)
+						{
+							// Resized window, but neither Maximized nor Minimized applies.
+						}
+						kernel::SystemEvent sysevent;
+						sysevent.subtype = kernel::WindowResized;
+						sysevent.render_width = sysevent.window_width = static_cast<int16_t>(LOWORD(lparam));
+						sysevent.render_height = sysevent.window_height = static_cast<int16_t>(HIWORD(lparam));
+						sysevent.window = window;
+						kernel::event_dispatch(sysevent);
+						break;
+					}
+
+					case WM_WINDOWPOSCHANGED:
+					{
+						// Handle when the user moves the Window.
+
+						WINDOWPOS* new_position = reinterpret_cast<WINDOWPOS*>(lparam);
+						RECT client_rect;
+						GetClientRect(hwnd, &client_rect);
+
+						//RECT window_rect;
+						//GetWindowRect(hwnd, &window_rect);
+
+						//int32_t offset[2] = { window_rect.left, window_rect.top };
+						//ClientToScreen(hwnd, reinterpret_cast<LPPOINT>(&client_rect.left));
+						//ClientToScreen(hwnd, reinterpret_cast<LPPOINT>(&client_rect.right));
+
+						// re-center the last mouse position if in relative
+						// mode.
+						if (_window_provider->in_relative_mode())
+						{
+							POINT center;
+							center.x = static_cast<int32_t>((client_rect.right - client_rect.left) / 2.0f);
+							center.y = static_cast<int32_t>((client_rect.bottom - client_rect.top) / 2.0f);
+
+							// convert the point to screen space
+							ClientToScreen(hwnd, &center);
+							win32::last_mousex = center.x;
+							win32::last_mousey = center.y;
+						}
+						break;
+					}
+
+					case WM_SYSCOMMAND:
+					{
+						//four low order bits of wparam are used
+						// internally, so we have to mask off wparam.
+						if ((wparam & 0xfff0) == SC_SCREENSAVE)
+						{
+							// Tell windows we want to disable the screen
+							// saver by returning 0.
+							return 0;
+						}
+						else if ((wparam & 0xfff0) == SC_MONITORPOWER)
+						{
+							// 1: display is going to low power
+							// 2: display is being shut off
+							if (lparam > 0)
 							{
-								kernel::SystemEvent sysevent;
-								sysevent.subtype = kernel::WindowClosed;
-								sysevent.window = window;
-								kernel::event_dispatch(sysevent);
+								// We handled this, don't disable monitor.
+								return 0;
 							}
-							break;
 						}
-
-						case WM_SIZE:
-						{
-							kernel::SystemEvent sysevent;
-							sysevent.subtype = kernel::WindowResized;
-							sysevent.render_width = sysevent.window_width = static_cast<int16_t>(LOWORD(lparam));
-							sysevent.render_height = sysevent.window_height = static_cast<int16_t>(HIWORD(lparam));
-							sysevent.window = window;
-							kernel::event_dispatch(sysevent);
-							break;
-						}
+						break;
+					}
 					} // switch
 				} // window
 
@@ -446,6 +541,7 @@ namespace platform
 
 		Result Win32WindowProvider::startup()
 		{
+			is_in_relative_mode = false;
 			return Result::success();
 		}
 
@@ -537,7 +633,7 @@ namespace platform
 				NULL,
 				GetModuleHandle(NULL),
 				NULL
-			);
+				);
 
 			assert(window_handle);
 			window->set_handle(window_handle);
@@ -557,6 +653,7 @@ namespace platform
 				TRUE);
 
 			ShowWindow(window_handle, SW_SHOW);
+			BringWindowToTop(window_handle);
 			SetForegroundWindow(window_handle);
 			UpdateWindow(window_handle);
 
@@ -578,12 +675,23 @@ namespace platform
 		Frame Win32WindowProvider::get_frame(NativeWindow* window) const
 		{
 			Frame window_frame;
-			RECT rect;
-			GetClientRect(static_cast<HWND>(window->get_native_handle()), &rect);
-			window_frame.x = static_cast<float>(rect.left);
-			window_frame.y = static_cast<float>(rect.top);
-			window_frame.width = static_cast<float>(rect.right - rect.left);
-			window_frame.height = static_cast<float>(rect.bottom - rect.top);
+			HWND hwnd = static_cast<HWND>(window->get_native_handle());
+
+			RECT window_rect;
+			GetWindowRect(hwnd, &window_rect);
+
+			RECT client_rect;
+			GetClientRect(hwnd, &client_rect);
+
+			// We have to convert rect from client to screen as get_frame must
+			// return screen coordinates.
+			ClientToScreen(hwnd, reinterpret_cast<LPPOINT>(&client_rect.left));
+			ClientToScreen(hwnd, reinterpret_cast<LPPOINT>(&client_rect.right));
+
+			window_frame.x = static_cast<float>(window_rect.left);
+			window_frame.y = static_cast<float>(window_rect.top);
+			window_frame.width = static_cast<float>(client_rect.right - client_rect.left);
+			window_frame.height = static_cast<float>(client_rect.bottom - client_rect.top);
 			return window_frame;
 		}
 
@@ -599,7 +707,7 @@ namespace platform
 				nullptr,
 				win32::count_all_screens,
 				reinterpret_cast<LPARAM>(&total_screens)
-			);
+				);
 
 			return total_screens;
 		}
@@ -614,7 +722,7 @@ namespace platform
 				nullptr,
 				win32::get_screen_frame,
 				reinterpret_cast<LPARAM>(&info)
-			);
+				);
 
 			return info.frame;
 		}
@@ -658,6 +766,9 @@ namespace platform
 				LOGE("graphics_provider startup failed with error: %s\n", graphics_startup.message);
 				return graphics_startup;
 			}
+
+			// store the default clip rect
+			GetClipCursor(&default_clip_rect);
 
 			return Result::success();
 		}
@@ -709,7 +820,6 @@ namespace platform
 
 			return window;
 		}
-
 
 		void destroy(NativeWindow* window, DestroyWindowBehavior behavior)
 		{
@@ -769,6 +879,11 @@ namespace platform
 
 		void set_cursor(float x, float y)
 		{
+			// SetCursorPos will cause a mouse move event. We don't want to
+			// dispatch it, so ignore it.
+			disable_next_mouse_event = 1;
+
+			// Horizontal border is just the size of the frame.
 			SetCursorPos(static_cast<int>(x), static_cast<int>(y));
 		}
 
@@ -780,9 +895,47 @@ namespace platform
 			y = static_cast<float>(point.y);
 		}
 
-		// if enabled, the OS will generate delta mouse movement events
-		void set_relative_mouse_mode(bool) {}
+		void set_relative_mouse_mode(NativeWindow* window, bool enable)
+		{
+			_window_provider->set_relative_mode(enable);
 
-		void set_mouse_tracking(bool) {}
+			if (enable)
+			{
+				assert(window);
+
+				HWND hwnd = reinterpret_cast<HWND>(window->get_native_handle());
+
+				RECT window_rect;
+				GetWindowRect(hwnd, &window_rect);
+
+				// this should center the cursor inside window
+				RECT client_rect;
+				GetClientRect(hwnd, &client_rect);
+
+				ClientToScreen(hwnd, reinterpret_cast<LPPOINT>(&client_rect.left));
+				ClientToScreen(hwnd, reinterpret_cast<LPPOINT>(&client_rect.right));
+
+				const float centerx = (client_rect.right - client_rect.left) / 2.0f;
+				const float centery = (client_rect.bottom - client_rect.top) / 2.0f;
+
+				// set new clip rect
+				ClipCursor(&client_rect);
+				win32::last_mousex = static_cast<int32_t>((client_rect.right - client_rect.left) / 2.0f);
+				win32::last_mousey = static_cast<int32_t>((client_rect.bottom - client_rect.top) / 2.0f);
+
+				set_cursor(static_cast<float>(window_rect.left + centerx),
+					static_cast<float>(window_rect.top + centery)
+				);
+			}
+			else
+			{
+				// restore the default clip rect
+				ClipCursor(&default_clip_rect);
+			}
+		}
+
+		void set_mouse_tracking(bool)
+		{
+		}
 	} // namespace window
 } // namespace platform

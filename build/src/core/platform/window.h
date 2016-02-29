@@ -232,7 +232,7 @@ namespace platform
 		// swap buffers on this window
 		void swap_buffers(NativeWindow* window);
 
-		// return the window size in screen coordinates
+		// return the window frame in screen coordinates
 		Frame get_frame(NativeWindow* window);
 
 		// return the renderable window surface in pixels
@@ -256,11 +256,14 @@ namespace platform
 		// get the cursor position in screen coordinates (origin is top left)
 		void get_cursor(float& x, float& y);
 
-		// if enabled, the OS will generate delta mouse movement events
-		void set_relative_mouse_mode(bool enable);
+		// If enabled; MouseEvent dx, dy should be populated with regards to mouse
+		// movement. The mouse movement is locked to the window specified.
+		void set_relative_mouse_mode(NativeWindow* window, bool enable);
 
 		// if enabled, mouse events generated outside of window bounds will be dispatched
 		// default: off
 		void set_mouse_tracking(bool enable);
+
+		// TODO: Provide an option for users to enable/disable screen saver.
 	} // namespace window
 } // namespace platform

@@ -780,7 +780,6 @@ public:
 
 	virtual void render_view(const View& view, const Color& clear_color)
 	{
-#if 0
 		// TODO: need to validate this origin/orientation is allowed.
 		// otherwise, client could ask us to render from anyone's POV.
 		EntityManager* em = static_cast<EntityManager*>(engine::instance()->entities());
@@ -803,11 +802,10 @@ public:
 		newview.height = frame.height;
 
 		render_scene_from_camera(entity_list, newview, scenelink);
-#endif
-// TODO@APP: Fix debug draw when rendering a viewmodel.
-//		glm::mat4 origin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
-//		::renderer::debugdraw::axes(origin, 0.25f);
-//		::renderer::debugdraw::render(newview.modelview, newview.projection, newview.width, newview.height);
+
+		glm::mat4 origin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
+		::renderer::debugdraw::axes(origin, 0.25f);
+		::renderer::debugdraw::render(newview.modelview, newview.projection, newview.width, newview.height);
 	}
 
 	virtual void render_gui()
@@ -905,7 +903,8 @@ public:
 
 	virtual void set_relative_mouse_mode(bool enable) override
 	{
-		platform::window::set_relative_mouse_mode(enable);
+		platform::window::set_relative_mouse_mode(main_window, enable);
+
 		center_cursor();
 	}
 };
@@ -1460,7 +1459,6 @@ Options:
 			main_window
 		);
 		gemini::engine::set_instance(engine_interface);
-		platform::window::show_cursor(true);
 
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		setup_gui(device, frame.width, frame.height);

@@ -138,7 +138,7 @@ namespace kernel
 	{
 		unsigned int button;
 
-		// absolute mouse values
+		// absolute mouse values in local (window) coordinates
 		int mx;
 		int my;
 
