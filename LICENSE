@@ -25,44 +25,8 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-
-### Third-party assets
-
-#### Nokia Cellphone FC
-
-This is a free font/file, distribute as you wish to who you wish. Do NOT sell
-this font within a CD or any other media; it's not yours and you can't make
-money of it. You'd rather ask me first via email, I may probably let you do it
-as long as it's for a good cause.
-
-I don't know if the original Nokia font has some copyright which prevents
-people from making new fonts based on it. I hope not. Anyways, buy a Nokia,
-and I think everything's gonna be alright.
-
-Special thanks on this version go out to Carlos BÍla (www.goldenshower.gs) and
-Diogo Kalil (www.sincolor.com.br) for helping me out with the Mac version of
-the font. It has been extensively tested to ensure it's as smooth (hint,
-kerning, spacing and aliasing-wise) as the pc one is.
-
-This font was done by Zeh Fernando on Fontlab 4 (www.fontlab.com) on a PC.
-
-Zeh Fernando
-zeh@fatorcaos.com.br
-www.fatorcaos.com.br
-
+### Third-party
 
 ### murmur3
 
 Murmur3 is in the public domain. Murmur3 was created by Austin Appleby, and the C port and general tidying up was done by Peter Scott.
-
-
-## The tools make use of one or more of the following third-party software libraries:
-
-### Autodesk FBX
-
-This software contains Autodesk® FBX® code developed by Autodesk, Inc. Copyright 2008 Autodesk, Inc. All rights, reserved. Such code is provided "as is" and Autodesk, Inc. disclaims any and all warranties, whether express or implied, including without limitation the implied warranties of merchantability, fitness for a particular purpose or non-infringement of third party rights. In no event shall Autodesk, Inc. be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of such code.
-
-### Qt-5
-See LICENSE-Qt for a copy of LGPLv2.1.
-The Qt-5 source can be downloaded by following this link: http://qt-project.org/wiki/Get_The_Source

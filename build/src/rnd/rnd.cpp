@@ -27,8 +27,6 @@
 
 using namespace std;
 
-#include "common.h"
-
 #if defined(PLATFORM_POSIX)
 	#include <unistd.h>
 #endif

@@ -92,16 +92,6 @@ def setup_common_variables(arguments, target_platform, product):
 		"DEBUG"
 	]
 
-def setup_datamodel(product):
-	product.sources += [
-		"src/tools/common.cpp",
-		"src/tools/common.h",
-		"src/tools/common/*.cpp",
-		"src/tools/common/*.h",
-		"src/tools/datamodel/*.cpp",
-		"src/tools/datamodel/*.h"
-	]
-
 def setup_common_tool(product):
 
 	product.root = "../"
@@ -110,13 +100,9 @@ def setup_common_tool(product):
 		"src/tools/%s/*.h" % product.name
 	]
 
-	setup_datamodel(product)
-
 	product.includes += [
 		"src/tools/%s" % product.name,
-		"src/tools/",
-		"src/tools/common",
-		"src/tools/datamodel"
+		"src/tools/"
 	]
 
 
@@ -365,28 +351,6 @@ def get_tools(arguments, libruntime, librenderer, libcore, libsdk, **kwargs):
 	tools = []
 
 	target_platform = kwargs.get("target_platform")
-
-	#
-	# muse: asset conversion tool
-	#
-	# muse = Product(name="muse", output=ProductType.Commandline)
-	# muse.project_root = COMMON_PROJECT_ROOT
-	# muse.dependencies.extend([
-	# 	libruntime,
-	# 	libcore
-	# ])
-
-	# macosx = muse.layout(platform="macosx")
-	# macosx.links += [
-	# 	"Cocoa.framework"
-	# ]
-	# muse.product_root = COMMON_PRODUCT_ROOT
-	# setup_driver(arguments, muse, target_platform)
-	# setup_common_tool(muse)
-	# tools.append(muse)
-
-	#kraken = get_kraken(arguments, libruntime, libcore, librenderer, **kwargs)
-	#tools.append(kraken)
 
 	orion = get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs)
 	tools.append(orion)
@@ -820,49 +784,6 @@ def get_unit_tests(arguments, libcore, librenderer, libruntime, libglm, **kwargs
 		create_unit_test(target_platform, arguments, "test_ui", [librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
 		create_unit_test(target_platform, arguments, "test_window", [librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
 	]
-
-def get_kraken(arguments, libruntime, librenderer, libcore, **kwargs):
-	global_params = kwargs.get("global_params")
-	target_platform = kwargs.get("target_platform")
-
-	kraken = Product(name="kraken", output=ProductType.Application)
-	kraken.project_root = COMMON_PROJECT_ROOT
-	kraken.product_root = COMMON_PRODUCT_ROOT
-	kraken.root = "../"
-	#kraken.sources += [
-	#]
-
-	setup_driver(arguments, kraken, target_platform)
-	setup_common_tool(kraken)
-
-	kraken.dependencies.extend([
-		libcore,
-		librenderer
-	])
-
-	kraken.sources += [
-		"src/tools/kraken/kraken.cpp"
-	]
-
-	macosx = kraken.layout(platform="macosx")
-	macosx.links += [
-		"Cocoa.framework",
-		"OpenGL.framework"
-	]
-
-	# TODO: This path is relative to the *project*
-	macosx.driver.infoplist_file = "../src/tools/kraken/resources/osx/Info.plist"
-	macosx.resources = [
-		"src/tools/kraken/resources/osx/en.lproj/*.xib",
-		"src/tools/kraken/resources/osx/en.lproj/*.strings"
-	]
-
-	linux = kraken.layout(platform="linux")
-	linux.links += [
-		"GL"
-	]
-
-	return kraken
 
 def get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs):
 	orion = Product(name="orion", output=ProductType.Application)
