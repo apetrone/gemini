@@ -343,11 +343,21 @@ def setup_driver(arguments, product, target_platform):
 	# Windows
 	windows_debug = product.layout(platform="windows", configuration="debug")
 	windows_debug.driver.generate_debug_info = "debug"
+	windows_debug.links += [
+		"Shlwapi",
+		"user32",
+		"OpenGL32", # for wglGetProcAddress
+		"Gdi32"		# for ChoosePixelFormat, SetPixelFormat
+	]
 
 	windows_release = product.layout(platform="windows", configuration="release")
 	windows_release.driver.generate_debug_info = "no"
-
-
+	windows_release.links += [
+		"Shlwapi",
+		"user32",
+		"OpenGL32", # for wglGetProcAddress
+		"Gdi32"		# for ChoosePixelFormat, SetPixelFormat
+	]
 def get_tools(arguments, libruntime, librenderer, libcore, libsdk, **kwargs):
 	#
 	#
@@ -598,13 +608,6 @@ def get_libcore(arguments, target_platform):
 		"src/core/platform/window/win32/win32_window_provider.h"
 	]
 
-	windows.links += [
-		"Shlwapi",
-		"user32",
-		"OpenGL32", # for wglGetProcAddress
-		"Gdi32"		# for ChoosePixelFormat, SetPixelFormat
-	]
-
 	return libcore
 
 
@@ -712,11 +715,13 @@ def get_sdk(arguments, links, **kwargs):
 	sdk.project_root = COMMON_PROJECT_ROOT
 	sdk.root = "../"
 	sdk.sources += [
-		"src/sdk/audio.cpp",
-		"src/sdk/debugdraw.cpp",
-		"src/sdk/engine.cpp",
-		"src/sdk/physics.cpp"
+		# glob all sdk files
+		"src/sdk/*.cpp",
+
+		# glob all includes
+		"src/sdk/include/sdk/*.h"
 	]
+
 	sdk.includes += [
 		"src/sdk/include"
 	]
@@ -916,6 +921,8 @@ def arguments(parser):
 	parser.add_argument("--with-tools", dest="with_tools", action="store_true", help="Build with support for tools", default=False)
 	parser.add_argument("--with-tests", dest="with_tests", action="store_true", help="Build with support for unit tests", default=False)
 
+	parser.add_argument("--with-game", dest="with_game", help="Build with support for external game", default=None)
+
 def products(arguments, **kwargs):
 
 	# if arguments.with_tools:
@@ -1027,6 +1034,42 @@ def products(arguments, **kwargs):
 
 	setup_common_libs(arguments, gemini, target_platform)
 
+	# Optionally add a game to the list of products.
+	games = []
+	if arguments.with_game:
+		game = Product(name="game", output=ProductType.StaticLibrary)
+		setup_driver(arguments, game, target_platform)
+		GAME_ROOT_PATH = arguments.with_game
+		game.project_root = COMMON_PROJECT_ROOT
+		game.root = "../"
+		game.product_root = COMMON_PRODUCT_ROOT
+		game.includes += [
+			"src/include/sdk/*.h",
+			"src/engine/game",
+			"src/include"
+		]
+
+		game.dependencies += [
+			librenderer,
+			libruntime,
+			libcore,
+			libsdk,
+			libglm
+		]
+
+		# No need to whitelist; just glob everything for the game.
+		game.sources += [
+			"src/include/sdk/*.h",
+			os.path.join(GAME_ROOT_PATH, "src/*.h"),
+			os.path.join(GAME_ROOT_PATH, "src/*.cpp")
+		]
+
+		# Build gemini with this preprocessor so it can link the game
+		gemini.defines += [ "GEMINI_STATIC_GAME=1" ]
+		gemini.dependencies += [ game ]
+
+		games = [game]
+
 	gemini.sources += [
 		"src/engine/gemini.cpp"
 	]
@@ -1058,7 +1101,6 @@ def products(arguments, **kwargs):
 		"src/engine/game/**.*",
 
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_image.h"),
-		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_freetype.h"),
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_vorbis.c")
 	]
 
@@ -1165,7 +1207,7 @@ def products(arguments, **kwargs):
 			Dependency(file="glm.py"),
 			**kwargs)
 
-	return [
+	return games + [
 		librenderer,
 		libruntime,
 		libcore,

@@ -71,9 +71,6 @@
 // uncomment this to draw bone debug information
 //#define GEMINI_DEBUG_BONES
 
-// uncomment to load game from main executable as opposed to a DLL.
-#define GEMINI_STATIC_GAME 1
-
 using namespace platform;
 using namespace core;
 using namespace gemini; // for renderer
