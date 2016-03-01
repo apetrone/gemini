@@ -799,10 +799,6 @@ public:
 		newview.height = frame.height;
 
 		render_scene_from_camera(entity_list, newview, scenelink);
-
-		glm::mat4 origin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
-		::renderer::debugdraw::axes(origin, 0.25f);
-		::renderer::debugdraw::render(newview.modelview, newview.projection, newview.width, newview.height);
 	}
 
 	virtual void render_gui()
@@ -852,6 +848,14 @@ public:
 
 	virtual void render_debug(const View& view) override
 	{
+		glm::mat4 origin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
+		::renderer::debugdraw::axes(origin, 0.25f);
+
+		View newview = view;
+		platform::window::Frame frame = platform::window::get_render_frame(main_window);
+		newview.width = frame.width;
+		newview.height = frame.height;
+		::renderer::debugdraw::render(newview.modelview, newview.projection, newview.width, newview.height);
 	}
 
 	virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height)
