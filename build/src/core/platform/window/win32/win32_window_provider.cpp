@@ -33,6 +33,8 @@
 #include "input.h"
 #include "kernel.h"
 
+#include <windowsx.h> // GET_X_LPARAM, GET_Y_LPARAM
+
 namespace platform
 {
 	namespace window
@@ -315,6 +317,27 @@ namespace platform
 				}
 			}
 
+			void constrain_mouse_in_relative_mode(HWND hwnd, int32_t mousex, int32_t mousey)
+			{
+				if (_window_provider->in_relative_mode())
+				{
+					// Must reset the mouse coords here. However,
+					// these are in local window coordinates.
+					last_mousex = mousex;
+					last_mousey = mousey;
+
+					// We have to convert these to screen
+					// coordinates in order to use them with the
+					// win32 SetCursorPos API.
+					POINT new_mouse;
+					new_mouse.x = mousex;
+					new_mouse.y = mousey;
+					ClientToScreen(hwnd, &new_mouse);
+
+					set_cursor(static_cast<float>(new_mouse.x), static_cast<float>(new_mouse.y));
+				}
+			}
+
 			LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 			{
 				// fetch our window pointer from hwnd
@@ -327,6 +350,8 @@ namespace platform
 						input::MouseButton::MOUSE_MOUSE4
 					};
 
+					const int32_t prev_mouse[2] = { last_mousex, last_mousey };
+
 					switch (message)
 					{
 						// handle mouse events
@@ -337,11 +362,11 @@ namespace platform
 							disable_next_mouse_event = 0;
 							return 0;
 						}
-						int32_t prev_mouse[2] = { last_mousex, last_mousey };
 						kernel::MouseEvent mevent;
-						// According to MSDN; these coordinates
-						mevent.mx = LOWORD(lparam);
-						mevent.my = HIWORD(lparam);
+
+						// According to MSDN; these coordinates are window-local.
+						mevent.mx = GET_X_LPARAM(lparam);
+						mevent.my = GET_Y_LPARAM(lparam);
 						mevent.dx = (mevent.mx - last_mousex);
 						last_mousex = mevent.mx;
 						mevent.dy = (mevent.my - last_mousey);
@@ -351,24 +376,8 @@ namespace platform
 						mevent.subtype = _window_provider->in_relative_mode() ? kernel::MouseDelta : kernel::MouseMoved;
 						kernel::event_dispatch(mevent);
 
-						if (_window_provider->in_relative_mode())
-						{
-							// Must reset the mouse coords here. However,
-							// these are in local window coordinates.
-							last_mousex = prev_mouse[0];
-							last_mousey = prev_mouse[1];
-
-							//LOGV("delta: %i, %i; old: %i, %i\n", mevent.dx, mevent.dy, last_mousex, last_mousey);
-							// We have to convert these to screen
-							// coordinates in order to use them with the
-							// win32 SetCursorPos API.
-							POINT new_mouse;
-							new_mouse.x = prev_mouse[0];
-							new_mouse.y = prev_mouse[1];
-							ClientToScreen(hwnd, &new_mouse);
-
-							set_cursor(static_cast<float>(new_mouse.x), static_cast<float>(new_mouse.y));
-						}
+						constrain_mouse_in_relative_mode(hwnd, prev_mouse[0], prev_mouse[1]);
+						return 0;
 						break;
 					}
 
@@ -378,8 +387,8 @@ namespace platform
 						// -1 is towards the user
 						// 1 is away from the user
 						kernel::MouseEvent mevent;
-						mevent.mx = LOWORD(lparam);
-						mevent.my = HIWORD(lparam);
+						mevent.mx = GET_X_LPARAM(lparam);
+						mevent.my = GET_Y_LPARAM(lparam);
 						mevent.dx = (mevent.mx - last_mousex);
 						last_mousex = mevent.mx;
 						mevent.dy = (mevent.my - last_mousey);
@@ -388,6 +397,9 @@ namespace platform
 						mevent.window = window;
 						mevent.subtype = kernel::MouseWheelMoved;
 						kernel::event_dispatch(mevent);
+
+						constrain_mouse_in_relative_mode(hwnd, prev_mouse[0], prev_mouse[1]);
+						return 0;
 						break;
 					}
 
@@ -403,6 +415,7 @@ namespace platform
 						const WORD button_index = HIWORD(wparam);
 						assert(button_index >= 0 && button_index <= 2);
 						handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, xmouse[button_index]);
+						return 0;
 						break;
 					}
 
@@ -414,6 +427,7 @@ namespace platform
 						const WORD button_index = HIWORD(wparam);
 						assert(button_index >= 0 && button_index <= 2);
 						handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, xmouse[button_index]);
+						return 0;
 						break;
 					}
 
@@ -424,6 +438,7 @@ namespace platform
 					case WM_KEYUP:
 					{
 						handle_keyboard_event(window, message, wparam, lparam);
+						return 0;
 						break;
 					}
 
@@ -439,6 +454,7 @@ namespace platform
 						sysevent.subtype = (message == WM_KILLFOCUS) ? kernel::WindowLostFocus : kernel::WindowGainFocus;
 						sysevent.window = window;
 						kernel::event_dispatch(sysevent);
+						return 0;
 						break;
 					}
 
@@ -451,6 +467,7 @@ namespace platform
 							sysevent.subtype = kernel::WindowClosed;
 							sysevent.window = window;
 							kernel::event_dispatch(sysevent);
+							return 0;
 						}
 						break;
 					}
@@ -476,6 +493,7 @@ namespace platform
 						sysevent.render_height = sysevent.window_height = static_cast<int16_t>(HIWORD(lparam));
 						sysevent.window = window;
 						kernel::event_dispatch(sysevent);
+						return 0;
 						break;
 					}
 
@@ -496,6 +514,7 @@ namespace platform
 							ClientToScreen(hwnd, &center);
 							win32::last_mousex = center.x;
 							win32::last_mousey = center.y;
+							return 0;
 						}
 						break;
 					}
@@ -646,6 +665,7 @@ namespace platform
 			BringWindowToTop(window_handle);
 			SetForegroundWindow(window_handle);
 			UpdateWindow(window_handle);
+			SetFocus(window_handle);
 
 			// store our window pointer as userdata
 			SetWindowLongPtr(window_handle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window));
