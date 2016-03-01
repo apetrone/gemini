@@ -457,7 +457,7 @@ namespace platform
 
 					case WM_SIZE:
 					{
-						uint32_t resize_type = wparam;
+						WPARAM resize_type = wparam;
 						if (resize_type == SIZE_MAXIMIZED)
 						{
 							// The window has been maximized.
@@ -482,25 +482,15 @@ namespace platform
 					case WM_WINDOWPOSCHANGED:
 					{
 						// Handle when the user moves the Window.
-
 						WINDOWPOS* new_position = reinterpret_cast<WINDOWPOS*>(lparam);
-						RECT client_rect;
-						GetClientRect(hwnd, &client_rect);
-
-						//RECT window_rect;
-						//GetWindowRect(hwnd, &window_rect);
-
-						//int32_t offset[2] = { window_rect.left, window_rect.top };
-						//ClientToScreen(hwnd, reinterpret_cast<LPPOINT>(&client_rect.left));
-						//ClientToScreen(hwnd, reinterpret_cast<LPPOINT>(&client_rect.right));
 
 						// re-center the last mouse position if in relative
 						// mode.
 						if (_window_provider->in_relative_mode())
 						{
 							POINT center;
-							center.x = static_cast<int32_t>((client_rect.right - client_rect.left) / 2.0f);
-							center.y = static_cast<int32_t>((client_rect.bottom - client_rect.top) / 2.0f);
+							center.x = static_cast<int32_t>((new_position->cx) / 2.0f);
+							center.y = static_cast<int32_t>((new_position->cy) / 2.0f);
 
 							// convert the point to screen space
 							ClientToScreen(hwnd, &center);
