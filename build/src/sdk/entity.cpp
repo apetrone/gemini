@@ -248,7 +248,7 @@ void Entity::set_physics_from_current_transform()
 
 void Entity::set_current_transform_from_physics(size_t collider_index)
 {
-	assert(colliders.empty() || !colliders.empty() && (collider_index >= 0 && collider_index < colliders.size()));
+	assert(colliders.empty() || (!colliders.empty() && (collider_index >= 0 && collider_index < colliders.size())));
 
 	if (!colliders.empty())
 	{
@@ -382,7 +382,7 @@ void Entity::apply_central_impulse(const glm::vec3& impulse)
 	}
 }
 
-void Entity::set_mass(float mass)
+void Entity::set_mass(float /*mass*/)
 {
 //	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
 //	{
@@ -390,7 +390,7 @@ void Entity::set_mass(float mass)
 //	}
 }
 
-void Entity::set_parent(Entity *other)
+void Entity::set_parent(Entity* /*other*/)
 {
 //	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
 //	{

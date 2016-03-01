@@ -50,7 +50,7 @@ namespace gemini
 					0.0f);
 			}
 
-			void DebugPhysicsRenderer::drawLine( const btVector3& from, const btVector3& to, const btVector3& fromColor, const btVector3& color )
+			void DebugPhysicsRenderer::drawLine( const btVector3& from, const btVector3& to, const btVector3& /*fromColor*/, const btVector3& color )
 			{
 				debugdraw::line(
 					BTVECTOR3_TO_VEC3(from),
@@ -59,7 +59,11 @@ namespace gemini
 					0.0f);
 			}
 
-			void DebugPhysicsRenderer::drawContactPoint(const btVector3& PointOnB,const btVector3& normalOnB,btScalar distance,int lifeTime,const btVector3& color)
+			void DebugPhysicsRenderer::drawContactPoint(const btVector3& /*point_on_b*/,
+														const btVector3& /*normal_on_b*/,
+														btScalar /*distance*/,
+														int /*lifetime*/,
+														const btVector3& /*color*/)
 			{
 			}
 
@@ -68,11 +72,12 @@ namespace gemini
 				LOGE("[bullet2] %s\n", warningString );
 			}
 
-			void DebugPhysicsRenderer::draw3dText(const btVector3& location,const char* textString)
+			void DebugPhysicsRenderer::draw3dText(const btVector3& /*location*/,
+													const char* /*text_string*/)
 			{
 			}
 
-			void DebugPhysicsRenderer::setDebugMode(int debugMode)
+			void DebugPhysicsRenderer::setDebugMode(int /*debug_mode*/)
 			{
 			}
 

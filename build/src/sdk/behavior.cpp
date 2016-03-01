@@ -51,7 +51,7 @@ namespace behavior
 	{
 	}
 
-	void Behavior::deactivate(Entity* entity, behavior::BehaviorContext* context)
+	void Behavior::deactivate(Entity* /*entity*/, behavior::BehaviorContext* context)
 	{
 		context->log(core::str::format("[%s] deactivate\n", name()));
 		status = Behavior_Invalid;

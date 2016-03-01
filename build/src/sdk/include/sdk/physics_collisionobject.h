@@ -116,8 +116,8 @@ namespace gemini
 			// invoked when this object no longer collides with other
 			virtual void collision_ended(ICollisionObject* other) = 0;
 
-			virtual void apply_impulse(const glm::vec3& force, const glm::vec3& local_position) {};
-			virtual void apply_central_impulse(const glm::vec3& force) {};
+			virtual void apply_impulse(const glm::vec3& /*force*/, const glm::vec3& /*local_position*/) {};
+			virtual void apply_central_impulse(const glm::vec3& /*force*/) {};
 //
 
 			virtual ICollisionShape* get_shape() const = 0;

@@ -59,7 +59,7 @@ namespace gemini
 				m_me = me;
 			}
 
-			virtual bool needsCollision(btBroadphaseProxy* proxy) const
+			virtual bool needsCollision(btBroadphaseProxy* /*proxy*/) const
 			{
 				return true;
 			}

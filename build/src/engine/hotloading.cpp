@@ -194,7 +194,7 @@ namespace gemini
 
 		class JsonConfigHandler : public CivetHandler
 		{
-			virtual bool handlePut(CivetServer* server, struct mg_connection* conn)
+			virtual bool handlePut(CivetServer* /*server*/, struct mg_connection* conn)
 			{
 //				const struct mg_request_info* request = mg_get_request_info(conn);
 				String buf;
@@ -217,7 +217,7 @@ namespace gemini
 				return true;
 			}
 
-			virtual bool handleDelete(CivetServer* server, struct mg_connection* conn)
+			virtual bool handleDelete(CivetServer* /*server*/, struct mg_connection* /*conn*/)
 			{
 				return true;
 			}
@@ -233,7 +233,7 @@ namespace gemini
 			AssetHotloadHandler(ThreadSafeQueue<String>& command_queue) : queue(command_queue)
 			{}
 
-			virtual bool handlePut(CivetServer* server, struct mg_connection* conn)
+			virtual bool handlePut(CivetServer* /*server*/, struct mg_connection* conn)
 			{
 //				const struct mg_request_info* request = mg_get_request_info(conn);
 				String buf;

@@ -282,7 +282,7 @@ namespace gemini
 			return collision_object;
 		}
 
-		physics::ICollisionObject* PhysicsInterface::create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation)
+		physics::ICollisionObject* PhysicsInterface::create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& /*orientation*/)
 		{
 			BulletCollisionObject* collision_object = MEMORY_NEW(BulletCollisionObject, core::memory::global_allocator());
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
@@ -309,7 +309,7 @@ namespace gemini
 			return collision_object;
 		}
 
-		physics::ICollisionObject* PhysicsInterface::create_kinematic_object(gemini::physics::ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation)
+		physics::ICollisionObject* PhysicsInterface::create_kinematic_object(gemini::physics::ICollisionShape* shape, const glm::vec3& position, const glm::quat& /*orientation*/)
 		{
 			BulletCollisionObject* collision_object = MEMORY_NEW(BulletCollisionObject, core::memory::global_allocator());
 

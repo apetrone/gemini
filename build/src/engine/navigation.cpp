@@ -53,12 +53,12 @@ namespace gemini
 		typedef core::memory::HeapAllocator<core::memory::DefaultTrackingPolicy> NavigationAllocatorType;
 		NavigationAllocatorType* _nav_allocator;
 
-		void* navigation_allocate(int size, rcAllocHint hint)
+		void* navigation_allocate(int size, rcAllocHint /*hint*/)
 		{
 			return MEMORY_ALLOC(size, *_nav_allocator);
 		}
 
-		void* navigation_allocate(int size, dtAllocHint hint)
+		void* navigation_allocate(int size, dtAllocHint /*hint*/)
 		{
 			return MEMORY_ALLOC(size, *_nav_allocator);
 		}
@@ -96,17 +96,17 @@ namespace gemini
 			{
 			}
 
-			virtual void depthMask(bool state)
+			virtual void depthMask(bool /*state*/)
 			{
 //				LOGV("depth_mask: %i\n", state);
 			}
 
-			virtual void texture(bool state)
+			virtual void texture(bool /*state*/)
 			{
 //				LOGV("texture: %i\n", state);
 			}
 
-			virtual void begin(duDebugDrawPrimitives prim, float size)
+			virtual void begin(duDebugDrawPrimitives prim, float /*size*/)
 			{
 				primitive_state = prim;
 				vertex_offset = 0;
@@ -172,12 +172,19 @@ namespace gemini
 				}
 			}
 
-			virtual void vertex(const float* pos, unsigned int color, const float* uv) override
+			virtual void vertex(const float* /*pos*/,
+								unsigned int /*color*/,
+								const float* /*uv*/) override
 			{
 				assert(0); // not implemented
 			}
 
-			virtual void vertex(const float x, const float y, const float z, unsigned int color, const float u, const float v) override
+			virtual void vertex(const float /*x*/,
+								const float /*y*/,
+								const float /*z*/,
+								unsigned int /*color*/,
+								const float /*u*/,
+								const float v) override
 			{
 				assert(0); // not implemented
 			}

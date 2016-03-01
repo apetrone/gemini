@@ -530,7 +530,7 @@ class ModelInterface : public gemini::IModelInterface
 			return duration_seconds;
 		}
 
-		virtual uint32_t get_total_bones(int32_t index) const
+		virtual uint32_t get_total_bones(int32_t /*index*/) const
 		{
 			assert(mesh != nullptr);
 			return mesh->skeleton.size();
@@ -547,7 +547,7 @@ class ModelInterface : public gemini::IModelInterface
 			return -1;
 		}
 
-		virtual void get_local_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation)
+		virtual void get_local_bone_pose(int32_t /*animation_index*/, int32_t bone_index, glm::vec3& position, glm::quat& rotation)
 		{
 			assert(bone_index != -1);
 
@@ -556,7 +556,7 @@ class ModelInterface : public gemini::IModelInterface
 			position = glm::vec3(glm::column(model_matrix, 3));
 		}
 
-		virtual void get_model_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation)
+		virtual void get_model_bone_pose(int32_t /*animation_index*/, int32_t bone_index, glm::vec3& position, glm::quat& rotation)
 		{
 			assert(bone_index != -1);
 
@@ -1336,7 +1336,7 @@ Options:
 		// setup filesystem paths
 		Settings config;
 
-		std::function<void(const char*)> custom_path_setup = [&](const char* application_data_path)
+		std::function<void(const char*)> custom_path_setup = [&](const char* /*application_data_path*/)
 		{
 			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
 
