@@ -308,7 +308,7 @@ namespace platform
 
 		}
 
-		void set_relative_mouse_mode(bool /*enable*/)
+		void set_relative_mouse_mode(NativeWindow* /*native_window*/, bool /*enable*/)
 		{
 
 		}

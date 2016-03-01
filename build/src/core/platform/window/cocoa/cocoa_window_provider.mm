@@ -854,7 +854,7 @@ namespace platform
 			LOGW("Could not find screen for mouse location [%2.2f, %2.2f]\n", x, y);
 		}
 
-		void set_relative_mouse_mode(bool enable)
+		void set_relative_mouse_mode(NativeWindow* native_window, bool enable)
 		{
 			cocoa::_state.last_mouse = [NSEvent mouseLocation];
 			CGAssociateMouseAndMouseCursorPosition(!enable);
