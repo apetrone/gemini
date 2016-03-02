@@ -148,5 +148,10 @@ using namespace platform::window::cocoa;
 	[super flagsChanged:event];
 }
 
+-(void) keyDown:(NSEvent *) event
+{
+	(void)(event);
+	// don't trigger the Sosumi sound.
+}
 
 @end

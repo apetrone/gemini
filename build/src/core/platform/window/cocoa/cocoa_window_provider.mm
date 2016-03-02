@@ -397,35 +397,6 @@ namespace platform
 				[window->context flushBuffer];
 			}
 
-
-			void center_cursor_inside_key_window()
-			{
-				NSWindow* key_window = [[NSApplication sharedApplication] keyWindow];
-				if (key_window)
-				{
-					NSRect bounds = [[key_window contentView] frame];
-					bounds = [key_window convertRectToScreen: bounds];
-
-					// y needs to be flipped
-					NSScreen* screen = [key_window screen];
-					NSRect screen_frame = [screen frame];
-
-					NSPoint window_center = NSMakePoint(
-						bounds.origin.x + (bounds.size.width / 2.0),
-						screen_frame.size.height - (bounds.origin.y + (bounds.size.height / 2.0))
-								);
-					CGWarpMouseCursorPosition(window_center);
-					cocoa::_state.last_mouse = window_center;
-					cocoa::_state.ignore_next_event = true;
-					CGAssociateMouseAndMouseCursorPosition(true);
-					CGAssociateMouseAndMouseCursorPosition(false);
-
-					[key_window makeKeyAndOrderFront:nil];
-					[key_window makeMainWindow];
-				}
-			}
-
-
 			// Convert an NS mouse-Y location (based in the lower left)
 			// to one based in the upper left.
 			// This has to take the content rect of the window into account.
@@ -867,8 +838,31 @@ namespace platform
 			if (enable)
 			{
 				// if we are entering relative mode,
-				// we must center the cursor inside the key window.
-				cocoa::center_cursor_inside_key_window();
+				// we must center the cursor inside the window.
+				cocoa::cocoa_native_window* cocoawindow = cocoa::from(native_window);
+				NSWindow* key_window = cocoawindow->cw;
+				if (key_window)
+				{
+					NSRect bounds = [[key_window contentView] frame];
+					bounds = [key_window convertRectToScreen: bounds];
+
+					// y needs to be flipped
+					NSScreen* screen = [key_window screen];
+					NSRect screen_frame = [screen frame];
+
+					NSPoint window_center = NSMakePoint(
+														bounds.origin.x + (bounds.size.width / 2.0),
+														screen_frame.size.height - (bounds.origin.y + (bounds.size.height / 2.0))
+														);
+					CGWarpMouseCursorPosition(window_center);
+					cocoa::_state.last_mouse = window_center;
+					cocoa::_state.ignore_next_event = true;
+					CGAssociateMouseAndMouseCursorPosition(true);
+					CGAssociateMouseAndMouseCursorPosition(false);
+
+					[key_window makeKeyAndOrderFront:nil];
+					[key_window makeMainWindow];
+				}
 			}
 		}
 
