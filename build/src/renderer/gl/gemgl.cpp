@@ -30,6 +30,9 @@
 #include <stdio.h> // for sscanf
 #include <string.h> // for strstr
 
+// uncomment this to dump extensions upon context creation
+//#define GEMINI_SHOW_EXTENSIONS 1
+
 namespace renderer
 {
 	gemgl_interface_t gl;
@@ -76,7 +79,7 @@ namespace renderer
 		gemgl_GLGETSTRINGPROC gl_get_string = (gemgl_GLGETSTRINGPROC)gemgl_findsymbol(gl, "glGetString");
 		if ( gl_get_string )
 		{
-			LOGV( "glGetString is %p\n", gl_get_string );
+			assert(gl_get_string != nullptr);
 			const GLubyte * version = gl_get_string( GL_VERSION );
 			if ( !version )
 			{
@@ -480,7 +483,7 @@ namespace renderer
 
 			GLint total_extensions = -1;
 // only supported in GL 3.0+
-#if defined(GL_NUM_EXTENSIONS) // not available for GLES2
+#if defined(GEMINI_SHOW_EXTENSIONS) && defined(GL_NUM_EXTENSIONS) // not available for GLES2
 
 			gl.GetIntegerv(GL_NUM_EXTENSIONS, &total_extensions);
 			gl.CheckError("GetIntegerv");
@@ -496,13 +499,13 @@ namespace renderer
 					LOGV("[%i] - %s\n", i, gl.GetStringi(GL_EXTENSIONS, i));
 				}
 			}
-#endif
 
 			if (total_extensions == -1)
 			{
 				LOGV("GL_EXTENSIONS: %s\n", gl.GetString(GL_EXTENSIONS));
+				gl.CheckError("GetString(GL_EXTENSIONS)");
 			}
-
+#endif
 		}
 
 		return 1;

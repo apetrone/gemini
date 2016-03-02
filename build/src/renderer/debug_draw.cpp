@@ -261,6 +261,9 @@ namespace renderer
 		font::Handle text_handle;
 		glm::mat4 orthographic_projection;
 
+		glm::mat4 modelview_matrix;
+		glm::mat4 projection_matrix;
+
 		// this needs to be persistent due to the way
 		// values are stored in the constant maps
 		int diffuse_texture_unit = 0;
@@ -538,13 +541,35 @@ namespace renderer
 		{
 			device->destroy_texture(white_texture);
 
-			device->destroy_buffer(line_buffer);
-			device->destroy_buffer(tris_buffer);
-			device->destroy_buffer(text_buffer);
+			if (line_buffer)
+			{
+				device->destroy_buffer(line_buffer);
+			}
 
-			device->destroy_pipeline(line_pipeline);
-			device->destroy_pipeline(tris_pipeline);
-			device->destroy_pipeline(text_pipeline);
+			if (tris_buffer)
+			{
+				device->destroy_buffer(tris_buffer);
+			}
+
+			if (text_buffer)
+			{
+				device->destroy_buffer(text_buffer);
+			}
+
+			if (line_pipeline)
+			{
+				device->destroy_pipeline(line_pipeline);
+			}
+
+			if (tris_pipeline)
+			{
+				device->destroy_pipeline(tris_pipeline);
+			}
+
+			if (text_pipeline)
+			{
+				device->destroy_pipeline(text_pipeline);
+			}
 
 			device = nullptr;
 
@@ -583,11 +608,6 @@ namespace renderer
 				6,
 				(TOTAL_CIRCLE_VERTICES * 3)
 			};
-
-			memset(
-				&line_vertex_cache[0],
-				0,
-				sizeof(DebugDrawVertex) * line_vertex_cache.size());
 
 			// step 1: tally up the total vertex cache size we'll need
 			size_t total_vertices_required = 0;
@@ -629,7 +649,7 @@ namespace renderer
 				for (size_t index = 0; index < persistent_primitives.size(); ++index)
 				{
 					DebugPrimitive* primitive = &persistent_primitives[index];
-					if (primitive->type != 0 && primitive->type <= TYPE_SPHERE)
+					if (primitive->type > 0 && primitive->type <= TYPE_SPHERE)
 					{
 						buffer_primitive_table[primitive->type](primitive,
 							accessor);
@@ -640,12 +660,14 @@ namespace renderer
 				for(size_t index = 0; index < per_frame_primitives.size(); ++index)
 				{
 					DebugPrimitive* primitive = &per_frame_primitives[index];
-					if (primitive->type != 0 && primitive->type <= TYPE_SPHERE)
+					if (primitive->type > 0 && primitive->type <= TYPE_SPHERE)
 					{
 						buffer_primitive_table[primitive->type](primitive,
 							accessor);
 					}
 				}
+
+				assert(total_vertices_required % 2 == 0);
 
 				device->buffer_upload(
 					line_buffer,
@@ -654,8 +676,6 @@ namespace renderer
 
 				render2::CommandQueue* queue = device->create_queue(pass);
 				render2::CommandSerializer* serializer = device->create_serializer(queue);
-
-				assert(total_vertices_required % 2 == 0);
 
 				// serialize all lines first
 				serializer->pipeline(line_pipeline);
@@ -844,11 +864,14 @@ namespace renderer
 			pass.cull_mode = render2::CullMode::None;
 			pass.target = device->default_render_target();
 
-			line_pipeline->constants().set("projection_matrix", &projection);
-			line_pipeline->constants().set("modelview_matrix", &modelview);
+			modelview_matrix = modelview;
+			projection_matrix = projection;
 
-			tris_pipeline->constants().set("projection_matrix", &projection);
-			tris_pipeline->constants().set("modelview_matrix", &modelview);
+			line_pipeline->constants().set("projection_matrix", &projection_matrix);
+			line_pipeline->constants().set("modelview_matrix", &modelview_matrix);
+
+			tris_pipeline->constants().set("projection_matrix", &projection_matrix);
+			tris_pipeline->constants().set("modelview_matrix", &modelview_matrix);
 			tris_pipeline->constants().set("diffuse", &diffuse_texture_unit);
 
 			orthographic_projection = glm::ortho(0.0f, (float)viewport_width, (float)viewport_height, 0.0f, -1.0f, 1.0f);

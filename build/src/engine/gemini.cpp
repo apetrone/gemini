@@ -846,11 +846,9 @@ public:
 		::render_viewmodel(entity, newview, scenelink);
 	}
 
+
 	virtual void render_debug(const View& view) override
 	{
-		glm::mat4 origin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
-		::renderer::debugdraw::axes(origin, 0.25f);
-
 		View newview = view;
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		newview.width = frame.width;
@@ -923,6 +921,20 @@ extern "C"
 }
 #endif
 
+bool load_config(Settings& config)
+{
+	bool success = util::json_load_with_callback("conf/settings.conf", settings_conf_loader, &config, true);
+	if (!success)
+	{
+		LOGW("Unable to load settings.conf! Let's hope wise defaults were chosen...\n");
+
+		// This is hit when the game content path is invalid.
+		assert(0);
+	}
+
+	return success;
+} // load_config
+
 class EngineKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -971,22 +983,6 @@ private:
 
 	// used by debug draw
 	font::Handle debug_font;
-
-private:
-	bool load_config(Settings& config)
-	{
-		bool success = util::json_load_with_callback( "conf/settings.conf", settings_conf_loader, &config, true );
-		if ( !success )
-		{
-			LOGW("Unable to load settings.conf! Let's hope wise defaults were chosen...\n");
-
-			// This is hit when the game content path is invalid.
-			assert(0);
-		}
-
-		return success;
-	} // load_config
-
 
 	void open_gamelibrary()
 	{
@@ -1086,6 +1082,9 @@ public:
 		game_interface(0)
 	{
 		game_path = "";
+		compositor = nullptr;
+		gui_renderer = nullptr;
+		resource_cache = nullptr;
 	}
 
 	virtual ~EngineKernel()
@@ -1180,7 +1179,10 @@ public:
 			assert(device);
 			device->backbuffer_resized(frame.width, frame.height);
 
-			compositor->resize(frame.width, frame.height);
+			if (compositor)
+			{
+				compositor->resize(frame.width, frame.height);
+			}
 		}
 		else if (event.subtype == kernel::WindowClosed)
 		{
@@ -1556,7 +1558,6 @@ Options:
 	{
 		platform::window::activate_context(main_window);
 
-
 		if (graph)
 		{
 			graph->record_value(kernel::parameters().framedelta_milliseconds, 0);
@@ -1635,26 +1636,6 @@ Options:
 			game_interface->client_frame(kernel::parameters().framedelta_seconds, kernel::parameters().step_alpha);
 		}
 
-//		if (device)
-//		{
-//			glm::mat4 xform;
-//			device->test(xform);
-//			debugdraw::axes(xform, 2.0f, 0.1f);
-//		}
-
-
-
-		// starting to migrate towards render2
-//		render2::Pass pass;
-//		pass.target = device->default_render_target();
-//		pass.color(1.0f, 0.0f, 0.0f, 1.0f);
-//		pass.clear_color = true;
-//		pass.clear_depth = true;
-//
-//		render2::CommandQueue* queue = device->create_queue(pass);
-//		render2::CommandSerializer* serializer = device->create_serializer(queue);
-//		assert(serializer);
-
 		device->submit();
 
 		// TODO: this needs to be controlled somehow
@@ -1670,11 +1651,18 @@ Options:
 		navigation::shutdown();
 
 		// shutdown gui
-		delete compositor;
-		compositor = 0;
-		_compositor = 0;
+		if (compositor)
+		{
+			delete compositor;
+			compositor = 0;
+			_compositor = 0;
+		}
 
-		MEMORY_DELETE(gui_renderer, core::memory::global_allocator());
+		if (gui_renderer)
+		{
+			MEMORY_DELETE(gui_renderer, core::memory::global_allocator());
+		}
+
 
 
 		// since the game can create gui elements, we need to shutdown
@@ -1683,14 +1671,12 @@ Options:
 
 		// we need to explicitly shut this down so it cleans up before
 		// our memory detects any leaks.
-		MEMORY_DELETE(resource_cache, core::memory::global_allocator());
+		if (resource_cache)
+		{
+			MEMORY_DELETE(resource_cache, core::memory::global_allocator());
+		}
 
 		font::shutdown();
-
-		platform::window::destroy(main_window);
-		main_window = 0;
-
-		platform::window::shutdown();
 
 		// shutdown subsystems
 		hotloading::shutdown();
@@ -1702,9 +1688,14 @@ Options:
 		assets::shutdown();
 		input::shutdown();
 		audio::shutdown();
-		::renderer::shutdown();
 
+		// must shutdown the renderer before our window
+		::renderer::shutdown();
 		render2::destroy_device(device);
+
+		platform::window::destroy(main_window);
+		main_window = 0;
+		platform::window::shutdown();
 
 		gemini::runtime_shutdown();
 

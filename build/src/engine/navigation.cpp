@@ -466,11 +466,14 @@ namespace gemini
 			dtFreeNavMesh(nav_mesh);
 			dtFreeNavMeshQuery(nav_query);
 
-			core::memory::Zone* nav_zone = _nav_allocator->get_zone();
-			MEMORY_DELETE(_nav_allocator, core::memory::global_allocator());
-			_nav_allocator = nullptr;
+			if (_nav_allocator)
+			{
+				core::memory::Zone* nav_zone = _nav_allocator->get_zone();
+				MEMORY_DELETE(_nav_allocator, core::memory::global_allocator());
+				_nav_allocator = nullptr;
 
-			MEMORY_DELETE(nav_zone, core::memory::global_allocator());
+				MEMORY_DELETE(nav_zone, core::memory::global_allocator());
+			}
 		}
 
 		void debugdraw()

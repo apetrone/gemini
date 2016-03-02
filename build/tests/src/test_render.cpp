@@ -218,14 +218,14 @@ public:
 		serializer->texture(font::get_font_texture(state.handle), 0);
 		serializer->draw(0, state.total_font_vertices);
 
-		// queue the buffer with our device
-		state.device->destroy_serializer(serializer);
-		state.device->queue_buffers(queue, 1);
-
 		// horizontal line test
 		serializer->pipeline(state.line_pipeline);
 		serializer->vertex_buffer(state.line_buffer);
 		serializer->draw(0, 4);
+
+		// queue the buffer with our device
+		state.device->destroy_serializer(serializer);
+		state.device->queue_buffers(queue, 1);
 
 		// submit the queues to the GPU
 		platform::window::activate_context(state.native_window);
@@ -363,7 +363,7 @@ public:
 		fd.input_layout = state.device->create_input_layout(td.vertex_description, fd.shader);
 		state.font_pipeline = state.device->create_pipeline(fd);
 
-		// setu line pipeline
+		// setup line pipeline
 		render2::PipelineDescriptor ld;
 		ld.shader = state.device->create_shader("lines");
 		ld.vertex_description.add("in_position", render2::VD_FLOAT, 3);
@@ -528,7 +528,7 @@ public:
 		static uint64_t last_time = current_time;
 		static float accumulator = 0;
 
-		// calculate delta ticks in miliseconds
+		// calculate delta ticks in milliseconds
 		params.framedelta_milliseconds = (current_time - last_time)*0.001f;
 
 		// cache the value in seconds

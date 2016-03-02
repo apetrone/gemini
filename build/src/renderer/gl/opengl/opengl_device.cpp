@@ -129,6 +129,11 @@ namespace render2
 	// ---------------------------------------------------------------------
 	Shader* OpenGLDevice::create_shader(const char* name, Shader* reuse_shader)
 	{
-		return common_create_shader("150", name, static_cast<GLShader*>(reuse_shader), "", "#version 150 core\n");
+		return common_create_shader("150",
+			name,
+			static_cast<GLShader*>(reuse_shader),
+			"",
+			"#version 150 core\n"
+			"#extension GL_ARB_explicit_attrib_location : enable\n");
 	}
 } // namespace render2
