@@ -33,6 +33,8 @@
 #include <string.h> // for strrchr
 #include <Shlwapi.h> // for PathFileExists
 
+#include <core/logging.h>
+
 namespace platform
 {
 	const unsigned int STATIC_BUFFER_SIZE = 8192;
@@ -158,7 +160,19 @@ namespace platform
 		}
 
 		file.handle = CreateFileA(path, desired_access, share_mode, NULL, creation_disposition, flags, NULL);
+		if (file.handle == INVALID_HANDLE_VALUE)
+		{
+			DWORD last_error = GetLastError();
+			LOGW("CreateFileA returned error: %i\n", last_error);
+			if (last_error == ERROR_SHARING_VIOLATION)
+			{
+				LOGW("The process cannot access the file because it is "
+					"being used by another process.");
+			}
+		}
+
 		assert(file.handle != INVALID_HANDLE_VALUE);
+
 
 		return file;
 	}
