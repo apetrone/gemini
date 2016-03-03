@@ -27,6 +27,10 @@
 
 namespace gui
 {
+	const uint32_t MENU_ITEM_BORDER = 2;
+	const uint32_t MENU_ITEM_SEPARATOR_HEIGHT = 1;
+
+
 	// MenuButton
 
 	MenuButton::MenuButton(gui::Panel* parent)

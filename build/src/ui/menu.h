@@ -75,10 +75,8 @@ namespace gui
 
 		Rect expanded_rect;
 
-		static const uint32_t MENU_ITEM_BORDER = 2;
-		static const uint32_t MENU_ITEM_SEPARATOR_HEIGHT = 1;
-
 		void update_color();
+
 	public:
 		Menu(const char* label, Panel* parent);
 		void add_item(const char* name, const gemini::Delegate<void()>& action);
