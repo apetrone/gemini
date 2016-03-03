@@ -48,12 +48,13 @@ struct EntityList
 
 	Collection objects;
 
+
 	void add( Type * object )
 	{
 		this->objects.push_back( object );
 	} // add
 
-	virtual void remove( Type * object )
+	void remove( Type * object )
 	{
 		for (typename Collection::iterator it = this->objects.begin(); it != this->objects.end(); ++it)
 		{
@@ -76,9 +77,9 @@ struct EntityList
 	void purge()
 	{
 		// create a local copy that won't be modified as we traverse it.
-		Collection objects = this->objects;
+		Collection local_objects = objects;
 
-		for (typename Collection::iterator it = objects.begin(); it != objects.end(); ++it)
+		for (typename Collection::iterator it = local_objects.begin(); it != local_objects.end(); ++it)
 		{
 			Entity * obj = (*it);
 			delete obj;
@@ -89,7 +90,7 @@ struct EntityList
 
 	Type* find_with_name(const EntityName& name)
 	{
-		for (typename Collection::iterator it = this->objects.begin(); it != this->objects.end(); ++it)
+		for (typename Collection::iterator it = objects.begin(); it != objects.end(); ++it)
 		{
 			Entity * obj = (*it);
 

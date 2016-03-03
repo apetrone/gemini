@@ -210,7 +210,7 @@ void Entity::post_tick()
 	set_current_transform_from_physics(0);
 }
 
-void Entity::update(float delta_seconds, float alpha)
+void Entity::update(float delta_seconds, float /*alpha*/)
 {
 	local_time += delta_seconds;
 } // update
@@ -225,15 +225,15 @@ void Entity::remove_collision()
 	this->flags |= EF_DELETE_PHYSICS;
 }
 
-void Entity::collision_began(const EntityCollisionData& collision_data)
+void Entity::collision_began(const EntityCollisionData& /*collision_data*/)
 {
 }
 
-void Entity::collision_ended(const EntityCollisionData& collision_data)
+void Entity::collision_ended(const EntityCollisionData& /*collision_data*/)
 {
 }
 
-void Entity::use(Entity *user)
+void Entity::use(Entity* /*user*/)
 {
 }
 
@@ -248,7 +248,7 @@ void Entity::set_physics_from_current_transform()
 
 void Entity::set_current_transform_from_physics(size_t collider_index)
 {
-	assert(colliders.empty() || (!colliders.empty() && (collider_index >= 0 && collider_index < colliders.size())));
+	assert(colliders.empty() || !colliders.empty() && (collider_index < colliders.size()));
 
 	if (!colliders.empty())
 	{

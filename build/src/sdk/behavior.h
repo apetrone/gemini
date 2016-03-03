@@ -81,6 +81,7 @@ namespace behavior
 		BehaviorName name;
 
 		Behavior(const BehaviorName& behavior_name);
+		virtual ~Behavior();
 
 		virtual BehaviorStatus update(Entity* entity, BehaviorContext* context) = 0;
 
@@ -147,10 +148,10 @@ namespace behavior
 		TreeNodeArray::iterator current_child;
 		TreeNodeArray::iterator active_child;
 
-		Composite(const BehaviorName& behavior_name) :
-		Behavior(behavior_name),
-		current_child(children.end()),
-		active_child(children.end())
+		Composite(const BehaviorName& behavior_name)
+			: Behavior(behavior_name)
+			, current_child(children.end())
+			, active_child(children.end())
 		{
 		}
 
@@ -205,8 +206,8 @@ namespace behavior
 					{
 						if (active_child != children.end())
 						{
-							Behavior* child = *active_child;
-							child->deactivate(entity, context);
+							Behavior* previous_active_child = *active_child;
+							previous_active_child->deactivate(entity, context);
 						}
 						active_child = current_child;
 					}
@@ -285,8 +286,8 @@ namespace behavior
 					{
 						if (active_child != children.end())
 						{
-							Behavior* child = *active_child;
-							child->deactivate(entity, context);
+							Behavior* previous_active_child = *active_child;
+							previous_active_child->deactivate(entity, context);
 						}
 						active_child = current_child;
 					}

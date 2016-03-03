@@ -41,9 +41,13 @@ namespace behavior
 	}
 
 
-	Behavior::Behavior(const BehaviorName& behavior_name) :
-	name(behavior_name),
-	status(Behavior_Invalid)
+	Behavior::Behavior(const BehaviorName& behavior_name)
+		: name(behavior_name)
+		, status(Behavior_Invalid)
+	{
+	}
+
+	Behavior::~Behavior()
 	{
 	}
 
