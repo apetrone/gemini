@@ -883,6 +883,136 @@ void test_devices()
 
 #endif
 
+
+
+// test out reading BNO055.
+
+struct DataInput
+{
+	bool execute;
+
+	glm::quat orientation;
+	platform::Serial* device;
+	platform::Thread* thread_data;
+//	EventQueueType* event_queue;
+};
+
+// raw data read from BNO055;
+// quaternion data is 16-bit x 4 values
+struct bno055_packet_t
+{
+	uint8_t header;
+	uint8_t data[8];
+	uint8_t footer;
+
+	bno055_packet_t()
+	{
+		header = 0xba;
+		footer = 0xff;
+	}
+
+	bool is_valid() const
+	{
+		return (header == 0xba) && (footer == 0xff);
+	}
+
+	glm::quat get_orientation() const
+	{
+		int16_t x = 0;
+		int16_t y = 0;
+		int16_t z = 0;
+		int16_t w = 0;
+
+		// they are 16-bit LSB
+		x = (((uint16_t)data[3]) << 8) | ((uint16_t)data[2]);
+		y = (((uint16_t)data[5]) << 8) | ((uint16_t)data[4]);
+		z = (((uint16_t)data[7]) << 8) | ((uint16_t)data[6]);
+		w = (((uint16_t)data[1]) << 8) | ((uint16_t)data[0]);
+
+		const double QUANTIZE = (1.0 / 16384.0);
+
+		return glm::quat(w * QUANTIZE, x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
+	}
+};
+
+void data_thread(platform::Thread* thread)
+{
+	DataInput* block = static_cast<DataInput*>(thread->user_data);
+
+	LOGV("entering data thread\n");
+
+	const size_t PACKET_SIZE = sizeof(bno055_packet_t);
+	const size_t MAX_PACKET_DATA = 4 * PACKET_SIZE;
+	uint8_t buffer[MAX_PACKET_DATA];
+	size_t current_index = 0;
+
+	while(block->execute)
+	{
+		size_t bytes_read = platform::serial_read(block->device, &buffer[current_index], PACKET_SIZE);
+		if (bytes_read > 0)
+		{
+//			LOGV("read bytes: %i\n", bytes_read);
+			size_t last_index = current_index;
+			current_index += bytes_read;
+
+			// scan for a valid packet
+			uint8_t* head = &buffer[last_index];
+
+			// try to search the entire length of a packet
+			for (size_t index = 0; index < sizeof(bno055_packet_t); ++index)
+			{
+				bno055_packet_t* packet = reinterpret_cast<bno055_packet_t*>(head);
+				if (packet->is_valid())
+				{
+//					gemini::GameMessage message;
+//					message.type = gemini::GameMessage::Orientation;
+
+					glm::quat q = packet->get_orientation();
+					// this bit of code converts the coordinate system of the BNO055
+					// to that of gemini.
+//					glm::quat flipped(q.w, q.x, -q.z, -q.y);
+//					glm::quat y = glm::quat(glm::vec3(0, mathlib::degrees_to_radians(180), 0));
+//					glm::quat result = glm::inverse(y * flipped);
+					LOGV("q: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
+
+//					block->event_queue->push_back(message);
+
+					// handle the packet and reset the data
+
+					memset(buffer, 0, MAX_PACKET_DATA);
+
+					current_index = index;
+					break;
+				}
+			}
+		}
+		else
+		{
+			LOGV("no bytes read!\n");
+		}
+	}
+
+	LOGV("exiting data thread\n");
+}
+
+void test_bno055()
+{
+	DataInput data_input;
+	const char* serial_device = "/dev/cu.usbserial-AH02QPX7";
+	data_input.device = platform::serial_open(serial_device, 115200);
+	assert(data_input.device != nullptr);
+	data_input.execute = 1;
+
+	data_input.thread_data = platform::thread_create(data_thread, &data_input);
+
+	LOGV("reading data...\n");
+
+	while( true )
+	{
+		// process!
+	}
+}
+
 int main(int, char**)
 {
 	gemini::core_startup();
@@ -899,6 +1029,8 @@ int main(int, char**)
 
 	test_devices();
 #endif
+
+	test_bno055();
 
 	gemini::core_shutdown();
 
