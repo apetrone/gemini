@@ -398,7 +398,6 @@ public:
 
 
 		buttons[0]->set_visible(false);
-		LOGV("button %p is not visible\n", buttons[0]);
 #endif
 
 		// test slider

@@ -92,33 +92,33 @@ namespace gui
 
 		Rect name_bounds;
 		get_compositor()->get_renderer()->font_measure_string(font_handle, label, core::str::len(label), name_bounds);
-		float dimx = (name_bounds.width() + 8.0) / parent->get_size().width;
+		float dimx = static_cast<float>((name_bounds.width() + 8.0) / parent->get_size().width);
 		set_dimensions(dimx, 1.0f);
 	}
 
 	void Menu::add_item(const char* name, const gemini::Delegate<void()>& action)
 	{
-		MenuItem item;
-		item.type = MenuItem_Item;
-		item.label = name;
-		item.action = action;
-		items.push_back(item);
+		MenuItem menu_item;
+		menu_item.type = MenuItem_Item;
+		menu_item.label = name;
+		menu_item.action = action;
+		items.push_back(menu_item);
 	} // add_item
 
 	void Menu::add_menu(Menu* menu)
 	{
-		MenuItem item;
-		item.type = MenuItem_Menu;
-		item.menu = menu;
-		items.push_back(item);
+		MenuItem menu_item;
+		menu_item.type = MenuItem_Menu;
+		menu_item.menu = menu;
+		items.push_back(menu_item);
 	} // add_menu
 
 	void Menu::add_separator()
 	{
-		MenuItem item;
-		item.type = MenuItem_Separator;
-		item.height = MENU_ITEM_SEPARATOR_HEIGHT;
-		items.push_back(item);
+		MenuItem menu_item;
+		menu_item.type = MenuItem_Separator;
+		menu_item.height = MENU_ITEM_SEPARATOR_HEIGHT;
+		items.push_back(menu_item);
 	} // add_separator
 
 	void Menu::show()
@@ -135,13 +135,13 @@ namespace gui
 
 	void Menu::toggle()
 	{
-		menu_is_expanded = !menu_is_expanded;
+		menu_is_expanded = static_cast<uint32_t>(static_cast<bool>(!menu_is_expanded));
 		update_color();
 	} // toggle
 
 	bool Menu::is_open() const
 	{
-		return menu_is_expanded;
+		return (menu_is_expanded == 1);
 	} // is_open
 
 	void Menu::handle_event(EventArgs& args)
@@ -159,11 +159,11 @@ namespace gui
 			MenuItem* found_item = nullptr;
 			Point local_cursor = compositor_to_local(args.cursor) - Point(0, size.height);
 			Rect test_rect;
-			for (MenuItem& item : items)
+			for (MenuItem& current_item : items)
 			{
-				if (item.hit_rect.is_point_inside(local_cursor))
+				if (current_item.hit_rect.is_point_inside(local_cursor))
 				{
-					found_item = &item;
+					found_item = &current_item;
 					break;
 				}
 			}
@@ -208,18 +208,18 @@ namespace gui
 
 			// first pass, we need the maximum width of the menu items.
 			Size max_menu_size;
-			for (MenuItem& item : items)
+			for (MenuItem& menu_item : items)
 			{
-				if (item.type == MenuItem_Item)
+				if (menu_item.type == MenuItem_Item)
 				{
 					gui::Rect string_bounds;
-					compositor->get_renderer()->font_measure_string(font_handle, item.label, core::str::len(item.label), string_bounds);
+					compositor->get_renderer()->font_measure_string(font_handle, menu_item.label, core::str::len(menu_item.label), string_bounds);
 					max_menu_size.width = glm::max(max_menu_size.width, string_bounds.width() + padding.x + padding.x);
-					max_menu_size.height += item.height = string_bounds.height() + 16; // add some padding to the height
+					max_menu_size.height += menu_item.height = string_bounds.height() + 16; // add some padding to the height
 				}
-				else if (item.type == MenuItem_Separator)
+				else if (menu_item.type == MenuItem_Separator)
 				{
-					max_menu_size.height += item.height;
+					max_menu_size.height += menu_item.height;
 				}
 			}
 
@@ -253,13 +253,13 @@ namespace gui
 			expanded_rect = Rect(local_offset, max_menu_size);
 			float current_item_offset = 0;
 			size_t index = 0;
-			for (MenuItem& item : items)
+			for (MenuItem& menu_item : items)
 			{
-				if (item.type == MenuItem_Item)
+				if (menu_item.type == MenuItem_Item)
 				{
 					Size menu_size;
 					menu_size.width = max_menu_size.width;
-					menu_size.height = item.height;
+					menu_size.height = menu_item.height;
 
 					Point data[4];
 					data[0] = local_offset + Point(MENU_ITEM_BORDER, MENU_ITEM_BORDER);
@@ -267,13 +267,13 @@ namespace gui
 					data[2] = local_offset + Point(menu_size.width - MENU_ITEM_BORDER, menu_size.height - MENU_ITEM_BORDER);
 					data[3] = local_offset + Point(menu_size.width - MENU_ITEM_BORDER, MENU_ITEM_BORDER);
 
-					item.hit_rect.origin.y = current_item_offset;
-					item.hit_rect.size = menu_size;
+					menu_item.hit_rect.origin.y = current_item_offset;
+					menu_item.hit_rect.size = menu_size;
 
 
 					gemini::Color draw_color = gemini::Color(0.0f, 0.0f, 0.0f, 1.0f);
 					gemini::Color font_color = gemini::Color(1.0f, 1.0f, 1.0f);
-					if (item.hit_rect.is_point_inside(local_cursor))
+					if (menu_item.hit_rect.is_point_inside(local_cursor))
 					{
 						draw_color = highlight_color;
 					}
@@ -287,28 +287,28 @@ namespace gui
 						draw_color
 						);
 
-					if (item.label)
+					if (menu_item.label)
 					{
 						Rect font_rect;
 						font_rect.origin = transform_point(get_transform(0), local_offset);
 						font_rect.size = menu_size;
 						font_rect.origin.x += 8;
 						font_rect.origin.y += font_height + 8;
-						render_commands.add_font(font_handle, item.label, core::str::len(item.label), font_rect, font_color);
+						render_commands.add_font(font_handle, menu_item.label, core::str::len(menu_item.label), font_rect, font_color);
 					}
 
-					current_item_offset += item.height;
-					local_offset.y += item.height;
+					current_item_offset += menu_item.height;
+					local_offset.y += menu_item.height;
 				}
-				else if (item.type == MenuItem_Separator)
+				else if (menu_item.type == MenuItem_Separator)
 				{
 					Point start(0, local_offset.y);
 					Point end(max_menu_size.width, local_offset.y);
 					render_commands.add_line(
 						transform_point(get_transform(0), start),
 						transform_point(get_transform(0), end), highlight_color);
-					current_item_offset += item.height;
-					local_offset.y += item.height;
+					current_item_offset += menu_item.height;
+					local_offset.y += menu_item.height;
 				}
 
 				index++;
@@ -333,10 +333,9 @@ namespace gui
 
 	void MenuBar::add_menu(Menu* menu)
 	{
-		const Point& dimensions = menu->get_dimensions();
-
+		const Point& menu_dimensions = menu->get_dimensions();
 		menu->set_origin(next_origin, 0.0f);
-		next_origin += (dimensions.x * size.width);
+		next_origin += (menu_dimensions.x * size.width);
 	} // add_menu
 
 	void MenuBar::handle_event(EventArgs& args)
