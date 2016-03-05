@@ -25,6 +25,7 @@
 #include "unit_test.h"
 
 #include <core/logging.h>
+#include <core/profiler.h>
 
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
@@ -76,6 +77,18 @@ static void gui_free_callback(void* pointer)
 	core::memory::global_allocator().deallocate(pointer);
 }
 
+static void ui_profile_output(const char* name, uint64_t cycles, uint32_t depth, uint32_t hitcount, float parent_weight)
+{
+	size_t indents = 0;
+	while (indents <= depth)
+	{
+		fprintf(stdout, "-");
+		++indents;
+	}
+
+	LOGV(" %s, cycles: %llu, hits: %i, pct: %2.3f cycles/hit: %2.2f\n", name, cycles, hitcount, parent_weight * 100.0, cycles / (float)hitcount);
+}
+
 struct MyVertex
 {
 	float position[3];
@@ -118,6 +131,7 @@ class TestUi : public kernel::IKernel,
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
 
+	float countdown;
 public:
 	virtual void event(kernel::KeyboardEvent& event)
 	{
@@ -161,28 +175,28 @@ public:
 
 	virtual void event(kernel::SystemEvent& event)
 	{
-		switch(event.subtype)
+		switch (event.subtype)
 		{
-			case kernel::WindowResized:
+		case kernel::WindowResized:
+		{
+			LOGV("window resized: %i x %i\n", event.render_width, event.render_height);
+			if (device)
 			{
-				LOGV("window resized: %i x %i\n", event.render_width, event.render_height);
-				if (device)
-				{
-					device->backbuffer_resized(event.render_width, event.render_height);
-				}
-
-				compositor->resize(event.render_width, event.render_height);
-				break;
-			}
-			case kernel::WindowClosed:
-			{
-				LOGV("Window was closed!\n");
-				set_active(false);
-				break;
+				device->backbuffer_resized(event.render_width, event.render_height);
 			}
 
-			default:
-				break;
+			compositor->resize(event.render_width, event.render_height);
+			break;
+		}
+		case kernel::WindowClosed:
+		{
+			LOGV("Window was closed!\n");
+			set_active(false);
+			break;
+		}
+
+		default:
+			break;
 		}
 	}
 
@@ -368,9 +382,9 @@ public:
 		uint32_t button_height = 50;
 		uint32_t button_spacing = 10;
 		const size_t total_buttons = 4;
-//		uint32_t vertical_offset = 0;
-		uint32_t origin_x = (compositor->get_size().width/2.0f) - (button_width/2.0f);
-		uint32_t origin_y = (compositor->get_size().height/2.0f) - ((button_height*total_buttons)/2.0f);
+		//uint32_t vertical_offset = 0;
+		uint32_t origin_x = (compositor->get_size().width / 2.0f) - (button_width / 2.0f);
+		uint32_t origin_y = (compositor->get_size().height / 2.0f) - ((button_height*total_buttons) / 2.0f);
 
 		const char* captions[total_buttons] = {
 			"New Game",
@@ -379,7 +393,7 @@ public:
 			"Test Three"
 		};
 
-		gui::Button* buttons[total_buttons] = {nullptr};
+		gui::Button* buttons[total_buttons] = { nullptr };
 
 		for (size_t index = 0; index < total_buttons; ++index)
 		{
@@ -426,6 +440,10 @@ public:
 
 	virtual kernel::Error startup()
 	{
+		PROFILE_BEGIN("test_ui");
+		// sample for three seconds and then close.
+		countdown = 3.0f;
+
 		gemini::runtime_startup("arcfusion.net/gemini/test_ui");
 
 		input::startup();
@@ -491,7 +509,7 @@ public:
 		vertices[1].set_position(width, height, 0);
 		vertices[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
 
-		vertices[2].set_position(width/2, 0, 0);
+		vertices[2].set_position(width / 2, 0, 0);
 		vertices[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
 
 		vertices[3].set_position(0, 0, 0);
@@ -507,7 +525,7 @@ public:
 		pipeline->constants().set("modelview_matrix", &modelview_matrix);
 		pipeline->constants().set("projection_matrix", &projection_matrix);
 
-		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
+		kernel::parameters().step_interval_seconds = (1.0f / 50.0f);
 
 
 		// initialize fonts
@@ -542,7 +560,7 @@ public:
 		// update accumulator
 		accumulator += params.framedelta_seconds;
 
-		while(accumulator >= params.step_interval_seconds)
+		while (accumulator >= params.step_interval_seconds)
 		{
 			// subtract the interval from the accumulator
 			accumulator -= static_cast<float>(params.step_interval_seconds);
@@ -552,7 +570,7 @@ public:
 		}
 
 		params.step_alpha = static_cast<float>(accumulator / params.step_interval_seconds);
-		if ( params.step_alpha >= 1.0f )
+		if (params.step_alpha >= 1.0f)
 		{
 			params.step_alpha -= 1.0f;
 		}
@@ -561,6 +579,14 @@ public:
 	virtual void tick()
 	{
 		update();
+
+		// Used for testing
+		//countdown -= kernel::parameters().step_interval_seconds;
+		//if (countdown <= 0)
+		//{
+		//	LOGV("shutting down application..\n");
+		//	kernel::instance()->set_active(false);
+		//}
 
 		// update our input
 		input::update();
@@ -589,13 +615,15 @@ public:
 		}
 
 
-//		graph->set_rotation(mathlib::degrees_to_radians(rot));
+		//		graph->set_rotation(mathlib::degrees_to_radians(rot));
 
 		if (rot > 360)
 			rot -= 360.0f;
 
 		// update the gui
+		PROFILE_BEGIN("compositor_tick");
 		compositor->tick(kernel::parameters().framedelta_seconds);
+		PROFILE_END("compositor_tick");
 
 #if 1
 		render2::Pass render_pass;
@@ -615,21 +643,25 @@ public:
 
 		// add commands to the queue
 		serializer->pipeline(pipeline);
-//		serializer->viewport(0, 0, native_window->dimensions.width, native_window->dimensions.height);
 		serializer->vertex_buffer(vertex_buffer);
-//		serializer->draw_indexed_primitives(index_buffer, 3);
+		//		serializer->draw_indexed_primitives(index_buffer, 3);
 		serializer->draw(0, 3);
-		device->destroy_serializer(serializer);
 
 		// queue the buffer with our device
 		device->queue_buffers(queue, 1);
 
-
-		compositor->draw();
+		device->destroy_serializer(serializer);
 #endif
 
+		PROFILE_BEGIN("compositor_draw");
+		compositor->draw();
+		PROFILE_END("compositor_draw");
+
+
 		platform::window::activate_context(native_window);
+		PROFILE_BEGIN("device_submit");
 		device->submit();
+		PROFILE_END("device_submit");
 		platform::window::swap_buffers(native_window);
 	}
 
@@ -652,6 +684,9 @@ public:
 		platform::window::shutdown();
 
 		input::shutdown();
+
+		PROFILE_END("test_ui");
+		gemini::profiler::report(ui_profile_output);
 
 		gemini::runtime_shutdown();
 	}
