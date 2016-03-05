@@ -128,17 +128,17 @@ namespace render2
 		}
 
 		void draw(
-				  GLPipeline* pipeline,
-				  GLBuffer* vertex_buffer,
-				  size_t initial_offset,
-				  size_t total,
-				  size_t instance_index,
-				  size_t index_count)
+			GLPipeline* pipeline,
+			GLBuffer* vertex_buffer,
+			size_t initial_offset,
+			size_t total,
+			size_t /*instance_index*/,
+			size_t /*index_count*/)
 		{
 			vertex_buffer->bind();
 			activate_pipeline(pipeline, vertex_buffer);
 
-			gl.DrawArrays(GL_TRIANGLES, initial_offset, total);
+			gl.DrawArrays(pipeline->draw_type, static_cast<GLint>(initial_offset), static_cast<GLsizei>(total));
 			gl.CheckError("DrawArrays");
 
 			deactivate_pipeline(pipeline);
