@@ -423,8 +423,6 @@ namespace render2
 		height = _height;
 		framebuffer = 0;
 
-		assert(gl.GenFramebuffers);
-
 		if (!_is_default)
 		{
 			gl.GenFramebuffers(1, &framebuffer);
@@ -433,8 +431,6 @@ namespace render2
 
 	GLRenderTarget::~GLRenderTarget()
 	{
-		assert(gl.DeleteFramebuffers);
-
 		if (framebuffer > 0)
 		{
 			gl.DeleteFramebuffers(1, &framebuffer);
