@@ -156,7 +156,7 @@ namespace render2
 			activate_pipeline(pipeline, vertex_buffer);
 
 			index_buffer->bind();
-			gl.DrawElements(GL_TRIANGLES, total, GL_UNSIGNED_SHORT, 0);
+			gl.DrawElements(pipeline->draw_type, total, GL_UNSIGNED_SHORT, 0);
 			index_buffer->unbind();
 
 			deactivate_pipeline(pipeline);
@@ -177,7 +177,7 @@ namespace render2
 			GLInputLayout* layout = static_cast<GLInputLayout*>(pipeline->input_layout);
 			for (size_t index = 0; index < layout->items.size(); ++index)
 			{
-				GLInputLayout::Description& item = layout->items[index];
+				const GLInputLayout::Description& item = layout->items[index];
 
 				assert(item.type != GL_INVALID_ENUM);
 
@@ -196,7 +196,7 @@ namespace render2
 			if (pipeline->enable_blending)
 			{
 				gl.Enable(GL_BLEND);
-				gl.CheckError("Enable");
+				gl.CheckError("Enable GL_BLEND");
 
 				gl.BlendFunc(pipeline->blend_source, pipeline->blend_destination);
 				gl.CheckError("BlendFunc");
@@ -211,7 +211,7 @@ namespace render2
 			if (pipeline->enable_blending)
 			{
 				gl.Disable(GL_BLEND);
-				gl.CheckError("Disable");
+				gl.CheckError("Disable GL_BLEND");
 			}
 		}
 
@@ -225,6 +225,9 @@ namespace render2
 			{
 				// setup pass
 				const Pass* pass = &cq->pass;
+
+				//common_push_render_target(pass->target);
+
 				common_pass_setup(pass);
 
 				GLPipeline* current_pipeline = nullptr;
@@ -237,7 +240,13 @@ namespace render2
 					const Command* command = &cq->commands[index];
 					if (command->type == COMMAND_DRAW)
 					{
-						draw(current_pipeline, vertex_stream, command->params[0], command->params[1], command->params[2], command->params[3]);
+						draw(current_pipeline,
+							vertex_stream,
+							command->params[0],
+							command->params[1],
+							command->params[2],
+							command->params[3]
+						);
 					}
 					else if (command->type == COMMAND_DRAW_INDEXED)
 					{
@@ -253,11 +262,6 @@ namespace render2
 					{
 						vertex_stream = static_cast<GLBuffer*>(command->data[0]);
 					}
-//					else if (command->type == COMMAND_VIEWPORT)
-//					{
-//						gl.Viewport(command->params[0], command->params[1], command->params[2], command->params[3]);
-//						gl.CheckError("glViewport");
-//					}
 					else if (command->type == COMMAND_TEXTURE)
 					{
 						if (texture)
@@ -266,7 +270,7 @@ namespace render2
 						}
 
 						texture = static_cast<GLTexture*>(command->data[0]);
-						gl.ActiveTexture(GL_TEXTURE0+command->params[0]);
+						gl.ActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + command->params[0]));
 						gl.CheckError("ActiveTexture");
 						texture->bind();
 
@@ -283,6 +287,8 @@ namespace render2
 				{
 					texture->unbind();
 				}
+
+				//common_pop_render_target(pass->target);
 			}
 
 
