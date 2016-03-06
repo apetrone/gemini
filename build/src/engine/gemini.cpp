@@ -1432,15 +1432,6 @@ Options:
 
 		}
 
-//		renderer::IRenderDriver* driver = renderer::driver();
-//		driver->render
-
-		struct TempVertex
-		{
-			glm::vec2 pos;
-			Color color;
-			glm::vec2 uv;
-		};
 
 		// initialize main subsystems
 		audio::startup();
@@ -1760,6 +1751,14 @@ public:
 
 
 #if 0
+
+		struct TempVertex
+		{
+			glm::vec2 pos;
+			Color color;
+			glm::vec2 uv;
+		};
+
 		// create the render target and texture for the gui
 		image::Image image;
 		image.width = 512;

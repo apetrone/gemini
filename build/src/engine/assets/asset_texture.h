@@ -56,7 +56,10 @@ namespace gemini
 			unsigned int flags;
 			image::FilterType filter_type;
 
-			TextureParameters() : flags(0) {}
+			TextureParameters()
+				: flags(0)
+				, filter_type(image::FILTER_LINEAR)
+			{}
 		};
 
 	//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
