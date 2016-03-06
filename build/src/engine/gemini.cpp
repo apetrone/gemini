@@ -986,6 +986,9 @@ private:
 	// used by debug draw
 	font::Handle debug_font;
 
+	// Toying with OpenVR
+	vr::IVRSystem* vr_system;
+
 	void open_gamelibrary()
 	{
 #if !defined(GEMINI_STATIC_GAME)
@@ -1367,16 +1370,16 @@ Options:
 		LOGV("filesystem content_path = '%s'\n", content_path.c_str());
 		LOGV("filesystem user_application_directory = '%s'\n", filesystem->user_application_directory().c_str());
 
-		// TODO@VR: Initialize OpenVR
+		// In order for this to work, you MUST have SteamVR installed.
 		if (vr::VR_IsHmdPresent())
 		{
 			LOGV("VR headset detected. Initializing OpenVR...\n");
 
 			vr::HmdError init_error;
-			vr::IVRSystem* vrsystem = vr::VR_Init(&init_error);
-			if (!vrsystem)
+			vr_system = vr::VR_Init(&init_error, vr::EVRApplicationType::VRApplication_Scene);
+			if (!vr_system)
 			{
-				LOGE("Unable to init OpenVR!\n");
+				LOGE("Unable to init OpenVR! [%s]\n", vr::VR_GetVRInitErrorAsEnglishDescription(init_error));
 				return kernel::Error::StartupFailed;
 			}
 		}
@@ -1679,6 +1682,12 @@ Options:
 		// since the game can create gui elements, we need to shutdown
 		// the gui before shutting down the game library.
 		close_gamelibrary();
+
+		// Try to close OpenVR
+		if (vr_system)
+		{
+			vr::VR_Shutdown();
+		}
 
 		// we need to explicitly shut this down so it cleans up before
 		// our memory detects any leaks.
