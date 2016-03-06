@@ -956,6 +956,7 @@ void data_thread(platform::Thread* thread)
 			current_index += bytes_read;
 
 			// scan for a valid packet
+			assert(last_index < (MAX_PACKET_DATA - sizeof(bno055_packet_t)));
 			uint8_t* head = &buffer[last_index];
 
 			// try to search the entire length of a packet
@@ -998,18 +999,29 @@ void data_thread(platform::Thread* thread)
 void test_bno055()
 {
 	DataInput data_input;
+#if defined(PLATFORM_APPLE) || defined(PLATFORM_LINUX)
 	const char* serial_device = "/dev/cu.usbserial-AH02QPX7";
+#elif defined(PLATFORM_WINDOWS)
+	const char* serial_device = "COM3";
+#endif
 	data_input.device = platform::serial_open(serial_device, 115200);
-	assert(data_input.device != nullptr);
-	data_input.execute = 1;
-
-	data_input.thread_data = platform::thread_create(data_thread, &data_input);
-
-	LOGV("reading data...\n");
-
-	while( true )
+	if (data_input.device)
 	{
-		// process!
+		assert(data_input.device != nullptr);
+		data_input.execute = 1;
+
+		data_input.thread_data = platform::thread_create(data_thread, &data_input);
+
+		LOGV("reading data...\n");
+
+		while (true)
+		{
+			// process!
+		}
+	}
+	else
+	{
+		LOGE("Could not open device\n");
 	}
 }
 

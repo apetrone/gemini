@@ -341,6 +341,7 @@ namespace platform
 
 	struct Serial
 	{
+		virtual ~Serial();
 	};
 
 	Serial* serial_open(const char* device, uint32_t baud_rate);

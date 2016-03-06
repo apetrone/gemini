@@ -77,6 +77,10 @@ namespace platform
 	{
 	}
 
+	Serial::~Serial()
+	{
+	}
+
 	Thread::~Thread()
 	{
 	}
