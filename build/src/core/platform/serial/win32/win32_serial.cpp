@@ -117,10 +117,10 @@ namespace platform
 		DWORD comm_event;
 		if (WaitCommEvent(native_serial->handle, &comm_event, 0))
 		{
-			bool result = ReadFile(
+			BOOL result = ReadFile(
 				native_serial->handle,
 				buffer,
-				bytes_requested,
+				static_cast<DWORD>(bytes_requested),
 				&bytes_read, 0);
 
 			if (!result)
@@ -143,9 +143,9 @@ namespace platform
 	{
 		Win32Serial* native_serial = static_cast<Win32Serial*>(serial);
 		DWORD bytes_written;
-		bool result = WriteFile(native_serial->handle,
+		BOOL result = WriteFile(native_serial->handle,
 			buffer,
-			bytes_to_write,
+			static_cast<DWORD>(bytes_to_write),
 			&bytes_written,
 			NULL
 		);

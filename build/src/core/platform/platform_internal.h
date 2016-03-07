@@ -41,6 +41,8 @@ namespace platform
 
 	void backend_shutdown();
 
+	void backend_update(float delta_milliseconds);
+
 	// timer interface
 	Result timer_startup();
 	void timer_shutdown();

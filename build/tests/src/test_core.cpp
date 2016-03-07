@@ -93,7 +93,7 @@ UNITTEST(Array)
 
 	for (size_t i = 0; i < 14; ++i)
 	{
-		a.push_back(i+1);
+		a.push_back(static_cast<int>(i+1));
 	}
 
 	TEST_ASSERT(a.size() == 15, size_after_adding_14);
@@ -120,6 +120,7 @@ UNITTEST(Array)
 	// test const value iteration
 	for (const int& value : abc)
 	{
+		value;
 	}
 
 	abc.erase(60);
@@ -129,6 +130,7 @@ UNITTEST(Array)
 	TEST_ASSERT(abc.size() == 1, size_after_erase);
 	for (const int& value : abc)
 	{
+		value;
 	}
 
 
@@ -259,16 +261,16 @@ class SomeType
 {
 public:
 	void	vv_foo()				{}
-	void	vi_foo(int input)		{}
+	void	vi_foo(int)				{}
 	int		iv_foo()				{ return 42; }
 	int		ii_foo(int x)			{ return x + 10; }
 	int		iii_foo(int a, int b)	{ return (a + b); }
-	void	vii_foo(int a, int b)	{}
+	void	vii_foo(int, int)		{}
 };
 
 static void vv_foo()				{}
-static void vi_foo(int input)		{}
-static void vii_foo(int a, int b)	{}
+static void vi_foo(int)				{}
+static void vii_foo(int, int)		{}
 static int iv_foo()					{ return 42; }
 static int ii_foo(int x)			{ return x + 10; }
 static int iii_foo(int a, int b)	{ return (a + b); }

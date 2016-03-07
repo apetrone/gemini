@@ -285,20 +285,20 @@ namespace platform
 			kernel::MouseEvent mouseevent;
 
 			uint32_t x11_mouse_to_platform[] = {
-				input::MOUSE_INVALID, 	// AnyButton
-				input::MOUSE_LEFT,		// Button1
-				input::MOUSE_MIDDLE,	// Button2 // (Yes Middle is Button2)
-				input::MOUSE_RIGHT,		// Button3
+				gemini::MOUSE_INVALID, 	// AnyButton
+				gemini::MOUSE_LEFT,		// Button1
+				gemini::MOUSE_MIDDLE,	// Button2 // (Yes Middle is Button2)
+				gemini::MOUSE_RIGHT,	// Button3
 
 				// scroll wheel
-				input::MOUSE_INVALID,	// Button4
-				input::MOUSE_INVALID,	// Button5
+				gemini::MOUSE_INVALID,	// Button4
+				gemini::MOUSE_INVALID,	// Button5
 
-				input::MOUSE_INVALID,	// Button6
-				input::MOUSE_INVALID,	// Button7
+				gemini::MOUSE_INVALID,	// Button6
+				gemini::MOUSE_INVALID,	// Button7
 
-				input::MOUSE_MOUSE4,	// Button8
-				input::MOUSE_MOUSE5,	// Button9
+				gemini::MOUSE_MOUSE4,	// Button8
+				gemini::MOUSE_MOUSE5,	// Button9
 			};
 
 			switch(event.type)

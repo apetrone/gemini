@@ -32,6 +32,7 @@
 #include <core/logging.h>
 #include <core/argumentparser.h>
 #include <core/mathlib.h>
+#include <core/profiler.h>
 
 #include <runtime/filesystem.h>
 #include <runtime/configloader.h>
@@ -74,7 +75,18 @@
 using namespace platform;
 using namespace core;
 using namespace gemini; // for renderer
-using namespace input;
+
+void profile_output(const char* name, uint64_t cycles, uint32_t depth, uint32_t hitcount, float parent_weight)
+{
+	size_t indents = 0;
+	while (indents <= depth)
+	{
+		LOGV("-");
+		++indents;
+	}
+
+	LOGV(" %s, cycles: %llu, hits: %i, pct: %2.3f cycles/hit: %2.2f\n", name, cycles, hitcount, parent_weight * 100.0, cycles / (float)hitcount);
+}
 
 struct Settings
 {
@@ -656,11 +668,6 @@ public:
 
 	virtual gui::Panel* root_panel() const
 	{
-//		command.left += input::state()->keyboard().is_down(input::BUTTON_A) * input::AxisValueMaximum;
-//		command.right += input::state()->keyboard().is_down(input::BUTTON_D) * input::AxisValueMaximum;
-//		command.forward += input::state()->keyboard().is_down(input::BUTTON_W) * input::AxisValueMaximum;
-//		command.back += input::state()->keyboard().is_down(input::BUTTON_S) * input::AxisValueMaximum;
-
 		return root;
 	}
 
@@ -955,8 +962,6 @@ private:
 	double accumulator;
 	uint64_t last_time;
 
-	Array<gemini::GameMessage>* event_queue;
-
 	// rendering
 	SceneLink* scenelink;
 	render2::Device* device;
@@ -977,7 +982,7 @@ private:
 	gui::Graph* graph;
 	gui::Panel* root;
 
-	::renderer::VertexStream alt_vs;
+	//::renderer::VertexStream alt_vs;
 
 	::renderer::StandaloneResourceCache* resource_cache;
 
@@ -1094,75 +1099,37 @@ public:
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
 
-	virtual void event( kernel::KeyboardEvent & event )
+	virtual void event(kernel::KeyboardEvent& event)
 	{
-//		input::state()->keyboard().inject_key_event(event.key, event.is_down);
-
-		GameMessage game_message;
-		game_message.type = GameMessage::KeyboardEvent;
-		game_message.button = event.key;
-		game_message.params[0] = event.is_down;
-		game_message.params[1] = event.modifiers;
-
-		event_queue->push_back(game_message);
-
 		if (event.is_down)
 		{
-			if (event.key == input::BUTTON_P)
+			if (event.key == gemini::BUTTON_P)
 			{
 				draw_physics_debug = !draw_physics_debug;
 				LOGV("draw_physics_debug = %s\n", draw_physics_debug?"ON":"OFF");
 			}
-			else if (event.key == input::BUTTON_N)
+			else if (event.key == gemini::BUTTON_N)
 			{
 				draw_navigation_debug = !draw_navigation_debug;
 				LOGV("draw_navigation_debug = %s\n", draw_navigation_debug?"ON":"OFF");
 			}
-			else if (event.key == input::BUTTON_M)
-			{
-				LOGV("level load\n");
-				game_interface->level_load();
-			}
+		}
+
+		if (game_interface)
+		{
+			game_interface->on_event(event);
 		}
 	}
 
 	virtual void event(kernel::MouseEvent& event)
 	{
-		GameMessage game_message;
-		switch (event.subtype)
+		if (game_interface)
 		{
-			case kernel::MouseButton:
-				game_message.type = GameMessage::MouseEvent;
-				game_message.button = event.button;
-				game_message.params[0] = event.is_down;
-				break;
-
-			case kernel::MouseMoved:
-				game_message.type = GameMessage::MouseMove;
-				game_message.params[0] = event.mx;
-				game_message.params[1] = event.my;
-				break;
-
-			case kernel::MouseDelta:
-				game_message.type = GameMessage::MouseDelta;
-				game_message.params[0] = event.dx;
-				game_message.params[1] = event.dy;
-				break;
-
-			case kernel::MouseWheelMoved:
-				game_message.type = GameMessage::MouseMove;
-				game_message.params[0] = event.wheel_direction;
-				break;
-
-			default:
-				assert(0);
-				break;
+			game_interface->on_event(event);
 		}
-
-		event_queue->push_back(game_message);
 	}
 
-	virtual void event( kernel::SystemEvent & event )
+	virtual void event(kernel::SystemEvent& event)
 	{
 		if (event.subtype == kernel::WindowLostFocus)
 		{
@@ -1189,29 +1156,18 @@ public:
 			LOGV("Window was closed!\n");
 			set_active(false);
 		}
+
+		if (game_interface)
+		{
+			game_interface->on_event(event);
+		}
 	}
 
 	virtual void event(kernel::GameControllerEvent& event)
 	{
-		if (event.subtype == kernel::JoystickConnected)
+		if (game_interface)
 		{
-			LOGV("gamepad [%i] connected\n", event.gamepad_id);
-		}
-		else if (event.subtype == kernel::JoystickDisconnected)
-		{
-			LOGV("gamepad [%i] disconnected\n", event.gamepad_id);
-		}
-		else if (event.subtype == kernel::JoystickButton)
-		{
-			LOGV("gamepad [%i] button: %i, is_down: %i\n", event.gamepad_id, event.button, event.is_down);
-		}
-		else if (event.subtype == kernel::JoystickAxisMoved)
-		{
-			LOGV("gamepad [%i] joystick: %i, value: %i (%2.2f)\n", event.gamepad_id, event.joystick_id, event.joystick_value, event.normalized_value());
-		}
-		else
-		{
-			LOGV("gamepad [%i] controller event received: %i\n", event.gamepad_id, event.subtype);
+			game_interface->on_event(event);
 		}
 	}
 
@@ -1301,8 +1257,6 @@ Options:
 		{
 			return kernel::CoreFailed;
 		}
-
-		event_queue = new Array<GameMessage>(64);
 
 		kernel::Parameters& params = kernel::parameters();
 
@@ -1435,7 +1389,6 @@ Options:
 
 		// initialize main subsystems
 		audio::startup();
-		input::startup();
 		gemini::physics::startup();
 		animation::startup();
 
@@ -1483,14 +1436,17 @@ Options:
 	}
 
 
-
-	void update()
+	virtual void tick()
 	{
 		uint64_t current_time = platform::microseconds();
 		kernel::Parameters& params = kernel::parameters();
 
 		// calculate delta ticks in milliseconds
 		params.framedelta_milliseconds = (current_time - last_time)*0.001f;
+
+		PROFILE_BEGIN("platform_update");
+		platform::update(kernel::parameters().framedelta_milliseconds);
+		PROFILE_END("platform_update");
 
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds*0.001f;
@@ -1499,7 +1455,7 @@ Options:
 		// update accumulator
 		accumulator += params.framedelta_seconds;
 
-		while(accumulator >= params.step_interval_seconds)
+		while (accumulator >= params.step_interval_seconds)
 		{
 			// begin step
 
@@ -1518,31 +1474,20 @@ Options:
 		}
 
 		params.step_alpha = accumulator / params.step_interval_seconds;
-		if ( params.step_alpha >= 1.0f )
+		if (params.step_alpha >= 1.0f)
 		{
 			params.step_alpha -= 1.0f;
 		}
-	}
 
-
-	virtual void tick()
-	{
-		platform::window::dispatch_events();
-
-		// 1. handle input; generate events?
-		// 2. on frame duties:
-		//	- pump event
-
-
-		update();
-
-
-		input::update();
 		audio::update();
 		animation::update(kernel::parameters().framedelta_seconds);
 		hotloading::tick();
 		post_tick();
 		kernel::parameters().current_frame++;
+
+
+		//gemini::profiler::report(profile_output);
+		//gemini::profiler::reset();
 	}
 
 	void post_tick()
@@ -1553,42 +1498,6 @@ Options:
 		{
 			graph->record_value(kernel::parameters().framedelta_milliseconds, 0);
 		}
-
-		if (compositor)
-		{
-			compositor->tick(kernel::parameters().framedelta_milliseconds);
-			compositor->process_events();
-		}
-
-#if 0
-		// add the inputs and then normalize
-		input::JoystickInput& joystick = input::state()->joystick(0);
-		if (joystick.axes[0].value < 0)
-		{
-			command.left += (joystick.axes[0].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
-		}
-		if (joystick.axes[0].value > 0)
-		{
-			command.right += (joystick.axes[0].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
-		}
-
-		if (joystick.axes[1].value < 0)
-		{
-			command.forward += (joystick.axes[1].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
-		}
-		if (joystick.axes[1].value > 0)
-		{
-			command.back += (joystick.axes[1].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
-		}
-#endif
-		if (game_interface)
-		{
-			for (GameMessage& message : *event_queue)
-			{
-				game_interface->server_process_message(message);
-			}
-		}
-		event_queue->resize(0);
 
 		// set the baseline for the font
 		int x = 250;
@@ -1602,6 +1511,24 @@ Options:
 		y += 12;
 
 
+		if (game_interface)
+		{
+			game_interface->server_frame(
+				kernel::parameters().current_tick,
+				kernel::parameters().framedelta_seconds,
+				kernel::parameters().step_interval_seconds,
+				kernel::parameters().step_alpha
+			);
+
+			game_interface->client_frame(kernel::parameters().framedelta_seconds, kernel::parameters().step_alpha);
+		}
+
+		if (compositor)
+		{
+			compositor->tick(kernel::parameters().framedelta_milliseconds);
+			compositor->process_events();
+		}
+
 		if (draw_physics_debug)
 		{
 			physics::debug_draw();
@@ -1612,20 +1539,6 @@ Options:
 			navigation::debugdraw();
 		}
 
-
-		if (game_interface)
-		{
-			// 1. game_interface->run_frame(framedelta_seconds);
-			// 2. game_interface->draw_frame();
-			game_interface->server_frame(
-				kernel::parameters().current_tick,
-				kernel::parameters().framedelta_seconds,
-				kernel::parameters().step_interval_seconds,
-				kernel::parameters().step_alpha
-			);
-
-			game_interface->client_frame(kernel::parameters().framedelta_seconds, kernel::parameters().step_alpha);
-		}
 
 		device->submit();
 
@@ -1677,7 +1590,6 @@ Options:
 		IDebugDraw* debug_draw = gemini::debugdraw::instance();
 		MEMORY_DELETE(debug_draw, core::memory::global_allocator());
 		assets::shutdown();
-		input::shutdown();
 		audio::shutdown();
 
 		// must shutdown the renderer before our window
@@ -1688,10 +1600,11 @@ Options:
 		main_window = 0;
 		platform::window::shutdown();
 
-		gemini::runtime_shutdown();
+#if defined(GEMINI_ENABLE_PROFILER)
+		gemini::profiler::report(profile_output);
+#endif
 
-		delete event_queue;
-		event_queue = 0;
+		gemini::runtime_shutdown();
 
 		MEMORY_DELETE(engine_interface, core::memory::global_allocator());
 		MEMORY_DELETE(scenelink, core::memory::global_allocator());

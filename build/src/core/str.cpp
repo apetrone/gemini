@@ -41,7 +41,7 @@ namespace core
 		static const int STRING_BUFFER_SIZE = 8192;
 
 		static unsigned int _current_format_buffer = 0;
-		PLATFORM_THREAD_LOCAL static char _buffers[STRING_MAX_BUFFERS][STRING_BUFFER_SIZE];
+		static PLATFORM_THREAD_LOCAL char _buffers[STRING_MAX_BUFFERS][STRING_BUFFER_SIZE];
 
 		char* format(const char* format, ...)
 		{

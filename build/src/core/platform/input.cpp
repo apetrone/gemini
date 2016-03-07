@@ -27,9 +27,11 @@
 #include <string.h>
 #include <assert.h>
 
-namespace input
+#include <platform/platform.h>
+
+namespace gemini
 {
-	void ButtonState::press_release( bool is_down )
+	void ButtonState::update_state( bool is_down )
 	{
 		if ( is_down )
 		{
@@ -52,7 +54,7 @@ namespace input
 			// set 'released' and 'impulse' flag
 			state = Button_Impulse | Button_Released;
 		}
-	} // press_release
+	} // update_state
 
 	void ButtonState::update()
 	{
@@ -95,40 +97,6 @@ namespace input
 	bool ButtonState::was_released() const
 	{
 		return (state == (Button_Impulse|Button_Released));
-	}
-
-	// prevent vtable from being emitted in every
-	// translation unit
-	InputDevice::~InputDevice()
-	{
-	}
-
-	void startup(void)
-	{
-//		_input_state.keyboard().reset();
-//		_input_state.mouse().reset();
-	}
-
-	void shutdown(void)
-	{
-
-	}
-
-	void update(void)
-	{
-//		_input_state.keyboard().update( 0 );
-//		_input_state.mouse().update( 0 );
-
-#if 0
-		for (uint8_t j = 0; j < MAX_JOYSTICKS; ++j)
-		{
-			JoystickInput& joystick = _input_state.joystick(j);
-			if (joystick.flags & JoystickInput::Connected)
-			{
-				joystick.update(0);
-			}
-		}
-#endif
 	}
 
 	const char* mouse_button_name(unsigned int value)
@@ -298,25 +266,31 @@ namespace input
 	} // key_name
 
 
-	const char* gamepad_name(unsigned int value)
+
+	const char* joystick_button_name(unsigned int value)
 	{
 		static const char* names[] = {
 			"GAMEPAD_BUTTON_INVALID",
 			"GAMEPAD_BUTTON_A",
 			"GAMEPAD_BUTTON_B",
+			"GAMEPAD_BUTTON_C",
 			"GAMEPAD_BUTTON_X",
 			"GAMEPAD_BUTTON_Y",
+			"GAMEPAD_BUTTON_Z",
 			"GAMEPAD_BUTTON_BACK",
 			"GAMEPAD_BUTTON_GUIDE",
+			"GAMEPAD_BUTTON_SELECT",
 			"GAMEPAD_BUTTON_START",
 			"GAMEPAD_BUTTON_LEFTSTICK",
 			"GAMEPAD_BUTTON_RIGHTSTICK",
 			"GAMEPAD_BUTTON_LEFTSHOULDER",
 			"GAMEPAD_BUTTON_RIGHTSHOULDER",
+			"GAMEPAD_BUTTON_L2",
+			"GAMEPAD_BUTTON_R2",
 			"GAMEPAD_BUTTON_DPAD_UP",
 			"GAMEPAD_BUTTON_DPAD_DOWN",
 			"GAMEPAD_BUTTON_DPAD_LEFT",
-			"GAMEPAD_BUTTON_DPAD_RIGHT",
+			"GAMEPAD_BUTTON_DPAD_RIGHT"
 		};
 
 		if (value < GAMEPAD_BUTTON_COUNT)
@@ -325,148 +299,5 @@ namespace input
 		}
 
 		return "GAMEPAD_BUTTON_INVALID";
-	} // gamepad_name
-
-	// ---------------------------------------------------------------------
-	// devices
-	// ---------------------------------------------------------------------
-
-
-	//
-	// KeyboardInput
-
-	void KeyboardInput::reset()
-	{
-		memset(&keys, 0, sizeof(ButtonState) * BUTTON_COUNT);
-	} // reset
-
-	void KeyboardInput::update()
-	{
-		for( unsigned int i = 0; i < BUTTON_COUNT; ++i )
-		{
-			this->keys[i].update();
-		}
-	} // update
-
-	void KeyboardInput::inject_key_event(int key, bool is_down)
-	{
-		input::Button button = (input::Button)key;
-		assert( button <= BUTTON_COUNT );
-		ButtonState* b = &this->keys[ button ];
-		b->press_release(is_down);
-	} // inject_key_event
-
-//	bool KeyboardInput::is_down(input::Button key)
-//	{
-//		ButtonState* b;
-//		assert( key < BUTTON_COUNT );
-//		b = &keys[ key ];
-//		return b->is_down();
-//	} // is_down
-//
-//	bool KeyboardInput::was_released(input::Button key )
-//	{
-//		ButtonState* b;
-//		assert( key < BUTTON_COUNT );
-//		b = &keys[ key ];
-//		return b->was_released();
-//	} // was_released
-
-	//
-	// MouseInput
-
-	void MouseInput::reset()
-	{
-		memset(&buttons, 0, sizeof(ButtonState) * MOUSE_COUNT);
-		window_coords[0] = window_coords[1] = 0;
-	} // reset
-
-	void MouseInput::update()
-	{
-		for( unsigned int i = 0; i < MOUSE_COUNT; ++i )
-		{
-			buttons[ MOUSE_LEFT+i ].update();
-		}
-	} // update
-
-
-	void MouseInput::inject_mouse_move(int absolute_x, int absolute_y)
-	{
-		window_coords[0] = absolute_x;
-		window_coords[1] = absolute_y;
-
-//		LOGV("inject move: %i %i\n", absolute_x, absolute_y);
-	} // inject_mouse_move
-
-	void MouseInput::inject_mouse_delta(int dx, int dy)
-	{
-		cursor_delta[0] += dx;
-		cursor_delta[1] += dy;
-	}
-
-	void MouseInput::inject_mouse_button(MouseButton button, bool is_down)
-	{
-		assert( button < MOUSE_COUNT && button >= 0 );
-		buttons[ button ].press_release( is_down );
-	} // inject_mouse_button
-
-	void MouseInput::inject_mouse_wheel(int direction)
-	{
-		wheel_direction = direction;
-	} // inject_mouse_wheel
-
-	bool MouseInput::is_down(MouseButton button)
-	{
-		assert( button < MOUSE_COUNT && button >= 0 );
-		return buttons[ button ].is_down();
-	} // is_down
-
-	bool MouseInput::was_released(MouseButton button)
-	{
-		assert( button < MOUSE_COUNT && button >= 0 );
-		// WAS down and NOT down now
-		return buttons[button].was_released();
-	} // was_released
-
-	void MouseInput::mouse_position(int& x, int& y)
-	{
-		x = window_coords[0];
-		y = window_coords[1];
-	} // mouse_position
-
-	void MouseInput::mouse_delta(int& dx, int& dy)
-	{
-		dx = cursor_delta[0];
-		dy = cursor_delta[1];
-	} // mouse_delta
-
-	//
-	// TouchInput
-	void TouchInput::reset()
-	{
-
-	} // reset
-
-	void TouchInput::update()
-	{
-
-	} // update
-
-
-	//
-	// JoystickInput
-	void JoystickInput::reset()
-	{
-		memset(&buttons, 0, sizeof(ButtonState) * MAX_JOYSTICK_BUTTONS);
-		memset(&axes, 0, sizeof(AxisState) * MAX_JOYSTICK_AXES);
-		flags = 0;
-	}
-
-	void JoystickInput::update()
-	{
-		for(uint8_t i = 0; i < MAX_JOYSTICK_BUTTONS; ++i)
-		{
-			buttons[ i ].update();
-		}
-	}
-} // namespace input
+	} // joystick_button_name
+} // namespace gemini

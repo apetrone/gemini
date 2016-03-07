@@ -29,6 +29,7 @@
 #include <core/array.h>
 #include <core/stackstring.h>
 
+#include <platform/input.h>
 
 #include <stdint.h>
 #include <stdio.h> // for size_t
@@ -185,6 +186,9 @@ namespace platform
 	/// @brief Shutdown low level system services. Calls core::memory::shutdown.
 	void shutdown();
 
+	/// @brief Per frame platform update
+	void update(float delta_milliseconds);
+
 	int run_application(kernel::IKernel* instance);
 	void set_mainparameters(const MainParameters& params);
 	const MainParameters& get_mainparameters();
@@ -200,6 +204,7 @@ namespace platform
 
 	struct DynamicLibrary
 	{
+		virtual ~DynamicLibrary();
 	};
 
 	typedef void* DynamicLibrarySymbol;
@@ -316,6 +321,23 @@ namespace platform
 	/// @returns A string pointing to the absolute path for content on this platform
 	/// example: On Mac/iOS/TVOS <AppBundle>/Content/Resources directory is the 'content' directory.
 	PathString fs_content_directory();
+
+	// ---------------------------------------------------------------------
+	// joystick
+	// ---------------------------------------------------------------------
+
+	// return the max number of joysticks supported on this platform
+	uint32_t joystick_max_count();
+
+	/// @brief Returns true if this joystick is physically connected.
+	bool joystick_is_connected(uint32_t index);
+
+	/// @brief Returns true if this joystick supports haptic feedback.
+	bool joystick_supports_haptics(uint32_t index);
+
+	/// @brief Set haptic force on joystick
+	/// force: 0 being off, USHRT_MAX being full.
+	void joystick_set_force(uint32_t index, uint16_t force);
 
 	// ---------------------------------------------------------------------
 	// process

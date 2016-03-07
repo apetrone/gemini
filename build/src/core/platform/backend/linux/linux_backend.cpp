@@ -99,6 +99,13 @@ namespace platform
 	{
 	}
 
+	void backend_update(float delta_milliseconds)
+	{
+		platform::window::dispatch_events();
+
+		// TODO: Poll joysticks?
+	}
+
 	Process* process_create(const char* /*executable_path*/,
 		const Array<PathString>& /*arguments*/,
 		const char* /*working_directory*/)

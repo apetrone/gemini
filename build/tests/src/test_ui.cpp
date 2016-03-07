@@ -137,7 +137,7 @@ public:
 	{
 		if (event.is_down)
 		{
-			if (event.key == input::BUTTON_ESCAPE)
+			if (event.key == gemini::BUTTON_ESCAPE)
 			{
 				kernel::instance()->set_active(false);
 			}
@@ -446,8 +446,6 @@ public:
 
 		gemini::runtime_startup("arcfusion.net/gemini/test_ui");
 
-		input::startup();
-
 		platform::window::startup(platform::window::RenderingBackend_Default);
 
 		size_t total_displays = platform::window::screen_count();
@@ -588,11 +586,7 @@ public:
 		//	kernel::instance()->set_active(false);
 		//}
 
-		// update our input
-		input::update();
-
-		// dispatch all window events
-		platform::window::dispatch_events();
+		platform::update(kernel::parameters().framedelta_milliseconds);
 
 		if (graph)
 		{
@@ -683,10 +677,11 @@ public:
 		platform::window::destroy(native_window);
 		platform::window::shutdown();
 
-		input::shutdown();
-
 		PROFILE_END("test_ui");
+
+#if defined(GEMINI_ENABLE_PROFILER)
 		gemini::profiler::report(ui_profile_output);
+#endif
 
 		gemini::runtime_shutdown();
 	}

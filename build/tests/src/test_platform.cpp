@@ -167,7 +167,7 @@ UNITTEST(system)
 // ---------------------------------------------------------------------
 void test_thread(platform::Thread* /*data*/)
 {
-	uint64_t thread_id = platform::thread_id();
+	platform::ThreadId thread_id = platform::thread_id();
 	LOGV("test_thread enter: %i\n", thread_id);
 
 	LOGV("test_thread exit\n");

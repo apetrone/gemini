@@ -182,6 +182,13 @@ namespace platform
 		}
 	}
 
+	void backend_update(float delta_milliseconds)
+	{
+		platform::window::dispatch_events();
+
+		// TODO@APP: Poll joysticks?
+	}
+
 	// ---------------------------------------------------------------------
 	// system
 	// ---------------------------------------------------------------------

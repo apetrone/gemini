@@ -32,21 +32,39 @@ namespace platform
 {
 	static unsigned int _previous_error_mode;
 
+
+	void joystick_startup();
+	void joystick_shutdown();
+	void joystick_update(float delta_milliseconds);
+
 	Result backend_startup()
 	{
 		// prevent error dialogs from hanging the process.
 		// these errors are forwarded to calling process.
 		_previous_error_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
+		joystick_startup();
+
 		return Result::success();
 	} // backend_startup
 
 	void backend_shutdown()
 	{
+		joystick_shutdown();
+
 		// restore the error mode
 		SetErrorMode(_previous_error_mode);
 	} // backend_shutdown
 
+
+	void backend_update(float delta_milliseconds)
+	{
+		// dispatch available window events
+		window::dispatch_events();
+
+		// update joysticks
+		joystick_update(delta_milliseconds);
+	} // backend_update
 
 	// system
 	size_t system_pagesize_bytes()

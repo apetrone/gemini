@@ -29,7 +29,6 @@
 #import "cocoa_window.h"
 
 #include "kernel.h"
-#include "input.h"
 
 #include <core/logging.h>
 
@@ -40,7 +39,7 @@ namespace platform
 		namespace cocoa
 		{
 			const unsigned int kMaxKeys = 132;
-			static input::Button key_map[ kMaxKeys ];
+			static gemini::Button key_map[ kMaxKeys ];
 
 			struct CocoaState
 			{
@@ -78,133 +77,133 @@ namespace platform
 
 			void populate_keymap()
 			{
-				memset(&key_map, 0, kMaxKeys * sizeof(input::Button));
+				memset(&key_map, 0, kMaxKeys * sizeof(gemini::Button));
 
 				// values taken from <HIToolbox/Events.h>
-				key_map[0x00] = input::BUTTON_A;
-				key_map[0x01] = input::BUTTON_S;
-				key_map[0x02] = input::BUTTON_D;
-				key_map[0x03] = input::BUTTON_F;
-				key_map[0x04] = input::BUTTON_H;
-				key_map[0x05] = input::BUTTON_G;
-				key_map[0x06] = input::BUTTON_Z;
-				key_map[0x07] = input::BUTTON_X;
-				key_map[0x08] = input::BUTTON_C;
-				key_map[0x09] = input::BUTTON_V;
-				key_map[0x0B] = input::BUTTON_B;
-				key_map[0x0C] = input::BUTTON_Q;
-				key_map[0x0D] = input::BUTTON_W;
-				key_map[0x0E] = input::BUTTON_E;
-				key_map[0x0F] = input::BUTTON_R;
-				key_map[0x10] = input::BUTTON_Y;
-				key_map[0x11] = input::BUTTON_T;
-				key_map[0x12] = input::BUTTON_1;
-				key_map[0x13] = input::BUTTON_2;
-				key_map[0x14] = input::BUTTON_3;
-				key_map[0x15] = input::BUTTON_4;
-				key_map[0x16] = input::BUTTON_6;
-				key_map[0x17] = input::BUTTON_5;
-				key_map[0x18] = input::BUTTON_EQUALS;
-				key_map[0x19] = input::BUTTON_9;
-				key_map[0x1A] = input::BUTTON_7;
-				key_map[0x1B] = input::BUTTON_MINUS;
-				key_map[0x1C] = input::BUTTON_8;
-				key_map[0x1D] = input::BUTTON_0;
-				key_map[0x1E] = input::BUTTON_RBRACKET;
-				key_map[0x1F] = input::BUTTON_O;
-				key_map[0x20] = input::BUTTON_U;
-				key_map[0x21] = input::BUTTON_LBRACKET;
-				key_map[0x22] = input::BUTTON_I;
-				key_map[0x23] = input::BUTTON_P;
-				key_map[0x24] = input::BUTTON_RETURN;
-				key_map[0x25] = input::BUTTON_L;
-				key_map[0x26] = input::BUTTON_J;
-				key_map[0x27] = input::BUTTON_QUOTE;
-				key_map[0x28] = input::BUTTON_K;
-				key_map[0x29] = input::BUTTON_SEMICOLON;
-				key_map[0x2A] = input::BUTTON_BACKSLASH;
-				key_map[0x2B] = input::BUTTON_COMMA;
-				key_map[0x2C] = input::BUTTON_SLASH;
-				key_map[0x2D] = input::BUTTON_N;
-				key_map[0x2E] = input::BUTTON_M;
-				key_map[0x2F] = input::BUTTON_PERIOD;
-				key_map[0x30] = input::BUTTON_TAB;
-				key_map[0x31] = input::BUTTON_SPACE;
-				key_map[0x32] = input::BUTTON_TILDE; // (GRAVE -> TILDE)
-				key_map[0x33] = input::BUTTON_DELETE;
-				key_map[0x35] = input::BUTTON_ESCAPE;
-				key_map[0x36] = input::BUTTON_ROSKEY;
-				key_map[0x37] = input::BUTTON_LOSKEY;
-				key_map[0x38] = input::BUTTON_LSHIFT;
-				key_map[0x39] = input::BUTTON_CAPSLOCK;
-				key_map[0x3A] = input::BUTTON_LALT; // (LOPTION -> LALT)
-				key_map[0x3B] = input::BUTTON_LCONTROL;
-				key_map[0x3C] = input::BUTTON_RSHIFT;
-				key_map[0x3D] = input::BUTTON_RALT; // (ROPTION -> RALT)
-				key_map[0x3E] = input::BUTTON_RCONTROL;
-				key_map[0x3F] = input::BUTTON_FUNCTION;
-				key_map[0x40] = input::BUTTON_F17;
-				key_map[0x41] = input::BUTTON_PERIOD;
-				key_map[0x43] = input::BUTTON_NUMPAD_MULTIPLY;
-				key_map[0x45] = input::BUTTON_NUMPAD_PLUS;
-				key_map[0x47] = input::BUTTON_NUMLOCK; // (CLEAR -> NUMLOCK)
-		//		key_map[0x48] = input::BUTTON_VOLUME_UP;
-		//		key_map[0x49] = input::BUTTON_VOLUME_DOWN;
-		//		key_map[0x4A] = input::BUTTON_MUTE;
-				key_map[0x4B] = input::BUTTON_NUMPAD_DIVIDE;
-				key_map[0x4C] = input::BUTTON_NUMPAD_ENTER;
-				key_map[0x4E] = input::BUTTON_NUMPAD_MINUS;
-				key_map[0x4F] = input::BUTTON_F18;
-				key_map[0x50] = input::BUTTON_F19;
-				key_map[0x51] = input::BUTTON_NUMPAD_EQUALS;
-				key_map[0x52] = input::BUTTON_NUMPAD0;
-				key_map[0x53] = input::BUTTON_NUMPAD1;
-				key_map[0x54] = input::BUTTON_NUMPAD2;
-				key_map[0x55] = input::BUTTON_NUMPAD3;
-				key_map[0x56] = input::BUTTON_NUMPAD4;
-				key_map[0x57] = input::BUTTON_NUMPAD5;
-				key_map[0x58] = input::BUTTON_NUMPAD6;
-				key_map[0x59] = input::BUTTON_NUMPAD7;
-				key_map[0x5A] = input::BUTTON_F20;
-				key_map[0x5B] = input::BUTTON_NUMPAD8;
-				key_map[0x5C] = input::BUTTON_NUMPAD9;
-				key_map[0x60] = input::BUTTON_F5;
-				key_map[0x61] = input::BUTTON_F6;
-				key_map[0x62] = input::BUTTON_F7;
-				key_map[0x63] = input::BUTTON_F3;
-				key_map[0x64] = input::BUTTON_F8;
-				key_map[0x65] = input::BUTTON_F9;
-				key_map[0x67] = input::BUTTON_F11;
-				key_map[0x69] = input::BUTTON_F13;
-				key_map[0x6A] = input::BUTTON_F16;
-				key_map[0x6B] = input::BUTTON_F14;
-				key_map[0x6D] = input::BUTTON_F10;
-				key_map[0x6E] = input::BUTTON_MENU;
-				key_map[0x6F] = input::BUTTON_F12;
-				key_map[0x71] = input::BUTTON_F15;
-				key_map[0x72] = input::BUTTON_INSERT;
-				key_map[0x73] = input::BUTTON_HOME;
-				key_map[0x74] = input::BUTTON_PAGEUP;
-				key_map[0x75] = input::BUTTON_DELETE;
-				key_map[0x76] = input::BUTTON_F4;
-				key_map[0x77] = input::BUTTON_END;
-				key_map[0x78] = input::BUTTON_F2;
-				key_map[0x79] = input::BUTTON_PAGEDN;
-				key_map[0x7A] = input::BUTTON_F1;
-				key_map[0x7B] = input::BUTTON_LEFT;
-				key_map[0x7C] = input::BUTTON_RIGHT;
-				key_map[0x7D] = input::BUTTON_DOWN;
-				key_map[0x7E] = input::BUTTON_UP;
+				key_map[0x00] = gemini::BUTTON_A;
+				key_map[0x01] = gemini::BUTTON_S;
+				key_map[0x02] = gemini::BUTTON_D;
+				key_map[0x03] = gemini::BUTTON_F;
+				key_map[0x04] = gemini::BUTTON_H;
+				key_map[0x05] = gemini::BUTTON_G;
+				key_map[0x06] = gemini::BUTTON_Z;
+				key_map[0x07] = gemini::BUTTON_X;
+				key_map[0x08] = gemini::BUTTON_C;
+				key_map[0x09] = gemini::BUTTON_V;
+				key_map[0x0B] = gemini::BUTTON_B;
+				key_map[0x0C] = gemini::BUTTON_Q;
+				key_map[0x0D] = gemini::BUTTON_W;
+				key_map[0x0E] = gemini::BUTTON_E;
+				key_map[0x0F] = gemini::BUTTON_R;
+				key_map[0x10] = gemini::BUTTON_Y;
+				key_map[0x11] = gemini::BUTTON_T;
+				key_map[0x12] = gemini::BUTTON_1;
+				key_map[0x13] = gemini::BUTTON_2;
+				key_map[0x14] = gemini::BUTTON_3;
+				key_map[0x15] = gemini::BUTTON_4;
+				key_map[0x16] = gemini::BUTTON_6;
+				key_map[0x17] = gemini::BUTTON_5;
+				key_map[0x18] = gemini::BUTTON_EQUALS;
+				key_map[0x19] = gemini::BUTTON_9;
+				key_map[0x1A] = gemini::BUTTON_7;
+				key_map[0x1B] = gemini::BUTTON_MINUS;
+				key_map[0x1C] = gemini::BUTTON_8;
+				key_map[0x1D] = gemini::BUTTON_0;
+				key_map[0x1E] = gemini::BUTTON_RBRACKET;
+				key_map[0x1F] = gemini::BUTTON_O;
+				key_map[0x20] = gemini::BUTTON_U;
+				key_map[0x21] = gemini::BUTTON_LBRACKET;
+				key_map[0x22] = gemini::BUTTON_I;
+				key_map[0x23] = gemini::BUTTON_P;
+				key_map[0x24] = gemini::BUTTON_RETURN;
+				key_map[0x25] = gemini::BUTTON_L;
+				key_map[0x26] = gemini::BUTTON_J;
+				key_map[0x27] = gemini::BUTTON_QUOTE;
+				key_map[0x28] = gemini::BUTTON_K;
+				key_map[0x29] = gemini::BUTTON_SEMICOLON;
+				key_map[0x2A] = gemini::BUTTON_BACKSLASH;
+				key_map[0x2B] = gemini::BUTTON_COMMA;
+				key_map[0x2C] = gemini::BUTTON_SLASH;
+				key_map[0x2D] = gemini::BUTTON_N;
+				key_map[0x2E] = gemini::BUTTON_M;
+				key_map[0x2F] = gemini::BUTTON_PERIOD;
+				key_map[0x30] = gemini::BUTTON_TAB;
+				key_map[0x31] = gemini::BUTTON_SPACE;
+				key_map[0x32] = gemini::BUTTON_TILDE; // (GRAVE -> TILDE)
+				key_map[0x33] = gemini::BUTTON_DELETE;
+				key_map[0x35] = gemini::BUTTON_ESCAPE;
+				key_map[0x36] = gemini::BUTTON_ROSKEY;
+				key_map[0x37] = gemini::BUTTON_LOSKEY;
+				key_map[0x38] = gemini::BUTTON_LSHIFT;
+				key_map[0x39] = gemini::BUTTON_CAPSLOCK;
+				key_map[0x3A] = gemini::BUTTON_LALT; // (LOPTION -> LALT)
+				key_map[0x3B] = gemini::BUTTON_LCONTROL;
+				key_map[0x3C] = gemini::BUTTON_RSHIFT;
+				key_map[0x3D] = gemini::BUTTON_RALT; // (ROPTION -> RALT)
+				key_map[0x3E] = gemini::BUTTON_RCONTROL;
+				key_map[0x3F] = gemini::BUTTON_FUNCTION;
+				key_map[0x40] = gemini::BUTTON_F17;
+				key_map[0x41] = gemini::BUTTON_PERIOD;
+				key_map[0x43] = gemini::BUTTON_NUMPAD_MULTIPLY;
+				key_map[0x45] = gemini::BUTTON_NUMPAD_PLUS;
+				key_map[0x47] = gemini::BUTTON_NUMLOCK; // (CLEAR -> NUMLOCK)
+		//		key_map[0x48] = gemini::BUTTON_VOLUME_UP;
+		//		key_map[0x49] = gemini::BUTTON_VOLUME_DOWN;
+		//		key_map[0x4A] = gemini::BUTTON_MUTE;
+				key_map[0x4B] = gemini::BUTTON_NUMPAD_DIVIDE;
+				key_map[0x4C] = gemini::BUTTON_NUMPAD_ENTER;
+				key_map[0x4E] = gemini::BUTTON_NUMPAD_MINUS;
+				key_map[0x4F] = gemini::BUTTON_F18;
+				key_map[0x50] = gemini::BUTTON_F19;
+				key_map[0x51] = gemini::BUTTON_NUMPAD_EQUALS;
+				key_map[0x52] = gemini::BUTTON_NUMPAD0;
+				key_map[0x53] = gemini::BUTTON_NUMPAD1;
+				key_map[0x54] = gemini::BUTTON_NUMPAD2;
+				key_map[0x55] = gemini::BUTTON_NUMPAD3;
+				key_map[0x56] = gemini::BUTTON_NUMPAD4;
+				key_map[0x57] = gemini::BUTTON_NUMPAD5;
+				key_map[0x58] = gemini::BUTTON_NUMPAD6;
+				key_map[0x59] = gemini::BUTTON_NUMPAD7;
+				key_map[0x5A] = gemini::BUTTON_F20;
+				key_map[0x5B] = gemini::BUTTON_NUMPAD8;
+				key_map[0x5C] = gemini::BUTTON_NUMPAD9;
+				key_map[0x60] = gemini::BUTTON_F5;
+				key_map[0x61] = gemini::BUTTON_F6;
+				key_map[0x62] = gemini::BUTTON_F7;
+				key_map[0x63] = gemini::BUTTON_F3;
+				key_map[0x64] = gemini::BUTTON_F8;
+				key_map[0x65] = gemini::BUTTON_F9;
+				key_map[0x67] = gemini::BUTTON_F11;
+				key_map[0x69] = gemini::BUTTON_F13;
+				key_map[0x6A] = gemini::BUTTON_F16;
+				key_map[0x6B] = gemini::BUTTON_F14;
+				key_map[0x6D] = gemini::BUTTON_F10;
+				key_map[0x6E] = gemini::BUTTON_MENU;
+				key_map[0x6F] = gemini::BUTTON_F12;
+				key_map[0x71] = gemini::BUTTON_F15;
+				key_map[0x72] = gemini::BUTTON_INSERT;
+				key_map[0x73] = gemini::BUTTON_HOME;
+				key_map[0x74] = gemini::BUTTON_PAGEUP;
+				key_map[0x75] = gemini::BUTTON_DELETE;
+				key_map[0x76] = gemini::BUTTON_F4;
+				key_map[0x77] = gemini::BUTTON_END;
+				key_map[0x78] = gemini::BUTTON_F2;
+				key_map[0x79] = gemini::BUTTON_PAGEDN;
+				key_map[0x7A] = gemini::BUTTON_F1;
+				key_map[0x7B] = gemini::BUTTON_LEFT;
+				key_map[0x7C] = gemini::BUTTON_RIGHT;
+				key_map[0x7D] = gemini::BUTTON_DOWN;
+				key_map[0x7E] = gemini::BUTTON_UP;
 			}
 
-			input::Button convert_keycode(unsigned short keycode)
+			gemini::Button convert_keycode(unsigned short keycode)
 			{
-				input::Button button = key_map[keycode];
+				gemini::Button button = key_map[keycode];
 
 				if (button == 0)
 				{
 					LOGV("UNKNOWN KEYCODE: %i\n", keycode);
-					return input::Button::BUTTON_INVALID;
+					return gemini::Button::BUTTON_INVALID;
 				}
 
 				return button;
@@ -468,26 +467,26 @@ namespace platform
 						}
 					}
 					case NSLeftMouseDown:
-						ev.button = input::MOUSE_LEFT;
+						ev.button = gemini::MOUSE_LEFT;
 						ev.is_down = true;
 						break;
 					case NSRightMouseDown:
-						ev.button = input::MOUSE_RIGHT;
+						ev.button = gemini::MOUSE_RIGHT;
 						ev.is_down = true;
 						break;
 					case NSOtherMouseDown:
-						ev.button = input::MOUSE_MIDDLE;
+						ev.button = gemini::MOUSE_MIDDLE;
 						ev.is_down = true;
 						break;
 
 					case NSLeftMouseUp:
-						ev.button = input::MOUSE_LEFT;
+						ev.button = gemini::MOUSE_LEFT;
 						break;
 					case NSRightMouseUp:
-						ev.button = input::MOUSE_RIGHT;
+						ev.button = gemini::MOUSE_RIGHT;
 						break;
 					case NSOtherMouseUp:
-						ev.button = input::MOUSE_MIDDLE;
+						ev.button = gemini::MOUSE_MIDDLE;
 						break;
 
 					case NSScrollWheel:
@@ -518,29 +517,29 @@ namespace platform
 
 				if (modifier_flags & NX_DEVICELCTLKEYMASK)
 				{
-					keymods |= input::MOD_LEFT_CONTROL;
+					keymods |= gemini::MOD_LEFT_CONTROL;
 				}
 				if (modifier_flags & NX_DEVICERCTLKEYMASK)
 				{
-					keymods |= input::MOD_RIGHT_CONTROL;
+					keymods |= gemini::MOD_RIGHT_CONTROL;
 				}
 
 				if (modifier_flags & NX_DEVICELSHIFTKEYMASK)
 				{
-					keymods |= input::MOD_LEFT_SHIFT;
+					keymods |= gemini::MOD_LEFT_SHIFT;
 				}
 				if (modifier_flags & NX_DEVICERSHIFTKEYMASK)
 				{
-					keymods |= input::MOD_RIGHT_SHIFT;
+					keymods |= gemini::MOD_RIGHT_SHIFT;
 				}
 
 				if (modifier_flags & NX_DEVICELALTKEYMASK)
 				{
-					keymods |= input::MOD_LEFT_ALT;
+					keymods |= gemini::MOD_LEFT_ALT;
 				}
 				if (modifier_flags & NX_DEVICERALTKEYMASK)
 				{
-					keymods |= input::MOD_RIGHT_ALT;
+					keymods |= gemini::MOD_RIGHT_ALT;
 				}
 
 				return keymods;

@@ -139,11 +139,11 @@ public:
 	{
 		if (event.is_down)
 		{
-			if (event.key == input::BUTTON_ESCAPE)
+			if (event.key == gemini::BUTTON_ESCAPE)
 			{
 				kernel::instance()->set_active(false);
 			}
-			else if (event.key == input::BUTTON_SPACE)
+			else if (event.key == gemini::BUTTON_SPACE)
 			{
 				platform::window::set_cursor(center.x, center.y);
 			}
@@ -256,8 +256,6 @@ public:
 		gemini::runtime_startup("arcfusion.net/gemini/test_render");
 //		platform::PathString temp_path = platform::get_user_temp_directory(); // adding this line breaks Android. Yes, you read that correctly.
 //		LOGV("temp_path: %s\n", temp_path());
-
-		input::startup();
 
 		platform::window::startup(platform::window::RenderingBackend_Default);
 
@@ -560,6 +558,8 @@ public:
 		update();
 		countdown -= kernel::parameters().step_interval_seconds;
 
+		platform::update(kernel::parameters().framedelta_milliseconds);
+
 		if (countdown <= 0)
 		{
 			++test_state;
@@ -568,12 +568,6 @@ public:
 				kernel::instance()->set_active(false);
 			}
 		}
-
-		// update our input
-		input::update();
-
-		// dispatch all window events
-		platform::window::dispatch_events();
 
 		test_state_callback render_callback = nullptr;
 		if (!render_callbacks.empty() && test_state < render_callbacks.size())
@@ -618,8 +612,6 @@ public:
 			platform::window::destroy(state.other_window);
 		}
 		platform::window::shutdown();
-
-		input::shutdown();
 
 		gemini::runtime_shutdown();
 	}

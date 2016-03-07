@@ -180,16 +180,15 @@ namespace kernel
 	struct GameControllerEvent : public Event<GameController>
 	{
 		int button;
-		int16_t joystick_value;
 		uint8_t gamepad_id;
-		uint8_t joystick_id;
+		uint8_t axis_id;
+		int16_t axis_value;
 		bool is_down;
-
 
 		float normalized_value() const;
 	}; // GameControllerEvent
 
-	void assign_listener_for_eventtype(kernel::EventType type, void * listener);
+	void assign_listener_for_eventtype(kernel::EventType type, void* listener);
 	void* find_listener_for_eventtype(kernel::EventType type);
 
 	//

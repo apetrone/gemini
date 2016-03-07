@@ -33,7 +33,7 @@
 // referenced from different compilation units. I should verify this.
 
 // enable this to allow profiling
-#define GEMINI_ENABLE_PROFILER
+//#define GEMINI_ENABLE_PROFILER
 
 namespace gemini
 {

@@ -32,7 +32,7 @@ namespace kernel
 {
 	float GameControllerEvent::normalized_value() const
 	{
-		return (joystick_value/(float)SHRT_MAX);
+		return (axis_value/(float)SHRT_MAX);
 	}
 
 	namespace detail

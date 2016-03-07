@@ -35,6 +35,8 @@
 
 #include <windowsx.h> // GET_X_LPARAM, GET_Y_LPARAM
 
+using namespace gemini;
+
 namespace platform
 {
 	namespace window
@@ -90,7 +92,7 @@ namespace platform
 				return TRUE;
 			}
 
-			void handle_mouse_button(bool is_down, int mx, int my, NativeWindow* window, input::MouseButton mouse_button)
+			void handle_mouse_button(bool is_down, int mx, int my, NativeWindow* window, MouseButton mouse_button)
 			{
 				kernel::MouseEvent mevent;
 				mevent.mx = mx;
@@ -110,9 +112,7 @@ namespace platform
 			{
 				// https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
 
-				using namespace input;
-
-				// map windows virtual keys to input::Button
+				// map windows virtual keys to gemini::Button
 				const Button keymap[] = {
 					Button::BUTTON_INVALID,
 					Button::BUTTON_INVALID, // VK_LBUTTON
@@ -293,7 +293,7 @@ namespace platform
 					// All keys below are OEM reserved keys.
 				};
 
-				const size_t max_keys = sizeof(keymap) / sizeof(input::Button);
+				const size_t max_keys = sizeof(keymap) / sizeof(Button);
 
 				// keymap is missing something
 				if (wparam < max_keys)
@@ -338,25 +338,74 @@ namespace platform
 				}
 			}
 
+			const gemini::MouseButton xmouse[] = {
+				gemini::MouseButton::MOUSE_INVALID,
+				gemini::MouseButton::MOUSE_MOUSE5,
+				gemini::MouseButton::MOUSE_MOUSE4
+			};
+
 			LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 			{
 				// fetch our window pointer from hwnd
 				win32::Window* window = reinterpret_cast<win32::Window*>(GetWindowLongPtrA(hwnd, GWLP_USERDATA));
 				if (window)
 				{
-					const input::MouseButton xmouse[] = {
-						input::MouseButton::MOUSE_INVALID,
-						input::MouseButton::MOUSE_MOUSE5,
-						input::MouseButton::MOUSE_MOUSE4
-					};
-
 					const int32_t prev_mouse[2] = { last_mousex, last_mousey };
 
 					switch (message)
 					{
-						// handle mouse events
+					case WM_INPUT:
+					{
+						// handle raw input
+						UINT size = 0;
+						BYTE data[48];
+
+						UINT raw_result = GetRawInputData(reinterpret_cast<HRAWINPUT>(lparam),
+							RID_INPUT,
+							NULL,
+							&size,
+							sizeof(RAWINPUTHEADER)
+						);
+						assert(raw_result != static_cast<UINT>(-1));
+						assert(size <= 48);
+
+						raw_result = GetRawInputData(reinterpret_cast<HRAWINPUT>(lparam),
+							RID_INPUT,
+							data,
+							&size,
+							sizeof(RAWINPUTHEADER)
+						);
+						assert(raw_result == size);
+
+						RAWINPUT* raw = reinterpret_cast<RAWINPUT*>(data);
+						if (raw->header.dwType == RIM_TYPEMOUSE)
+						{
+							int relx = raw->data.mouse.lLastX;
+							int rely = raw->data.mouse.lLastY;
+							//LOGV("%i, %i %i\n", raw->data.mouse.usFlags, relx, rely);
+
+							last_mousex += relx;
+							last_mousey += rely;
+
+							kernel::MouseEvent mevent;
+							mevent.mx = last_mousex;
+							mevent.my = last_mousey;
+							mevent.dx = relx;
+							mevent.dy = rely;
+							mevent.wheel_direction = 0;
+							mevent.window = window;
+							mevent.subtype = kernel::MouseDelta;
+
+							kernel::event_dispatch(mevent);
+							return 0;
+						}
+
+						break;
+					}
+
 					case WM_MOUSEMOVE:
 					{
+						// handle mouse events
 						if (disable_next_mouse_event)
 						{
 							disable_next_mouse_event = 0;
@@ -404,11 +453,11 @@ namespace platform
 					}
 
 					case WM_LBUTTONDBLCLK:
-					case WM_LBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_LEFT); break;
+					case WM_LBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, gemini::MouseButton::MOUSE_LEFT); break;
 					case WM_RBUTTONDBLCLK:
-					case WM_RBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_RIGHT); break;
+					case WM_RBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, gemini::MouseButton::MOUSE_RIGHT); break;
 					case WM_MBUTTONDBLCLK:
-					case WM_MBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_MIDDLE); break;
+					case WM_MBUTTONDOWN: handle_mouse_button(true, LOWORD(lparam), HIWORD(lparam), window, gemini::MouseButton::MOUSE_MIDDLE); break;
 					case WM_XBUTTONDBLCLK:
 					case WM_XBUTTONDOWN:
 					{
@@ -419,9 +468,9 @@ namespace platform
 						break;
 					}
 
-					case WM_LBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_LEFT); break;
-					case WM_RBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_RIGHT); break;
-					case WM_MBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, input::MouseButton::MOUSE_MIDDLE); break;
+					case WM_LBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, gemini::MouseButton::MOUSE_LEFT); break;
+					case WM_RBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, gemini::MouseButton::MOUSE_RIGHT); break;
+					case WM_MBUTTONUP: handle_mouse_button(false, LOWORD(lparam), HIWORD(lparam), window, gemini::MouseButton::MOUSE_MIDDLE); break;
 					case WM_XBUTTONUP:
 					{
 						const WORD button_index = HIWORD(wparam);
@@ -551,6 +600,84 @@ namespace platform
 		Result Win32WindowProvider::startup()
 		{
 			is_in_relative_mode = false;
+
+
+			// register for raw input
+			// keyboard: usagepage = 1, usage = 6
+
+
+			RAWINPUTDEVICELIST* device_list = nullptr;
+			UINT total_devices;
+			// query total devices
+			UINT result = GetRawInputDeviceList(NULL,
+				&total_devices,
+				sizeof(RAWINPUTDEVICELIST)
+			);
+
+			assert(result != static_cast<UINT>(-1));
+
+			device_list = reinterpret_cast<RAWINPUTDEVICELIST*>(
+				MEMORY_ALLOC(sizeof(RAWINPUTDEVICELIST) * total_devices,
+					core::memory::global_allocator())
+			);
+
+			// retrieve the full array of devices
+			result = GetRawInputDeviceList(device_list,
+				&total_devices,
+				sizeof(RAWINPUTDEVICELIST)
+			);
+
+			assert(result == total_devices);
+
+
+			// iterate over the list
+			for (UINT index = 0; index < total_devices; ++index)
+			{
+				HANDLE device = device_list[index].hDevice;
+				DWORD type = device_list[index].dwType;
+				if (type == RIM_TYPEKEYBOARD)
+				{
+					LOGV("found keyboard\n");
+				}
+				else if (type == RIM_TYPEMOUSE)
+				{
+					LOGV("found mouse\n");
+				}
+				else
+				{
+					LOGV("found HID device\n");
+				}
+
+
+				// get device name
+				char* buffer = nullptr;
+				UINT buffer_size = 0;
+				UINT info_result = GetRawInputDeviceInfoA(device,
+					RIDI_DEVICENAME,
+					NULL,
+					&buffer_size
+				);
+
+				assert(buffer_size > 0);
+
+				buffer = reinterpret_cast<char*>(
+					MEMORY_ALLOC(buffer_size, core::memory::global_allocator())
+				);
+
+				info_result = GetRawInputDeviceInfoA(device,
+					RIDI_DEVICENAME,
+					buffer,
+					&buffer_size
+				);
+
+				assert(info_result > 0);
+				LOGV("device_name: %s\n", buffer);
+
+				MEMORY_DEALLOC(buffer, core::memory::global_allocator());
+			}
+
+			MEMORY_DEALLOC(device_list, core::memory::global_allocator());
+
 			return Result::success();
 		}
 
@@ -909,8 +1036,21 @@ namespace platform
 		{
 			_window_provider->set_relative_mode(enable);
 
+			RAWINPUTDEVICE rid[1];
+
+			// register mice for raw input
+			rid[0].usUsagePage = 1;
+			rid[0].usUsage = 2;
+			rid[0].dwFlags = RIDEV_NOLEGACY /*| RIDEV_INPUTSINK*/;
+			rid[0].hwndTarget = 0;
+
 			if (enable)
 			{
+				//if (RegisterRawInputDevices(rid, 1, sizeof(RAWINPUTDEVICE)) == FALSE)
+				//{
+				//	LOGE("Failed to register RawInput devices. %i\n", GetLastError());
+				//}
+
 				assert(window);
 
 				HWND hwnd = reinterpret_cast<HWND>(window->get_native_handle());
@@ -941,6 +1081,10 @@ namespace platform
 			{
 				// restore the default clip rect
 				ClipCursor(&default_clip_rect);
+
+				//// unregister raw input for mouse
+				//rid[0].dwFlags = RIDEV_REMOVE;
+				//RegisterRawInputDevices(rid, 1, sizeof(RAWINPUTDEVICE));
 			}
 		}
 

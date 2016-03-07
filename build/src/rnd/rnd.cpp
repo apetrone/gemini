@@ -206,7 +206,7 @@ namespace test
 	{
 	}
 
-	const size_t DEVICE_BUFFER_SIZE = sizeof(struct input_event) * 2;
+	const size_t DEVICE_BUFFER_SIZE = sizeof(struct input_event) * 64;
 	template <DeviceType T>
 	class InputDeviceBase : public InputDevice
 	{
@@ -275,127 +275,127 @@ namespace test
 			using namespace platform;
 			memset(keymap, 0, MAX_KEYBOARD_KEYS);
 
-			keymap[KEY_ESC] = input::BUTTON_ESCAPE;
+			keymap[KEY_ESC] = gemini::BUTTON_ESCAPE;
 
-			keymap[KEY_1] = input::BUTTON_1;
-			keymap[KEY_2] = input::BUTTON_2;
-			keymap[KEY_3] = input::BUTTON_3;
-			keymap[KEY_4] = input::BUTTON_4;
-			keymap[KEY_5] = input::BUTTON_5;
-			keymap[KEY_6] = input::BUTTON_6;
-			keymap[KEY_7] = input::BUTTON_7;
-			keymap[KEY_8] = input::BUTTON_8;
-			keymap[KEY_9] = input::BUTTON_9;
-			keymap[KEY_0] = input::BUTTON_0;
-			keymap[KEY_MINUS] = input::BUTTON_MINUS;
-			keymap[KEY_EQUAL] = input::BUTTON_EQUALS;
-			keymap[KEY_BACKSPACE] = input::BUTTON_BACKSPACE;
-			keymap[KEY_TAB] = input::BUTTON_TAB;
-			keymap[KEY_Q] = input::BUTTON_Q;
-			keymap[KEY_W] = input::BUTTON_W;
-			keymap[KEY_E] = input::BUTTON_E;
-			keymap[KEY_R] = input::BUTTON_R;
-			keymap[KEY_T] = input::BUTTON_T;
-			keymap[KEY_Y] = input::BUTTON_Y;
-			keymap[KEY_U] = input::BUTTON_U;
-			keymap[KEY_I] = input::BUTTON_I;
-			keymap[KEY_O] = input::BUTTON_O;
-			keymap[KEY_P] = input::BUTTON_P;
-			keymap[KEY_LEFTBRACE] = input::BUTTON_LBRACKET;
-			keymap[KEY_RIGHTBRACE] = input::BUTTON_RBRACKET;
-			keymap[KEY_ENTER] = input::BUTTON_RETURN;
-			keymap[KEY_LEFTCTRL] = input::BUTTON_LCONTROL;
-			keymap[KEY_A] = input::BUTTON_A;
-			keymap[KEY_S] = input::BUTTON_S;
-			keymap[KEY_D] = input::BUTTON_D;
-			keymap[KEY_F] = input::BUTTON_F;
-			keymap[KEY_G] = input::BUTTON_G;
-			keymap[KEY_H] = input::BUTTON_H;
-			keymap[KEY_J] = input::BUTTON_J;
-			keymap[KEY_K] = input::BUTTON_K;
-			keymap[KEY_L] = input::BUTTON_L;
-			keymap[KEY_SEMICOLON] = input::BUTTON_SEMICOLON;
-			keymap[KEY_APOSTROPHE] = input::BUTTON_TILDE;
-			keymap[KEY_GRAVE] = input::BUTTON_INVALID;
-			keymap[KEY_LEFTSHIFT] = input::BUTTON_LSHIFT;
-			keymap[KEY_BACKSLASH] = input::BUTTON_RSHIFT;
-			keymap[KEY_Z] = input::BUTTON_Z;
-			keymap[KEY_X] = input::BUTTON_X;
-			keymap[KEY_C] = input::BUTTON_C;
-			keymap[KEY_V] = input::BUTTON_V;
-			keymap[KEY_B] = input::BUTTON_B;
-			keymap[KEY_N] = input::BUTTON_N;
-			keymap[KEY_M] = input::BUTTON_M;
-			keymap[KEY_COMMA] = input::BUTTON_COMMA;
-			keymap[KEY_DOT] = input::BUTTON_PERIOD;
-			keymap[KEY_SLASH] = input::BUTTON_SLASH;
-			keymap[KEY_RIGHTSHIFT] = input::BUTTON_RSHIFT;
-			keymap[KEY_KPASTERISK] = input::BUTTON_NUMPAD_MULTIPLY;
-			keymap[KEY_LEFTALT] = input::BUTTON_LALT;
-			keymap[KEY_SPACE] = input::BUTTON_SPACE;
-			keymap[KEY_CAPSLOCK] = input::BUTTON_CAPSLOCK;
-			keymap[KEY_F1] = input::BUTTON_F1;
-			keymap[KEY_F2] = input::BUTTON_F2;
-			keymap[KEY_F3] = input::BUTTON_F3;
-			keymap[KEY_F4] = input::BUTTON_F4;
-			keymap[KEY_F5] = input::BUTTON_F5;
-			keymap[KEY_F6] = input::BUTTON_F6;
-			keymap[KEY_F7] = input::BUTTON_F7;
-			keymap[KEY_F8] = input::BUTTON_F8;
-			keymap[KEY_F9] = input::BUTTON_F9;
-			keymap[KEY_F10] = input::BUTTON_F10;
-			keymap[KEY_NUMLOCK] = input::BUTTON_NUMLOCK;
-			keymap[KEY_SCROLLLOCK] = input::BUTTON_SCROLLLOCK;
-			keymap[KEY_KP7] = input::BUTTON_NUMPAD7;
-			keymap[KEY_KP8] = input::BUTTON_NUMPAD8;
-			keymap[KEY_KP9] = input::BUTTON_NUMPAD9;
-			keymap[KEY_KPMINUS] = input::BUTTON_NUMPAD_MINUS;
-			keymap[KEY_KP4] = input::BUTTON_NUMPAD4;
-			keymap[KEY_KP5] = input::BUTTON_NUMPAD5;
-			keymap[KEY_KP6] = input::BUTTON_NUMPAD6;
-			keymap[KEY_KPPLUS] = input::BUTTON_NUMPAD_PLUS;
-			keymap[KEY_KP1] = input::BUTTON_NUMPAD1;
-			keymap[KEY_KP2] = input::BUTTON_NUMPAD2;
-			keymap[KEY_KP3] = input::BUTTON_NUMPAD3;
-			keymap[KEY_KP0] = input::BUTTON_NUMPAD0;
-			keymap[KEY_KPDOT] = input::BUTTON_NUMPAD_PERIOD;
+			keymap[KEY_1] = gemini::BUTTON_1;
+			keymap[KEY_2] = gemini::BUTTON_2;
+			keymap[KEY_3] = gemini::BUTTON_3;
+			keymap[KEY_4] = gemini::BUTTON_4;
+			keymap[KEY_5] = gemini::BUTTON_5;
+			keymap[KEY_6] = gemini::BUTTON_6;
+			keymap[KEY_7] = gemini::BUTTON_7;
+			keymap[KEY_8] = gemini::BUTTON_8;
+			keymap[KEY_9] = gemini::BUTTON_9;
+			keymap[KEY_0] = gemini::BUTTON_0;
+			keymap[KEY_MINUS] = gemini::BUTTON_MINUS;
+			keymap[KEY_EQUAL] = gemini::BUTTON_EQUALS;
+			keymap[KEY_BACKSPACE] = gemini::BUTTON_BACKSPACE;
+			keymap[KEY_TAB] = gemini::BUTTON_TAB;
+			keymap[KEY_Q] = gemini::BUTTON_Q;
+			keymap[KEY_W] = gemini::BUTTON_W;
+			keymap[KEY_E] = gemini::BUTTON_E;
+			keymap[KEY_R] = gemini::BUTTON_R;
+			keymap[KEY_T] = gemini::BUTTON_T;
+			keymap[KEY_Y] = gemini::BUTTON_Y;
+			keymap[KEY_U] = gemini::BUTTON_U;
+			keymap[KEY_I] = gemini::BUTTON_I;
+			keymap[KEY_O] = gemini::BUTTON_O;
+			keymap[KEY_P] = gemini::BUTTON_P;
+			keymap[KEY_LEFTBRACE] = gemini::BUTTON_LBRACKET;
+			keymap[KEY_RIGHTBRACE] = gemini::BUTTON_RBRACKET;
+			keymap[KEY_ENTER] = gemini::BUTTON_RETURN;
+			keymap[KEY_LEFTCTRL] = gemini::BUTTON_LCONTROL;
+			keymap[KEY_A] = gemini::BUTTON_A;
+			keymap[KEY_S] = gemini::BUTTON_S;
+			keymap[KEY_D] = gemini::BUTTON_D;
+			keymap[KEY_F] = gemini::BUTTON_F;
+			keymap[KEY_G] = gemini::BUTTON_G;
+			keymap[KEY_H] = gemini::BUTTON_H;
+			keymap[KEY_J] = gemini::BUTTON_J;
+			keymap[KEY_K] = gemini::BUTTON_K;
+			keymap[KEY_L] = gemini::BUTTON_L;
+			keymap[KEY_SEMICOLON] = gemini::BUTTON_SEMICOLON;
+			keymap[KEY_APOSTROPHE] = gemini::BUTTON_TILDE;
+			keymap[KEY_GRAVE] = gemini::BUTTON_INVALID;
+			keymap[KEY_LEFTSHIFT] = gemini::BUTTON_LSHIFT;
+			keymap[KEY_BACKSLASH] = gemini::BUTTON_RSHIFT;
+			keymap[KEY_Z] = gemini::BUTTON_Z;
+			keymap[KEY_X] = gemini::BUTTON_X;
+			keymap[KEY_C] = gemini::BUTTON_C;
+			keymap[KEY_V] = gemini::BUTTON_V;
+			keymap[KEY_B] = gemini::BUTTON_B;
+			keymap[KEY_N] = gemini::BUTTON_N;
+			keymap[KEY_M] = gemini::BUTTON_M;
+			keymap[KEY_COMMA] = gemini::BUTTON_COMMA;
+			keymap[KEY_DOT] = gemini::BUTTON_PERIOD;
+			keymap[KEY_SLASH] = gemini::BUTTON_SLASH;
+			keymap[KEY_RIGHTSHIFT] = gemini::BUTTON_RSHIFT;
+			keymap[KEY_KPASTERISK] = gemini::BUTTON_NUMPAD_MULTIPLY;
+			keymap[KEY_LEFTALT] = gemini::BUTTON_LALT;
+			keymap[KEY_SPACE] = gemini::BUTTON_SPACE;
+			keymap[KEY_CAPSLOCK] = gemini::BUTTON_CAPSLOCK;
+			keymap[KEY_F1] = gemini::BUTTON_F1;
+			keymap[KEY_F2] = gemini::BUTTON_F2;
+			keymap[KEY_F3] = gemini::BUTTON_F3;
+			keymap[KEY_F4] = gemini::BUTTON_F4;
+			keymap[KEY_F5] = gemini::BUTTON_F5;
+			keymap[KEY_F6] = gemini::BUTTON_F6;
+			keymap[KEY_F7] = gemini::BUTTON_F7;
+			keymap[KEY_F8] = gemini::BUTTON_F8;
+			keymap[KEY_F9] = gemini::BUTTON_F9;
+			keymap[KEY_F10] = gemini::BUTTON_F10;
+			keymap[KEY_NUMLOCK] = gemini::BUTTON_NUMLOCK;
+			keymap[KEY_SCROLLLOCK] = gemini::BUTTON_SCROLLLOCK;
+			keymap[KEY_KP7] = gemini::BUTTON_NUMPAD7;
+			keymap[KEY_KP8] = gemini::BUTTON_NUMPAD8;
+			keymap[KEY_KP9] = gemini::BUTTON_NUMPAD9;
+			keymap[KEY_KPMINUS] = gemini::BUTTON_NUMPAD_MINUS;
+			keymap[KEY_KP4] = gemini::BUTTON_NUMPAD4;
+			keymap[KEY_KP5] = gemini::BUTTON_NUMPAD5;
+			keymap[KEY_KP6] = gemini::BUTTON_NUMPAD6;
+			keymap[KEY_KPPLUS] = gemini::BUTTON_NUMPAD_PLUS;
+			keymap[KEY_KP1] = gemini::BUTTON_NUMPAD1;
+			keymap[KEY_KP2] = gemini::BUTTON_NUMPAD2;
+			keymap[KEY_KP3] = gemini::BUTTON_NUMPAD3;
+			keymap[KEY_KP0] = gemini::BUTTON_NUMPAD0;
+			keymap[KEY_KPDOT] = gemini::BUTTON_NUMPAD_PERIOD;
 
-			keymap[KEY_ZENKAKUHANKAKU] = input::BUTTON_INVALID;
+			keymap[KEY_ZENKAKUHANKAKU] = gemini::BUTTON_INVALID;
 			keymap[KEY_102ND] = -1;
-			keymap[KEY_F11] = input::BUTTON_F11;
-			keymap[KEY_F12] = input::BUTTON_F12;
+			keymap[KEY_F11] = gemini::BUTTON_F11;
+			keymap[KEY_F12] = gemini::BUTTON_F12;
 
-			keymap[KEY_KPENTER] = input::BUTTON_NUMPAD_ENTER;
-			keymap[KEY_RIGHTCTRL] = input::BUTTON_RCONTROL;
-			keymap[KEY_KPSLASH] = input::BUTTON_NUMPAD_DIVIDE;
-			keymap[KEY_RIGHTALT] = input::BUTTON_RALT;
+			keymap[KEY_KPENTER] = gemini::BUTTON_NUMPAD_ENTER;
+			keymap[KEY_RIGHTCTRL] = gemini::BUTTON_RCONTROL;
+			keymap[KEY_KPSLASH] = gemini::BUTTON_NUMPAD_DIVIDE;
+			keymap[KEY_RIGHTALT] = gemini::BUTTON_RALT;
 
-			keymap[KEY_HOME] = input::BUTTON_HOME;
-			keymap[KEY_UP] = input::BUTTON_UP;
-			keymap[KEY_PAGEUP] = input::BUTTON_PAGEUP;
-			keymap[KEY_LEFT] = input::BUTTON_LEFT;
-			keymap[KEY_RIGHT] = input::BUTTON_RIGHT;
-			keymap[KEY_END] = input::BUTTON_END;
-			keymap[KEY_DOWN] = input::BUTTON_DOWN;
-			keymap[KEY_PAGEDOWN] = input::BUTTON_PAGEDN;
-			keymap[KEY_INSERT] = input::BUTTON_INSERT;
-			keymap[KEY_DELETE] = input::BUTTON_DELETE;
-			// keymap[KEY_MACRO] = input::BUTTON_MACRO;
-			// keymap[KEY_MUTE] = input::BUTTON_MUTE;
-			// keymap[KEY_VOLUMEDOWN] = input::BUTTON_VOLUMEDOWN;
-			// keymap[KEY_VOLUMEUP] = input::BUTTON_VOLUMEUP;
+			keymap[KEY_HOME] = gemini::BUTTON_HOME;
+			keymap[KEY_UP] = gemini::BUTTON_UP;
+			keymap[KEY_PAGEUP] = gemini::BUTTON_PAGEUP;
+			keymap[KEY_LEFT] = gemini::BUTTON_LEFT;
+			keymap[KEY_RIGHT] = gemini::BUTTON_RIGHT;
+			keymap[KEY_END] = gemini::BUTTON_END;
+			keymap[KEY_DOWN] = gemini::BUTTON_DOWN;
+			keymap[KEY_PAGEDOWN] = gemini::BUTTON_PAGEDN;
+			keymap[KEY_INSERT] = gemini::BUTTON_INSERT;
+			keymap[KEY_DELETE] = gemini::BUTTON_DELETE;
+			// keymap[KEY_MACRO] = gemini::BUTTON_MACRO;
+			// keymap[KEY_MUTE] = gemini::BUTTON_MUTE;
+			// keymap[KEY_VOLUMEDOWN] = gemini::BUTTON_VOLUMEDOWN;
+			// keymap[KEY_VOLUMEUP] = gemini::BUTTON_VOLUMEUP;
 			//keymap[KEY_POWER]
-			keymap[KEY_KPEQUAL] = input::BUTTON_NUMPAD_EQUALS;
-			keymap[KEY_KPPLUSMINUS] = input::BUTTON_NUMPAD_PLUSMINUS;
-			keymap[KEY_PAUSE] = input::BUTTON_PAUSE;
+			keymap[KEY_KPEQUAL] = gemini::BUTTON_NUMPAD_EQUALS;
+			keymap[KEY_KPPLUSMINUS] = gemini::BUTTON_NUMPAD_PLUSMINUS;
+			keymap[KEY_PAUSE] = gemini::BUTTON_PAUSE;
 			//keymap[KEY_SCALE]
 			//keymap[KEY_KPCOMMA]
 			//keymap[KEY_HANGEUL]
 			//keymap[KEY_HANGUEL]
 			//keymap[KEY_HANJA]
 			//keymap[KEY_YEN]
-			keymap[KEY_LEFTMETA] = input::BUTTON_LOSKEY;
-			keymap[KEY_RIGHTMETA] = input::BUTTON_ROSKEY;
+			keymap[KEY_LEFTMETA] = gemini::BUTTON_LOSKEY;
+			keymap[KEY_RIGHTMETA] = gemini::BUTTON_ROSKEY;
 			// keymap[KEY_COMPOSE]
 			// keymap[KEY_STOP]
 			// keymap[KEY_AGAIN]
@@ -454,18 +454,18 @@ namespace test
 			// keymap[KEY_KPRIGHTPAREN]
 			// keymap[KEY_NEW]
 			// keymap[KEY_REDO]
-			keymap[KEY_F13] = input::BUTTON_F13;
-			keymap[KEY_F14] = input::BUTTON_F14;
-			keymap[KEY_F15] = input::BUTTON_F15;
-			keymap[KEY_F16] = input::BUTTON_F16;
-			keymap[KEY_F17] = input::BUTTON_F17;
-			keymap[KEY_F18] = input::BUTTON_F18;
-			keymap[KEY_F19] = input::BUTTON_F19;
-			keymap[KEY_F20] = input::BUTTON_F20;
-			keymap[KEY_F21] = input::BUTTON_F21;
-			keymap[KEY_F22] = input::BUTTON_F22;
-			keymap[KEY_F23] = input::BUTTON_F23;
-			keymap[KEY_F24] = input::BUTTON_F24;
+			keymap[KEY_F13] = gemini::BUTTON_F13;
+			keymap[KEY_F14] = gemini::BUTTON_F14;
+			keymap[KEY_F15] = gemini::BUTTON_F15;
+			keymap[KEY_F16] = gemini::BUTTON_F16;
+			keymap[KEY_F17] = gemini::BUTTON_F17;
+			keymap[KEY_F18] = gemini::BUTTON_F18;
+			keymap[KEY_F19] = gemini::BUTTON_F19;
+			keymap[KEY_F20] = gemini::BUTTON_F20;
+			keymap[KEY_F21] = gemini::BUTTON_F21;
+			keymap[KEY_F22] = gemini::BUTTON_F22;
+			keymap[KEY_F23] = gemini::BUTTON_F23;
+			keymap[KEY_F24] = gemini::BUTTON_F24;
 		}
 
 		virtual bool process_event(const struct input_event& event)
@@ -537,41 +537,43 @@ namespace test
 		}
 	};
 
+	// on applying force-feedback
+	// https://www.kernel.org/doc/Documentation/input/ff.txt
+	// http://freegamedev.net/wiki/Input_Handling
 	class JoystickDevice : public InputDeviceBase<DeviceType::Joystick>
 	{
 	public:
 
 		JoystickDevice(const char* device_path) : InputDeviceBase(device_path)
 		{
-			using namespace input;
 			// TODO: We don't need a button map per joystick
 			// make this static!
-			memset(buttonmap, GAMEPAD_BUTTON_INVALID, 128);
+			memset(buttonmap, gemini::GAMEPAD_BUTTON_INVALID, 128);
 
-			set_button(BTN_MISC, GAMEPAD_BUTTON_INVALID);
-			set_button(BTN_A, GAMEPAD_BUTTON_A);
-			set_button(BTN_B, GAMEPAD_BUTTON_B);
-			set_button(BTN_C, GAMEPAD_BUTTON_C);
-			set_button(BTN_X, GAMEPAD_BUTTON_X);
-			set_button(BTN_Y, GAMEPAD_BUTTON_Y);
-			set_button(BTN_Z, GAMEPAD_BUTTON_Z);
-			set_button(BTN_THUMBL, GAMEPAD_BUTTON_LEFTSTICK);
-			set_button(BTN_THUMBR, GAMEPAD_BUTTON_RIGHTSTICK);
-			set_button(BTN_TL, GAMEPAD_BUTTON_LEFTSHOULDER);
-			set_button(BTN_TR, GAMEPAD_BUTTON_RIGHTSHOULDER);
-			set_button(BTN_TL2, GAMEPAD_BUTTON_L2);
-			set_button(BTN_TR2, GAMEPAD_BUTTON_R2);
-			set_button(BTN_SELECT, GAMEPAD_BUTTON_SELECT);
-			set_button(BTN_START, GAMEPAD_BUTTON_START);
-			set_button(BTN_MODE, GAMEPAD_BUTTON_GUIDE);
+			set_button(BTN_MISC, gemini::GAMEPAD_BUTTON_INVALID);
+			set_button(BTN_A, gemini::GAMEPAD_BUTTON_A);
+			set_button(BTN_B, gemini::GAMEPAD_BUTTON_B);
+			set_button(BTN_C, gemini::GAMEPAD_BUTTON_C);
+			set_button(BTN_X, gemini::GAMEPAD_BUTTON_X);
+			set_button(BTN_Y, gemini::GAMEPAD_BUTTON_Y);
+			set_button(BTN_Z, gemini::GAMEPAD_BUTTON_Z);
+			set_button(BTN_THUMBL, gemini::GAMEPAD_BUTTON_LEFTSTICK);
+			set_button(BTN_THUMBR, gemini::GAMEPAD_BUTTON_RIGHTSTICK);
+			set_button(BTN_TL, gemini::GAMEPAD_BUTTON_LEFTSHOULDER);
+			set_button(BTN_TR, gemini::GAMEPAD_BUTTON_RIGHTSHOULDER);
+			set_button(BTN_TL2, gemini::GAMEPAD_BUTTON_L2);
+			set_button(BTN_TR2, gemini::GAMEPAD_BUTTON_R2);
+			set_button(BTN_SELECT, gemini::GAMEPAD_BUTTON_SELECT);
+			set_button(BTN_START, gemini::GAMEPAD_BUTTON_START);
+			set_button(BTN_MODE, gemini::GAMEPAD_BUTTON_GUIDE);
 		}
 
-		void set_button(int code, input::GamepadButton button)
+		void set_button(int code, gemini::GamepadButton button)
 		{
 			buttonmap[code-BTN_MISC] = button;
 		}
 
-		inline input::GamepadButton get_button(int code)
+		inline gemini::GamepadButton get_button(int code)
 		{
 			return buttonmap[code-BTN_MISC];
 		}
@@ -580,11 +582,12 @@ namespace test
 		{
 			switch(event.type)
 			{
+				// handle button presses
 				case EV_KEY:
 				{
-					const input::GamepadButton button = get_button(event.code);
+					const gemini::GamepadButton button = get_button(event.code);
 
-					if (button > input::GAMEPAD_BUTTON_INVALID && (button < input::GAMEPAD_BUTTON_COUNT))
+					if (button > gemini::GAMEPAD_BUTTON_INVALID && (button < gemini::GAMEPAD_BUTTON_COUNT))
 					{
 						printf("button %s -> %i\n", event.value ? "down" : "up", static_cast<int>(button));
 					}
@@ -593,6 +596,17 @@ namespace test
 						printf("type: %x, code: %x, value: %d\n",
 							event.type, event.code, event.value);
 					}
+					break;
+				}
+
+				// handle axes
+				case EV_ABS:
+				{
+					// event.code is axis_id
+					// event.value is axis value [-32767,32767]
+					// DPAD are also treated as axes on XboxOne controller.
+					// axes 16, 17, with [-1, 1] range
+					//printf("type: %d, code: %d, value: %d\n", event.type, event.code, event.value);
 					break;
 				}
 			}
@@ -620,11 +634,10 @@ namespace test
 		}
 
 	private:
-		input::GamepadButton buttonmap[128];
+		gemini::GamepadButton buttonmap[128];
 	};
 
 
-	const size_t INPUT_BUFFER_SIZE = sizeof(struct input_event);
 	static Array<InputDevice*> _devices;
 
 	void create_device_with_path(const char* device_path,
@@ -830,10 +843,25 @@ namespace test
 				{
 					if (FD_ISSET(device->get_descriptor(), &read_fds))
 					{
-						unsigned char buffer[16] = {0};
+						struct input_event buffer[64] = {0};
 						int read_bytes = 0;
-						read_bytes = read(device->get_descriptor(), buffer, 16);
+						read_bytes = read(device->get_descriptor(), buffer, DEVICE_BUFFER_SIZE);
 
+						if (read_bytes < 0)
+						{
+							LOGW("read failed with errno: %i\n", errno);
+							break;
+						}
+
+
+
+						const int total_events_read = (read_bytes / sizeof(struct input_event));
+						//LOGV("read %i bytes, %i events\n", read_bytes, total_events_read);
+						for (int index = 0; index < total_events_read; ++index)
+						{
+							device->process_event(buffer[index]);
+						}
+#if 0
 
 						// struct input_event event;
 						core::util::MemoryStream& stream = device->get_stream();
@@ -852,6 +880,7 @@ namespace test
 								stream.rewind();
 							}
 						}
+#endif
 					}
 				}
 			}

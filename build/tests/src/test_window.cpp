@@ -139,7 +139,7 @@ public:
 		}
 		else if (event.subtype == kernel::MouseButton)
 		{
-			LOGV("mouse button: %s, %i -> %s\n", event.is_down ? "Yes" : "No", event.button, input::mouse_button_name(event.button));
+			LOGV("mouse button: %s, %i -> %s\n", event.is_down ? "Yes" : "No", event.button, gemini::mouse_button_name(event.button));
 		}
 		else
 		{
@@ -352,13 +352,13 @@ public:
 
 	virtual void event(kernel::KeyboardEvent& event)
 	{
-		if (event.key == input::BUTTON_ESCAPE && event.is_down)
+		if (event.key == gemini::BUTTON_ESCAPE && event.is_down)
 		{
 			set_active(false);
 		}
 		else
 		{
-			LOGV("key is_down: '%s', name: '%s', modifiers: %zu\n", event.is_down ? "Yes" : "No", input::key_name(event.key), event.modifiers);
+			LOGV("key is_down: '%s', name: '%s', modifiers: %zu\n", event.is_down ? "Yes" : "No", gemini::key_name(event.key), event.modifiers);
 		}
 	}
 

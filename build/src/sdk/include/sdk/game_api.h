@@ -28,10 +28,18 @@
 #include <core/mathlib.h>
 #include <platform/input.h>
 
+namespace kernel
+{
+	struct KeyboardEvent;
+	struct MouseEvent;
+	struct SystemEvent;
+	struct GameControllerEvent;
+} // namespace kernel
+
 namespace input
 {
 	class InputState;
-}
+} // namespace input
 
 namespace gemini
 {
@@ -42,32 +50,45 @@ namespace gemini
 	{
 		enum Type
 		{
-			KeyboardEvent = 1, // 1
+			KeyboardEvent		= 1, // 1
 			// button: keycode
 			// params[0]: is_down
 			// params[1]: keyboard modifiers
 
-			MouseEvent    = 8,   // 8
+			MouseEvent			= 8,   // 8
 			// button: mouse button
 			// params[0]: is_down
 
-			MouseMove     = MouseEvent | 16,
+			MouseMove			= MouseEvent | 16,
 			// params[0]: abs mouse x
 			// params[1]: abs mouse y
 
-			MouseDelta	  = MouseEvent | 32,
+			MouseDelta			= MouseEvent | 32,
 			// params[0]: delta mouse x
 			// params[1]: delta mouse y
 
-			MouseWheel    = MouseEvent | 64,
-			// params[0]: wheel delta
+			MouseWheel			= MouseEvent | 64,
+			// button: wheel delta
+			// params[0]: absolute mouse x
+			// params[1]: absolute mouse y
+			// params[2]: delta mouse x
+			// params[3]: delta mouse y
 
+			GamePadConnected	= 512,
+			// params[0]: gamepad_id
 
-			Orientation	  = 512
-			// params[0]: quat.x
-			// params[1]: quat.y
-			// params[2]: quat.z
-			// params[3]: quat.w
+			GamePadDisconnected = 1024,
+			// params[0]: gamepad_id
+
+			GamePadButton		= 2048,
+			// button: gamepad button
+			// params[0]: gamepad_id
+			// params[1]: is_down
+
+			GamePadAxis			= 4096,
+			// params[0]: gamepad_id
+			// params[1]: axis_id
+			// params[2]: axis_value
 		};
 
 		uint32_t type;
@@ -87,26 +108,33 @@ namespace gemini
 	struct UserCommand
 	{
 		int sequence;
-		uint32_t buttonflags;
+		//uint32_t buttonflags;
 		float angles[2]; // pitch, yaw
+		int16_t axes[4];
 
 		UserCommand()
 		{
 			sequence = 0;
-			buttonflags = 0;
+			//buttonflags = 0;
 			angles[0] = angles[1] = 0;
+			memset(axes, 0, sizeof(int16_t));
 		}
 
-		void set_button(int index, bool is_down)
+		//void set_button(int index, bool is_down)
+		//{
+		//	if (is_down)
+		//	{
+		//		buttonflags |= (1 << index);
+		//	}
+		//	else
+		//	{
+		//		buttonflags &= ~(1 << index);
+		//	}
+		//}
+
+		void set_axis(uint32_t axis_id, int16_t value)
 		{
-			if (is_down)
-			{
-				buttonflags |= (1 << index);
-			}
-			else
-			{
-				buttonflags &= ~(1 << index);
-			}
+			axes[axis_id] = value;
 		}
 	};
 
@@ -129,8 +157,11 @@ namespace gemini
 		virtual void server_frame(uint64_t current_ticks, float framedelta_seconds, float step_interval_seconds, float step_alpha) = 0;
 		virtual void client_frame(float framedelta_seconds, float step_alpha) = 0;
 
-		// called on the server: process an incoming message
-		virtual void server_process_message(const GameMessage& message) = 0;
+		// event handling
+		virtual void on_event(const kernel::KeyboardEvent& event) = 0;
+		virtual void on_event(const kernel::MouseEvent& event) = 0;
+		virtual void on_event(const kernel::SystemEvent& event) = 0;
+		virtual void on_event(const kernel::GameControllerEvent& event) = 0;
 	}; // GameInterface
 
 

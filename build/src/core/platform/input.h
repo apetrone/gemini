@@ -46,17 +46,19 @@
 // Renaming from 'KEY_' to 'BUTTON_' to deal with
 // linux/input.h macros.
 
-namespace input
+const size_t GEMINI_JOYSTICK_MAX_JOYSTICKS = 4;
+const size_t GEMINI_TOUCHES_MAX_COUNT = 10;
+
+
+const size_t GEMINI_JOYSTICK_MAX_AXES = 6;
+
+// Joystick states
+const size_t GEMINI_JOYSTICK_DISCONNECTED = 0; // joystick disconnected / not used
+const size_t GEMINI_JOYSTICK_CONNECTED = 1; // joystick is connected and enabled
+const size_t GEMINI_JOYSTICK_SUPPORTS_HAPTICS = 2; // joystick has haptic support
+
+namespace gemini
 {
-	const unsigned int MAX_INPUTSTATE_TOUCHES = 10;
-
-	const uint8_t MAX_JOYSTICK_BUTTONS = 16;
-	const uint8_t MAX_JOYSTICK_AXES = 6;
-	const uint8_t MAX_JOYSTICKS = 8;
-
-	const int16_t AxisValueMinimum = SHRT_MIN;
-	const int16_t AxisValueMaximum = SHRT_MAX;
-
 	enum Button
 	{
 		BUTTON_INVALID,
@@ -212,6 +214,54 @@ namespace input
 		MOUSE_COUNT
 	}; // enum MouseButton
 
+	// key mods
+	enum Modifiers
+	{
+		MOD_NONE,
+
+		MOD_LEFT_CONTROL	= 1,
+		MOD_RIGHT_CONTROL	= 2,
+		MOD_CONTROL			= 3,
+
+		MOD_LEFT_SHIFT		= 4,
+		MOD_RIGHT_SHIFT		= 8,
+		MOD_SHIFT			= 12,
+
+		MOD_LEFT_ALT		= 16,
+		MOD_RIGHT_ALT		= 32,
+		MOD_ALT				= 48
+	}; // enum Modifiers
+
+
+	// This is a similar pattern to that found in Quake. I find it very logical to determining input state.
+	enum ButtonStateFlags
+	{
+		Button_IsDown 	= 1,
+		Button_Held 	= 2,
+		Button_Released = 4,
+		Button_Impulse 	= 8
+	};
+
+	struct ButtonState
+	{
+		uint8_t state;
+
+		// handle a press or release event
+		void update_state( bool is_down );
+
+		// update this button state for this frame
+		void update();
+
+		// returns whether the button is down or not this frame
+		bool is_down() const;
+
+		// returns whether or not the button was just pressed
+		bool was_pressed() const;
+
+		// returns whether or not the button was just released
+		bool was_released() const;
+	}; // ButtonState
+
 	// This is modeled after SDL2's enums, which are in turn, modeled after the
 	// Xbox 360 config.
 	enum GamepadButton
@@ -242,180 +292,8 @@ namespace input
 		GAMEPAD_BUTTON_COUNT
 	}; // enum GamepadButton
 
-	// key mods
-	enum Modifiers
-	{
-		MOD_NONE,
-
-		MOD_LEFT_CONTROL	= 1,
-		MOD_RIGHT_CONTROL	= 2,
-		MOD_CONTROL			= 3,
-
-		MOD_LEFT_SHIFT		= 4,
-		MOD_RIGHT_SHIFT		= 8,
-		MOD_SHIFT			= 12,
-
-		MOD_LEFT_ALT		= 16,
-		MOD_RIGHT_ALT		= 32,
-		MOD_ALT				= 48
-	};
-
-
-	// This is a similar pattern to that found in Quake. I find it very logical to determining input state.
-	enum ButtonStateFlags
-	{
-		Button_IsDown 	= 1,
-		Button_Held 	= 2,
-		Button_Released = 4,
-		Button_Impulse 	= 8
-	};
-
-	struct ButtonState
-	{
-		uint8_t state;
-
-		// handle a press or release event
-		void press_release( bool is_down );
-
-		// update this button state for this frame
-		void update();
-
-		// returns whether the button is down or not this frame
-		bool is_down() const;
-
-		// returns whether or not the button was just pressed
-		bool was_pressed() const;
-
-		// returns whether or not the button was just released
-		bool was_released() const;
-	}; // ButtonState
-
-
-	struct AxisState
-	{
-		float normalized_value;
-		int16_t value;
-	};
-
-	class InputDevice
-	{
-	public:
-		virtual ~InputDevice();
-
-		virtual void reset() = 0;
-		virtual void update() = 0;
-	}; // InputDevice
-
-	class KeyboardInput : public InputDevice
-	{
-		ButtonState keys[ BUTTON_COUNT ];
-
-	public:
-		virtual void reset();
-		virtual void update();
-
-		void inject_key_event(int key, bool is_down);
-
-		inline const ButtonState& get_key(input::Button key) { return keys[key]; }
-
-		// Accessors
-//		bool is_down( input::Button key );
-//		bool was_released( input::Button key );
-	}; // KeyboardInput
-
-
-	class MouseInput : public InputDevice
-	{
-		// absolute mouse position in window coordinates
-		int window_coords[2];
-		int cursor_delta[2];
-
-		// > 0 towards screen
-		// < 0 towards user
-		int wheel_direction;
-
-		ButtonState buttons[ MOUSE_COUNT ];
-
-
-	public:
-		virtual void reset();
-		virtual void update();
-
-		void inject_mouse_move(int absolute_x, int absolute_y);
-		void inject_mouse_delta(int dx, int dy);
-		void inject_mouse_button( MouseButton button_id, bool is_down );
-		void inject_mouse_wheel( int direction );
-
-		//
-		// Accessors
-		bool is_down(MouseButton button);
-		bool was_released(MouseButton button);
-
-		// retrieve the current mouse position in screen coordinates
-		void mouse_position(int& x, int& y);
-
-		void mouse_delta(int& dx, int& dy);
-		void reset_delta()
-		{
-			cursor_delta[0] = cursor_delta[1] = 0;
-		}
-	}; // MouseInput
-
-	class TouchInput : public InputDevice
-	{
-		struct TouchState
-		{
-			// (state & 1) -> isDown
-			// (state & 2) -> isDragging
-			unsigned int state;
-			float x;
-			float y;
-
-			// [0] is the previous, [1] is current
-			int xpos[2];
-			int ypos[2];
-		}; // TouchState
-
-		TouchState touches[ MAX_INPUTSTATE_TOUCHES ];
-
-	public:
-		virtual void reset();
-		virtual void update();
-
-		void touch_began( int touchid, int x, int y );
-		void touch_drag( int touchid, int x, int y );
-		//	void touch_canceled( int touchid, int x, int y );
-		void touch_end( int touchid, int x, int y );
-
-		// retrieve touch from index
-		void touch_at_index( TouchState & touch, int touch_id );
-	}; // TouchInput
-
-
-	class JoystickInput : public InputDevice
-	{
-	public:
-		enum Flags
-		{
-			Disconnected 	= 0, // joystick disconnected / not used
-			Connected 		= 1, // joystick is connected and enabled
-			HapticSupport 	= 2 // joystick has haptics support
-		};
-
-		uint32_t flags;
-		ButtonState buttons[MAX_JOYSTICK_BUTTONS];
-		AxisState axes[MAX_JOYSTICK_AXES];
-
-		virtual void reset();
-		virtual void update();
-	}; // JoystickInput
-
-
-	void startup(void);
-	void shutdown(void);
-	void update(void);
-
 	const char* mouse_button_name(unsigned int button);
 	const char* key_name(unsigned int key);
-	const char* gamepad_name(unsigned int button);
-} // namespace input
+	const char* joystick_button_name(uint32_t button);
+
+} // namespace gemini

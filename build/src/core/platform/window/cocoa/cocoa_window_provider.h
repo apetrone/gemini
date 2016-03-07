@@ -27,7 +27,7 @@
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
 
-#include "input.h"
+#include <platform/input.h>
 
 namespace platform
 {
@@ -38,7 +38,7 @@ namespace platform
 			void populate_keymap();
 			void process_event_loop();
 
-			input::Button convert_keycode(unsigned short mac_keycode);
+			gemini::Button convert_keycode(unsigned short mac_keycode);
 
 			uint16_t keymod_state();
 			void keymod_state(uint16_t keymods);

@@ -73,6 +73,10 @@ namespace platform
 		return *_allocator;
 	}
 
+	DynamicLibrary::~DynamicLibrary()
+	{
+	}
+
 	Process::~Process()
 	{
 	}
@@ -217,6 +221,11 @@ namespace platform
 		MEMORY_DELETE(_zone, core::memory::global_allocator());
 	}
 
+	void update(float delta_milliseconds)
+	{
+		backend_update(delta_milliseconds);
+	}
+
 	// This nastiness MUST be here, because on different platforms
 	// platform::startup is called at different times. This is done to allow
 	// startup and shutdown on the correct threads via certain platforms.
@@ -344,5 +353,4 @@ namespace platform
 			}
 		} // make_directories
 	} // namespace path
-
 } // namespace platform
