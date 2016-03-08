@@ -899,10 +899,12 @@ struct DataInput
 
 // raw data read from BNO055;
 // quaternion data is 16-bit x 4 values
+const size_t TOTAL_SENSORS = 20;
+
 struct bno055_packet_t
 {
 	uint8_t header;
-	uint8_t data[8];
+	uint8_t data[8 * TOTAL_SENSORS];
 	uint8_t footer;
 
 	bno055_packet_t()
@@ -916,18 +918,20 @@ struct bno055_packet_t
 		return (header == 0xba) && (footer == 0xff);
 	}
 
-	glm::quat get_orientation() const
+	glm::quat get_orientation(uint32_t sensor_index = 0) const
 	{
 		int16_t x = 0;
 		int16_t y = 0;
 		int16_t z = 0;
 		int16_t w = 0;
 
+		const uint8_t* buffer = (data + (sensor_index * 8));
+
 		// they are 16-bit LSB
-		x = (((uint16_t)data[3]) << 8) | ((uint16_t)data[2]);
-		y = (((uint16_t)data[5]) << 8) | ((uint16_t)data[4]);
-		z = (((uint16_t)data[7]) << 8) | ((uint16_t)data[6]);
-		w = (((uint16_t)data[1]) << 8) | ((uint16_t)data[0]);
+		x = (((uint16_t)buffer[3]) << 8) | ((uint16_t)buffer[2]);
+		y = (((uint16_t)buffer[5]) << 8) | ((uint16_t)buffer[4]);
+		z = (((uint16_t)buffer[7]) << 8) | ((uint16_t)buffer[6]);
+		w = (((uint16_t)buffer[1]) << 8) | ((uint16_t)buffer[0]);
 
 		const double QUANTIZE = (1.0 / 16384.0);
 
@@ -968,13 +972,16 @@ void data_thread(platform::Thread* thread)
 //					gemini::GameMessage message;
 //					message.type = gemini::GameMessage::Orientation;
 
-					glm::quat q = packet->get_orientation();
+					glm::quat q = packet->get_orientation(0);
 					// this bit of code converts the coordinate system of the BNO055
 					// to that of gemini.
 //					glm::quat flipped(q.w, q.x, -q.z, -q.y);
 //					glm::quat y = glm::quat(glm::vec3(0, mathlib::degrees_to_radians(180), 0));
 //					glm::quat result = glm::inverse(y * flipped);
-					LOGV("q: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
+					LOGV("q[0]: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
+
+					q = packet->get_orientation(1);
+					LOGV("q[1]: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
 
 //					block->event_queue->push_back(message);
 
@@ -982,7 +989,7 @@ void data_thread(platform::Thread* thread)
 
 					memset(buffer, 0, MAX_PACKET_DATA);
 
-					current_index = index;
+					current_index = 0;
 					break;
 				}
 			}
