@@ -973,59 +973,37 @@ void data_thread(platform::Thread* thread)
 	DataInput* block = static_cast<DataInput*>(thread->user_data);
 
 	LOGV("entering data thread\n");
-
 	const size_t PACKET_SIZE = sizeof(bno055_packet_t);
-	const size_t MAX_PACKET_DATA = 4 * PACKET_SIZE;
-	uint8_t buffer[MAX_PACKET_DATA];
-	size_t current_index = 0;
+	const size_t MAX_PACKETS = 64;
+	const size_t MAX_PACKET_DATA = MAX_PACKETS * PACKET_SIZE;
+	bno055_packet_t buffer[MAX_PACKETS];
 
 	while(block->execute)
 	{
-		size_t bytes_read = platform::serial_read(block->device, &buffer[current_index], PACKET_SIZE);
-		if (bytes_read > 0)
+		size_t bytes_read = platform::serial_read(block->device, buffer, MAX_PACKET_DATA);
+		if (bytes_read < PACKET_SIZE)
 		{
-//			LOGV("read bytes: %i\n", bytes_read);
-			size_t last_index = current_index;
-			current_index += bytes_read;
-
-			// scan for a valid packet
-			assert(last_index < (MAX_PACKET_DATA - sizeof(bno055_packet_t)));
-			uint8_t* head = &buffer[last_index];
-
-			// try to search the entire length of a packet
-			for (size_t index = 0; index < sizeof(bno055_packet_t); ++index)
-			{
-				bno055_packet_t* packet = reinterpret_cast<bno055_packet_t*>(head);
-				if (packet->is_valid())
-				{
-//					gemini::GameMessage message;
-//					message.type = gemini::GameMessage::Orientation;
-
-					glm::quat q = packet->get_orientation(0);
-					// this bit of code converts the coordinate system of the BNO055
-					// to that of gemini.
-//					glm::quat flipped(q.w, q.x, -q.z, -q.y);
-//					glm::quat y = glm::quat(glm::vec3(0, mathlib::degrees_to_radians(180), 0));
-//					glm::quat result = glm::inverse(y * flipped);
-					LOGV("q[0]: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
-
-					q = packet->get_orientation(1);
-					LOGV("q[1]: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
-
-//					block->event_queue->push_back(message);
-
-					// handle the packet and reset the data
-
-					memset(buffer, 0, MAX_PACKET_DATA);
-
-					current_index = 0;
-					break;
-				}
-			}
+			LOGE("Error reading data\n");
 		}
-		else
+//		LOGV("read bytes: %i\n", bytes_read);
+
+		const size_t total_packets_read = (bytes_read / PACKET_SIZE);
+
+		// loop over all packets read
+		for (size_t index = 0; index < total_packets_read; ++index)
 		{
-			LOGV("no bytes read!\n");
+			bno055_packet_t* packet = &buffer[index];
+			assert(packet->is_valid());
+			glm::quat q = packet->get_orientation(0);
+			// this bit of code converts the coordinate system of the BNO055
+			// to that of gemini.
+//			glm::quat flipped(q.w, q.x, -q.z, -q.y);
+//			glm::quat y = glm::quat(glm::vec3(0, mathlib::degrees_to_radians(180), 0));
+//			glm::quat result = glm::inverse(y * flipped);
+			LOGV("q[0]: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
+
+			q = packet->get_orientation(1);
+			LOGV("q[1]: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
 		}
 	}
 
