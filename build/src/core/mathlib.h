@@ -106,6 +106,8 @@ namespace mathlib
 
 
 	bool point_in_radius(const glm::vec3& p0, const glm::vec3& p1, float radius = 3.0f);
+
+	glm::mat3 matrix_from_basis_vectors(const glm::vec3& right, const glm::vec3& up, const glm::vec3& forward);
 }
 
 #if 0

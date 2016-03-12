@@ -59,7 +59,7 @@ namespace gemini
 
 			virtual void destroy_object(ICollisionObject* object);
 
-			virtual void step_simulation(float delta_seconds);
+			virtual void step_simulation(float step_interval_seconds);
 
 			virtual RaycastInfo raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
 			virtual SweepTestResult sweep(ICollisionObject* source_object, ICollisionShape* shape, const glm::vec3& start, const glm::vec3& end, float angle_threshold);

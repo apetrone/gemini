@@ -92,6 +92,15 @@ namespace mathlib
 		float dot = glm::dot(pt, pt);
 		float r2 = (radius*radius);
 		return (dot < r2);
+	} // point_in_radius
+
+	glm::mat3 matrix_from_basis_vectors(const glm::vec3& right, const glm::vec3& up, const glm::vec3& forward)
+	{
+		glm::mat3 xform;
+		xform[0] = right;
+		xform[1] = up;
+		xform[2] = forward;
+		return xform;
 	}
 }
 

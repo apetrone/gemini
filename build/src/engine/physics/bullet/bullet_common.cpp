@@ -251,7 +251,7 @@ namespace gemini
 				//		delete _controller;
 			}
 
-			void step(float /*framedelta_seconds*/, float fixed_step_seconds)
+			void step(float fixed_step_seconds)
 			{
 				assert( dynamics_world != 0 );
 

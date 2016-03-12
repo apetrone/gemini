@@ -108,7 +108,7 @@ namespace platform
 				kernel::event_dispatch(mevent);
 			}
 
-			void handle_keyboard_event(win32::Window* window, UINT message, WPARAM wparam, LPARAM lparam)
+			int handle_keyboard_event(win32::Window* window, UINT message, WPARAM wparam, LPARAM lparam)
 			{
 				// https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
 
@@ -295,25 +295,32 @@ namespace platform
 
 				const size_t max_keys = sizeof(keymap) / sizeof(Button);
 
-				// keymap is missing something
 				if (wparam < max_keys)
 				{
 					const WPARAM vkey = wparam;
 					const UINT scancode = static_cast<UINT>((lparam & 0xff0000) >> 16);
 					const int extended = (lparam & (1 << 24)) != 0;
 					const int is_repeat = (HIWORD(lparam) & KF_REPEAT) != 0;
+					const int last_key = (lparam & (1 << 30)); // 0: was up; > 0 was down
+					if (is_repeat && (message == WM_KEYDOWN))
+					{
+						return 0;
+					}
 
 					kernel::KeyboardEvent event;
 					event.key = keymap[vkey];
-					event.is_down = (message == WM_KEYDOWN) || (message == WM_SYSKEYDOWN) ? true : false;
+					event.is_down = (last_key == 0) ? true : false;
 					event.modifiers = 0;
 					event.window = window;
 					event.unicode = 0;
 					kernel::event_dispatch(event);
+					return 0;
 				}
 				else
 				{
+					// keymap is missing something
 					LOGV("[win32] missing virtualkey in keymap: %i\n", wparam);
+					return 1;
 				}
 			}
 
@@ -486,8 +493,7 @@ namespace platform
 					case WM_KEYDOWN:
 					case WM_KEYUP:
 					{
-						handle_keyboard_event(window, message, wparam, lparam);
-						return 0;
+						return handle_keyboard_event(window, message, wparam, lparam);
 						break;
 					}
 
@@ -728,29 +734,31 @@ namespace platform
 			int window_width = 0;
 			int window_height = 0;
 
+
+
 			if (!parameters.enable_fullscreen)
 			{
-				RECT new_rect = {
-					0,
-					0,
-					static_cast<LONG>(parameters.frame.width),
-					static_cast<LONG>(parameters.frame.height)
-				};
-
 				window_style |= WS_MINIMIZEBOX | WS_CAPTION | WS_BORDER | WS_SYSMENU;
 				if (parameters.enable_resize)
 				{
 					window_style |= WS_OVERLAPPEDWINDOW;
 				}
-
-				AdjustWindowRect(&new_rect, window_style, 0);
-				window_width = static_cast<int>(new_rect.right - new_rect.left);
-				window_height = static_cast<int>(new_rect.bottom - new_rect.top);
 			}
 			else
 			{
 				window_style |= WS_POPUP;
 			}
+
+			RECT new_rect = {
+				0,
+				0,
+				static_cast<LONG>(parameters.frame.width),
+				static_cast<LONG>(parameters.frame.height)
+			};
+
+			AdjustWindowRect(&new_rect, window_style, 0);
+			window_width = static_cast<int>(new_rect.right - new_rect.left);
+			window_height = static_cast<int>(new_rect.bottom - new_rect.top);
 
 			const char* utf8_title = parameters.window_title;
 			wchar_t window_title[WINDOW_MAX_LENGTH];

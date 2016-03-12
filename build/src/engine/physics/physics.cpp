@@ -76,12 +76,6 @@ namespace gemini
 			MEMORY_DELETE(physics_interface, core::memory::global_allocator());
 		} // shutdown
 
-
-		void step(float framedelta_seconds, float fixed_step_seconds)
-		{
-			bullet::step(framedelta_seconds, fixed_step_seconds);
-		} // step
-
 		void debug_draw()
 		{
 			bullet::debug_draw();

@@ -1414,7 +1414,7 @@ Options:
 
 		open_gamelibrary();
 
-		navigation::startup();
+		//navigation::startup();
 
 		// for debugging
 		if (game_interface)
@@ -1429,7 +1429,7 @@ Options:
 
 
 		uint64_t current_time = platform::microseconds();
-		LOGV("startup in %2.2fms\n", (current_time-last_time)*.001f);
+		LOGV("startup in %2.2fms\n", (current_time-last_time) * MillisecondsPerMicrosecond);
 		last_time = current_time;
 
 		return kernel::NoError;
@@ -1449,22 +1449,39 @@ Options:
 		PROFILE_END("platform_update");
 
 		// cache the value in seconds
-		params.framedelta_seconds = params.framedelta_milliseconds*0.001f;
+		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 		last_time = current_time;
 
 		// update accumulator
 		accumulator += params.framedelta_seconds;
 
+		// record the current frametime milliseconds
+		if (graph)
+		{
+			graph->record_value(params.framedelta_milliseconds, 0);
+		}
+
+		// set the baseline for the font
+		int x = 250;
+		int y = 16;
+		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", params.framedelta_milliseconds), Color());
+		y += 12;
+		::renderer::debugdraw::text(x, y, core::str::format("allocations = %i, total %2.2f MB\n",
+			core::memory::global_allocator().get_zone()->get_active_allocations(),
+			core::memory::global_allocator().get_zone()->get_active_bytes() / (float)(1024 * 1024)), Color());
+		y += 12;
+
 		while (accumulator >= params.step_interval_seconds)
 		{
-			// begin step
+			if (game_interface)
+			{
+				game_interface->tick(params.current_tick, params.step_interval_seconds, params.step_alpha);
+			}
 
 			// this is going to be incorrect unless this is placed in the step.
 			// additionally, these aren't interpolated: figure how to; for example,
 			// draw hit boxes for a moving player with this system.
-			::renderer::debugdraw::update(params.step_interval_seconds);
-
-			// end step
+			::renderer::debugdraw::update(params.step_interval_seconds /** MillisecondsPerSecond*/);
 
 			// subtract the interval from the accumulator
 			accumulator -= params.step_interval_seconds;
@@ -1494,39 +1511,14 @@ Options:
 	{
 		platform::window::activate_context(main_window);
 
-		if (graph)
-		{
-			graph->record_value(kernel::parameters().framedelta_milliseconds, 0);
-		}
-
-		// set the baseline for the font
-		int x = 250;
-		int y = 16;
-
-		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_milliseconds), Color());
-		y += 12;
-		::renderer::debugdraw::text(x, y, core::str::format("allocations = %i, total %2.2f MB\n",
-			core::memory::global_allocator().get_zone()->get_active_allocations(),
-			core::memory::global_allocator().get_zone()->get_active_bytes()/(float)(1024*1024)), Color());
-		y += 12;
-
-
 		if (game_interface)
 		{
-			game_interface->server_frame(
-				kernel::parameters().current_tick,
-				kernel::parameters().framedelta_seconds,
-				kernel::parameters().step_interval_seconds,
-				kernel::parameters().step_alpha
-			);
-
-			game_interface->client_frame(kernel::parameters().framedelta_seconds, kernel::parameters().step_alpha);
+			game_interface->execute_frame(kernel::parameters().framedelta_seconds);
 		}
 
 		if (compositor)
 		{
 			compositor->tick(kernel::parameters().framedelta_milliseconds);
-			compositor->process_events();
 		}
 
 		if (draw_physics_debug)
@@ -1534,10 +1526,10 @@ Options:
 			physics::debug_draw();
 		}
 
-		if (draw_navigation_debug)
-		{
-			navigation::debugdraw();
-		}
+		//if (draw_navigation_debug)
+		//{
+		//	navigation::debugdraw();
+		//}
 
 
 		device->submit();
@@ -1552,7 +1544,7 @@ Options:
 
 	virtual void shutdown()
 	{
-		navigation::shutdown();
+		//navigation::shutdown();
 
 		// shutdown gui
 		if (compositor)

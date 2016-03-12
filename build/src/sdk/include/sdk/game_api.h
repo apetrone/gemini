@@ -153,9 +153,14 @@ namespace gemini
 		// called on level change
 		virtual void level_load() = 0;
 
-		// called each tick of the engine
-		virtual void server_frame(uint64_t current_ticks, float framedelta_seconds, float step_interval_seconds, float step_alpha) = 0;
-		virtual void client_frame(float framedelta_seconds, float step_alpha) = 0;
+		/// @brief Tick the game
+		/// @param current_ticks The tick counter
+		/// @param step_interval_seconds The fixed step interval (in seconds).
+		/// @param step_alpha Lerp value between ticks.
+		virtual void tick(uint64_t current_tick, float step_interval_seconds, float step_alpha) = 0;
+
+		/// @brief Execute a game frame
+		virtual void execute_frame(float framedelta_seconds) = 0;
 
 		// event handling
 		virtual void on_event(const kernel::KeyboardEvent& event) = 0;

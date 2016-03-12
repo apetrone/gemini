@@ -117,8 +117,11 @@ namespace platform
 			const int* attribute_list
 		);
 
+		//typedef BOOL (*wgl_swap_interval)(int interval);
+
 		wgl_choose_pixel_format choose_pixel_format = nullptr;
 		wgl_create_context_attribs create_context_attribs = nullptr;
+		//wgl_swap_interval swap_interval = nullptr;
 
 
 		Win32GraphicsProvider::Win32GraphicsProvider() :
@@ -148,6 +151,10 @@ namespace platform
 
 			create_context_attribs = (wgl_create_context_attribs)get_symbol("wglCreateContextAttribsARB");
 			assert(create_context_attribs);
+
+			// This doesn't seem to work vs. glSwapInterval... so, oh well.
+			//swap_interval = (wgl_swap_interval)get_symbol("wglSwapIntervalEXT");
+			//assert(swap_interval);
 
 			// Now that we've loaded the symbols, we can destroy that window
 			// and create a new one with the symbols we fetched. Windows doesn't

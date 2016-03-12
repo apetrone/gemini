@@ -78,8 +78,9 @@ struct Camera
 {
 	enum CameraType
 	{
-		FIRST_PERSON,
-		TARGET
+		FIRST_PERSON,	// classic first-person camera (Doom/Quake)
+		THIRD_PERSON,	// third-person camera (cover-based shooters)
+		CHASE,			// third-person chase camera (3D platformers)
 	};
 
 	Camera(CameraType _type = FIRST_PERSON);
@@ -102,8 +103,8 @@ struct Camera
 	virtual void update_view();
 
 	// projection type functions
-	void perspective( real fovy, int32_t width, int32_t height, real nearz, real farz );
-	void ortho( real left, real right, real bottom, real top, real nearz, real farz );
+	void perspective(real fovy, int32_t width, int32_t height, real nearz, real farz);
+	void ortho(real left, real right, real bottom, real top, real nearz, real farz);
 
 	const glm::mat4& get_inverse_world_transform() const { return inverse_world_transform; }
 	const glm::mat4& get_inverse_rotation() const { return inverse_rotation; }
@@ -163,3 +164,84 @@ private:
 	float near_clip;
 	float far_clip;
 }; // Camera
+
+class ChaseCamera
+{
+	glm::vec3 position;
+	glm::quat orientation;
+	glm::vec3 target_position;
+
+	glm::mat4 modelview;
+	glm::mat4 projection;
+
+	glm::vec3 desired_chase_offset;
+
+	// for interpolation
+	glm::vec3 desired_position;
+	//glm::quat orientation_offset;
+
+public:
+
+	ChaseCamera();
+	~ChaseCamera();
+
+	// projection type functions
+	void perspective(real fovy, int32_t width, int32_t height, real nearz, real farz);
+	void ortho(real left, real right, real bottom, real top, real nearz, real farz);
+
+	void update_view();
+
+	void tick(float step_interval_seconds);
+
+	inline void set_desired_position(const glm::vec3& new_desired_position)
+	{
+		desired_position = new_desired_position;
+	}
+
+	/// @brief Sets the 'desired' chase offset relative to the target position.
+	inline void set_desired_chase_offset(const glm::vec3& chase_offset)
+	{
+		desired_chase_offset = chase_offset;
+	}
+
+	inline void set_position(const glm::vec3& new_position)
+	{
+		position = new_position;
+	}
+
+	inline void set_target_position(const glm::vec3& new_target_position)
+	{
+		target_position = new_target_position;
+	}
+
+	inline const glm::mat4& get_modelview() const
+	{
+		return modelview;
+	}
+
+	inline const glm::vec3& get_desired_position() const
+	{
+		return desired_position;
+	}
+
+	inline const glm::vec3& get_position() const
+	{
+		return position;
+	}
+
+	inline const glm::quat& get_orientation() const
+	{
+		return orientation;
+	}
+
+	inline const glm::mat4& get_projection() const
+	{
+		return projection;
+	}
+
+	inline const glm::vec3& get_target_position() const
+	{
+		return target_position;
+	}
+};
+

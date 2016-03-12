@@ -37,8 +37,6 @@ namespace gemini
 		class ICollisionShape;
 		class ICollisionObject;
 
-		struct MovementCommand;
-
 		struct SurfaceProperties
 		{
 
@@ -53,22 +51,6 @@ namespace gemini
 
 			ObjectProperties() : mass_kg(0.0f), restitution(0.25f), friction(0.75f) {}
 		}; // ObjectProperties
-
-		typedef int16_t MovementValue;
-		struct MovementCommand
-		{
-			unsigned int time;
-			MovementValue left;
-			MovementValue right;
-			MovementValue forward;
-			MovementValue back;
-
-			MovementCommand()
-			{
-				memset(this, 0, sizeof(MovementCommand));
-			}
-		};
-
 
 		struct RaycastInfo
 		{
@@ -120,7 +102,7 @@ namespace gemini
 
 			virtual void destroy_object(ICollisionObject* object) = 0;
 
-			virtual void step_simulation(float framedelta_seconds) = 0;
+			virtual void step_simulation(float step_interval_seconds) = 0;
 
 			virtual RaycastInfo raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance) = 0;
 			virtual SweepTestResult sweep(ICollisionObject* source_object, ICollisionShape* shape, const glm::vec3& start, const glm::vec3& end, float min_angle_cosine = 0.0f) = 0;

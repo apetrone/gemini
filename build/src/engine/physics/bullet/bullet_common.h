@@ -68,7 +68,7 @@ namespace gemini
 
 			void startup();
 			void shutdown();
-			void step(float framedelta_seconds, float fixed_step_seconds);
+			void step(float fixed_step_seconds);
 			void debug_draw();
 
 			btTransform position_and_orientation_to_transform(const glm::vec3& position, const glm::quat& orientation);

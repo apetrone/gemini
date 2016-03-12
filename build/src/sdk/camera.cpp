@@ -26,6 +26,10 @@
 
 #include <core/mathlib.h>
 #include <core/typedefs.h>
+#include <core/interpolation.h>
+#include <core/logging.h>
+
+#include <renderer/debug_draw.h>
 
 // --------------------------------------------------------
 // Camera
@@ -136,7 +140,7 @@ void Camera::update_view()
 	glm::vec3 up( 0, 1, 0 );
 
 	glm::vec3 world_pos = pos;
-	if ( type == FIRST_PERSON )
+	if (type == FIRST_PERSON)
 	{
 		glm::vec3 target = world_pos + view;
 		inverse_rotation = glm::lookAt(glm::vec3(), view, up);
@@ -144,7 +148,7 @@ void Camera::update_view()
 		eye_position = world_pos;
 		inverse_world_transform = modelview;
 	}
-	else if ( type == TARGET )
+	else if (type == THIRD_PERSON)
 	{
 //		glm::mat4 inv_rotation;
 		glm::mat4 inv_translation;
@@ -181,6 +185,13 @@ void Camera::update_view()
 
 		inverse_world_transform = modelview;
 	}
+	else if (type == CHASE)
+	{
+		inverse_rotation = glm::lookAt(pos, pos+view, up);
+		modelview = inverse_rotation;
+		pos = (world_pos + target_offset);
+
+	}
 }
 
 void Camera::set_position(const glm::vec3& position)
@@ -193,25 +204,80 @@ void Camera::set_position(const glm::vec3& position)
 	update_view();
 }
 
-
-void Camera::perspective( real fovy, int32_t width, int32_t height, real nearz, real farz )
+void Camera::perspective(real fov_y, int32_t width, int32_t height, real nearz, real farz)
 {
 	// This MUST be greater than 0, otherwise the view will be inverted or something.
 	// Basically, you won't see anything.
 	assert( nearz > 0.0f );
-	this->fovy = fovy;
-	this->aspect_ratio = (float)(width/(float)height);
-	this->near_clip = nearz;
-	this->far_clip = farz;
-	projection = glm::perspective(glm::radians(fovy), (width/(float)height), nearz, farz );
+	fovy = fov_y;
+	aspect_ratio = (float)(width/(float)height);
+	near_clip = nearz;
+	far_clip = farz;
+	projection = glm::perspective(glm::radians(fovy), (width/(float)height), nearz, farz);
 	is_ortho = false;
 }
 
-void Camera::ortho( real left, real right, real bottom, real top, real nearz, real farz )
+void Camera::ortho(real left, real right, real bottom, real top, real nearz, real farz)
 {
 	this->near_clip = nearz;
 	this->far_clip = farz;
 	this->aspect_ratio = 1.0f;
-	projection = glm::ortho( left, right, bottom, top, nearz, farz );
+	projection = glm::ortho(left, right, bottom, top, nearz, farz);
 	is_ortho = true;
+}
+
+ChaseCamera::ChaseCamera()
+{
+	// Default value to avoid it being on top of the target position;
+	// otherwise, this hits an assert in bullet.
+	position = glm::vec3(0.0f, 3.0f, 1.0f);
+}
+
+ChaseCamera::~ChaseCamera()
+{
+}
+
+void ChaseCamera::perspective(real fovy, int32_t width, int32_t height, real nearz, real farz)
+{
+	// This MUST be greater than 0, otherwise the view will be inverted or something.
+	// Basically, you won't see anything.
+	assert(nearz > 0.0f);
+	projection = glm::perspective(glm::radians(fovy), (width / (float)height), nearz, farz);
+}
+
+void ChaseCamera::ortho(real left, real right, real bottom, real top, real nearz, real farz)
+{
+	projection = glm::ortho(left, right, bottom, top, nearz, farz);
+}
+
+void ChaseCamera::update_view()
+{
+	const glm::vec3 UP_DIRECTION(0.0f, 1.0f, 0.0f);
+
+	modelview = glm::lookAt(position, target_position, UP_DIRECTION);
+
+	// get new orientation quaternion
+	const glm::vec3 pos2d(position.x, 0.0f, position.z);
+	const glm::vec3 target2d(target_position.x, 0.0f, target_position.z);
+	orientation = glm::toQuat(glm::lookAt(pos2d, target2d, UP_DIRECTION));
+
+	//LOGV("q: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
+
+	// Compute vector from target to camera.
+	glm::vec3 camera_to_target = (target_position - position);
+	camera_to_target.y = 0;
+	float length = glm::length(camera_to_target);
+
+	// If the camera is too far or too close to the target; we have to adjust.
+	const float MAXIMUM_DISTANCE = 5.0f;
+
+	desired_position = target_position - (glm::normalize(camera_to_target) * MAXIMUM_DISTANCE);
+	desired_position.y = target_position.y + desired_chase_offset.y;
+
+	const float bias = 0.95f;
+	position = (position * bias + (desired_position * (1.0f - bias)));
+}
+
+void ChaseCamera::tick(float /*step_interval_seconds*/)
+{
 }
