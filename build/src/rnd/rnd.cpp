@@ -217,8 +217,7 @@ namespace test
 		{
 			LOGV("opening: '%s'...\n", device_path_node);
 			descriptor = open(device_path_node, O_RDONLY);
-
-			if (descriptor == -1)
+			if (descriptor < 0)
 			{
 				LOGW("%s (%i), Unable to open device '%s'\n",
 					strerror(errno),
@@ -227,6 +226,21 @@ namespace test
 				);
 			}
 			assert(descriptor != -1);
+
+			int version;
+			if (ioctl(descriptor, EVIOCGVERSION, &version))
+			{
+				LOGW("Can't get version: %i\n", errno);
+			}
+			LOGV("driver version: %i.%i.%i\n",
+				version >> 16,
+				(version >> 8) & 0xff,
+				version & 0xff
+			);
+
+			char name[256] = {0};
+			ioctl(descriptor, EVIOCGNAME(256), name);
+			LOGV("device name: %s\n", name);
 
 			memset(buffer, 0, DEVICE_BUFFER_SIZE);
 			stream.init(buffer, DEVICE_BUFFER_SIZE);
@@ -580,34 +594,45 @@ namespace test
 
 		virtual bool process_event(const struct input_event& event)
 		{
-			switch(event.type)
+			if (event.type == EV_SYN)
 			{
-				// handle button presses
-				case EV_KEY:
-				{
-					const gemini::GamepadButton button = get_button(event.code);
+				printf("EVN_SYN\n");
+			}
+			else if (event.type == EV_MSC && (event.code == MSC_RAW || event.code == MSC_SCAN))
+			{
 
-					if (button > gemini::GAMEPAD_BUTTON_INVALID && (button < gemini::GAMEPAD_BUTTON_COUNT))
-					{
-						printf("button %s -> %i\n", event.value ? "down" : "up", static_cast<int>(button));
-					}
-					else
-					{
-						printf("type: %x, code: %x, value: %d\n",
-							event.type, event.code, event.value);
-					}
-					break;
-				}
-
-				// handle axes
-				case EV_ABS:
+			}
+			else
+			{
+				switch(event.type)
 				{
-					// event.code is axis_id
-					// event.value is axis value [-32767,32767]
-					// DPAD are also treated as axes on XboxOne controller.
-					// axes 16, 17, with [-1, 1] range
-					//printf("type: %d, code: %d, value: %d\n", event.type, event.code, event.value);
-					break;
+					// handle button presses
+					case EV_KEY:
+					{
+						const gemini::GamepadButton button = get_button(event.code);
+
+						if (button > gemini::GAMEPAD_BUTTON_INVALID && (button < gemini::GAMEPAD_BUTTON_COUNT))
+						{
+							printf("button %s -> %i\n", event.value ? "down" : "up", static_cast<int>(button));
+						}
+						else
+						{
+							printf("type: %x, code: %x, value: %d\n",
+								event.type, event.code, event.value);
+						}
+						break;
+					}
+
+					// handle axes
+					case EV_ABS:
+					{
+						// event.code is axis_id
+						// event.value is axis value [-32767,32767]
+						// DPAD are also treated as axes on XboxOne controller.
+						// axes 16, 17, with [-1, 1] range
+						printf("type: %d, code: %d, value: %d\n", event.type, event.code, event.value);
+						break;
+					}
 				}
 			}
 
@@ -794,7 +819,7 @@ namespace test
 	{
 		// scan for and add devices of known types
 		//
-		add_devices("input", "ID_INPUT_KEYBOARD", "1", DeviceType::Keyboard);
+		//add_devices("input", "ID_INPUT_KEYBOARD", "1", DeviceType::Keyboard);
 		// add_devices("input", "ID_INPUT_MOUSE", "1", DeviceType::Mouse);
 		add_devices("input", "ID_INPUT_JOYSTICK", "1", DeviceType::Joystick);
 
@@ -846,14 +871,11 @@ namespace test
 						struct input_event buffer[64] = {0};
 						int read_bytes = 0;
 						read_bytes = read(device->get_descriptor(), buffer, DEVICE_BUFFER_SIZE);
-
-						if (read_bytes < 0)
+						if (read_bytes < sizeof(struct input_event))
 						{
 							LOGW("read failed with errno: %i\n", errno);
 							break;
 						}
-
-
 
 						const int total_events_read = (read_bytes / sizeof(struct input_event));
 						//LOGV("read %i bytes, %i events\n", read_bytes, total_events_read);
