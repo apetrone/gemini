@@ -72,6 +72,10 @@
 // uncomment this to draw bone debug information
 //#define GEMINI_DEBUG_BONES
 
+
+// enable this if you want to visualize the frame rate over time
+#define DEBUG_FRAMERATE
+
 using namespace platform;
 using namespace core;
 using namespace gemini; // for renderer
@@ -1208,6 +1212,7 @@ public:
 		root->set_dimensions(root->dimensions_from_pixels(gui::Point(frame.width, frame.height)));
 		root->set_background_color(Color(0, 0, 0, 0));
 
+#if defined(DEBUG_FRAMERATE)
 		// setup the framerate graph
 		graph = new gui::Graph(root);
 		graph->set_name("frametime_graph");
@@ -1219,8 +1224,8 @@ public:
 		graph->create_samples(100, 1);
 		graph->configure_channel(0, Color::from_rgba(0, 255, 0, 255));
 		graph->set_range(0.0f, 33.3f);
-
 		graph->enable_baseline(true, 16.6f, Color::from_rgba(255, 0, 255, 255));
+#endif
 	}
 
 	virtual kernel::Error startup()
@@ -1456,11 +1461,9 @@ Options:
 		accumulator += params.framedelta_seconds;
 
 		// record the current frametime milliseconds
-		if (graph)
-		{
-			graph->record_value(params.framedelta_milliseconds, 0);
-		}
-
+#if defined(DEBUG_FRAMERATE)
+		graph->record_value(params.framedelta_milliseconds, 0);
+#endif
 		// set the baseline for the font
 		int x = 250;
 		int y = 16;
