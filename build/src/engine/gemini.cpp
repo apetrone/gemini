@@ -1446,16 +1446,9 @@ Options:
 		uint64_t current_time = platform::microseconds();
 		kernel::Parameters& params = kernel::parameters();
 
-		// calculate delta ticks in milliseconds
-		params.framedelta_milliseconds = (current_time - last_time)*0.001f;
-
 		PROFILE_BEGIN("platform_update");
 		platform::update(kernel::parameters().framedelta_milliseconds);
 		PROFILE_END("platform_update");
-
-		// cache the value in seconds
-		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
-		last_time = current_time;
 
 		// update accumulator
 		accumulator += params.framedelta_seconds;
@@ -1505,6 +1498,13 @@ Options:
 		post_tick();
 		kernel::parameters().current_frame++;
 
+
+		// calculate delta ticks in milliseconds
+		params.framedelta_milliseconds = (current_time - last_time) * SecondsPerMillisecond;
+
+		// cache the value in seconds
+		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
+		last_time = current_time;
 
 		//gemini::profiler::report(profile_output);
 		//gemini::profiler::reset();
