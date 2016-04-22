@@ -86,6 +86,7 @@ typedef float real;
 namespace mathlib
 {
 	const real PI = (float)3.14159265358979323846f;
+	const real PI_2 = (PI * 2);
 	const real D2R_PI180 = (PI / 180.0f);
 	const real R2D_180PI = (180.0f / PI);
 	const real EPSILON = FLT_EPSILON;
@@ -104,10 +105,27 @@ namespace mathlib
 	// pitch and yaw are in degrees; internally converted to radians
 	void basis_vectors_from_pitch_yaw(float pitch, float yaw, glm::vec3& right, glm::vec3& view, bool invert_y_axis = true);
 
+	// assumes yaw's rotational axis is +Y; and pitch's rotational axis is +X.
+	glm::quat orientation_from_yaw_pitch(float yaw, float pitch, const glm::vec3& up, const glm::vec3& right);
 
 	bool point_in_radius(const glm::vec3& p0, const glm::vec3& p1, float radius = 3.0f);
 
 	glm::mat3 matrix_from_basis_vectors(const glm::vec3& right, const glm::vec3& up, const glm::vec3& forward);
+
+	// this only accepts unit vectors
+	glm::quat orientation_from_vectors(const glm::vec3& a, const glm::vec3& b);
+
+	void spherical_to_cartesian(float rho, float theta, float phi, glm::vec3& direction);
+	void cartesian_to_spherical(const glm::vec3& direction, float& rho, float& theta, float& phi);
+
+
+	glm::vec3 rotate_vector(const glm::vec3& view, const glm::quat& rotation);
+
+	// Like atan2, but return 0,2*PI as unsigned values.
+	// Clockwise ascending.
+	float unsigned_atan2(float y, float x);
+
+	float wrap_euler_angle(float rads);
 }
 
 #if 0

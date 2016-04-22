@@ -71,4 +71,9 @@ namespace gemini
 	{
 		renderer::debugdraw::triangle(v0, v1, v2, color, duration);
 	} // triangle
+
+	void DebugDrawInterface::camera(const glm::vec3& origin, const glm::vec3& view, float duration)
+	{
+		renderer::debugdraw::camera(origin, view, duration);
+	} // camera
 } // namespace gemini

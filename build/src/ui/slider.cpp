@@ -74,7 +74,7 @@ namespace gui
 			// set pressed color
 			drag_handle->set_background_color(gemini::Color::from_rgba(255, 128, 0, 255));
 
-			if (old_value != current_value)
+			if ((old_value != current_value) && on_value_changed.is_valid())
 			{
 				on_value_changed(current_value);
 			}
@@ -90,7 +90,7 @@ namespace gui
 			Point pt = args.local - drag_handle->get_origin();
 			if (drag_handle->hit_test_local(pt))
 			{
-				drag_handle->set_background_color(gemini::Color::from_rgba(255, 0, 0, 255));
+				drag_handle->set_background_color(gemini::Color::from_rgba(255, 128, 128, 255));
 			}
 			else
 			{
@@ -149,8 +149,10 @@ namespace gui
 
 	void Slider::set_value(float new_value)
 	{
+		// Until this slider has a range
+		assert(new_value <= 1.0f);
+
 		current_value = new_value;
-		on_value_changed(current_value);
 	}
 
 	Point Slider::get_left_edge()

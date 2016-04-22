@@ -60,7 +60,7 @@ namespace mathlib
 		float sy = sin(_yaw);
 		float cy = cos(_yaw);
 
-		right = glm::vec3( cy, 0, sy );
+		right = glm::vec3(cy, 0, sy);
 
 		view[0] = sy * cp;
 		view[1] = sp;
@@ -68,6 +68,12 @@ namespace mathlib
 		view = glm::normalize(view);
 	}
 
+	glm::quat orientation_from_yaw_pitch(float yaw, float pitch, const glm::vec3& up, const glm::vec3& right)
+	{
+		glm::quat qyaw = glm::angleAxis(glm::radians(yaw), up);
+		glm::quat qpitch = glm::angleAxis(glm::radians(pitch), right);
+		return glm::normalize(qyaw * qpitch);
+	}
 
 	// Returns true if p0 is within radius units of p1
 	bool point_in_radius(const glm::vec3& p0, const glm::vec3& p1, float radius)
@@ -85,8 +91,8 @@ namespace mathlib
 		 else
 		 return false;*/
 
-		// Use this method to save a sqrt.
-		// http://www.gamedev.net/community/forums/topic.asp?topic_id=221071
+		 // Use this method to save a sqrt.
+		 // http://www.gamedev.net/community/forums/topic.asp?topic_id=221071
 		glm::vec3 pt;
 		pt = p1 - p0;
 		float dot = glm::dot(pt, pt);
@@ -101,6 +107,66 @@ namespace mathlib
 		xform[1] = up;
 		xform[2] = forward;
 		return xform;
+	}
+
+	glm::quat orientation_from_vectors(const glm::vec3& a, const glm::vec3& b)
+	{
+		// http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
+		assert(a.x >= -1.0f && a.x <= 1.0f);
+		assert(a.y >= -1.0f && a.y <= 1.0f);
+		assert(a.z >= -1.0f && a.z <= 1.0f);
+		assert(b.x >= -1.0f && b.x <= 1.0f);
+		assert(b.y >= -1.0f && b.y <= 1.0f);
+		assert(b.z >= -1.0f && b.z <= 1.0f);
+
+		float d = sqrt(2.0f + 2.0f * glm::dot(a, b));
+		glm::vec3 result = (1.0f / d) * glm::cross(a, b);
+		return glm::quat(0.5f * d, result.x, result.y, result.z);
+	}
+
+	void spherical_to_cartesian(float rho, float theta, float phi, glm::vec3& direction)
+	{
+		float pitch = (mathlib::PI) - phi;
+		direction.x = rho * sinf(pitch) * cosf(theta);
+		direction.z = rho * sinf(pitch) * sinf(theta);
+		direction.y = rho * cos(pitch);
+	}
+
+	void cartesian_to_spherical(const glm::vec3& direction, float& rho, float& theta, float& phi)
+	{
+		rho = sqrt(glm::dot(direction, direction));
+		theta = atan2(direction.z, direction.x);
+		phi = acosf(direction.y / rho);
+	}
+
+
+	glm::vec3 rotate_vector(const glm::vec3& view, const glm::quat& rotation)
+	{
+		glm::quat qview(1.0f, view.x, view.y, view.z);
+
+		glm::quat v = rotation * qview * glm::conjugate(rotation);
+		return glm::vec3(v.x, v.y, v.z);
+	}
+
+	float unsigned_atan2(float y, float x)
+	{
+		float value = atan2(y, x);
+		//if (value < 0.0f)
+		//{
+		//	value += mathlib::PI * 2;
+		//}
+
+		return value;
+	}
+
+	float wrap_euler_angle(float rads)
+	{
+		if (fabsf(rads) < mathlib::PI)
+		{
+			float iterations = (floor(rads + mathlib::PI) * (1.0f / mathlib::PI_2));
+			rads -= iterations * mathlib::PI_2;
+		}
+		return rads;
 	}
 }
 

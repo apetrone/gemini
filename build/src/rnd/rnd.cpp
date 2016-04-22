@@ -1061,6 +1061,134 @@ void test_bno055()
 	}
 }
 
+
+//#define ENABLE_BSDIFF 1
+
+#if defined(ENABLE_BSDIFF)
+
+extern "C"
+{
+	#include <bsdiff.h>
+	#include <bspatch.h>
+}
+
+struct buffer_data
+{
+	char* data;
+	size_t index;
+};
+
+int write_data(struct bsdiff_stream* stream, const void* buffer, int size)
+{
+	LOGV("write: %i bytes\n", size);
+
+	buffer_data* bd = reinterpret_cast<buffer_data*>(stream->opaque);
+
+	// memmove will check for overlaps
+	memmove(&bd->data[bd->index], buffer, size);
+	bd->index += size;
+	return 0;
+}
+
+int read_data(const struct bspatch_stream* stream, void* buffer, int length)
+{
+	LOGV("read: %i\n", length);
+	buffer_data* bd = reinterpret_cast<buffer_data*>(stream->opaque);
+	memmove(buffer, &bd->data[bd->index], length);
+	bd->index += length;
+	return 0;
+}
+
+struct mytest
+{
+	int value;
+	float quantity;
+};
+
+void test_bsdiff()
+{
+	//
+
+
+
+	char buffer[64] = { 0 };
+
+	bsdiff_stream stream;
+	stream.free = free;
+	stream.malloc = malloc;
+	stream.opaque = nullptr;
+	stream.write = write_data;
+
+	buffer_data bd;
+	bd.data = buffer;
+	bd.index = 0;
+	stream.opaque = &bd;
+
+	mytest a;
+	mytest b;
+
+	a.value = 30;
+	a.quantity = 0.0f;
+
+	b.value = 62;
+	b.quantity = 2.3f;
+
+	int val = bsdiff((const uint8_t*)&a, sizeof(mytest), (const uint8_t*)&b, sizeof(mytest), &stream);
+
+	bspatch_stream ps;
+	ps.read = read_data;
+	ps.opaque = &bd;
+
+	mytest c;
+	bd.index = 0;
+
+	int ret = bspatch((const uint8_t*)&a, sizeof(mytest), (uint8_t*)&c, sizeof(mytest), &ps);
+
+	assert(c.value == b.value);
+	assert(c.quantity == b.quantity);
+}
+#endif
+
+
+void test_endian()
+{
+	uint8_t buffer[4] = { 0 };
+
+	uint32_t mz = 3;
+
+	buffer[0] = 0x0F & mz;
+	buffer[1] = 0xF0 & mz;
+
+	uint32_t* val = reinterpret_cast<uint32_t*>(buffer);
+
+
+}
+
+
+
+
+
+
+void test_spherical()
+{
+	// 1. convert spherical to Cartesian
+	glm::vec3 direction;
+	mathlib::spherical_to_cartesian(2.0f, (mathlib::PI / 4.0f), (mathlib::PI / 3.0f), direction);
+
+	const float TEST = sqrt(6.0f) / 2.0f;
+
+	assert(direction.x == TEST);
+	assert(direction.y == TEST);
+	assert(direction.z > (1.0f - FLT_EPSILON) && direction.z < (1.0f + FLT_EPSILON));
+
+	// 2. convert Cartesian to spherical
+	float rho, theta, phi;
+	mathlib::cartesian_to_spherical(glm::vec3(0.0f, 2 * sqrt(3.0f), -2.0f), rho, theta, phi);
+	assert(rho == 4.0f);
+	assert(theta == mathlib::PI/2.0f);
+	assert(phi == (2 * mathlib::PI) / 3.0f);
+}
+
 int main(int, char**)
 {
 	gemini::core_startup();

@@ -28,6 +28,10 @@
 #include <core/util.h> // for std::function
 #include <platform/platform.h>
 
+// TODO: for test slerp: move this elsewhere
+#include <core/mathlib.h>
+#include <core/interpolation.h>
+
 namespace platform
 {
 	struct Result;
@@ -42,4 +46,118 @@ namespace gemini
 	// paths in a custom fashion.
 	platform::Result runtime_startup(const char* application_data_path, std::function<void(const char*)> custom_path_setup = nullptr);
 	void runtime_shutdown();
+
+
+
+
+
+
+
+	template <class T>
+	class Test
+	{
+	private:
+		T initial;
+		T goal;
+		T& current;
+		float alpha;
+		float current_time;
+		float lerp_time;
+
+	public:
+		Test(T& _current)
+			: current(_current)
+			, alpha(0.0f)
+			, current_time(0.0f)
+		{
+			initial = T();
+			goal = T();
+			lerp_time = 0.0f;
+		}
+
+		~Test()
+		{}
+
+		Test(const Test& other) = delete;
+		Test(const Test&& other) = delete;
+		const Test& operator=(const Test& other) = delete;
+		const Test&& operator=(const Test&& other) = delete;
+
+		// used to initiate a transition from initial_value to target_value
+		void start_lerp(const T& initial_value, const T& target_value, float transition_time_seconds)
+		{
+			initial = initial_value;
+			goal = target_value;
+			current_time = 0.0f;
+			lerp_time = transition_time_seconds;
+		}
+
+		void tick(float step_interval_seconds)
+		{
+			current_time += step_interval_seconds;
+			alpha = glm::clamp((current_time / lerp_time), 0.0f, 1.0f);
+			current = gemini::lerp(initial, goal, alpha);
+		}
+
+		void reset()
+		{
+			current_time = 0.0f;
+		}
+	};
+
+
+	// quaternion
+	template <>
+	class Test<glm::quat>
+	{
+	private:
+		glm::quat initial;
+		glm::quat goal;
+		glm::quat& current;
+		float alpha;
+		float current_time;
+		float lerp_time;
+
+	public:
+		Test(glm::quat& _current)
+			: current(_current)
+			, alpha(0.0f)
+			, current_time(0.0f)
+		{
+			initial = glm::quat();
+			goal = glm::quat();
+			lerp_time = 0.0f;
+		}
+
+		~Test()
+		{}
+
+		Test(const Test& other) = delete;
+		Test(const Test&& other) = delete;
+		const Test& operator=(const Test& other) = delete;
+		const Test&& operator=(const Test&& other) = delete;
+
+		// used to initiate a transition from initial_value to target_value
+		void start_lerp(const glm::quat& initial_value, const glm::quat& target_value, float transition_time_seconds)
+		{
+			initial = initial_value;
+			goal = target_value;
+			current_time = 0.0f;
+			lerp_time = transition_time_seconds;
+		}
+
+		void tick(float step_interval_seconds)
+		{
+			current_time += step_interval_seconds;
+			alpha = glm::clamp((current_time / lerp_time), 0.0f, 1.0f);
+			current = gemini::slerp(initial, goal, alpha);
+		}
+
+		void reset()
+		{
+			current_time = 0.0f;
+		}
+	};
+
+
 } // namespace gemini

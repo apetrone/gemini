@@ -80,4 +80,30 @@ public:
 		tail_index--;
 		return item;
 	}
+
+	Type& top()
+	{
+		// Trying to access non-existent top element.
+		assert(total_elements > 0);
+
+		return elements[tail_index - 1];
+	}
+
+	const Type& top() const
+	{
+		assert(total_elements > 0);
+		return elements[tail_index - 1];
+	}
+
+	const Type& operator[](int index) const
+	{
+		assert(tail_index > index);
+		return elements[tail_index - index - 1];
+	}
+
+	Type& operator[](int index)
+	{
+		assert(tail_index > index);
+		return elements[tail_index - index - 1];
+	}
 }; // FixedSizeQueue

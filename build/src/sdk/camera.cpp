@@ -31,6 +31,514 @@
 
 #include <renderer/debug_draw.h>
 
+#include <sdk/utils.h>
+
+const char* cameratype_to_string(CameraType type)
+{
+	switch (type)
+	{
+		case CameraType::DefaultCamera: return "DefaultCamera";
+		case CameraType::FollowCamera: return "FollowCamera";
+		case CameraType::FixedCamera: return "FixedCamera";
+		default: break;
+	}
+
+	return "UnknownCamera";
+}
+
+// --------------------------------------------------------
+// GameCamera
+// --------------------------------------------------------
+GameCamera::~GameCamera()
+{
+}
+
+// --------------------------------------------------------
+// DefaultCamera
+// --------------------------------------------------------
+class DefaultCamera : public GameCamera
+{
+public:
+	virtual glm::vec3 get_origin() const override
+	{
+		glm::vec3 o(0.0f, 12.0f, 5.0f);
+		return o;
+	}
+
+	virtual glm::vec3 get_target() const override
+	{
+		glm::vec3 view(0.0f, 0.0f, -1.0f);
+		return view;
+	}
+
+	virtual float get_fov() const override
+	{
+		return 50.0f;
+	}
+
+	virtual CameraType get_type() const override { return CameraType::DefaultCamera; }
+
+	virtual void move_view(float yaw, float pitch) override
+	{
+	}
+
+	virtual void set_yaw_pitch(float yaw, float pitch) override
+	{
+	}
+
+	virtual void tick(float step_interval_seconds) override
+	{
+	}
+
+	virtual void set_target_position(const glm::vec3& target_worldspace_position) override
+	{
+	}
+
+	virtual void set_target_direction(const glm::vec3& direction) override
+	{
+	}
+
+	virtual glm::vec3 get_target_direction() const override
+	{
+		return glm::vec3(0.0f, 0.0f, 0.0f);
+	}
+
+	virtual void reset_view() override
+	{
+	}
+};
+
+// --------------------------------------------------------
+// QuaternionFollowCamera
+// --------------------------------------------------------
+
+#if 0
+	- need to independently control yaw and pitch (right analog stick)
+	- need to rotate back to 'ideal' position
+	- What if we stored a view vector?
+#endif
+
+
+// Quaternion interpolation time.
+const float kInterpolationTime = 1.0f;
+
+// Time to wait while moving before initiating auto-orient.
+const float kAutoOrientWaitTime = 0.5f;
+
+const glm::vec3 YUP_DIRECTION(0.0f, 1.0f, 0.0f);
+
+QuaternionFollowCamera::QuaternionFollowCamera()
+{
+	target_position = glm::vec3(0.0f, 0.0f, 0.0f);
+	position = glm::vec3(0.0f, 3.0f, 3.0f);
+	target_facing_direction = glm::vec3(0.0f, 0.0f, -1.0f);
+
+	// height above the player where camera should be
+	//splayer_height = 1.0f;
+
+	distance_to_target = 5.0f;
+
+	field_of_view = 50.0f;
+
+	view_moved = 0;
+
+	camera_direction = glm::vec3(0.0f, 0.0f, -1.0f);
+	camera_right = glm::vec3(1.0f, 0.0f, 0.0f);
+	interpolation_time = 0.0f;
+
+	auto_orient_seconds = kAutoOrientWaitTime;
+	auto_orienting = 0;
+
+	//pitch = 0.0f;
+	//pitch_min = 45.0f;
+	//pitch_max = 80.0f;
+}
+
+glm::vec3 QuaternionFollowCamera::get_origin() const
+{
+	return position;
+}
+
+glm::vec3 QuaternionFollowCamera::get_target() const
+{
+	return target_position;
+}
+
+float QuaternionFollowCamera::get_fov() const
+{
+	return field_of_view;
+}
+
+void QuaternionFollowCamera::move_view(float yaw_delta, float pitch_delta)
+{
+	// flag view moved this tick
+	view_moved = 1;
+
+#if 0
+	float old_pitch = pitch;
+	// need to clamp the pitch until we make this a spline
+	float new_pitch = (pitch + -pitch_delta);
+	LOGV("new pitch: %2.2f\n", new_pitch);
+	//new_pitch = glm::clamp(new_pitch, pitch_min, pitch_max);
+	pitch = new_pitch;
+
+	float delta_pitch = (old_pitch - pitch);
+	LOGV("pitch: %2.2f\n", pitch);
+#endif
+
+	glm::quat rotation = mathlib::orientation_from_yaw_pitch(yaw_delta, -pitch_delta, YUP_DIRECTION, camera_right);
+	camera_direction = glm::normalize(mathlib::rotate_vector(camera_direction, rotation));
+	camera_right = glm::normalize(glm::cross(camera_direction, YUP_DIRECTION));
+
+	position = (-camera_direction * distance_to_target);
+}
+
+void QuaternionFollowCamera::set_yaw_pitch(float yaw, float pitch)
+{
+	if (interpolation_time > 0.0f)
+		return;
+
+	glm::quat rotation = mathlib::orientation_from_yaw_pitch(yaw, -pitch, YUP_DIRECTION, camera_right);
+	camera_direction = glm::normalize(mathlib::rotate_vector(glm::vec3(0.0f, 0.0f, -1.0f), rotation));
+	camera_right = glm::normalize(glm::cross(camera_direction, YUP_DIRECTION));
+
+	position = (-camera_direction * distance_to_target);
+}
+
+void QuaternionFollowCamera::tick(float step_interval_seconds)
+{
+	if (view_moved == 0)
+	{
+		// decrement the wait time
+		if (auto_orienting == 0)
+		{
+			//LOGV("decrementing auto orient time\n");
+			//auto_orient_seconds -= step_interval_seconds;
+
+			if (auto_orient_seconds <= 0.0f)
+			{
+				// start auto-orienting...
+				auto_orienting = 1;
+
+				//LOGV("start auto orienting\n");
+				reset_view();
+				auto_orient_seconds = kAutoOrientWaitTime;
+			}
+		}
+	}
+	else
+	{
+		// reset the wait timer
+		auto_orient_seconds = kAutoOrientWaitTime;
+		//LOGV("reset auto orient timer\n");
+
+		interpolation_time = 0.0f;
+		auto_orienting = 0;
+	}
+
+	renderer::debugdraw::camera(
+		target_position + position,
+		glm::normalize(-position), // facing direction
+		0.0f
+	);
+
+	renderer::debugdraw::line(
+		target_position,
+		(target_position + (target_facing_direction * 1.0f)),
+		gemini::Color(0.0f, 1.0f, 1.0f)
+	);
+
+	//renderer::debugdraw::line(
+	//	target_position,
+	//	(target_position + (target_facing_direction * 1.0f)),
+	//	gemini::Color(0.0f, 1.0f, 1.0f)
+	//);
+
+	renderer::debugdraw::line(
+		target_position,
+		(target_position + (camera_direction * 1.0f)),
+		gemini::Color(0.0f, 0.0f, 1.0f)
+	);
+
+	renderer::debugdraw::line(
+		target_position,
+		(target_position + (camera_right * 1.0f)),
+		gemini::Color(1.0f, 0.0f, 0.0f)
+	);
+
+	if ((view_moved == 0) && (auto_orienting == 1) && (interpolation_time > 0.0f))
+	{
+		float t = (kInterpolationTime - interpolation_time) / kInterpolationTime;
+		glm::quat rot = gemini::slerp(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), interpolation_rotation, t);
+		camera_direction = mathlib::rotate_vector(interpolation_vector, rot);
+
+		position = (-camera_direction * distance_to_target);
+		//LOGV("t = %2.2f %2.2f\n", t, interpolation_time);
+		interpolation_time -= step_interval_seconds;
+
+		if (interpolation_time <= 0.0f)
+		{
+			LOGV("finished auto-orienting camera\n");
+			auto_orienting = 0;
+			auto_orient_seconds = kAutoOrientWaitTime;
+		}
+	}
+
+	view_moved = 0;
+}
+
+void QuaternionFollowCamera::set_target_position(const glm::vec3& target_worldspace_position)
+{
+	target_position = target_worldspace_position;
+
+	// position the camera relative to the target_position
+	position = (-camera_direction * distance_to_target);
+}
+
+void QuaternionFollowCamera::set_target_direction(const glm::vec3& direction)
+{
+	target_facing_direction = glm::normalize(direction);
+}
+
+glm::vec3 QuaternionFollowCamera::get_target_direction() const
+{
+	return target_facing_direction;
+}
+
+void QuaternionFollowCamera::reset_view()
+{
+	glm::vec3 new_direction = target_facing_direction; //glm::vec3(0.0f, 0.0f, -1.0f); //
+
+	float difference = glm::length(new_direction - camera_direction);
+	if (difference > FLT_EPSILON)
+	{
+		glm::quat rot = mathlib::orientation_from_vectors(glm::normalize(camera_direction), glm::normalize(new_direction));
+
+		interpolation_rotation = rot;
+		//camera_direction = mathlib::rotate_vector(new_direction, rot);
+
+		interpolation_time = kInterpolationTime;
+		interpolation_vector = camera_direction;
+	}
+	else
+	{
+		//LOGV("skipping auto-orient; difference too small\n");
+		auto_orienting = 0;
+	}
+}
+
+void QuaternionFollowCamera::set_follow_distance(float target_distance)
+{
+	distance_to_target = target_distance;
+}
+
+void QuaternionFollowCamera::set_view(const glm::vec3& view_direction)
+{
+	camera_direction = view_direction;
+}
+
+// --------------------------------------------------------
+// FixedCamera
+// --------------------------------------------------------
+FixedCamera::FixedCamera(const glm::vec3& position, const glm::vec3& target_position, float fov)
+	: origin(position)
+	, target(target_position)
+	, field_of_view(fov)
+{
+}
+
+glm::vec3 FixedCamera::get_origin() const
+{
+	return origin;
+}
+
+glm::vec3 FixedCamera::get_target() const
+{
+	return target;
+}
+
+float FixedCamera::get_fov() const
+{
+	return field_of_view;
+}
+
+void FixedCamera::move_view(float yaw, float pitch)
+{
+}
+
+void FixedCamera::set_yaw_pitch(float yaw, float pitch)
+{
+}
+
+
+void FixedCamera::tick(float step_interval_seconds)
+{
+}
+
+void FixedCamera::set_target_position(const glm::vec3& target_worldspace_position)
+{
+}
+
+void FixedCamera::set_target_direction(const glm::vec3& direction)
+{
+}
+
+glm::vec3 FixedCamera::get_target_direction() const
+{
+	return glm::vec3(0.0f, 0.0f, 0.0f);
+}
+
+void FixedCamera::reset_view()
+{
+}
+
+// --------------------------------------------------------
+// CameraMixer
+// --------------------------------------------------------
+void CameraMixer::normalize_weights(float top_weight)
+{
+	// This does NOT correctly normalize the weights of cameras.
+	// It's unclear how I want this to behave -- so for now
+	// it mainly works to push and pop a single camera on a stack
+	// with full weight.
+	float weight_remaining = top_weight;
+	const size_t total_cameras = cameras.size();
+	for (size_t index = 0; index < total_cameras; ++index)
+	{
+		CameraBlend& blend = cameras[index];
+		blend.weight = weight_remaining;
+
+		weight_remaining -= blend.weight;
+		weight_remaining = glm::clamp(weight_remaining, 0.0f, 1.0f);
+	}
+}
+
+CameraMixer::CameraMixer()
+{
+	// default camera
+	DefaultCamera* camera = MEMORY_NEW(DefaultCamera, core::memory::global_allocator());
+	push_camera(camera, 1.0f);
+
+	origin = glm::vec3(0.0f, 0.0f, 0.0f);
+	view = glm::vec3(0.0f, 0.0f, -1.0f);
+	offset = glm::vec3(0.0f, 0.0f, 0.0f);
+}
+
+CameraMixer::~CameraMixer()
+{
+	const size_t total_cameras = cameras.size();
+	for (size_t index = 0; index < total_cameras; ++index)
+	{
+		CameraBlend blend = cameras.pop();
+		MEMORY_DELETE(blend.camera, core::memory::global_allocator());
+	}
+}
+
+void CameraMixer::push_camera(GameCamera* camera, float weight)
+{
+	CameraBlend blend(camera, weight);
+	cameras.push_back(blend);
+
+	normalize_weights(weight);
+
+	// force an update of the origin/view
+	tick(0.0f, 0.0f);
+}
+
+void CameraMixer::pop_camera(float weight)
+{
+	CameraBlend blend = cameras.pop();
+	MEMORY_DELETE(blend.camera, core::memory::global_allocator());
+
+	normalize_weights(weight);
+
+	// re-normalize
+	tick(0.0f, 0.0f);
+}
+
+GameCamera* CameraMixer::get_top_camera()
+{
+	return cameras.top().camera;
+}
+
+glm::vec3 CameraMixer::get_origin() const
+{
+	return origin;
+}
+
+glm::vec3 CameraMixer::get_target() const
+{
+	return view;
+}
+
+float CameraMixer::get_field_of_view() const
+{
+	return cameras.top().camera->get_fov();
+}
+
+void CameraMixer::tick(float step_interval_seconds, float step_alpha)
+{
+	// aggregate values for origin and view.
+	origin = glm::vec3(0.0f, 0.0f, 0.0f);
+	view = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	const size_t total_cameras = cameras.size();
+	for (size_t index = 0; index < total_cameras; ++index)
+	{
+		CameraBlend& blend = cameras[index];
+		GameCamera* camera = blend.camera;
+		camera->tick(step_interval_seconds);
+		origin += (blend.weight * camera->get_origin());
+		view += (blend.weight * camera->get_target());
+	}
+}
+
+void CameraMixer::move_view(float yaw_delta, float pitch_delta)
+{
+	const size_t total_cameras = cameras.size();
+	for (size_t index = 0; index < total_cameras; ++index)
+	{
+		CameraBlend& blend = cameras[index];
+		blend.camera->move_view(yaw_delta, pitch_delta);
+	}
+}
+
+void CameraMixer::set_yaw_pitch(float yaw, float pitch)
+{
+	const size_t total_cameras = cameras.size();
+	for (size_t index = 0; index < total_cameras; ++index)
+	{
+		CameraBlend& blend = cameras[index];
+		blend.camera->set_yaw_pitch(yaw, pitch);
+	}
+}
+
+void CameraMixer::set_target_position(const glm::vec3& target_worldspace_position)
+{
+	const size_t total_cameras = cameras.size();
+	for (size_t index = 0; index < total_cameras; ++index)
+	{
+		CameraBlend& blend = cameras[index];
+		blend.camera->set_target_position(target_worldspace_position);
+	}
+}
+
+void CameraMixer::set_target_direction(const glm::vec3& direction)
+{
+	const size_t total_cameras = cameras.size();
+	for (size_t index = 0; index < total_cameras; ++index)
+	{
+		CameraBlend& blend = cameras[index];
+		blend.camera->set_target_direction(direction);
+	}
+}
+
+glm::vec3 CameraMixer::get_target_direction() const
+{
+	const CameraBlend& blend = cameras.top();
+	return blend.camera->get_target_direction();
+}
+
 // --------------------------------------------------------
 // Camera
 // --------------------------------------------------------
@@ -226,58 +734,12 @@ void Camera::ortho(real left, real right, real bottom, real top, real nearz, rea
 	is_ortho = true;
 }
 
-ChaseCamera::ChaseCamera()
+#if 0
+glm::quat ChaseCamera::from_yaw_pitch(float yaw, float pitch)
 {
-	// Default value to avoid it being on top of the target position;
-	// otherwise, this hits an assert in bullet.
-	position = glm::vec3(0.0f, 3.0f, 1.0f);
+	glm::quat qyaw = glm::angleAxis(glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::quat qpitch = glm::angleAxis(glm::radians(-pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+	return glm::normalize(qyaw * qpitch);
 }
 
-ChaseCamera::~ChaseCamera()
-{
-}
-
-void ChaseCamera::perspective(real fovy, int32_t width, int32_t height, real nearz, real farz)
-{
-	// This MUST be greater than 0, otherwise the view will be inverted or something.
-	// Basically, you won't see anything.
-	assert(nearz > 0.0f);
-	projection = glm::perspective(glm::radians(fovy), (width / (float)height), nearz, farz);
-}
-
-void ChaseCamera::ortho(real left, real right, real bottom, real top, real nearz, real farz)
-{
-	projection = glm::ortho(left, right, bottom, top, nearz, farz);
-}
-
-void ChaseCamera::update_view()
-{
-	const glm::vec3 UP_DIRECTION(0.0f, 1.0f, 0.0f);
-
-	modelview = glm::lookAt(position, target_position, UP_DIRECTION);
-
-	// get new orientation quaternion
-	const glm::vec3 pos2d(position.x, 0.0f, position.z);
-	const glm::vec3 target2d(target_position.x, 0.0f, target_position.z);
-	orientation = glm::toQuat(glm::lookAt(pos2d, target2d, UP_DIRECTION));
-
-	//LOGV("q: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
-
-	// Compute vector from target to camera.
-	glm::vec3 camera_to_target = (target_position - position);
-	camera_to_target.y = 0;
-	float length = glm::length(camera_to_target);
-
-	// If the camera is too far or too close to the target; we have to adjust.
-	const float MAXIMUM_DISTANCE = 5.0f;
-
-	desired_position = target_position - (glm::normalize(camera_to_target) * MAXIMUM_DISTANCE);
-	desired_position.y = target_position.y + desired_chase_offset.y;
-
-	const float bias = 0.95f;
-	position = (position * bias + (desired_position * (1.0f - bias)));
-}
-
-void ChaseCamera::tick(float /*step_interval_seconds*/)
-{
-}
+#endif

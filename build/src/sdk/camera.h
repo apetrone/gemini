@@ -26,6 +26,8 @@
 
 #include <core/mathlib.h>
 #include <core/typedefs.h>
+#include <core/interpolation.h>
+#include <runtime/runtime.h>
 
 // REFERENCE LINKS
 
@@ -72,7 +74,200 @@
 // TargetCamera References
 // http://www.gamedev.net/community/forums/topic.asp?topic_id=473371 - cursor moving faster than object
 // http://www.gamedev.net/community/forums/topic.asp?topic_id=480789 - Rotating a group of points around a pivot
+// http://www.gamedev.net/topic/655639-orbit-quaternion-camera/?hl=%2Bspherical+%2Bcoordinates+%2Bcamera - polar coordinates
+// https://blog.nobel-joergensen.com/2010/10/22/spherical-coordinates-in-unity/ - polar coordinates
+// https://en.wikipedia.org/wiki/Spherical_coordinate_system - spherical coordinates
+// http://www.mathworks.com/help/matlab/ref/cart2sph.html - spherical coordinate system transformation
+// http://www.gamasutra.com/blogs/YoannPignole/20150928/249412/Third_person_camera_design_with_free_move_zone.php
 
+// https://en.wikipedia.org/wiki/Spherical_trigonometry - spherical trig
+
+#include <core/fixedsizequeue.h>
+
+enum class CameraType
+{
+	DefaultCamera,
+	FollowCamera,
+	FixedCamera
+};
+
+const char* cameratype_to_string(CameraType type);
+
+class GameCamera
+{
+public:
+	virtual ~GameCamera();
+
+	// returns the camera's 'eye' position
+	virtual glm::vec3 get_origin() const = 0;
+	virtual glm::vec3 get_target() const = 0;
+
+	// return the vertical field of view for this camera
+	virtual float get_fov() const = 0;
+
+	// returns the discrete camera type
+	virtual CameraType get_type() const = 0;
+
+	// Called when the camera's should rotate by a delta
+	virtual void move_view(float yaw, float pitch) = 0;
+
+	// set absolute yaw and pitch
+	virtual void set_yaw_pitch(float yaw, float pitch) = 0;
+
+	// Called each frame
+	virtual void tick(float step_interval_seconds) = 0;
+
+	// Called when the target object's position changed
+	virtual void set_target_position(const glm::vec3& position) = 0;
+
+	// Set the target object's moved direction.
+	virtual void set_target_direction(const glm::vec3& direction) = 0;
+
+	// Get the target object's facing direction.
+	virtual glm::vec3 get_target_direction() const = 0;
+
+	// Reset this camera's view.
+	virtual void reset_view() = 0;
+}; // GameCamera
+
+
+// distance and field of view driven from pitch.
+
+class QuaternionFollowCamera : public GameCamera
+{
+private:
+
+	// truck: up and down
+	// tilt; from camera origin (up/down)
+	// pan: left/right from camera origin
+	// field of view
+
+#if 0
+	// TODO: replace this with a spline
+	float pitch;
+	float pitch_min;
+	float pitch_max;
+#endif
+
+	glm::vec3 position;
+	glm::vec3 target_position;
+	glm::vec3 target_facing_direction;
+
+	// did the view move this tick?
+	size_t view_moved;
+
+	//float follow_distance;
+	//float player_height;
+
+	float distance_to_target;
+
+	float field_of_view;
+
+	glm::vec3 camera_direction;
+	glm::vec3 camera_right;
+
+	float interpolation_time;
+	glm::quat interpolation_rotation;
+	glm::vec3 interpolation_vector;
+
+	float auto_orient_seconds;
+	size_t auto_orienting;
+
+public:
+	QuaternionFollowCamera();
+
+	virtual glm::vec3 get_origin() const override;
+	virtual glm::vec3 get_target() const override;
+	virtual float get_fov() const override;
+	virtual CameraType get_type() const override { return CameraType::FollowCamera; }
+	virtual void move_view(float yaw, float pitch) override;
+	virtual void set_yaw_pitch(float yaw, float pitch) override;
+	virtual void tick(float step_interval_seconds) override;
+	virtual void set_target_position(const glm::vec3& player_position) override;
+	virtual void set_target_direction(const glm::vec3& direction) override;
+	virtual glm::vec3 get_target_direction() const override;
+	virtual void reset_view() override;
+
+	void set_follow_distance(float target_distance);
+	void set_view(const glm::vec3& view_direction);
+};
+
+class FixedCamera : public GameCamera
+{
+private:
+	glm::vec3 origin;
+	glm::vec3 target;
+	float field_of_view;
+
+public:
+	FixedCamera(const glm::vec3& position, const glm::vec3& target, float fov);
+
+	virtual glm::vec3 get_origin() const override;
+	virtual glm::vec3 get_target() const override;
+	virtual float get_fov() const override;
+	virtual CameraType get_type() const override { return CameraType::FixedCamera; }
+	virtual void move_view(float yaw, float pitch) override;
+	virtual void set_yaw_pitch(float yaw, float pitch) override;
+	virtual void tick(float step_interval_seconds) override;
+	virtual void set_target_position(const glm::vec3& player_position) override;
+	virtual void set_target_direction(const glm::vec3& direction) override;
+	virtual glm::vec3 get_target_direction() const override;
+	virtual void reset_view() override;
+};
+
+class CameraMixer
+{
+private:
+	struct CameraBlend
+	{
+		GameCamera* camera;
+		float weight;
+
+		CameraBlend(GameCamera* game_camera = nullptr, float blend_weight = 0.0f)
+			: camera(game_camera)
+			, weight(blend_weight)
+		{
+		}
+	};
+
+	FixedSizeQueue<CameraBlend, 4> cameras;
+
+	glm::vec3 origin;
+	glm::vec3 view;
+	glm::vec3 offset;
+
+	void normalize_weights(float top_weight);
+public:
+	CameraMixer();
+	~CameraMixer();
+
+	// push a new camera onto the stack with the desired blend weight
+	void push_camera(GameCamera* new_camera, float weight);
+
+	// pop the current camera off the stack and set the new blend weight
+	void pop_camera(float weight);
+
+	GameCamera* get_top_camera();
+
+	// get origin and view vectors
+	glm::vec3 get_origin() const;
+	glm::vec3 get_target() const;
+
+	// get field of view
+	float get_field_of_view() const;
+
+	void tick(float step_interval_seconds, float step_alpha);
+	void move_view(float yaw, float pitch);
+	void set_yaw_pitch(float yaw, float pitch);
+
+	// Update the target's position (in worldspace)
+	void set_target_position(const glm::vec3& position);
+
+	// Set the direction of travel for the target object.
+	void set_target_direction(const glm::vec3& direction);
+
+	glm::vec3 get_target_direction() const;
+};
 
 struct Camera
 {
@@ -164,84 +359,4 @@ private:
 	float near_clip;
 	float far_clip;
 }; // Camera
-
-class ChaseCamera
-{
-	glm::vec3 position;
-	glm::quat orientation;
-	glm::vec3 target_position;
-
-	glm::mat4 modelview;
-	glm::mat4 projection;
-
-	glm::vec3 desired_chase_offset;
-
-	// for interpolation
-	glm::vec3 desired_position;
-	//glm::quat orientation_offset;
-
-public:
-
-	ChaseCamera();
-	~ChaseCamera();
-
-	// projection type functions
-	void perspective(real fovy, int32_t width, int32_t height, real nearz, real farz);
-	void ortho(real left, real right, real bottom, real top, real nearz, real farz);
-
-	void update_view();
-
-	void tick(float step_interval_seconds);
-
-	inline void set_desired_position(const glm::vec3& new_desired_position)
-	{
-		desired_position = new_desired_position;
-	}
-
-	/// @brief Sets the 'desired' chase offset relative to the target position.
-	inline void set_desired_chase_offset(const glm::vec3& chase_offset)
-	{
-		desired_chase_offset = chase_offset;
-	}
-
-	inline void set_position(const glm::vec3& new_position)
-	{
-		position = new_position;
-	}
-
-	inline void set_target_position(const glm::vec3& new_target_position)
-	{
-		target_position = new_target_position;
-	}
-
-	inline const glm::mat4& get_modelview() const
-	{
-		return modelview;
-	}
-
-	inline const glm::vec3& get_desired_position() const
-	{
-		return desired_position;
-	}
-
-	inline const glm::vec3& get_position() const
-	{
-		return position;
-	}
-
-	inline const glm::quat& get_orientation() const
-	{
-		return orientation;
-	}
-
-	inline const glm::mat4& get_projection() const
-	{
-		return projection;
-	}
-
-	inline const glm::vec3& get_target_position() const
-	{
-		return target_position;
-	}
-};
 

@@ -42,6 +42,8 @@ namespace renderer
 			TYPE_LINE,
 			TYPE_AXES,
 			TYPE_SPHERE,
+			TYPE_CAMERA,
+
 			TYPE_TEXT,
 			TYPE_TRIANGLE,
 
@@ -460,7 +462,7 @@ namespace renderer
 			const gemini::Color frustum_color(0.0f, 1.0f, 0.0f, 1.0f);
 
 			const glm::vec3& origin = primitive->start;
-			const glm::vec3& view = glm::normalize(primitive->end);
+			const glm::vec3& view = -glm::normalize(primitive->end);
 
 			// First we need to establish the basis matrix given the view vector.
 			const glm::vec3 right = glm::normalize(glm::cross(view, glm::vec3(0.0f, 1.0f, 0.0f)));
@@ -682,7 +684,8 @@ namespace renderer
 				buffer_box,
 				buffer_line,
 				buffer_axes,
-				buffer_sphere
+				buffer_sphere,
+				buffer_camera
 			};
 
 			size_t primitive_sizes[] =
@@ -691,7 +694,8 @@ namespace renderer
 				24,
 				2,
 				6,
-				(TOTAL_CIRCLE_VERTICES * 3)
+				(TOTAL_CIRCLE_VERTICES * 3),
+				16, // camera
 			};
 
 			// step 1: tally up the total vertex cache size we'll need
@@ -734,7 +738,7 @@ namespace renderer
 				for (size_t index = 0; index < persistent_primitives.size(); ++index)
 				{
 					DebugPrimitive* primitive = &persistent_primitives[index];
-					if (primitive->type > 0 && primitive->type <= TYPE_SPHERE)
+					if (primitive->type > 0 && primitive->type <= TYPE_CAMERA)
 					{
 						buffer_primitive_table[primitive->type](primitive,
 							accessor);
@@ -745,7 +749,7 @@ namespace renderer
 				for(size_t index = 0; index < per_frame_primitives.size(); ++index)
 				{
 					DebugPrimitive* primitive = &per_frame_primitives[index];
-					if (primitive->type > 0 && primitive->type <= TYPE_SPHERE)
+					if (primitive->type > 0 && primitive->type <= TYPE_CAMERA)
 					{
 						buffer_primitive_table[primitive->type](primitive,
 							accessor);
@@ -1080,5 +1084,17 @@ namespace renderer
 			}
 		}
 
+		void camera(const glm::vec3& origin, const glm::vec3& view, float duration)
+		{
+			DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+			if (primitive)
+			{
+				primitive->type = TYPE_CAMERA;
+				primitive->start = origin;
+				primitive->end = view;
+				primitive->timeleft = duration;
+				primitive->radius = 1.0f;
+			}
+		}
 	} // namespace debugdraw
 } // namespace renderer

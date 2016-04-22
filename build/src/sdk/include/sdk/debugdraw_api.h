@@ -85,6 +85,11 @@ namespace gemini
 			const glm::vec3& v2,
 			const Color& color,
 			float duration = 0.0f) = 0;
+
+		// draw camera
+		virtual void camera(const glm::vec3& origin,
+			const glm::vec3& view,
+			float duration = 0.0f) = 0;
 	};
 
 	namespace debugdraw

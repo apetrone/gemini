@@ -552,6 +552,9 @@ def get_libcore(arguments, target_platform):
 		"src/core/platform/graphics/win32/win32_graphics_provider.cpp",
 		"src/core/platform/graphics/win32/win32_graphics_provider.h",
 
+		# joystick
+		"src/core/platform/joystick/win32/win32_joystick.cpp",
+
 		# serial
 		"src/core/platform/serial/win32/win32_serial.cpp",
 

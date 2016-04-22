@@ -111,6 +111,9 @@ namespace gemini
 		//uint32_t buttonflags;
 		float angles[2]; // pitch, yaw
 		int16_t axes[4];
+		float cam_yaw;
+		float cam_pitch;
+		glm::quat last_orientation;
 
 		UserCommand()
 		{
@@ -118,6 +121,7 @@ namespace gemini
 			//buttonflags = 0;
 			angles[0] = angles[1] = 0;
 			memset(axes, 0, sizeof(int16_t));
+			cam_yaw = cam_pitch = 0.0f;
 		}
 
 		//void set_button(int index, bool is_down)
