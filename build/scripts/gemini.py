@@ -391,6 +391,8 @@ def get_libcore(arguments, target_platform):
 		"src/core/platform/window.h",
 		"src/core/platform/window_provider.cpp",
 		"src/core/platform/window_provider.h",
+		"src/core/platform/input_provider.cpp",
+		"src/core/platform/input_provider.h",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c")
 	]
@@ -541,6 +543,10 @@ def get_libcore(arguments, target_platform):
 			"/opt/vc/include/interface/vmcs_host/linux"
 		]
 
+	if True:
+		linux.links += [
+			"udev"
+		]
 
 	windows = libcore.layout(platform="windows")
 	windows.sources += [
@@ -722,8 +728,7 @@ def get_rnd(arguments, links, **kwargs):
 
 	rnd_linux = rnd.layout(platform="linux")
 	rnd_linux.links += [
-		"GL",
-		"udev"
+		"GL"
 	]
 
 	# Fix undefined reference for SysFreeString
