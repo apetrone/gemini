@@ -92,6 +92,30 @@ InputDevice::~InputDevice()
 }
 
 
+bool device_is_supported(const char* device_path)
+{
+	// try to open the device
+	int descriptor = open(device_path, O_RDONLY);
+	if (descriptor < 0)
+	{
+		LOGW("Skipping device '%s' (cannot open)\n", device_path);
+		return false;
+	}
+
+	// if we can open it; try to get the EVIO version
+	int version;
+	if (ioctl(descriptor, EVIOCGVERSION, &version) != 0)
+	{
+		LOGW("Skipping device '%s' (EVIOCGVERSION)\n", device_path);
+		return false;
+	}
+
+	// close the device, checks out.
+	close(descriptor);
+
+	return true;
+}
+
 template <DeviceType T>
 class InputDeviceBase : public InputDevice
 {
@@ -472,7 +496,7 @@ public:
 	{
 		if (event.type == EV_SYN)
 		{
-			printf("EVN_SYN\n");
+			// printf("EVN_SYN\n");
 		}
 		else if (event.type == EV_MSC && (event.code == MSC_RAW || event.code == MSC_SCAN))
 		{
@@ -627,7 +651,7 @@ private:
 			const char* device_node_path = udev_device_get_devnode(udevice);
 			if (!device_node_path)
 			{
-				LOGV("Unable to get device node path.\n");
+				LOGV("Unable to get device node path. Skipping device...\n");
 				udev_device_unref(udevice);
 				continue;
 			}
@@ -644,7 +668,7 @@ private:
 
 			if (!uparent)
 			{
-				LOGV("Unable to find parent usb device\n");
+				LOGV("Unable to find parent usb device. Skipping device...\n");
 				udev_device_unref(udevice);
 				continue;
 			}
@@ -682,9 +706,12 @@ private:
 				udev_device_get_sysattr_value(uparent, "idBustype")
 			);
 
-			// register this device type before we unref devices
-			// as they take the device_node_path with them.
-			create_device_with_path(device_node_path, device_type);
+			if (device_is_supported(device_node_path))
+			{
+				// register this device type before we unref devices
+				// as they take the device_node_path with them.
+				create_device_with_path(device_node_path, device_type);
+			}
 
 			// free resources
 			//udev_device_unref(uparent); // this causes a crash; do we need
@@ -701,8 +728,8 @@ public:
 		// scan for and add devices of known types
 		//
 		add_devices("input", "ID_INPUT_KEYBOARD", "1", DeviceType::Keyboard);
-		//add_devices("input", "ID_INPUT_MOUSE", "1", DeviceType::Mouse);
-		//add_devices("input", "ID_INPUT_JOYSTICK", "1", DeviceType::Joystick);
+		add_devices("input", "ID_INPUT_MOUSE", "1", DeviceType::Mouse);
+		add_devices("input", "ID_INPUT_JOYSTICK", "1", DeviceType::Joystick);
 
 		return platform::Result::success();
 	}
