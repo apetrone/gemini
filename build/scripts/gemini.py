@@ -270,10 +270,6 @@ def setup_driver(arguments, product, target_platform):
 			"PLATFORM_EGL_SUPPORT=1"
 		]
 	if arguments.with_x11:
-		# We have to verify Xlib exists on the system.
-		found_xlib = target_platform.find_include_path("X11/Xlib.h")
-		assert_dependency(found_xlib, "X11/Xlib.h not found!")
-
 		linux.defines += [
 			"PLATFORM_X11_SUPPORT=1"
 		]
@@ -927,7 +923,18 @@ def products(arguments, **kwargs):
 	else:
 		raise Exception("Unknown renderer!")
 
+	# Try and build with sensible defaults. Prefers to use X11, if it exists.
+	if target_platform.matches("linux"):
+		# Is this a RaspberryPi?
+		bcm_host_h = target_platform.find_include_path("bcm_host.h")
+		if bcm_host_h:
+			arguments.raspberrypi = True
 
+		# See if we should build with X11 by default.
+		found_xlib = target_platform.find_include_path("X11/Xlib.h")
+		if found_xlib:
+			logging.info("Detected Xlib.h!")
+			arguments.with_x11 = True
 
 	libcore = get_libcore(arguments, target_platform)
 
@@ -1034,10 +1041,6 @@ def products(arguments, **kwargs):
 		"src/engine/kernels/test_mobile.cpp",
 		"src/engine/kernels/test_ui.cpp"
 	]
-
-
-
-
 
 	if target_platform.get() in DESKTOP:
 		gemini.sources += [
