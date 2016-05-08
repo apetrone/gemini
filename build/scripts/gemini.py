@@ -909,20 +909,6 @@ def products(arguments, **kwargs):
 
 	target_platform = kwargs.get("target_platform")
 
-	if arguments.raspberrypi:
-		if not arguments.gles:
-			arguments.gles = True
-
-		if not arguments.with_egl:
-			arguments.with_egl = True
-
-	if not arguments.gles:
-		arguments.opengl = True
-	elif arguments.gles:
-		arguments.opengl = False
-	else:
-		raise Exception("Unknown renderer!")
-
 	# Try and build with sensible defaults.
 	if target_platform.matches("linux"):
 		# Is this a RaspberryPi?
@@ -936,6 +922,20 @@ def products(arguments, **kwargs):
 			found_xlib = target_platform.find_include_path("X11/Xlib.h")
 			if found_xlib:
 				arguments.with_x11 = True
+
+	if arguments.raspberrypi:
+		if not arguments.gles:
+			arguments.gles = True
+
+		if not arguments.with_egl:
+			arguments.with_egl = True
+
+	if not arguments.gles:
+		arguments.opengl = True
+	elif arguments.gles:
+		arguments.opengl = False
+	else:
+		raise Exception("Unknown renderer!")
 
 	libcore = get_libcore(arguments, target_platform)
 
