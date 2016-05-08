@@ -923,18 +923,19 @@ def products(arguments, **kwargs):
 	else:
 		raise Exception("Unknown renderer!")
 
-	# Try and build with sensible defaults. Prefers to use X11, if it exists.
+	# Try and build with sensible defaults.
 	if target_platform.matches("linux"):
 		# Is this a RaspberryPi?
 		bcm_host_h = target_platform.find_include_path("bcm_host.h")
 		if bcm_host_h:
 			arguments.raspberrypi = True
 
-		# See if we should build with X11 by default.
-		found_xlib = target_platform.find_include_path("X11/Xlib.h")
-		if found_xlib:
-			logging.info("Detected Xlib.h!")
-			arguments.with_x11 = True
+		# Only prefer X11 if not on RaspberryPi.
+		if not arguments.with_x11 and not bcm_host_h:
+			# See if we should build with X11 by default.
+			found_xlib = target_platform.find_include_path("X11/Xlib.h")
+			if found_xlib:
+				arguments.with_x11 = True
 
 	libcore = get_libcore(arguments, target_platform)
 
