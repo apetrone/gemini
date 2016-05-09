@@ -30,6 +30,8 @@
 
 namespace gui
 {
+	const float GRAPH_LEFT_TEXT_MARGIN = 2.0f;
+
 	void Graph::draw_float(Renderer* renderer, float value, const Point& pt, const gemini::Color& color, gui::render::CommandList& render_commands)
 	{
 		char string_value[16] = {0};
@@ -67,6 +69,9 @@ namespace gui
 		foreground_color = gemini::Color::from_rgba(255, 255, 255, 255);
 
 		show_baseline = false;
+
+		vertices = nullptr;
+		vertex_colors = nullptr;
 	}
 
 	Graph::~Graph()
@@ -96,6 +101,18 @@ namespace gui
 			delete [] last_point;
 			last_point = 0;
 		}
+
+		if (vertices)
+		{
+			delete [] vertices;
+			vertices = nullptr;
+		}
+
+		if (vertex_colors)
+		{
+			delete [] vertex_colors;
+			vertex_colors = nullptr;
+		}
 	}
 
 
@@ -117,6 +134,12 @@ namespace gui
 
 		last_point = new Point[ max_channels ];
 		memset(last_point, 0, sizeof(Point) * max_channels);
+
+		const size_t total_vertices = (max_samples * max_channels) * 2;
+		vertices = new Point[total_vertices];
+		vertex_colors = new gemini::Color[total_vertices];
+		memset(vertices, 0, sizeof(Point) * total_vertices);
+		memset(vertex_colors, 0, sizeof(gemini::Color) * total_vertices);
 	}
 
 	void Graph::configure_channel(uint32_t channel_index, const gemini::Color& color/*, const gemini::Color& min_color, const gemini::Color& max_color*/)
@@ -193,6 +216,103 @@ namespace gui
 		foreground_color = color;
 	}
 
+	void Graph::update(Compositor* compositor, float delta_seconds)
+	{
+		float dx = (float)size.width / (float)total_samples;
+		float y = origin.y;
+		float height = size.height;
+		float vertical_scale = range_max - range_min;
+		float yoffset = (range_min / vertical_scale) * height;
+		float baseline_y = ((range_min - baseline_value) / vertical_scale) * height;
+
+		if (show_baseline)
+		{
+			// recompute the baseline geometry
+			baseline_start = Point(
+				origin.x,
+				baseline_y + y + height
+			);
+			baseline_end = Point(
+				origin.x + size.width,
+				baseline_y + y + height
+			);
+
+			// compute baseline text origin
+			baseline_text_origin = Point(origin.x + GRAPH_LEFT_TEXT_MARGIN,
+				baseline_y + y + height - (font_height / 2.0f));
+		}
+
+		// cache range text origins
+		range_text_origin[0] = Point(origin.x + GRAPH_LEFT_TEXT_MARGIN, origin.y);
+		range_text_origin[1] = Point(origin.x + GRAPH_LEFT_TEXT_MARGIN, y + height - font_height);
+
+		// compute all lines
+		for (unsigned int current_channel = 0; current_channel < total_channels; ++current_channel)
+		{
+			// draw the most current information on the right
+			float cx = origin.x;
+
+			// left to right graph: (sample_delta=1, dx = -dx, cx = right)
+			// right to left: (sample_delta=-1, cx=left)
+			int sample_delta = 1;
+
+			unsigned int sample_id = current_sample[current_channel];
+			gemini::Color* colors = &channel_colors[ChannelTotal * current_channel];
+
+			for (uint32_t i = 0; i < total_samples; ++i)
+			{
+				gemini::Color color = colors[ChannelColor];
+				float sample_value = values[(current_channel * total_samples) + ((sample_id) % total_samples)];
+
+				if (sample_value < range_min)
+				{
+					sample_value = range_min;
+				}
+
+				if (sample_value < baseline_value)
+				{
+					//color = colors[ ChannelMin ];
+				}
+				else if (sample_value > range_max)
+				{
+					sample_value = range_max;
+					//color = colors[ ChannelMax ];
+				}
+
+				vertex_colors[current_channel * total_samples + (i)] = color;
+				vertex_colors[current_channel * total_samples + (i + 1)] = color;
+
+				float sample_y = (sample_value / vertical_scale);
+				float outvalue = yoffset + y + height - (sample_y*height);
+
+				// Assume 4 samples per channel
+				// [0, 0, 0, 0] , [0, 0, 0, 0]
+				// Sample size == sizeof(Point) * 2.
+				// A line is a start and an end point.
+
+				const size_t vertex_index = (current_channel * total_samples) + (i * 2);
+
+				if (i > 0)
+				{
+					Point current(cx, outvalue);
+					vertices[current_channel * total_samples + ((i-1) * 2)] = last_point[current_channel];
+					vertices[current_channel * total_samples + ((i-1) * 2)+1] = current;
+					last_point[current_channel] = current;
+				}
+				else
+				{
+					last_point[current_channel].x = cx;
+					last_point[current_channel].y = outvalue;
+				}
+
+				cx += dx;
+				sample_id += sample_delta;
+			}
+		}
+
+		Panel::update(compositor, delta_seconds);
+	}
+
 	void Graph::render(Compositor* /*compositor*/, Renderer* renderer, gui::render::CommandList& render_commands)
 	{
 		render_commands.add_rectangle(
@@ -209,87 +329,22 @@ namespace gui
 		float height = size.height;
 		float vertical_scale = range_max - range_min;
 		float yoffset = (range_min / vertical_scale) * height;
-		float baseline_y = ((range_min-baseline_value) / vertical_scale) * height;
 
 		if (show_baseline)
 		{
-			// draw a line
-			Point start(origin.x, baseline_y+y+height);
-			Point end(origin.x+size.width, baseline_y+y+height);
+			// draw the horizontal baseline
+			render_commands.add_line(baseline_start, baseline_end, baseline_color);
 
-			render_commands.add_line(start, end, baseline_color);
+			// draw the baseline text
+			draw_float(renderer, baseline_value, baseline_text_origin, foreground_color, render_commands);
 		}
 
-		for( unsigned int current_channel = 0; current_channel < total_channels; ++current_channel )
-		{
-			// draw the most current information on the right
-			float cx = origin.x;
+		// draw graph data
+		render_commands.add_lines(total_samples * total_channels, vertices, vertex_colors);
 
-			// left to right graph: (sample_delta=1, dx = -dx, cx = right)
-			// right to left: (sample_delta=-1, cx=left)
-			int sample_delta = 1;
-
-			unsigned int sample_id = current_sample[ current_channel ];
-			gemini::Color* colors = &channel_colors[ ChannelTotal * current_channel ];
-
-			for(uint32_t i = 0; i < total_samples; ++i)
-			{
-				gemini::Color color = colors[ ChannelColor ];
-				float sample_value = values[ (current_channel * total_samples) + ((sample_id) % total_samples) ];
-
-				if ( sample_value < range_min )
-				{
-					sample_value = range_min;
-				}
-
-				if ( sample_value < baseline_value )
-				{
-//					color = colors[ ChannelMin ];
-				}
-				else if ( sample_value > range_max )
-				{
-					sample_value = range_max;
-//					color = colors[ ChannelMax ];
-				}
-
-
-				float sample_y = (sample_value / vertical_scale);
-				float outvalue = yoffset+y+height-(sample_y*height);
-
-				if ( i > 0 )
-				{
-					Point current( cx, outvalue );
-					render_commands.add_line(last_point[current_channel], current, color);
-					last_point[ current_channel ] = current;
-
-				}
-				else
-				{
-					last_point[ current_channel ].x = cx;
-					last_point[ current_channel ].y = outvalue;
-				}
-
-				cx += dx;
-				sample_id += sample_delta;
-			}
-		}
-
-
-
-		// draw text
-		Point left_margin(origin.x + 2, origin.y);
-
-		draw_float(renderer, range_max, left_margin, foreground_color, render_commands);
-
-		if (show_baseline)
-		{
-			left_margin.y = baseline_y + y + height - (font_height/2.0f);
-			draw_float(renderer, baseline_value, left_margin, foreground_color, render_commands);
-		}
-
-
-		left_margin.y = y + height - font_height;
-		draw_float(renderer, range_min, left_margin, foreground_color, render_commands);
+		// draw range text
+		draw_float(renderer, range_max, range_text_origin[0], foreground_color, render_commands);
+		draw_float(renderer, range_min, range_text_origin[1], foreground_color, render_commands);
 	}
 
 } // namespace gui

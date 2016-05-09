@@ -85,52 +85,57 @@ namespace render
 		write_pointer = &(*vertex_buffer)[current_vertex_offset];
 	}
 
+	void quad_from_corners(gui::render::Vertex* vertices, const gui::Point& p0, const gui::Point& p1, const gui::Point& p2, const gui::Point& p3, const gemini::Color& color)
+	{
+		// origin is in the upper left, with Y+ towards the bottom of the screen
+		// these are counter-clock wise
+		vertices[0].x = p0.x;
+		vertices[0].y = p0.y;
+		vertices[0].color = color;
+		vertices[0].uv[0] = 0;
+		vertices[0].uv[1] = 1;
+
+		vertices[1].x = p1.x;
+		vertices[1].y = p1.y;
+		vertices[1].color = color;
+		vertices[1].uv[0] = 0;
+		vertices[1].uv[1] = 0;
+
+		vertices[2].x = p2.x;
+		vertices[2].y = p2.y;
+		vertices[2].color = color;
+		vertices[2].uv[0] = 1;
+		vertices[2].uv[1] = 0;
+
+		vertices[3].x = p2.x;
+		vertices[3].y = p2.y;
+		vertices[3].color = color;
+		vertices[3].uv[0] = 1;
+		vertices[3].uv[1] = 0;
+
+		vertices[4].x = p3.x;
+		vertices[4].y = p3.y;
+		vertices[4].color = color;
+		vertices[4].uv[0] = 1;
+		vertices[4].uv[1] = 1;
+
+		vertices[5].x = p0.x;
+		vertices[5].y = p0.y;
+		vertices[5].color = color;
+		vertices[5].uv[0] = 0;
+		vertices[5].uv[1] = 1;
+	}
+
 	void CommandList::primitive_quad(const gui::Point& p0, const gui::Point& p1, const gui::Point& p2, const gui::Point& p3, const TextureHandle& texture, const gemini::Color& color)
 	{
 		primitive_reserve(6);
 		Command& command = commands.back();
 		command.texture = texture;
 
-		// origin is in the upper left, with Y+ towards the bottom of the screen
-		// these are counter-clock wise
-		write_pointer[0].x = p0.x;
-		write_pointer[0].y = p0.y;
-		write_pointer[0].color = color;
-		write_pointer[0].uv[0] = 0;
-		write_pointer[0].uv[1] = 1;
-
-		write_pointer[1].x = p1.x;
-		write_pointer[1].y = p1.y;
-		write_pointer[1].color = color;
-		write_pointer[1].uv[0] = 0;
-		write_pointer[1].uv[1] = 0;
-
-		write_pointer[2].x = p2.x;
-		write_pointer[2].y = p2.y;
-		write_pointer[2].color = color;
-		write_pointer[2].uv[0] = 1;
-		write_pointer[2].uv[1] = 0;
-
-		write_pointer[3].x = p2.x;
-		write_pointer[3].y = p2.y;
-		write_pointer[3].color = color;
-		write_pointer[3].uv[0] = 1;
-		write_pointer[3].uv[1] = 0;
-
-		write_pointer[4].x = p3.x;
-		write_pointer[4].y = p3.y;
-		write_pointer[4].color = color;
-		write_pointer[4].uv[0] = 1;
-		write_pointer[4].uv[1] = 1;
-
-		write_pointer[5].x = p0.x;
-		write_pointer[5].y = p0.y;
-		write_pointer[5].color = color;
-		write_pointer[5].uv[0] = 0;
-		write_pointer[5].uv[1] = 1;
+		quad_from_corners(&write_pointer[0], p0, p1, p2, p3, color);
 	}
 
-	void CommandList::add_line(const Point& start, const Point& end, const gemini::Color& color, float thickness)
+	void quad_from_line(gui::render::Vertex* vertices, const Point& start, const Point& end, const gemini::Color& color, float thickness)
 	{
 		Point corners[4];
 
@@ -152,9 +157,35 @@ namespace render
 		corners[2] = end + (axis * half_thickness);
 		corners[3] = end + (raxis * half_thickness);
 
-		add_drawcall();
-		primitive_quad(corners[0], corners[1], corners[2], corners[3], TextureHandle(), color);
+		quad_from_corners(vertices, corners[0], corners[1], corners[2], corners[3], color);
 	}
+
+	void CommandList::add_line(const Point& start, const Point& end, const gemini::Color& color, float thickness)
+	{
+		add_drawcall();
+		primitive_reserve(6);
+		Command& command = commands.back();
+		command.texture = TextureHandle();
+		quad_from_line(&write_pointer[0], start, end, color, thickness);
+	}
+
+	void CommandList::add_lines(size_t line_count, const Point* vertices, const gemini::Color* colors, float thickness)
+	{
+		add_drawcall();
+		primitive_reserve(line_count * 6);
+
+		for (size_t index = 0; index < line_count; ++index)
+		{
+			quad_from_line(
+				&write_pointer[(index * 6)],
+				vertices[(index * 2)],
+				vertices[(index * 2) + 1],
+				colors[index],
+				thickness
+			);
+		}
+	}
+
 
 	void CommandList::add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color)
 	{

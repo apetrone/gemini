@@ -46,7 +46,13 @@ namespace gui
 
 		Point* last_point;
 		gemini::Color* channel_colors;
+
+		// 0: left, 1: right
+		Point baseline_start;
+		Point baseline_end;
 		gemini::Color baseline_color;
+		Point baseline_text_origin;
+
 		float baseline_value;
 
 		uint32_t total_samples;
@@ -56,6 +62,13 @@ namespace gui
 		FontHandle font_handle;
 		gemini::Color background_color;
 		gemini::Color foreground_color;
+
+		// vertices for the lines (total_lines * 2)
+		Point* vertices;
+		gemini::Color* vertex_colors;
+
+		// 0: top, 1: bottom
+		Point range_text_origin[2];
 
 		float font_height;
 
@@ -86,6 +99,7 @@ namespace gui
 		virtual void set_foreground_color(const gemini::Color& color);
 
 		// Panel overrides
-		virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
+		virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands) override;
+		virtual void update(Compositor* compositor, float delta_seconds) override;
 	}; // Graph
 } // namespace gui
