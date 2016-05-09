@@ -57,12 +57,12 @@ using namespace renderer;
 
 // The simplest of all tests -- see what happens when we create a new panel
 // and put it on the compositor.
-#define GEMINI_TEST_PANEL			1
-#define GEMINI_TEST_GRAPH			1
-#define GEMINI_TEST_MENU			1
-#define GEMINI_TEST_TABCONTROL		1
-#define GEMINI_TEST_BUTTON			1
-#define GEMINI_TEST_SLIDER			1
+#define GEMINI_TEST_PANEL			1 // 65 draw calls
+#define GEMINI_TEST_GRAPH			1 // 6 draw calls
+#define GEMINI_TEST_MENU			1 // 10 draw calls
+#define GEMINI_TEST_TABCONTROL		1 // 9 draw calls
+#define GEMINI_TEST_BUTTON			1 // 6 draw calls (2 per button)
+#define GEMINI_TEST_SLIDER			1 // 5 draw calls
 
 // ---------------------------------------------------------------------
 // gui
@@ -576,6 +576,8 @@ public:
 
 	virtual void tick()
 	{
+		PROFILE_BEGIN("tick");
+
 		update();
 
 		// Used for testing
@@ -619,7 +621,7 @@ public:
 		compositor->tick(kernel::parameters().framedelta_seconds);
 		PROFILE_END("compositor_tick");
 
-#if 1
+#if 0
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
 		assert(render_pass.target->width != 0 && render_pass.target->height != 0);
@@ -657,6 +659,15 @@ public:
 		device->submit();
 		PROFILE_END("device_submit");
 		platform::window::swap_buffers(native_window);
+
+		PROFILE_END("tick");
+
+#if defined(GEMINI_ENABLE_PROFILER)
+		gemini::profiler::report(ui_profile_output);
+		gemini::profiler::reset();
+#endif
+
+
 	}
 
 
