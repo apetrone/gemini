@@ -372,7 +372,7 @@ class Mesh(Node):
 		self.vertices = []
 		self.normals = []
 		self.indices = []
-		self.material_id = 0
+		self.material_id = -1
 		self.uv_sets = []
 		self.bind_data = []
 		self.blend_weights = []
@@ -484,7 +484,8 @@ class Mesh(Node):
 
 		# collect all blender materials used by this mesh
 		for bmaterial in mesh.materials:
-			model.add_material(bmaterial)
+			mat = model.add_material(bmaterial)
+			node.material_id = mat.index
 
 		cache = VertexCache()
 
@@ -988,6 +989,9 @@ class GeminiModel(object):
 
 		# iterate over selected objects
 		for obj in self.selected_meshes:
+			# NOTE: This assaumes that each object has a single distinct texture.
+			# This will have to be updated at some point!
+
 			# TODO: Add an explicit EDGE SPLIT modifier?
 			meshnode = Mesh.from_object(self, obj, root_node)
 			root_node.children.append(meshnode)
