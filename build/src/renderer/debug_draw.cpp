@@ -448,6 +448,91 @@ namespace renderer
 			}
 		} // buffer_sphere
 
+		void buffer_camera(DebugPrimitive* primitive, detail::VertexAccessor<DebugDrawVertex>& access)
+		{
+			const size_t vertex_count = 16;
+			DebugDrawVertex* vertices = access.request(vertex_count);
+
+			// for now; just a 16:9 ratio.
+			const glm::vec2 frame_dimensions(1.77f, 1.0f);
+			const glm::vec2 half_dim = (frame_dimensions * 0.5f);
+			const gemini::Color frame_color(1.0f, 0.0f, 0.0f, 1.0f);
+			const gemini::Color frustum_color(0.0f, 1.0f, 0.0f, 1.0f);
+
+			const glm::vec3& origin = primitive->start;
+			const glm::vec3& view = glm::normalize(primitive->end);
+
+			// First we need to establish the basis matrix given the view vector.
+			const glm::vec3 right = glm::normalize(glm::cross(view, glm::vec3(0.0f, 1.0f, 0.0f)));
+
+			// Calculate the true up vector.
+			const glm::vec3 up = glm::normalize(glm::cross(right, view));
+
+			const float forward_distance = -1.0f; // distance from origin to near clip plane
+
+			glm::mat4 basis;
+
+			basis[0] = glm::vec4(right.x, right.y, right.z, 0);
+			basis[1] = glm::vec4(up.x, up.y, up.z, 0);
+			basis[2] = glm::vec4(view.x, view.y, view.z, 0);
+			basis[3] = glm::vec4(origin.x, origin.y, origin.z, 0);
+
+			// ccw draw the frame, starting in the lower left corner from the camera's
+			// point of view looking into the scene.
+
+			// lower left to lower right
+			vertices[0].position = glm::vec3(-half_dim.x, -half_dim.y, forward_distance);
+			vertices[0].color = frame_color;
+			vertices[1].position = glm::vec3(half_dim.x, -half_dim.y, forward_distance);
+			vertices[1].color = frame_color;
+
+			// lower right to upper right
+			vertices[2].position = glm::vec3(half_dim.x, -half_dim.y, forward_distance);
+			vertices[2].color = frame_color;
+			vertices[3].position = glm::vec3(half_dim.x, half_dim.y, forward_distance);
+			vertices[3].color = frame_color;
+
+			// upper right to upper left
+			vertices[4].position = glm::vec3(half_dim.x, half_dim.y, forward_distance);
+			vertices[4].color = frame_color;
+			vertices[5].position = glm::vec3(-half_dim.x, half_dim.y, forward_distance);
+			vertices[5].color = frame_color;
+
+			// upper left to lower left
+			vertices[6].position = glm::vec3(-half_dim.x, half_dim.y, forward_distance);
+			vertices[6].color = frame_color;
+			vertices[7].position = glm::vec3(-half_dim.x, -half_dim.y, forward_distance);
+			vertices[7].color = frame_color;
+
+
+			// draw corners
+			vertices[8].position = glm::vec3(-half_dim.x, -half_dim.y, forward_distance);
+			vertices[8].color = frustum_color;
+			vertices[9].position = glm::vec3(0.0f, 0.0f, 0.0f);
+			vertices[9].color = frustum_color;
+
+			vertices[10].position = glm::vec3(half_dim.x, -half_dim.y, forward_distance);
+			vertices[10].color = frustum_color;
+			vertices[11].position = glm::vec3(0.0f, 0.0f, 0.0f);
+			vertices[11].color = frustum_color;
+
+			vertices[12].position = glm::vec3(half_dim.x, half_dim.y, forward_distance);
+			vertices[12].color = frustum_color;
+			vertices[13].position = glm::vec3(0.0f, 0.0f, 0.0f);
+			vertices[13].color = frustum_color;
+
+			vertices[14].position = glm::vec3(-half_dim.x, half_dim.y, forward_distance);
+			vertices[14].color = frustum_color;
+			vertices[15].position = glm::vec3(0.0f, 0.0f, 0.0f);
+			vertices[15].color = frustum_color;
+
+			// transform all vertices
+			for (size_t index = 0; index < vertex_count; ++index)
+			{
+				vertices[index].position = glm::vec3(basis * glm::vec4(vertices[index].position, 1.0f));
+			}
+		} // buffer_camera
+
 		void buffer_triangle(DebugPrimitive* primitive, detail::VertexAccessor<TexturedVertex>& access)
 		{
 			const size_t vertex_count = 3;
