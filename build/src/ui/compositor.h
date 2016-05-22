@@ -44,6 +44,7 @@ namespace gui
 		Panel* focus;
 		Panel* hot;
 		Panel* capture;
+		CursorButton::Type capture_button;
 		PanelVector zsorted;
 
 		Point last_cursor;
@@ -75,7 +76,7 @@ namespace gui
 		void set_hot(Panel* panel) { hot = panel; }
 
 		Panel* get_capture() { return capture; }
-		void set_capture(Panel* panel) { capture = panel; }
+		void set_capture(Panel* panel, CursorButton::Type button) { capture = panel; capture_button = button; }
 
 		const Point& get_cursor_position() const { return last_cursor; }
 

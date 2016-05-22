@@ -65,7 +65,7 @@ namespace gui
 		capture = nullptr;
 
 		set_hot(0);
-		set_capture(0);
+		set_capture(0, CursorButton::None);
 
 		next_z_depth = 0;
 		listener = 0;
@@ -279,6 +279,7 @@ namespace gui
 			Panel* target = get_capture();
 
 			EventArgs args(this, Event_CursorDrag);
+			args.cursor_button = capture_button;
 			args.cursor = cursor;
 			args.hot = focus;
 			args.focus = get_focus();
@@ -356,7 +357,7 @@ namespace gui
 
 
 			set_hot(panel);
-			set_capture(panel);
+			set_capture(panel, button);
 
 			send_to_front(panel);
 		}
@@ -387,7 +388,7 @@ namespace gui
 				get_capture()->handle_event(args);
 			}
 
-			set_capture(0);
+			set_capture(0, CursorButton::None);
 			find_new_hot(0, 0);
 		}
 	} // cursor_button
