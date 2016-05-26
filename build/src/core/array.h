@@ -200,11 +200,15 @@ public:
 
 	T& operator[](size_t index)
 	{
+		// Validate the index against total elements in the array.
+		assert(index < total_elements);
 		return data[index];
 	}
 
 	const T& operator[](size_t index) const
 	{
+		// Validate the index against total elements in the array.
+		assert(index < total_elements);
 		return data[index];
 	}
 
