@@ -452,15 +452,19 @@ namespace platform
 	/// This should only be called from created Threads.
 	bool thread_is_active(Thread* thread);
 
+	struct Mutex
+	{
+		virtual ~Mutex();
+	};
 
-	void mutex_create();
-	void mutex_destroy();
-	void mutex_lock();
-	void mutex_unlock();
-
+	Mutex* mutex_create();
+	void mutex_destroy(Mutex* mutex);
+	void mutex_lock(Mutex* mutex);
+	void mutex_unlock(Mutex* mutex);
 
 	struct Semaphore
 	{
+		virtual ~Semaphore();
 	};
 
 

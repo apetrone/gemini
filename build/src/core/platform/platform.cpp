@@ -89,6 +89,14 @@ namespace platform
 	{
 	}
 
+	Mutex::~Mutex()
+	{
+	}
+
+	Semaphore::~Semaphore()
+	{
+	}
+
 
 	namespace detail
 	{

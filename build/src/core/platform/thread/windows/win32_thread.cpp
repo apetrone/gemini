@@ -197,6 +197,62 @@ namespace platform
 		return true;
 	}
 
+
+	class Win32Mutex : public Mutex
+	{
+	private:
+		CRITICAL_SECTION cs;
+
+	public:
+		Win32Mutex();
+		virtual ~Win32Mutex();
+
+		void lock();
+		void unlock();
+	};
+
+	Win32Mutex::Win32Mutex()
+	{
+		InitializeCriticalSection(&cs);
+	}
+
+	Win32Mutex::~Win32Mutex()
+	{
+		DeleteCriticalSection(&cs);
+	}
+
+	void Win32Mutex::lock()
+	{
+		EnterCriticalSection(&cs);
+	}
+
+	void Win32Mutex::unlock()
+	{
+		LeaveCriticalSection(&cs);
+	}
+
+	Mutex* mutex_create()
+	{
+		return MEMORY_NEW(Win32Mutex, platform::get_platform_allocator());
+	}
+
+	void mutex_destroy(Mutex* mutex)
+	{
+		MEMORY_DELETE(mutex, platform::get_platform_allocator());
+	}
+
+	void mutex_lock(Mutex* mutex)
+	{
+		Win32Mutex* mt = static_cast<Win32Mutex*>(mutex);
+		mt->lock();
+	}
+
+	void mutex_unlock(Mutex* mutex)
+	{
+		Win32Mutex* mt = static_cast<Win32Mutex*>(mutex);
+		mt->unlock();
+	}
+
 	class Win32Semaphore : public Semaphore
 	{
 	public:
