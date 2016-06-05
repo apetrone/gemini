@@ -194,20 +194,20 @@ static util::ConfigLoadStatus settings_conf_loader( const Json::Value & root, vo
 // this is required at the moment because our render method needs it!
 gui::Compositor* _compositor = 0;
 
-void render_scene_from_camera(gemini::IEngineEntity** entity_list, View& view, SceneLink& scenelink)
+void render_scene_from_camera(::renderer::RenderStream& stream, gemini::IEngineEntity** entity_list, View& view, SceneLink& scenelink)
 {
 	// use the entity list to render
 	scenelink.clear();
 	scenelink.queue_entities(entity_list, MAX_ENTITIES, RENDER_VISIBLE);
 	scenelink.sort();
-	scenelink.draw(&view.modelview, &view.projection);
+	scenelink.draw(stream, &view.modelview, &view.projection);
 }
 
-void render_viewmodel(gemini::IEngineEntity* entity, View& view, SceneLink& scenelink)
+void render_viewmodel(::renderer::RenderStream& stream, gemini::IEngineEntity* entity, View& view, SceneLink& scenelink)
 {
 	scenelink.clear();
 	scenelink.queue_entities(&entity, 1, RENDER_VIEWMODEL);
-	scenelink.draw(&view.modelview, &view.projection);
+	scenelink.draw(stream, &view.modelview, &view.projection);
 }
 
 
@@ -733,6 +733,8 @@ struct SharedState
 
 static SharedState _sharedstate;
 
+const size_t GEMINI_MAX_RENDERSTREAM_BYTES = 8192;
+const size_t GEMINI_MAX_RENDER_STREAM_COMMANDS = 512;
 
 class EngineInterface : public IEngineInterface
 {
@@ -745,6 +747,9 @@ class EngineInterface : public IEngineInterface
 	core::memory::Zone game_memory_zone;
 	core::memory::GlobalAllocatorType game_allocator;
 	SceneLink& scenelink;
+
+	Array<char> render_stream_data;
+	Array<::renderer::RenderState> render_commands;
 
 public:
 
@@ -763,6 +768,8 @@ public:
 		, game_allocator(&game_memory_zone)
 		, scenelink(scene_link)
 	{
+		render_stream_data.resize(GEMINI_MAX_RENDERSTREAM_BYTES);
+		render_commands.resize(GEMINI_MAX_RENDER_STREAM_COMMANDS);
 	}
 
 
@@ -795,7 +802,7 @@ public:
 		gemini::IEngineEntity** entity_list = em->get_entity_list();
 
 
-		::renderer::RenderStream rs;
+		::renderer::RenderStream rs((char*)&render_stream_data[0], GEMINI_MAX_RENDERSTREAM_BYTES, (::renderer::RenderState*)&render_commands[0], GEMINI_MAX_RENDER_STREAM_COMMANDS);
 		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
 //		rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
 		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
@@ -809,7 +816,7 @@ public:
 		newview.width = frame.width;
 		newview.height = frame.height;
 
-		render_scene_from_camera(entity_list, newview, scenelink);
+		render_scene_from_camera(rs, entity_list, newview, scenelink);
 	}
 
 	virtual void render_gui()
@@ -854,7 +861,7 @@ public:
 		newview.width = frame.width;
 		newview.height = frame.height;
 
-		::render_viewmodel(entity, newview, scenelink);
+		::render_viewmodel(rs, entity, newview, scenelink);
 	}
 
 

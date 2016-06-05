@@ -42,12 +42,19 @@ namespace renderer
 
 	struct RenderStream
 	{
-		char buffer[ MAX_RENDERER_STREAM_BYTES ];
-		RenderState commands[ MAX_RENDERER_STREAM_COMMANDS ];
+		//char buffer[ MAX_RENDERER_STREAM_BYTES ];
+		//RenderState commands[ MAX_RENDERER_STREAM_COMMANDS ];
+		char* buffer;
+		RenderState* commands;
 		unsigned int num_commands;
+		size_t max_commands;
 		core::util::MemoryStream stream;
+		int should_cleanup_buffers;
 
 		RenderStream( unsigned int max_bytes = MAX_RENDERER_STREAM_BYTES, unsigned int max_commands = MAX_RENDERER_STREAM_COMMANDS );
+		RenderStream(char* buffer, size_t buffer_size, RenderState* command_buffer, size_t max_render_commands);
+
+		~RenderStream();
 
 		void save_offset( long & offset );
 		void load_offset( long offset );

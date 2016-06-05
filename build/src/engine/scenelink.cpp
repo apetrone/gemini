@@ -59,30 +59,27 @@ namespace gemini
 		queue->sort();
 	}
 
-	void SceneLink::draw(glm::mat4* modelview_matrix, glm::mat4* projection_matrix)
+	void SceneLink::draw(::renderer::RenderStream& stream, glm::mat4* modelview_matrix, glm::mat4* projection_matrix)
 	{
-		::renderer::RenderStream rs;
-
 		// finally, draw from the queue
-		for(auto& block : queue->render_list)
+		for(::renderer::RenderBlock& block : queue->render_list)
 		{
 			assets::Shader* shader = assets::shaders()->find_with_id(block.shader_id);
 			assets::Material* material = assets::materials()->find_with_id(block.material_id);
 
+			stream.add_shader(shader->program);
 
-			rs.add_shader(shader->program);
-
-			rs.add_uniform_matrix4(shader->program->get_uniform_location("modelview_matrix"), modelview_matrix);
-			rs.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), projection_matrix);
-			rs.add_uniform_matrix4(shader->program->get_uniform_location("object_matrix"), block.object_matrix);
+			stream.add_uniform_matrix4(shader->program->get_uniform_location("modelview_matrix"), modelview_matrix);
+			stream.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), projection_matrix);
+			stream.add_uniform_matrix4(shader->program->get_uniform_location("object_matrix"), block.object_matrix);
 
 			if (block.total_transforms > 0)
 			{
 				// http://gamedev.stackexchange.com/questions/77854/how-can-i-reliably-implement-gpu-skinning-in-android
 				// lovely, Android. There's a bug in Adreno where indexing into Uniform Matrices is wonky.
 				// The solution is to index like a vec4.
-				rs.add_uniform_matrix4(shader->program->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
-				rs.add_uniform_matrix4(shader->program->get_uniform_location("inverse_bind_transforms"), block.inverse_bind_transforms, block.total_transforms);
+				stream.add_uniform_matrix4(shader->program->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
+				stream.add_uniform_matrix4(shader->program->get_uniform_location("inverse_bind_transforms"), block.inverse_bind_transforms, block.total_transforms);
 			}
 			else
 			{
@@ -104,12 +101,12 @@ namespace gemini
 #endif
 			}
 
-			rs.add_material(material, shader->program);
+			stream.add_material(material, shader->program);
 
-			rs.add_draw_call(block.object->vertexbuffer);
+			stream.add_draw_call(block.object->vertexbuffer);
 		}
 
-		rs.run_commands();
+		stream.run_commands();
 	}
 
 	void SceneLink::queue_entities(gemini::IEngineEntity** entity_list, uint32_t max_entities, uint32_t render_flags)
