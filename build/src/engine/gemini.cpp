@@ -747,14 +747,14 @@ public:
 	virtual gemini::AudioHandle play(const char* path, int num_repeats)
 	{
 		return gemini::audio::play_sound(
-			assets::sounds()->load_from_path(path), 
+			assets::sounds()->load_from_path(path),
 			num_repeats
 		);
 	}
 
 	virtual void stop(gemini::AudioHandle handle)
 	{
-		gemini::audio::stop(handle);
+		gemini::audio::stop_sound(handle);
 	}
 
 	virtual void stop_all_sounds()
@@ -1540,7 +1540,6 @@ Options:
 			params.step_alpha -= 1.0f;
 		}
 
-		audio::update();
 		animation::update(kernel::parameters().framedelta_seconds);
 		hotloading::tick();
 		post_tick();

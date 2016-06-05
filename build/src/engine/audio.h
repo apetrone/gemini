@@ -126,31 +126,5 @@ namespace gemini
 			virtual void clean_source( AudioSource * source ) = 0;
 		}; // class IAudioDriver
 
-
-		// interface
-		void startup();
-		void shutdown();
-
-		// update all sources
-		void update();
-
-		// handle an event
-		void event( EventType type );
-
-		// stop all sounds
-		void stop_all_sounds();
-
-		// resume any previously playing sources
-		void resume();
-
-		// return the number of sources currently being used
-		int count_used_sources();
-
-		SoundHandle create_sound( const char * filename );
-		SoundHandle create_stream( const char * filename );
-		SoundSource play( SoundHandle handle, int num_repeats = 0 );
-		void stop( SoundSource source_id );
-
-
 	} // namespace audio
 } // namespace gemini

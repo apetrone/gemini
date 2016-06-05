@@ -133,11 +133,3 @@ namespace gemini
 		size_t get_total_playing_sounds();
 	} // namespace audio
 } // namespace gemini
-
-
-// TODO: This needs to be re-located.
-#include <core/array.h>
-namespace gemini
-{
-	void load_wave(Array<audio::InMemorySampleType>& samples, const char* path);
-} // namespace gemini

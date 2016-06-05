@@ -28,6 +28,8 @@
 #include "assets.h"
 #include "assets/asset_sound.h"
 
+#include <platform/kernel.h> // for choosing the extension
+
 using namespace renderer;
 
 namespace gemini
@@ -189,6 +191,15 @@ namespace gemini
 
 		void sound_construct_extension(core::StackString<MAX_PATH_SIZE>& extension)
 		{
+			//kernel::KernelDeviceFlags device_flags = kernel::parameters().device_flags;
+			//if ((device_flags & kernel::DeviceiPad) || (device_flags & kernel::DeviceiPhone))
+			//{
+			//	extension = ".caf";
+			//}
+
+			// TODO: packaged extension should always be compressed.
+			//extension = ".ogg";
+
 			extension = ".wav";
 		} // sound_construct_extension
 	} // namespace assets
