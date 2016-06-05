@@ -1422,16 +1422,19 @@ Options:
 				LOGE("renderer initialization failed!\n");
 				return kernel::RendererFailed;
 			}
+		}
 
-			assets::startup();
+		assets::startup();
 
+		if (device)
+		{
+			// initialize fonts
 			font::startup(device);
 
+			// initialize debug draw
 			::renderer::debugdraw::startup(device);
 			DebugDrawInterface* debug_draw = MEMORY_NEW(DebugDrawInterface, core::memory::global_allocator());
 			gemini::debugdraw::set_instance(debug_draw);
-
-
 		}
 
 		test_sound = gemini::assets::sounds()->load_from_path("sounds/select");

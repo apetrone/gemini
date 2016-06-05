@@ -138,10 +138,7 @@ namespace gemini
 						{
 							const size_t instance_frame = (instance->frames_buffered * 2);
 							assert(instance->sound_asset);
-							channels[0] += instance->sound_asset->pcmdata[instance_frame + 0];
-							channels[1] += instance->sound_asset->pcmdata[instance_frame + 1];
-							//channels[0] += instance->pcmdata[instance_frame + 0];
-							//channels[1] += instance->pcmdata[instance_frame + 1];
+							instance->sound_asset->get_frame(instance->frames_buffered, channels);
 							++instance->frames_buffered;
 						}
 					}

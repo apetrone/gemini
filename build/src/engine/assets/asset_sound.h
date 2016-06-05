@@ -40,9 +40,16 @@ namespace gemini
 		struct Sound : public Asset
 		{
 			Array<gemini::audio::InMemorySampleType> pcmdata;
+			size_t channels;
 
-			Sound() {}
+			// retrieve a frame from the underlying audio asset.
+			// returns the number of frames read (0 on error)
+			size_t (*get_frame_callback)(struct Sound* sound, size_t frame, float* buffer);
+
+			Sound();
+			virtual ~Sound();
 			virtual void release();
+			size_t get_frame(size_t frame, float* destination);
 		}; // Sound
 
 		AssetLoadStatus sound_load_callback(const char* path, Sound* shader, const AssetParameters& parameters);

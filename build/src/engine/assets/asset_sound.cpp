@@ -99,7 +99,7 @@ namespace gemini
 		};
 
 		// TODO: This could fail; add error checking/codes.
-		int load_wave(Array<audio::InMemorySampleType>& samples, const char* path)
+		int load_wave(Array<audio::InMemorySampleType>& samples, size_t& channels, const char* path)
 		{
 			Array<unsigned char> filecontents;
 			core::filesystem::instance()->virtual_load_file(filecontents, path);
@@ -134,10 +134,10 @@ namespace gemini
 			assert(format->sample_rate == audio::AUDIO_FREQUENCY_HZ);
 
 			// TODO: Support mono and stereo sounds.
-			assert(/*format->total_channels == 1 || */format->total_channels == 2);
-
 			// Currently, only stereo WAVE files are supported.
 			assert(format->total_channels == 2);
+
+			channels = format->total_channels;
 
 			wave_data_chunk* data = reinterpret_cast<wave_data_chunk*>(
 				reinterpret_cast<char*>(format) + format->advance_size()
@@ -151,6 +151,9 @@ namespace gemini
 
 			// length of the file in seconds: data->chunk_size / format->data_rate
 			const bool has_pad_byte = ((data->chunk_size + 1) & ~1) == 0;
+
+			// TODO: support padding byte
+			assert(has_pad_byte == false);
 
 			const uint32_t total_samples = (data->chunk_size / format->block_align);
 
@@ -170,21 +173,49 @@ namespace gemini
 
 
 		// -------------------------------------------------------------
+		size_t get_frame_wave(Sound* sound, size_t frame, float* buffer)
+		{
+			const size_t frame_index = (frame * sound->channels);
+			buffer[0] = sound->pcmdata[frame_index + 0];
+			buffer[1] = sound->pcmdata[frame_index + 1];
+			return frame;
+		}
+
+		// -------------------------------------------------------------
 		// Sound
+
+		Sound::Sound()
+			: channels(0)
+		{
+		}
+
+		Sound::~Sound()
+		{
+		}
 
 		void Sound::release()
 		{
 			// cleanup
 		}
 
+		size_t Sound::get_frame(size_t frame, float* buffer)
+		{
+			return get_frame_callback(this, frame, buffer);
+		}
+
 		AssetLoadStatus sound_load_callback(const char* path, Sound* sound, const AssetParameters& parameters)
 		{
 			// load the file into a memory buffer
-			if (load_wave(sound->pcmdata, path) != 0)
+			if (load_wave(sound->pcmdata, sound->channels, path) != 0)
 			{
 				LOGW("An error occurred while loading '%s'\n", path);
+				assert(0);
 				return AssetLoad_Failure;
 			}
+
+			// TODO: determine which callback it should use here based on
+			// file extension.
+			sound->get_frame_callback = &get_frame_wave;
 
 			return AssetLoad_Success;
 		} // font_load_callback
