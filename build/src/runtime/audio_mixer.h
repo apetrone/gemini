@@ -81,22 +81,36 @@ Audio Decompression
 
 namespace gemini
 {
+	namespace assets
+	{
+		struct Sound;
+	}
+
 	namespace audio
 	{
-		typedef size_t SoundHandle;
+		typedef size_t SoundHandle_t;
+
+
+		// The following assumptions are made:
+		// For loaded sounds; they must be TWO-CHANNEL STEREO sounds.
+		// Sounds are 16-bit.
+		// Frequency is 44.1 kHz.
+		const size_t AUDIO_FREQUENCY_HZ = 44100;
+		const size_t AUDIO_MAX_OUTPUT_CHANNELS = 2;
 
 		// Samples are stored as floats in memory for mixing.
 		typedef float InMemorySampleType;
 		const float InMemorySampleValueMax = 32767.0f;
 
 		// precache/load sound; returns an id for that sound
-		SoundHandle load_sound(const char* asset_name);
+		SoundHandle_t load_sound(const char* asset_name);
+		//SoundHandle precache_sound(const char* asset_name);
 
 		// start playing sound [repeats]
-		void play_sound(SoundHandle handle, int32_t repeats = 0);
+		SoundHandle_t play_sound(gemini::assets::Sound*, int32_t repeats = 0);
 
 		// stop playing sound
-		void stop_sound(SoundHandle handle);
+		void stop_sound(SoundHandle_t handle);
 
 		// stop playing ALL sounds
 		void stop_all_sounds();

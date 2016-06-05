@@ -97,6 +97,7 @@ namespace gemini
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(EmitterConfigAssetLibrary, emitters)
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(FontAssetLibrary, fonts)
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(ShaderAssetLibrary, shaders)
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(SoundAssetLibrary, sounds);
 
 		void load_default_texture_and_material()
 		{
@@ -136,6 +137,7 @@ namespace gemini
 			_emitters = MEMORY_NEW(EmitterConfigAssetLibrary, core::memory::global_allocator()) (emitterconfig_load_callback, emitterconfig_construct_extension);
 			_fonts = MEMORY_NEW(FontAssetLibrary, core::memory::global_allocator()) (font_load_callback, font_construct_extension);
 			_shaders = MEMORY_NEW(ShaderAssetLibrary, core::memory::global_allocator()) (shader_load_callback, shader_construct_extension);
+			_sounds = MEMORY_NEW(SoundAssetLibrary, core::memory::global_allocator()) (sound_load_callback, sound_construct_extension);
 
 			load_default_texture_and_material();
 		} // startup
@@ -149,6 +151,7 @@ namespace gemini
 			MEMORY_DELETE(_emitters, core::memory::global_allocator());
 			MEMORY_DELETE(_fonts, core::memory::global_allocator());
 			MEMORY_DELETE(_shaders, core::memory::global_allocator());
+			MEMORY_DELETE(_sounds, core::memory::global_allocator());
 		} // shutdown
 
 		void append_asset_extension( AssetType type, core::StackString<MAX_PATH_SIZE> & path )

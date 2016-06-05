@@ -1000,6 +1000,8 @@ private:
 	// used by debug draw
 	font::Handle debug_font;
 
+	assets::Sound* test_sound;
+
 	void open_gamelibrary()
 	{
 #if !defined(GEMINI_STATIC_GAME)
@@ -1178,6 +1180,11 @@ public:
 	{
 		if (game_interface)
 		{
+			if (event.subtype == kernel::JoystickButton && event.is_down)
+			{
+				gemini::audio::SoundHandle_t sound_handle = gemini::audio::play_sound(test_sound, 0);
+			}
+
 			game_interface->on_event(event);
 		}
 	}
@@ -1333,8 +1340,6 @@ Options:
 
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 
-
-
 		// initialize window subsystem
 		platform::window::startup(platform::window::RenderingBackend_Default);
 
@@ -1398,6 +1403,8 @@ Options:
 
 		}
 
+		test_sound = gemini::assets::sounds()->load_from_path("sounds/select");
+		assert(test_sound);
 
 		// initialize main subsystems
 		audio::startup();

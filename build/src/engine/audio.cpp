@@ -270,6 +270,7 @@ namespace gemini
 			}
 		};
 
+#if 0
 		// interface
 		void startup()
 		{
@@ -305,7 +306,9 @@ namespace gemini
 
 			return;
 		} // startup
+#endif
 
+#if 0
 		void shutdown()
 		{
 			stop_all_sounds();
@@ -321,6 +324,7 @@ namespace gemini
 			MEMORY_DELETE(interface, core::memory::global_allocator());
 			audio::set_instance(nullptr);
 		} // shutdown
+#endif
 
 		// update all sources
 		void update()
@@ -357,6 +361,7 @@ namespace gemini
 			}
 		} // event
 
+#if 0
 		// stop all sounds
 		void stop_all_sounds()
 		{
@@ -379,6 +384,7 @@ namespace gemini
 
 			LOGV( "Stopped %i sources.\n", total_sources );
 		} // stop_all_sounds
+#endif
 
 		// resume any previously playing sources
 		void resume()

@@ -26,15 +26,14 @@
 
 #include <core/array.h>
 #include <core/logging.h>
+#include <core/mathlib.h>
+#include <core/linearfreelist.h>
 
 #include <platform/audio.h>
 #include <platform/platform.h>
 
-#include <core/mathlib.h>
-#include <core/linearfreelist.h>
-
-#include <core/atomic.h>
-
+// TODO: Fix this when assets move into the runtime.
+#include "../engine/assets/asset_sound.h"
 
 // enable this to add locks in with mixing and audio functions.
 //#define AUDIO_USE_LOCK 1
@@ -57,26 +56,15 @@ namespace gemini
 				Playing
 			};
 
+			assets::Sound* sound_asset;
 			uint64_t frames_buffered;
 			uint64_t total_frames;
 			uint64_t sample_count_started; // sample count this started playing
-			struct SoundInstance* next;
-			Array<InMemorySampleType> pcmdata;
 			State state;
-			SoundHandle handle;
 		};
-
-		// The following assumptions are made:
-		// For loaded sounds; they must be TWO-CHANNEL STEREO sounds.
-		// Sounds are 16-bit.
-		// Frequency is 44.1 kHz.
 
 		//
 		// audio_mixer state
-		const size_t AUDIO_FREQUENCY_HZ				= 44100;
-		const size_t AUDIO_MAX_OUTPUT_CHANNELS		= 2;
-		const size_t AUDIO_BITS_PER_SAMPLE			= 16;
-
 		size_t total_active_sounds = 0;
 
 		LinearFreeList<SoundInstance>* sound_list;
@@ -139,6 +127,8 @@ namespace gemini
 
 						if (is_finished_playing)
 						{
+							LOGV("sound %i has finished playing\n", index);
+
 							// return to the free list
 							sound_list->release(index);
 							--total_active_sounds;
@@ -149,8 +139,11 @@ namespace gemini
 						if (instance->frames_buffered < instance->total_frames)
 						{
 							const size_t instance_frame = (instance->frames_buffered * 2);
-							channels[0] += instance->pcmdata[instance_frame + 0];
-							channels[1] += instance->pcmdata[instance_frame + 1];
+							assert(instance->sound_asset);
+							channels[0] += instance->sound_asset->pcmdata[instance_frame + 0];
+							channels[1] += instance->sound_asset->pcmdata[instance_frame + 1];
+							//channels[0] += instance->pcmdata[instance_frame + 0];
+							//channels[1] += instance->pcmdata[instance_frame + 1];
 							++instance->frames_buffered;
 						}
 					}
@@ -215,48 +208,60 @@ namespace gemini
 {
 	namespace audio
 	{
-		SoundHandle load_sound(const char* asset_name)
+		SoundHandle_t load_sound(const char* asset_name)
 		{
 			core::filesystem::IFileSystem* fs = core::filesystem::instance();
 			assert(fs->file_exists(asset_name));
 
 			SoundInstance* instance;
-			SoundHandle handle = sound_list->acquire();
+			SoundHandle_t handle = sound_list->acquire();
 
 			instance = sound_list->from_handle(handle);
 			assert(instance);
 
-			load_wave(instance->pcmdata, asset_name);
+			//load_wave(instance->pcmdata, asset_name);
+			// TODO: hookup the asset system.
+			assert(0);
 
-			instance->total_frames = (instance->pcmdata.size() / 2);
+			//instance->total_frames = (instance->pcmdata.size() / 2);
 			instance->state = SoundInstance::State::Loaded;
 			instance->frames_buffered = 0;
 
 			return handle;
 		}
 
-		void play_sound(SoundHandle handle, int32_t repeats)
+		SoundHandle_t play_sound(assets::Sound* sound, int32_t repeats)
 		{
+#if defined(AUDIO_USE_LOCK)
+			platform::mutex_lock(audio_lock);
+#endif
+
+			SoundHandle_t handle = sound_list->acquire();
 			SoundInstance* instance = sound_list->from_handle(handle);
 			assert(instance);
 
-			if (instance->state != SoundInstance::State::Playing)
-			{
-				// only if the sound wasn't previously playing.
-				instance->state = SoundInstance::State::Playing;
-				instance->frames_buffered = 0;
-				instance->sample_count_started = platform::audio_frame_position();
+			// only if the sound wasn't previously playing.
+			instance->state = SoundInstance::State::Playing;
+			instance->frames_buffered = 0;
+			instance->sample_count_started = platform::audio_frame_position();
+			instance->sound_asset = sound;
+			instance->total_frames = sound->pcmdata.size() / 2;
+			++total_active_sounds;
 
-				++total_active_sounds;
-			}
+#if defined(AUDIO_USE_LOCK)
+			platform::mutex_unlock(audio_lock);
+#endif
+
+			return handle;
 		}
 
-		void stop_sound(SoundHandle handle)
+		void stop_sound(SoundHandle_t handle)
 		{
 			SoundInstance* instance = sound_list->from_handle(handle);
 			assert(instance);
 			instance->state = SoundInstance::State::Inactive;
 			instance->frames_buffered = 0;
+			instance->sound_asset = nullptr;
 
 			--total_active_sounds;
 		}
@@ -273,6 +278,7 @@ namespace gemini
 						instance->state = SoundInstance::State::Loaded;
 						instance->frames_buffered = 0;
 						instance->sample_count_started = 0;
+						instance->sound_asset = nullptr;
 					}
 					else
 					{
@@ -339,138 +345,4 @@ namespace gemini
 			return total_active_sounds;
 		}
 	} // namespace audio
-} // namespace gemini
-
-
-namespace gemini
-{
-	// code for reading and writing WAVE files
-	// http://www-mmsp.ece.mcgill.ca/documents/audioformats/wave/wave.html
-	// http://soundfile.sapp.org/doc/WaveFormat/
-#define MAKE_RIFF_CODE(a) static_cast<uint32_t>(((a[0]) << 0 | (a[1]) << 8 | (a[2]) << 16 | (a[3]) << 24))
-#ifndef WAVE_FORMAT_PCM
-	const size_t WAVE_FORMAT_PCM = 0x001;
-	const size_t WAVE_FORMAT_IEEE_FLOAT = 0x0003;
-	const size_t WAVE_FORMAT_ALAW = 0x0006;
-	const size_t WAVE_FORMAT_MULAW = 0x0007;
-	const size_t WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
-#endif
-
-	const uint32_t RIFF_CHUNK_ID = MAKE_RIFF_CODE("RIFF");
-	const uint32_t RIFF_WAVE_FORMAT = MAKE_RIFF_CODE("WAVE");
-	const uint32_t WAVE_FORMAT_CHUNK_ID = MAKE_RIFF_CODE("fmt ");
-	const uint32_t WAVE_DATA_CHUNK_ID = MAKE_RIFF_CODE("data");
-
-	// riff header
-	struct wave_chunk_descriptor
-	{
-		uint32_t chunk_id; // should be 'RIFF'
-		uint32_t chunk_size;
-		uint32_t format; // should be 'WAVE'
-
-		uint32_t advance_size() const
-		{
-			return 8 + 4;
-		}
-	};
-
-	struct wave_format_chunk
-	{
-		uint32_t chunk_id; // should be 'fmt '
-		uint32_t chunk_size; // should be 16, 18, or 40.
-		uint16_t format_code; // format tag
-		uint16_t total_channels; // number of interleaved channels
-		uint32_t sample_rate; // blocks per second
-		uint32_t data_rate; // avg bytes per sec
-		uint16_t block_align; // data block size (bytes)
-		uint16_t bits_per_sample;
-		uint16_t extended_size; // size of extension (0 or 22)
-		uint16_t valid_bits_per_sample; // number of valid bits
-		uint32_t channel_mask; // speaker position mask
-		uint8_t subformat[16]; // GUID including the data format code
-
-		uint32_t advance_size() const
-		{
-			return 8 + chunk_size;
-		}
-	};
-
-	struct wave_data_chunk
-	{
-		uint32_t chunk_id; // should be 'data'
-		uint32_t chunk_size; // == num_samples * num_channels * bits_per_sample / 8
-
-		uint32_t advance_size() const
-		{
-			return 8;
-		}
-	};
-
-	// TODO: This could fail; add error checking/codes.
-	void load_wave(Array<audio::InMemorySampleType>& samples, const char* path)
-	{
-		Array<unsigned char> filecontents;
-		core::filesystem::instance()->virtual_load_file(filecontents, path);
-
-		LOGV("[WAVE] loaded %s\n", path);
-		LOGV("[WAVE] file size: %i bytes\n", filecontents.size());
-
-
-		unsigned char* wavedata = static_cast<unsigned char*>(&filecontents[0]);
-		wave_chunk_descriptor* desc = reinterpret_cast<wave_chunk_descriptor*>(wavedata);
-		if (desc->chunk_id != RIFF_CHUNK_ID)
-		{
-			LOGV("[WAVE] Is not a valid RIFF file\n");
-			return;
-		}
-
-		if (desc->format != RIFF_WAVE_FORMAT)
-		{
-			LOGV("[WAVE] Is not a valid WAVE file format\n");
-			return;
-		}
-
-		wave_format_chunk* format = reinterpret_cast<wave_format_chunk*>(
-			reinterpret_cast<char*>(desc) + desc->advance_size()
-		);
-		if (format->chunk_id != WAVE_FORMAT_CHUNK_ID)
-		{
-			LOGV("[WAVE] Expected WAVE 'fmt ' chunk!\n");
-			return;
-		}
-
-		// We only support PCM.
-		assert(format->format_code == WAVE_FORMAT_PCM);
-
-		// Only support our sample rate of 44.1KHz.
-		assert(format->sample_rate == audio::AUDIO_FREQUENCY_HZ);
-
-		// TODO: Support mono and stereo sounds.
-		//assert(format->total_channels == 1 || format->total_channels == 2);
-
-		// Currently, only stereo WAVE files are supported.
-		assert(format->total_channels == 2);
-
-		wave_data_chunk* data = reinterpret_cast<wave_data_chunk*>(
-			reinterpret_cast<char*>(format) + format->advance_size()
-		);
-
-		if (data->chunk_id != WAVE_DATA_CHUNK_ID)
-		{
-			LOGV("[WAVE] Expected WAVE 'data' chunk!\n");
-			return;
-		}
-
-		// length of the file in seconds: data->chunk_size / format->data_rate
-		const bool has_pad_byte = ((data->chunk_size + 1) & ~1) == 0;
-
-		const uint32_t total_samples = (data->chunk_size / format->block_align);
-
-		samples.resize(total_samples * format->total_channels);
-		int16_t* sample_data = reinterpret_cast<int16_t*>(reinterpret_cast<char*>(data) + data->advance_size());
-		for (size_t sample = 0; sample < total_samples * 2; ++sample)
-		{
-			samples[sample] = glm::clamp(sample_data[sample] / audio::InMemorySampleValueMax, -1.0f, 1.0f);
-		}
-	} // load_wave
 } // namespace gemini
