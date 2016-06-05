@@ -29,17 +29,16 @@
 
 namespace gemini
 {
-	typedef unsigned int AudioHandle;
-	typedef int AudioSource;
+	typedef size_t AudioHandle;
 
 	class IAudioInterface
 	{
 	public:
 		virtual ~IAudioInterface() {}
 
-		virtual AudioHandle load(const char* path) = 0;
-		virtual AudioSource play(AudioHandle handle, int num_repeats = 0) = 0;
-		virtual void stop(AudioSource source) = 0;
+		virtual void precache_sound(const char* path) = 0;
+		virtual AudioHandle play(const char* path, int num_repeats = 0) = 0;
+		virtual void stop(AudioHandle handle) = 0;
 		virtual void stop_all_sounds() = 0;
 	};
 

@@ -246,29 +246,29 @@ namespace gemini
 
 
 
-		class AudioInterface : public IAudioInterface
-		{
-		public:
-			virtual gemini::AudioHandle load(const char* path)
-			{
-				return (gemini::AudioHandle)create_sound(path);
-			}
+		//class AudioInterface : public IAudioInterface
+		//{
+		//public:
+		//	virtual gemini::AudioHandle load(const char* path)
+		//	{
+		//		return (gemini::AudioHandle)create_sound(path);
+		//	}
 
-			virtual gemini::AudioSource play(AudioHandle handle, int num_repeats)
-			{
-				return gemini::audio::play((SoundHandle)handle, num_repeats);
-			}
+		//	virtual gemini::AudioSource play(AudioHandle handle, int num_repeats)
+		//	{
+		//		return gemini::audio::play((SoundHandle)handle, num_repeats);
+		//	}
 
-			virtual void stop(gemini::AudioSource source)
-			{
-				gemini::audio::stop((SoundSource)source);
-			}
+		//	virtual void stop(gemini::AudioSource source)
+		//	{
+		//		gemini::audio::stop((SoundSource)source);
+		//	}
 
-			virtual void stop_all_sounds()
-			{
-				audio::stop_all_sounds();
-			}
-		};
+		//	virtual void stop_all_sounds()
+		//	{
+		//		audio::stop_all_sounds();
+		//	}
+		//};
 
 #if 0
 		// interface

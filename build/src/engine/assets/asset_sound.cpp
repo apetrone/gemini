@@ -102,9 +102,6 @@ namespace gemini
 			Array<unsigned char> filecontents;
 			core::filesystem::instance()->virtual_load_file(filecontents, path);
 
-			LOGV("[WAVE] loaded %s\n", path);
-			LOGV("[WAVE] file size: %i bytes\n", filecontents.size());
-
 			unsigned char* wavedata = static_cast<unsigned char*>(&filecontents[0]);
 			wave_chunk_descriptor* desc = reinterpret_cast<wave_chunk_descriptor*>(wavedata);
 			if (desc->chunk_id != RIFF_CHUNK_ID)
@@ -135,7 +132,7 @@ namespace gemini
 			assert(format->sample_rate == audio::AUDIO_FREQUENCY_HZ);
 
 			// TODO: Support mono and stereo sounds.
-			//assert(format->total_channels == 1 || format->total_channels == 2);
+			assert(/*format->total_channels == 1 || */format->total_channels == 2);
 
 			// Currently, only stereo WAVE files are supported.
 			assert(format->total_channels == 2);
@@ -161,6 +158,10 @@ namespace gemini
 			{
 				samples[sample] = glm::clamp(sample_data[sample] / audio::InMemorySampleValueMax, -1.0f, 1.0f);
 			}
+
+			LOGV("[WAVE] loaded '%s'\n", path);
+			LOGV("[WAVE] file size: %i bytes\n", filecontents.size());
+			LOGV("[WAVE] channels: %i, frequency: %i Hz, samples: %i\n", format->total_channels, format->sample_rate, total_samples);
 
 			return 0;
 		} // load_wave

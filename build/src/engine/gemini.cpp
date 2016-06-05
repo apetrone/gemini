@@ -736,6 +736,37 @@ static SharedState _sharedstate;
 const size_t GEMINI_MAX_RENDERSTREAM_BYTES = 8192;
 const size_t GEMINI_MAX_RENDER_STREAM_COMMANDS = 512;
 
+class AudioInterface : public IAudioInterface
+{
+public:
+	virtual void precache_sound(const char* path)
+	{
+		assets::sounds()->load_from_path(path);
+	}
+
+	virtual gemini::AudioHandle play(const char* path, int num_repeats)
+	{
+		return gemini::audio::play_sound(
+			assets::sounds()->load_from_path(path), 
+			num_repeats
+		);
+	}
+
+	virtual void stop(gemini::AudioHandle handle)
+	{
+		gemini::audio::stop(handle);
+	}
+
+	virtual void stop_all_sounds()
+	{
+		audio::stop_all_sounds();
+	}
+};
+
+
+
+
+
 class EngineInterface : public IEngineInterface
 {
 	IEntityManager* entity_manager;
@@ -1408,6 +1439,9 @@ Options:
 
 		// initialize main subsystems
 		audio::startup();
+		IAudioInterface* audio_instance = MEMORY_NEW(AudioInterface, core::memory::global_allocator());
+		audio::set_instance(audio_instance);
+
 		gemini::physics::startup();
 		animation::startup();
 
@@ -1600,6 +1634,10 @@ Options:
 		MEMORY_DELETE(debug_draw, core::memory::global_allocator());
 		assets::shutdown();
 		audio::shutdown();
+
+		IAudioInterface* interface = audio::instance();
+		MEMORY_DELETE(interface, core::memory::global_allocator());
+		audio::set_instance(nullptr);
 
 		// must shutdown the renderer before our window
 		::renderer::shutdown();

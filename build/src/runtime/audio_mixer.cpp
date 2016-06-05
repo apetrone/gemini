@@ -127,8 +127,6 @@ namespace gemini
 
 						if (is_finished_playing)
 						{
-							LOGV("sound %i has finished playing\n", index);
-
 							// return to the free list
 							sound_list->release(index);
 							--total_active_sounds;
