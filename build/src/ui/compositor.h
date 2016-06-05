@@ -44,6 +44,7 @@ namespace gui
 		Panel* focus;
 		Panel* hot;
 		Panel* capture;
+		Panel* drop_target;
 		CursorButton::Type capture_button;
 		PanelVector zsorted;
 
@@ -100,8 +101,8 @@ namespace gui
 		void resize(const Size&) {}
 
 		// location is in compositor coordinates with the origin (0, 0) in the upper left
-		Panel* find_panel_at_location(const Point& location, uint32_t flags);
-		Panel* find_deepest_panel_at_location(Panel* root, const Point& location, uint32_t flags);
+		Panel* find_panel_at_location(const Point& location, uint32_t flags, Panel* ignore = nullptr);
+		Panel* find_deepest_panel_at_location(Panel* root, const Point& location, uint32_t flags, Panel* ignore = nullptr);
 
 		virtual void set_listener(Listener* listener);
 		virtual void queue_event(const EventArgs& args);

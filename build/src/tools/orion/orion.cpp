@@ -47,6 +47,7 @@
 #include <ui/graph.h>
 #include <ui/button.h>
 #include <ui/label.h>
+#include <ui/dockingcontainer.h>
 
 
 
@@ -326,7 +327,7 @@ void profile_output(const char* name, uint64_t cycles, uint32_t depth, uint32_t 
 		++indents;
 	}
 
-	fprintf(stdout, " %s, cycles: %llu, hits: %i, pct: %2.3f cycles/hit: %2.2f\n", name, cycles, hitcount, parent_weight * 100.0, cycles/(float)hitcount);
+	fprintf(stdout, " %s, cycles: %llu, hits: %i, pct: %2.3f cycles/hit: %2.2f\n", name, cycles, hitcount, parent_weight * 100.0, cycles/static_cast<float>(hitcount));
 }
 
 class EditorKernel : public kernel::IKernel,
@@ -354,6 +355,7 @@ private:
 	::renderer::StandaloneResourceCache resource_cache;
 	render2::RenderTarget* render_target;
 	render2::Texture* texture;
+	gui::DockingContainer* container;
 
 	float value;
 
@@ -367,6 +369,7 @@ public:
 		, render_target(nullptr)
 		, texture(nullptr)
 		, value(0.0f)
+		, container(nullptr)
 	{
 	}
 
@@ -617,6 +620,23 @@ public:
 #endif
 
 #if 0
+			// try and use a docking container for fun.
+			container = new gui::DockingContainer(compositor);
+			container->set_name("docking_container");
+			container->set_dimensions(0.5f, 0.5f);
+
+
+	#if 1
+			gui::Panel* tp = new gui::Panel(compositor);
+			tp->set_dimensions(0.1f, 0.1f);
+			tp->set_background_color(gemini::Color(1.0f, 0.5f, 0.0f));
+			tp->set_flags(tp->get_flags() | gui::Panel::Flag_CanMove);
+			tp->set_name("draggable_test_panel");
+	#endif
+#endif
+
+
+#if 0
 			gui::RenderableSurface* surface = new gui::RenderableSurface(compositor);
 			surface->set_bounds(0, 0, 512, 512);
 			surface->on_render_content.bind<EditorKernel, &EditorKernel::render_main_content>(this);
@@ -634,7 +654,9 @@ public:
 			surface->set_texture_handle(handle);
 #endif
 
-#if 1
+#if 0
+			// TODO: This needs more work as it can still get swamped and
+			// latency increases dramatically.
 			log_window = new gui::Label(compositor);
 			log_window->set_origin(0.0f, 450);
 			log_window->set_dimensions(1.0f, 0.25f);
@@ -679,7 +701,7 @@ public:
 
 		if (compositor)
 		{
-			compositor->tick(kernel::parameters().step_interval_seconds);
+			compositor->tick(static_cast<float>(kernel::parameters().step_interval_seconds));
 			compositor->process_events();
 		}
 

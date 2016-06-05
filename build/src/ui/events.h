@@ -43,9 +43,6 @@ namespace gui
 		};
 	}
 
-
-
-
 	namespace KeyboardModifier
 	{
 		enum Type
@@ -74,7 +71,10 @@ namespace gui
 		Event_FocusGain,
 		Event_FocusLost,
 		Event_CursorMove,
-		Event_CursorDrag,
+		Event_CursorDrag,				// panel is being dragged
+		Event_CursorDragEnter,			// a drag enters this panel
+		Event_CursorDragExit,			// a drag exits this panel
+		Event_CursorDrop,				// dropped onto this panel
 		Event_CursorScroll,
 		Event_CursorButtonPressed,
 		Event_CursorButtonReleased,
@@ -84,9 +84,6 @@ namespace gui
 
 		Event_Click
 	};
-
-
-
 
 	class EventArgs
 	{
@@ -134,9 +131,6 @@ namespace gui
 		{
 		}
 
-		virtual ~EventArgs() {}
-
-
 		EventArgs(const EventArgs& other)
 		{
 			*this = other;
@@ -161,77 +155,7 @@ namespace gui
 
 			return *this;
 		}
-	};
-
-	enum
-	{
-		EV_INVALID = 0,
-
-		// low level events
-		EV_MouseDown,
-		EV_MouseUp,
-		EV_MouseMove,
-
-		EV_KeyDown,
-		EV_KeyUp,
-
-		EV_GainFocus,
-		EV_LostFocus,
-
-		EV_MouseEnter, // gain hot
-		EV_MouseExit, // lost hot
-
-		// higher level events, subscribable
-		EV_CLICK,
-		EV_DOUBLECLICK,
-		EV_DRAG,
-
-		EV_TEST,
-
-		EV_LastEvent
-	};
-
-
-	struct PanelEvent
-	{
-		//bool handled; // set to true if an event was handled successfully
-		Panel * target;
-		unsigned int type;
-		Point click; // where the first click occurred
-		Point current; // current position
-		Point mousePosition;
-		int mouseButton;
-		int unicode;
-		int key;
-		PanelEvent();
-
-		InputState* inputState;
-	}; // PanelEvent
-
-	struct DragEventArgs : public PanelEvent
-	{
-		Point startDrag;
-		Point deltaDrag;
-	};
-
-	struct DerivedPanelEvent : public PanelEvent
-	{
-		void * userdata;
-
-		DerivedPanelEvent();
-	}; // DerivedPanelEvent
-
-	template <class ReturnType, class ParameterType>
-	class Callback
-	{
-	public:
-		virtual ReturnType execute( ParameterType parameter ) = 0;
-	};
-
-
-
-
-
+	}; // EventArgs
 
 	class Listener
 	{

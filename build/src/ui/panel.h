@@ -83,7 +83,8 @@ namespace gui
 			Flag_None,
 			Flag_CursorEnabled		= 1, // if this can receive cursor input
 			Flag_IsVisible			= 2,
-			Flag_CanMove			= 4,
+			Flag_CanMove			= 4, // Should this panel accept drag events?
+			Flag_CanDrop			= 8, // Should this panel accept drop events?
 
 			Flag_TransformIsDirty	= 16,
 			Flag_NeedsLayout		= 32,

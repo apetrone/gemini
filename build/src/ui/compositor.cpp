@@ -63,6 +63,7 @@ namespace gui
 		focus = nullptr;
 		hot = nullptr;
 		capture = nullptr;
+		drop_target = nullptr;
 
 		set_hot(0);
 		set_capture(0, CursorButton::None);
@@ -226,56 +227,61 @@ namespace gui
 
 		if (!get_capture())
 		{
+			// There is no captured panel:
+			// - moving the mouse tries to find a new hot panel
 			newhot = find_panel_at_location(cursor, Panel::Flag_CursorEnabled | Panel::Flag_IsVisible);
 			hot = newhot;
-		}
 
-		if (newhot && !get_capture())
-		{
-			// if hot changed
-			if (hot != last_hot)
+			if (newhot)
 			{
-				if (hot && listener)
+				// if hot changed
+				if (hot != last_hot)
 				{
-					listener->hot_changed(last_hot, hot);
-				}
+					if (hot && listener)
+					{
+						listener->hot_changed(last_hot, hot);
+					}
 
-				if (last_hot)
-				{
-					// mouse exit
-					EventArgs args(this, Event_CursorExit);
-					args.cursor = cursor;
-					args.hot = last_hot;
-					args.focus = get_focus();
-					args.capture = get_capture();
-					args.delta.x = dx;
-					args.delta.y = dy;
-					args.local = last_hot->compositor_to_local(cursor);
-					args.sender = this;
-					args.target = last_hot;
-					last_hot->handle_event(args);
-				}
+					if (last_hot)
+					{
+						// mouse exit
+						EventArgs args(this, Event_CursorExit);
+						args.cursor = cursor;
+						args.hot = last_hot;
+						args.focus = get_focus();
+						args.capture = get_capture();
+						args.delta.x = dx;
+						args.delta.y = dy;
+						args.local = last_hot->compositor_to_local(cursor);
+						args.sender = this;
+						args.target = last_hot;
+						last_hot->handle_event(args);
+					}
 
-				if (hot)
-				{
-					// mouse enter
-					EventArgs args(this, Event_CursorEnter);
-					args.cursor = cursor;
-					args.hot = hot;
-					args.focus = get_focus();
-					args.capture = get_capture();
-					args.delta.x = dx;
-					args.delta.y = dy;
-					args.local = hot->compositor_to_local(cursor);
-					args.sender = this;
-					args.target = hot;
-					hot->handle_event(args);
+					if (hot)
+					{
+						// mouse enter
+						EventArgs args(this, Event_CursorEnter);
+						args.cursor = cursor;
+						args.hot = hot;
+						args.focus = get_focus();
+						args.capture = get_capture();
+						args.delta.x = dx;
+						args.delta.y = dy;
+						args.local = hot->compositor_to_local(cursor);
+						args.sender = this;
+						args.target = hot;
+						hot->handle_event(args);
+					}
 				}
 			}
 		}
 
 		if (get_capture())
 		{
+			// There is a captured panel.
+			// - A drag event is happening to the capture.
+			// - A drag and drop event from capture to... drop_target.
 			Panel* target = get_capture();
 
 			EventArgs args(this, Event_CursorDrag);
@@ -294,7 +300,43 @@ namespace gui
 			{
 				target->handle_event(args);
 			}
-			// mouse move
+
+			Panel* last_drop_target = drop_target;
+
+			// try to find a drop target
+			drop_target = find_panel_at_location(cursor, Panel::Flag_CursorEnabled | Panel::Flag_IsVisible | Panel::Flag_CanDrop, get_capture());
+			if (drop_target != last_drop_target)
+			{
+				if (last_drop_target)
+				{
+					EventArgs hoverargs(this, Event_CursorDragExit);
+					hoverargs.cursor_button = capture_button;
+					hoverargs.cursor = cursor;
+					hoverargs.hot = last_drop_target;
+					hoverargs.focus = get_focus();
+					hoverargs.delta.x = dx;
+					hoverargs.delta.y = dy;
+					hoverargs.local = last_drop_target->compositor_to_local(cursor);
+					hoverargs.sender = this;
+					hoverargs.target = last_drop_target;
+					last_drop_target->handle_event(hoverargs);
+				}
+
+				if (drop_target)
+				{
+					EventArgs hoverargs(this, Event_CursorDragEnter);
+					hoverargs.cursor_button = capture_button;
+					hoverargs.cursor = cursor;
+					hoverargs.hot = drop_target;
+					hoverargs.focus = get_focus();
+					hoverargs.delta.x = dx;
+					hoverargs.delta.y = dy;
+					hoverargs.local = drop_target->compositor_to_local(cursor);
+					hoverargs.sender = this;
+					hoverargs.target = drop_target;
+					drop_target->handle_event(hoverargs);
+				}
+			}
 		}
 		else if (hot)
 		{
@@ -388,8 +430,19 @@ namespace gui
 				get_capture()->handle_event(args);
 			}
 
+			if (drop_target)
+			{
+				// dispatch drop event
+				args.target = drop_target;
+				args.type = Event_CursorDrop;
+				args.capture = get_capture();
+				args.local = drop_target->compositor_to_local(last_cursor);
+				drop_target->handle_event(args);
+			}
+
 			set_capture(0, CursorButton::None);
 			find_new_hot(0, 0);
+			drop_target = nullptr;
 		}
 	} // cursor_button
 
@@ -467,12 +520,12 @@ namespace gui
 		return result;
 	}
 
-	Panel* Compositor::find_panel_at_location(const Point& location, uint32_t option_flags)
+	Panel* Compositor::find_panel_at_location(const Point& location, uint32_t option_flags, Panel* ignore)
 	{
 		// This must go front to back traversal to find panels.
 		for(PanelVector::iterator it = zsorted.begin(); it != zsorted.end(); ++it)
 		{
-			Panel* hit_panel = find_deepest_panel_at_location((*it), location, option_flags);
+			Panel* hit_panel = find_deepest_panel_at_location((*it), location, option_flags, ignore);
 			if (hit_panel)
 			{
 				return hit_panel;
@@ -482,23 +535,23 @@ namespace gui
 		return nullptr;
 	} // find_panel_at_location
 
-	Panel* Compositor::find_deepest_panel_at_location(Panel* root, const gui::Point& location, uint32_t option_flags)
+	Panel* Compositor::find_deepest_panel_at_location(Panel* root, const gui::Point& location, uint32_t option_flags, Panel* ignore)
 	{
 		if (!root)
 		{
 			return 0;
 		}
 
-		if (hit_test_panel(root, location, option_flags))
+		if (hit_test_panel(root, location, option_flags) && root != ignore)
 		{
 			// hit test passed for root; descend into children
 			Panel* cpanel = 0;
 			for (PanelVector::iterator child = root->children.begin(); child != root->children.end(); ++child)
 			{
 				cpanel = (*child);
-				if (hit_test_panel(cpanel, location, option_flags))
+				if (hit_test_panel(cpanel, location, option_flags) && cpanel != ignore)
 				{
-					return find_deepest_panel_at_location(cpanel, location, option_flags);
+					return find_deepest_panel_at_location(cpanel, location, option_flags, ignore);
 				}
 			}
 
