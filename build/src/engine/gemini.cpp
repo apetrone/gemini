@@ -736,6 +736,37 @@ static SharedState _sharedstate;
 const size_t GEMINI_MAX_RENDERSTREAM_BYTES = 8192;
 const size_t GEMINI_MAX_RENDER_STREAM_COMMANDS = 512;
 
+class AudioInterface : public IAudioInterface
+{
+public:
+	virtual void precache_sound(const char* path)
+	{
+		assets::sounds()->load_from_path(path);
+	}
+
+	virtual gemini::AudioHandle play(const char* path, int num_repeats)
+	{
+		return gemini::audio::play_sound(
+			assets::sounds()->load_from_path(path),
+			num_repeats
+		);
+	}
+
+	virtual void stop(gemini::AudioHandle handle)
+	{
+		gemini::audio::stop_sound(handle);
+	}
+
+	virtual void stop_all_sounds()
+	{
+		audio::stop_all_sounds();
+	}
+};
+
+
+
+
+
 class EngineInterface : public IEngineInterface
 {
 	IEntityManager* entity_manager;
@@ -1000,6 +1031,9 @@ private:
 	// used by debug draw
 	font::Handle debug_font;
 
+	assets::Sound* test_sound;
+	audio::SoundHandle_t background_music;
+
 	void open_gamelibrary()
 	{
 #if !defined(GEMINI_STATIC_GAME)
@@ -1178,6 +1212,11 @@ public:
 	{
 		if (game_interface)
 		{
+			if (event.subtype == kernel::JoystickButton && event.is_down)
+			{
+				gemini::audio::SoundHandle_t sound_handle = gemini::audio::play_sound(test_sound, 0);
+			}
+
 			game_interface->on_event(event);
 		}
 	}
@@ -1333,8 +1372,6 @@ Options:
 
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 
-
-
 		// initialize window subsystem
 		platform::window::startup(platform::window::RenderingBackend_Default);
 
@@ -1386,21 +1423,33 @@ Options:
 				LOGE("renderer initialization failed!\n");
 				return kernel::RendererFailed;
 			}
+		}
 
-			assets::startup();
+		assets::startup();
 
+		if (device)
+		{
+			// initialize fonts
 			font::startup(device);
 
+			// initialize debug draw
 			::renderer::debugdraw::startup(device);
 			DebugDrawInterface* debug_draw = MEMORY_NEW(DebugDrawInterface, core::memory::global_allocator());
 			gemini::debugdraw::set_instance(debug_draw);
-
-
 		}
-
 
 		// initialize main subsystems
 		audio::startup();
+		IAudioInterface* audio_instance = MEMORY_NEW(AudioInterface, core::memory::global_allocator());
+		audio::set_instance(audio_instance);
+
+		test_sound = gemini::assets::sounds()->load_from_path("sounds/select");
+		assert(test_sound);
+
+		assets::Sound* canond = gemini::assets::sounds()->load_from_path("sounds/canond");
+		background_music = audio::play_sound(canond, 0);
+
+
 		gemini::physics::startup();
 		animation::startup();
 
@@ -1499,7 +1548,6 @@ Options:
 			params.step_alpha -= 1.0f;
 		}
 
-		audio::update();
 		animation::update(kernel::parameters().framedelta_seconds);
 		hotloading::tick();
 		post_tick();
@@ -1593,6 +1641,10 @@ Options:
 		MEMORY_DELETE(debug_draw, core::memory::global_allocator());
 		assets::shutdown();
 		audio::shutdown();
+
+		IAudioInterface* interface = audio::instance();
+		MEMORY_DELETE(interface, core::memory::global_allocator());
+		audio::set_instance(nullptr);
 
 		// must shutdown the renderer before our window
 		::renderer::shutdown();

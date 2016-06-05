@@ -66,7 +66,7 @@ using namespace renderer;
 #define GEMINI_TEST_SLIDER			1 // 5 draw calls
 
 // enable this to enable and test audio
-#define TEST_AUDIO 1
+//#define TEST_AUDIO 1
 
 // ---------------------------------------------------------------------
 // gui
@@ -201,13 +201,13 @@ namespace gui
 class TestUIListener : public gui::Listener
 {
 public:
-	gemini::audio::SoundHandle focus_sound;
-	gemini::audio::SoundHandle hot_sound;
+	//gemini::audio::SoundHandle focus_sound;
+	//gemini::audio::SoundHandle hot_sound;
 
 	TestUIListener()
 	{
-		hot_sound = gemini::audio::load_sound("sounds/select.wav");
-		focus_sound = gemini::audio::load_sound("sounds/confirm.wav");
+		//hot_sound = gemini::audio::load_sound("sounds/select.wav");
+		//focus_sound = gemini::audio::load_sound("sounds/confirm.wav");
 	}
 
 	virtual void focus_changed(gui::Panel* old_focus, gui::Panel* new_focus)
@@ -217,16 +217,16 @@ public:
 
 	virtual void hot_changed(gui::Panel* old_hot, gui::Panel* new_hot)
 	{
-		hot_sound = gemini::audio::load_sound("sounds/select.wav");
-		gemini::audio::play_sound(hot_sound, 0);
+		//hot_sound = gemini::audio::load_sound("sounds/select.wav");
+		//gemini::audio::play_sound(hot_sound, 0);
 	}
 
 	virtual void handle_event(const gui::EventArgs& event)
 	{
 		if (event.type == gui::Event_Click)
 		{
-			focus_sound = gemini::audio::load_sound("sounds/confirm.wav");
-			gemini::audio::play_sound(focus_sound, 0);
+			//focus_sound = gemini::audio::load_sound("sounds/confirm.wav");
+			//gemini::audio::play_sound(focus_sound, 0);
 		}
 	}
 };
@@ -460,7 +460,7 @@ public:
 		compositor->set_listener(listener);
 #endif
 
-#if defined(TEST_AUDIO) && 1
+#if defined(TEST_AUDIO) && 0
 		// load audio
 		music = gemini::audio::load_sound("sounds/time_travel.wav");
 

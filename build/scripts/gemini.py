@@ -185,19 +185,6 @@ def setup_common_libs(arguments, product, target_platform):
 
 
 	windows = product.layout(platform="windows")
-	windows.includes += [
-		os.path.join(SDKS_FOLDER, "openal-1.1", "include")
-	]
-
-	win32 = product.layout(platform="windows", architecture="x86")
-	win32.libdirs += [
-		os.path.join(SDKS_FOLDER, "openal-1.1", "libs/Win32")
-	]
-
-	win64 = product.layout(platform="windows", architecture="x86_64")
-	win64.libdirs += [
-		os.path.join(SDKS_FOLDER, "openal-1.1", "libs/Win64")
-	]
 
 	# currently, we use MultiByte character set (and with Squirrel3)
 	# to avoid Unicode. This is a problem with squirrel that should be
@@ -1065,7 +1052,6 @@ def products(arguments, **kwargs):
 	# more sources
 	gemini.sources += [
 		"src/engine/*.*",
-		"src/engine/audio/openal.*",
 		"src/engine/assets/*.*",
 		"src/engine/game/**.*",
 
@@ -1084,10 +1070,6 @@ def products(arguments, **kwargs):
 	]
 
 	if target_platform.get() in DESKTOP:
-		gemini.sources += [
-			"src/engine/audio/openal_vorbis_decoder.*"
-		]
-
 		gemini.includes += [
 			"src/engine/audio"
 		]
@@ -1108,15 +1090,6 @@ def products(arguments, **kwargs):
 		]
 
 		linux = gemini.layout(platform="linux")
-
-		if target_platform.matches("linux"):
-			# Verify openal is installed
-			found_oal = target_platform.find_include_path("AL/al.h")
-			assert_dependency(found_oal, "AL/al.h not found!")
-
-		linux.links += [
-			"openal"
-		]
 
 		if arguments.with_x11:
 			linux.links += ["X11"]

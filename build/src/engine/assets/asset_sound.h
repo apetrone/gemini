@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2016- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,16 +22,45 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include "audio.h"
-#include "opensles.h"
-#include <slim/xlog.h>
+#pragma once
 
-OpenSLES::OpenSLES() {}
-OpenSLES::~OpenSLES() {}
+#include <core/stackstring.h>
 
-void OpenSLES::event( audio::EventType event ) {}
-void OpenSLES::prepare_source( AudioSource * source ) {}
-void OpenSLES::play_source( AudioSource * source ) {}
-void OpenSLES::update_source( AudioSource * source ) {}
-void OpenSLES::stop_source( AudioSource * source ) {}
-void OpenSLES::clean_source( AudioSource * source ) {}
+#include <engine/assets.h>
+
+#include <runtime/audio_mixer.h>
+
+namespace gemini
+{
+	namespace assets
+	{
+		// -------------------------------------------------------------
+		// Sound
+
+		// A frame is a single sample of PCM data
+		// (including all channels which comprise that sample).
+
+		struct Sound : public Asset
+		{
+			Array<gemini::audio::InMemorySampleType> pcmdata;
+			size_t channels;
+
+			// retrieve a frame from the underlying audio asset.
+			// returns the number of frames read (0 on error)
+			size_t (*get_frame_callback)(struct Sound* sound, size_t frame, float* buffer);
+
+			Sound();
+			virtual ~Sound();
+			virtual void release();
+			size_t get_frame(size_t frame, float* destination);
+
+			// Returns total frames for this sound.
+			size_t get_total_frames() const;
+		}; // Sound
+
+		AssetLoadStatus sound_load_callback(const char* path, Sound* shader, const AssetParameters& parameters);
+		void sound_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
+
+		DECLARE_ASSET_LIBRARY_ACCESSOR(Sound, AssetParameters, sounds);
+	} // namespace assets
+} // namespace gemini

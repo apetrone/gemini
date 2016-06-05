@@ -102,7 +102,7 @@ namespace gemini
 #include "assets/asset_mesh.h"
 #include "assets/asset_emitter.h"
 #include "assets/asset_font.h"
-
+#include "assets/asset_sound.h"
 
 namespace gemini
 {
