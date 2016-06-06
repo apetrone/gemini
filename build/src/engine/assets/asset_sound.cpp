@@ -203,12 +203,17 @@ namespace gemini
 			return get_frame_callback(this, frame, buffer);
 		}
 
+		size_t Sound::get_total_frames() const
+		{
+			return pcmdata.size() / channels;
+		}
+
 		AssetLoadStatus sound_load_callback(const char* path, Sound* sound, const AssetParameters& parameters)
 		{
 			// load the file into a memory buffer
 			if (load_wave(sound->pcmdata, sound->channels, path) != 0)
 			{
-				LOGW("An error occurred while loading '%s'\n", path);
+				LOGE("An error occurred while loading '%s'\n", path);
 				assert(0);
 				return AssetLoad_Failure;
 			}

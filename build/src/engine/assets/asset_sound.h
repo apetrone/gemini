@@ -37,6 +37,9 @@ namespace gemini
 		// -------------------------------------------------------------
 		// Sound
 
+		// A frame is a single sample of PCM data
+		// (including all channels which comprise that sample).
+
 		struct Sound : public Asset
 		{
 			Array<gemini::audio::InMemorySampleType> pcmdata;
@@ -50,6 +53,9 @@ namespace gemini
 			virtual ~Sound();
 			virtual void release();
 			size_t get_frame(size_t frame, float* destination);
+
+			// Returns total frames for this sound.
+			size_t get_total_frames() const;
 		}; // Sound
 
 		AssetLoadStatus sound_load_callback(const char* path, Sound* shader, const AssetParameters& parameters);

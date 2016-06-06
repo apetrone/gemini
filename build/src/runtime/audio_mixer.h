@@ -102,12 +102,8 @@ namespace gemini
 		typedef float InMemorySampleType;
 		const float InMemorySampleValueMax = 32767.0f;
 
-		// precache/load sound; returns an id for that sound
-		SoundHandle_t load_sound(const char* asset_name);
-		//SoundHandle precache_sound(const char* asset_name);
-
 		// start playing sound [repeats]
-		SoundHandle_t play_sound(gemini::assets::Sound*, int32_t repeats = 0);
+		SoundHandle_t play_sound(gemini::assets::Sound* sound, int32_t repeats = 0);
 
 		// stop playing sound
 		void stop_sound(SoundHandle_t handle);
@@ -119,17 +115,16 @@ namespace gemini
 		void set_master_volume(float new_volume);
 		float get_master_volume();
 
-		// should be called each frame.
-		// audio will starve if it cannot maintain 10Hz.
-		void tick(float delta_seconds);
-
 		void startup();
 		void shutdown();
 
-		// How do we identify when a sound has stopped playing? Rather,
-		// how do we expose this to the game? we'll know when the samples have all
-		// played, but there must be a better way than a callback.
-
+		// returns the number of sounds currently playing.
 		size_t get_total_playing_sounds();
+
+		// get total time for a handle in seconds.
+		float get_total_time_seconds(SoundHandle_t handle);
+
+		// get current play head for a sound in seconds.
+		float get_current_playhead(SoundHandle_t handle);
 	} // namespace audio
 } // namespace gemini

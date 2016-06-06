@@ -49,8 +49,8 @@ namespace gemini
 				// An invalid instance.
 				Inactive,
 
-				// An allocated, valid handle which is not yet playing.
-				Loaded,
+				// A handle which has finished playing.
+				Stopped,
 
 				// An instance which is currently playing.
 				Playing
@@ -203,28 +203,6 @@ namespace gemini
 {
 	namespace audio
 	{
-		SoundHandle_t load_sound(const char* asset_name)
-		{
-			core::filesystem::IFileSystem* fs = core::filesystem::instance();
-			assert(fs->file_exists(asset_name));
-
-			SoundInstance* instance;
-			SoundHandle_t handle = sound_list->acquire();
-
-			instance = sound_list->from_handle(handle);
-			assert(instance);
-
-			//load_wave(instance->pcmdata, asset_name);
-			// TODO: hookup the asset system.
-			assert(0);
-
-			//instance->total_frames = (instance->pcmdata.size() / 2);
-			instance->state = SoundInstance::State::Loaded;
-			instance->frames_buffered = 0;
-
-			return handle;
-		}
-
 		SoundHandle_t play_sound(assets::Sound* sound, int32_t repeats)
 		{
 #if defined(AUDIO_USE_LOCK)
@@ -240,7 +218,7 @@ namespace gemini
 			instance->frames_buffered = 0;
 			instance->sample_count_started = platform::audio_frame_position();
 			instance->sound_asset = sound;
-			instance->total_frames = sound->pcmdata.size() / 2;
+			instance->total_frames = sound->get_total_frames();
 			++total_active_sounds;
 
 #if defined(AUDIO_USE_LOCK)
@@ -270,7 +248,7 @@ namespace gemini
 					SoundInstance* instance = sound_list->from_handle(index);
 					if (instance->state == SoundInstance::State::Playing)
 					{
-						instance->state = SoundInstance::State::Loaded;
+						instance->state = SoundInstance::State::Stopped;
 						instance->frames_buffered = 0;
 						instance->sample_count_started = 0;
 						instance->sound_asset = nullptr;
@@ -338,6 +316,27 @@ namespace gemini
 		size_t get_total_playing_sounds()
 		{
 			return total_active_sounds;
+		}
+
+		float get_total_time_seconds(SoundHandle_t handle)
+		{
+			SoundInstance* instance = sound_list->from_handle(handle);
+			assert(instance);
+
+			return (instance->total_frames / static_cast<float>(AUDIO_FREQUENCY_HZ));
+		}
+
+		float get_current_playhead(SoundHandle_t handle)
+		{
+			if (sound_list->is_valid(handle))
+			{
+				SoundInstance* instance = sound_list->from_handle(handle);
+				assert(instance);
+				assert(instance->state != SoundInstance::State::Stopped);
+
+				uint64_t current_frame = platform::audio_frame_position();
+				return (current_frame - instance->sample_count_started) / static_cast<float>(AUDIO_FREQUENCY_HZ);
+			}
 		}
 	} // namespace audio
 } // namespace gemini

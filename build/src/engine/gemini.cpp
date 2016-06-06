@@ -1032,6 +1032,7 @@ private:
 	font::Handle debug_font;
 
 	assets::Sound* test_sound;
+	audio::SoundHandle_t background_music;
 
 	void open_gamelibrary()
 	{
@@ -1437,13 +1438,17 @@ Options:
 			gemini::debugdraw::set_instance(debug_draw);
 		}
 
-		test_sound = gemini::assets::sounds()->load_from_path("sounds/select");
-		assert(test_sound);
-
 		// initialize main subsystems
 		audio::startup();
 		IAudioInterface* audio_instance = MEMORY_NEW(AudioInterface, core::memory::global_allocator());
 		audio::set_instance(audio_instance);
+
+		test_sound = gemini::assets::sounds()->load_from_path("sounds/select");
+		assert(test_sound);
+
+		assets::Sound* canond = gemini::assets::sounds()->load_from_path("sounds/canond");
+		background_music = audio::play_sound(canond, 0);
+
 
 		gemini::physics::startup();
 		animation::startup();
@@ -1555,6 +1560,10 @@ Options:
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 		last_time = current_time;
+
+		// print out the cursor
+		float playhead = audio::get_current_playhead(background_music);
+		LOGV("playhead: %2.2f\n", playhead);
 
 		//gemini::profiler::report(profile_output);
 		//gemini::profiler::reset();
