@@ -1639,8 +1639,8 @@ Options:
 		::renderer::debugdraw::shutdown();
 		IDebugDraw* debug_draw = gemini::debugdraw::instance();
 		MEMORY_DELETE(debug_draw, core::memory::global_allocator());
-		assets::shutdown();
 		audio::shutdown();
+		assets::shutdown();
 
 		IAudioInterface* interface = audio::instance();
 		MEMORY_DELETE(interface, core::memory::global_allocator());
