@@ -69,6 +69,9 @@
 #include "hotloading.h"
 #include "navigation.h"
 
+// for MAX_BONES
+#include <shared/shared_constants.h>
+
 // uncomment this to draw bone debug information
 //#define GEMINI_DEBUG_BONES
 

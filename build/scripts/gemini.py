@@ -36,9 +36,6 @@ def assert_dependency(found, message):
 
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
-		"src/engine/*.c*",
-		"src/engine/*.h*",
-
 		"src/engine/physics/*.c*",
 		"src/engine/physics/*.h*",
 
@@ -60,7 +57,6 @@ def setup_common_variables(arguments, target_platform, product):
 	# TODO: Allow generic *.DS_Store excludes
 	product.excludes = [
 		"src/engine/.DS_Store",
-		"src/engine/assets/.DS_Store",
 		"src/engine/game/.DS_Store",
 		#"src/engine/entry.cpp",
 
@@ -149,21 +145,6 @@ def setup_common_libs(arguments, product, target_platform):
 	product.dependencies += [
 		libglm
 	]
-
-	if arguments.with_civet:
-		product.defines += [
-			"USE_WEBSERVER=1"
-		]
-
-		product.sources += [
-			os.path.join(DEPENDENCIES_FOLDER, "civetweb/src/CivetServer.cpp"),
-			os.path.join(DEPENDENCIES_FOLDER, "civetweb/src/civetweb.c"),
-			os.path.join(DEPENDENCIES_FOLDER, "civetweb/include/*.h")
-		]
-
-		product.includes += [
-			os.path.join(DEPENDENCIES_FOLDER, "civetweb/include")
-		]
 
 	linux = product.layout(platform="linux")
 	if target_platform.matches("linux"):
@@ -476,6 +457,9 @@ def get_libcore(arguments, target_platform):
 
 	linux = libcore.layout(platform="linux")
 	linux.sources += [
+		# audio
+		"src/core/platform/audio/linux/linux_alsa.cpp",
+
 		# backend
 		"src/core/platform/backend/linux/linux_backend.cpp",
 		"src/core/platform/backend/linux/linux_backend.h",
@@ -656,7 +640,7 @@ def get_librenderer(arguments, target_platform):
 
 	return librenderer
 
-def get_libruntime(arguments, target_platform, librenderer):
+def get_libruntime(arguments, target_platform, librenderer, libcore):
 	libruntime = Product(name="runtime", output=get_library_type(target_platform))
 	setup_driver(arguments, libruntime, target_platform)
 	libruntime.project_root = COMMON_PROJECT_ROOT
@@ -666,8 +650,37 @@ def get_libruntime(arguments, target_platform, librenderer):
 		"src/runtime/*.cpp",
 		"src/runtime/*.h",
 
+		"src/shared/shared_constants.h",
+
+		"src/runtime/animation.cpp",
+		"src/runtime/animation.h",
 		"src/runtime/audio_mixer.cpp",
 		"src/runtime/audio_mixer.h",
+
+		# assets
+		"src/runtime/assetlibrary.h",
+		"src/runtime/assets/asset_emitter.cpp",
+		"src/runtime/assets/asset_emitter.h",
+		"src/runtime/assets/asset_font.cpp",
+		"src/runtime/assets/asset_font.h",
+		"src/runtime/assets/asset_material.cpp",
+		"src/runtime/assets/asset_material.h",
+		"src/runtime/assets/asset_mesh.cpp",
+		"src/runtime/assets/asset_mesh.h",
+		"src/runtime/assets/asset_shader.cpp",
+		"src/runtime/assets/asset_shader.h",
+		"src/runtime/assets/asset_sound.cpp",
+		"src/runtime/assets/asset_sound.h",
+		"src/runtime/assets/asset_texture.cpp",
+		"src/runtime/assets/asset_texture.h",
+		"src/runtime/assets.cpp",
+		"src/runtime/assets.h",
+
+		"src/runtime/hotloading.cpp",
+		"src/runtime/hotloading.h",
+
+		"src/runtime/keyframechannel.cpp",
+		"src/runtime/keyframechannel.h",
 
 		"src/ui/**.c*",
 		"src/ui/**.h",
@@ -676,16 +689,38 @@ def get_libruntime(arguments, target_platform, librenderer):
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")
 	]
 
+	libruntime.excludes += [
+		"src/runtime/assets/.DS_Store",
+	]
+
 	libruntime.defines += [
 		"JSON_IS_AMALGAMATION"
 	]
 
 	libruntime.includes += [
 		"src/runtime",
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
+		"src/runtime/assets",
+		"src/shared",
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")
 	]
 
 	libruntime.dependencies.append(librenderer)
+	libruntime.dependencies.append(libcore)
+
+	if arguments.with_civet:
+		libruntime.defines += [
+			"USE_WEBSERVER=1"
+		]
+
+		libruntime.sources += [
+			os.path.join(DEPENDENCIES_FOLDER, "civetweb/src/CivetServer.cpp"),
+			os.path.join(DEPENDENCIES_FOLDER, "civetweb/src/civetweb.c"),
+			os.path.join(DEPENDENCIES_FOLDER, "civetweb/include/*.h")
+		]
+
+		libruntime.includes += [
+			os.path.join(DEPENDENCIES_FOLDER, "civetweb/include")
+		]
 
 	return libruntime
 
@@ -701,11 +736,14 @@ def get_sdk(arguments, links, **kwargs):
 		"src/sdk/*.cpp",
 
 		# glob all includes
-		"src/sdk/include/sdk/*.h"
+		"src/sdk/include/sdk/*.h",
+
+		"src/shared/shared_constants.h"
 	]
 
 	sdk.includes += [
-		"src/sdk/include"
+		"src/sdk/include",
+		"src/shared"
 	]
 
 	setup_driver(arguments, sdk, target_platform)
@@ -969,7 +1007,7 @@ def products(arguments, **kwargs):
 	librenderer = get_librenderer(arguments, target_platform)
 	librenderer.dependencies += [libcore, Dependency(file="glm.py")]
 
-	libruntime = get_libruntime(arguments, target_platform, librenderer)
+	libruntime = get_libruntime(arguments, target_platform, librenderer, libcore)
 	libruntime.dependencies += [libcore, Dependency(file="glm.py")]
 
 	# don't add this until we clean up the shaderconfig dependency on libruntime
@@ -1051,8 +1089,18 @@ def products(arguments, **kwargs):
 
 	# more sources
 	gemini.sources += [
-		"src/engine/*.*",
-		"src/engine/assets/*.*",
+		"src/engine/audio.cpp",
+		"src/engine/audio.h",
+		"src/engine/debugdraw_interface.cpp",
+		"src/engine/debugdraw_interface.h",
+		"src/engine/gemini.cpp",
+		"src/engine/navigation.cpp",
+		"src/engine/navigation.h",
+		"src/engine/scenelink.cpp",
+		"src/engine/scenelink.h",
+		# "src/engine/script.cpp",
+		# "src/engine/script.h",
+
 		"src/engine/game/**.*",
 
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_image.h"),

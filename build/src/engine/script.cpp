@@ -24,11 +24,10 @@
 // -------------------------------------------------------------
 #include <stack>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
+#include <core/logging.h>
 #include <core/util.h>
-#include <core/filesystem.h>
-
-#include <slim/xlog.h>
+#include <runtime/filesystem.h>
 
 #include "script.h"
 #define scvprintf vfprintf

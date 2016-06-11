@@ -24,11 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/stackstring.h>
-
-#include <engine/assets.h>
-
+#include <runtime/assets.h>
 #include <runtime/audio_mixer.h>
+
+#include <core/stackstring.h>
 
 namespace gemini
 {

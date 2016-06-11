@@ -28,9 +28,6 @@
 
 namespace gemini
 {
-	const unsigned int MAX_BONES = 64;
-	const unsigned int MAX_INFLUENCES_PER_VERTEX = 4;
-
 	class IModelInstanceData
 	{
 	public:

@@ -23,6 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include <runtime/audio_mixer.h>
+#include <runtime/assets/asset_sound.h>
 
 #include <core/array.h>
 #include <core/logging.h>
@@ -32,8 +33,6 @@
 #include <platform/audio.h>
 #include <platform/platform.h>
 
-// TODO: Fix this when assets move into the runtime.
-#include "../engine/assets/asset_sound.h"
 
 // enable this to add locks in with mixing and audio functions.
 //#define AUDIO_USE_LOCK 1

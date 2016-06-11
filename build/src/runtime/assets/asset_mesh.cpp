@@ -31,7 +31,8 @@
 #include "assets/asset_material.h"
 #include "renderer/renderer.h"
 
-#include <sdk/model_api.h>
+// for MAX_INFLUENCES_PER_VERTEX
+#include <shared/shared_constants.h>
 
 using namespace renderer;
 
