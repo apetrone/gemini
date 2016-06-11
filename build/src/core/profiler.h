@@ -57,7 +57,7 @@ namespace gemini
 
 		void begin_scope(const char* name, const char* fancy_name);
 		void end_scope(const char* name, const char* caller_name);
-		void report(profile_callback callback);
+		void report(profile_callback callback = nullptr);
 		void reset();
 		void startup();
 		void shutdown();

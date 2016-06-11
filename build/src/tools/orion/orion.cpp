@@ -744,7 +744,7 @@ public:
 		platform::window::swap_buffers(main_window);
 
 #if defined(GEMINI_ENABLE_PROFILER)
-		gemini::profiler::report(profile_output);
+		gemini::profiler::report();
 		gemini::profiler::reset();
 #endif
 

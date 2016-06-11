@@ -80,18 +80,6 @@ using namespace platform;
 using namespace core;
 using namespace gemini; // for renderer
 
-void profile_output(const char* name, uint64_t cycles, uint32_t depth, uint32_t hitcount, float parent_weight)
-{
-	size_t indents = 0;
-	while (indents <= depth)
-	{
-		LOGV("-");
-		++indents;
-	}
-
-	LOGV(" %s, cycles: %llu, hits: %i, pct: %2.3f cycles/hit: %2.2f\n", name, cycles, hitcount, parent_weight * 100.0, cycles / (float)hitcount);
-}
-
 struct Settings
 {
 	uint32_t physics_tick_rate;
@@ -1561,7 +1549,7 @@ Options:
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 		last_time = current_time;
 
-		//gemini::profiler::report(profile_output);
+		//gemini::profiler::report();
 		//gemini::profiler::reset();
 	}
 
@@ -1655,7 +1643,7 @@ Options:
 		platform::window::shutdown();
 
 #if defined(GEMINI_ENABLE_PROFILER)
-		gemini::profiler::report(profile_output);
+		gemini::profiler::report();
 #endif
 
 		gemini::runtime_shutdown();

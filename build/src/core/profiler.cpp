@@ -28,6 +28,7 @@
 #include "stack.h"
 
 #include <platform/platform.h>
+#include <core/logging.h>
 
 namespace gemini
 {
@@ -42,6 +43,18 @@ namespace gemini
 		gemini::stack<profile_block*> profile_stack;
 		size_t depth = 0;
 		uint64_t overhead = 0;
+
+		void default_profile_output(const char* name, uint64_t cycles, uint32_t depth, uint32_t hitcount, float parent_weight)
+		{
+			size_t indents = 0;
+			while (indents <= depth)
+			{
+				LOGV("-");
+				++indents;
+			}
+
+			LOGV(" %s, cycles: %llu, hits: %i, pct: %2.3f cycles/hit: %2.2f\n", name, cycles, hitcount, parent_weight * 100.0, cycles / (float)hitcount);
+		}
 
 		profile_block* find_or_create_block(const char* name)
 		{
@@ -88,6 +101,11 @@ namespace gemini
 
 		void report(profile_callback callback)
 		{
+			if (!callback)
+			{
+				callback = &default_profile_output;
+			}
+
 			for (profile_block* scope : scopes)
 			{
 				const profile_block* parent = scopes[scope->parent_index];
