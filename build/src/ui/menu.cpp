@@ -329,6 +329,12 @@ namespace gui
 	{
 		flags |= Flag_CursorEnabled | Flag_AlwaysOnTop;
 		set_name("MenuBar");
+
+		const float parent_width = parent->get_size().get_width();
+		set_origin(0, 0);
+		set_size(gui::Size(parent_width, 24));
+		set_maximum_size(gui::Size(parent_width, 24));
+		set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
 	}
 
 	void MenuBar::add_menu(Menu* menu)

@@ -81,18 +81,6 @@ static void gui_free_callback(void* pointer)
 	core::memory::global_allocator().deallocate(pointer);
 }
 
-static void ui_profile_output(const char* name, uint64_t cycles, uint32_t depth, uint32_t hitcount, float parent_weight)
-{
-	size_t indents = 0;
-	while (indents <= depth)
-	{
-		fprintf(stdout, "-");
-		++indents;
-	}
-
-	LOGV(" %s, cycles: %llu, hits: %i, pct: %2.3f cycles/hit: %2.2f\n", name, cycles, hitcount, parent_weight * 100.0, cycles / (float)hitcount);
-}
-
 struct MyVertex
 {
 	float position[3];
@@ -408,10 +396,6 @@ public:
 		// test the menu bar
 #if GEMINI_TEST_MENU
 		gui::MenuBar* menubar = new gui::MenuBar(compositor);
-		menubar->set_origin(0, 0);
-		menubar->set_size(gui::Size(frame.width, 24));
-		menubar->set_maximum_size(gui::Size(frame.width, 24));
-		menubar->set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
 
 		gui::Menu* filemenu = new gui::Menu("File", menubar);
 		filemenu->add_item("New Project", MAKE_MEMBER_DELEGATE(void(), TestUi, &TestUi::on_new_project, this));
@@ -842,7 +826,7 @@ public:
 		PROFILE_END("tick");
 
 #if defined(GEMINI_ENABLE_PROFILER)
-		gemini::profiler::report(ui_profile_output);
+		gemini::profiler::report();
 		gemini::profiler::reset();
 #endif
 
@@ -873,7 +857,7 @@ public:
 		PROFILE_END("test_ui");
 
 #if defined(GEMINI_ENABLE_PROFILER)
-		gemini::profiler::report(ui_profile_output);
+		gemini::profiler::report();
 #endif
 
 #if defined(TEST_AUDIO)

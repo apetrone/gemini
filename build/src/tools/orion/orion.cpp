@@ -48,7 +48,7 @@
 #include <ui/button.h>
 #include <ui/label.h>
 #include <ui/dockingcontainer.h>
-
+#include <ui/menu.h>
 
 
 using namespace platform;
@@ -318,17 +318,33 @@ void log_window_logger_close(core::logging::Handler* /*handler*/)
 {
 }
 
-void profile_output(const char* name, uint64_t cycles, uint32_t depth, uint32_t hitcount, float parent_weight)
-{
-	size_t indents = 0;
-	while(indents <= depth)
-	{
-		fprintf(stdout, "-");
-		++indents;
-	}
+// Asset Processing
+#if 0
+// 1. asset source (currently opened project)
+// 2. destination folder: <asset_source>/../builds/<platform>/
 
-	fprintf(stdout, " %s, cycles: %llu, hits: %i, pct: %2.3f cycles/hit: %2.2f\n", name, cycles, hitcount, parent_weight * 100.0, cycles/static_cast<float>(hitcount));
-}
+// tools for use by asset processor.
+// libsox/libogg: audio format conversions
+// pvrtexlib: PowerVR texture compression
+// nvtt / libsquish: texture compression
+// models/animation: custom code
+// packaging: custom code
+#endif
+
+class AssetProcessingPanel : public gui::Panel
+{
+public:
+
+	AssetProcessingPanel(gui::Panel* parent)
+		: gui::Panel(parent)
+	{
+		flags |= gui::Panel::Flag_CanMove;
+	}
+};
+
+
+
+
 
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -356,6 +372,7 @@ private:
 	render2::RenderTarget* render_target;
 	render2::Texture* texture;
 	gui::DockingContainer* container;
+	AssetProcessingPanel* asset_processor;
 
 	float value;
 
@@ -442,6 +459,21 @@ public:
 			LOGV("target path is: %s\n", paths[0]());
 		}
 	}
+
+	// menu handlers
+
+	void on_file_quit(void)
+	{
+		set_active(false);
+	}
+
+	void on_window_toggle_asset_processor(void)
+	{
+		assert(asset_processor);
+		asset_processor->set_visible(!asset_processor->is_visible());
+	}
+
+
 
 	void timeline_scrubber_changed(size_t current_frame)
 	{
@@ -635,6 +667,28 @@ public:
 	#endif
 #endif
 
+			asset_processor = new AssetProcessingPanel(compositor);
+			asset_processor->set_origin(0.0f, 25.0f);
+			asset_processor->set_dimensions(1.0f, 0.05f);
+			asset_processor->set_background_color(gemini::Color(0.25f, 0.25f, 0.25f));
+			//asset_processor->set_visible(false);
+
+
+
+
+// add a menu
+#if 1
+			gui::MenuBar* menubar = new gui::MenuBar(compositor);
+			{
+				gui::Menu* filemenu = new gui::Menu("File", menubar);
+				filemenu->add_item("Quit", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_quit, this));
+				menubar->add_menu(filemenu);
+
+				gui::Menu* windowmenu = new gui::Menu("Window", menubar);
+				windowmenu->add_item("Show Asset Processor", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_window_toggle_asset_processor, this));
+				menubar->add_menu(windowmenu);
+			}
+#endif
 
 #if 0
 			gui::RenderableSurface* surface = new gui::RenderableSurface(compositor);
