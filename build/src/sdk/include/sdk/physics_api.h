@@ -62,6 +62,17 @@ namespace gemini
 			}
 		};
 
+		enum CollisionGroup
+		{
+			DefaultFilter	= 1,
+			StaticFilter	= 2,
+			KinematicFilter = 4,
+			DebrisFilter	= 8,
+			SensorTrigger	= 16,
+			CharacterFilter = 32,
+			AllFilter		= -1
+		};
+
 		struct SweepTestResult
 		{
 			glm::vec3 hit_normal_world;
@@ -90,7 +101,7 @@ namespace gemini
 			virtual physics::ICollisionObject* create_physics_model(int32_t model_index, ObjectProperties& properties) = 0;
 			virtual physics::ICollisionObject* create_character_object(ICollisionShape* shape) = 0;
 			virtual physics::ICollisionObject* create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation) = 0;
-			virtual physics::ICollisionObject* create_kinematic_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation) = 0;
+			virtual physics::ICollisionObject* create_kinematic_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, uint16_t collision_mask = SensorTrigger) = 0;
 
 			// Shapes
 			// Shapes are handled internally by the physics system and do not
@@ -107,6 +118,8 @@ namespace gemini
 
 			virtual RaycastInfo raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance) = 0;
 			virtual SweepTestResult sweep(ICollisionObject* source_object, ICollisionShape* shape, const glm::vec3& start, const glm::vec3& end, float min_angle_cosine = 0.0f) = 0;
+
+			virtual bool update_shape_geometry(ICollisionShape* shape, const glm::vec3* vertices, size_t total_vertices) = 0;
 		};
 
 

@@ -309,7 +309,7 @@ namespace gemini
 			return collision_object;
 		}
 
-		physics::ICollisionObject* PhysicsInterface::create_kinematic_object(gemini::physics::ICollisionShape* shape, const glm::vec3& position, const glm::quat& /*orientation*/)
+		physics::ICollisionObject* PhysicsInterface::create_kinematic_object(gemini::physics::ICollisionShape* shape, const glm::vec3& position, const glm::quat& /*orientation*/, uint16_t collision_mask)
 		{
 			BulletCollisionObject* collision_object = MEMORY_NEW(BulletCollisionObject, core::memory::global_allocator());
 
@@ -331,7 +331,21 @@ namespace gemini
 			tr.setOrigin(btVector3(position.x, position.y, position.z));
 			ghost->setWorldTransform(tr);
 
-			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger);
+			short collision_filter_mask = 0;
+			if (collision_mask & physics::DefaultFilter)
+				collision_filter_mask |= btBroadphaseProxy::DefaultFilter;
+			if (collision_mask & physics::StaticFilter)
+				collision_filter_mask |= btBroadphaseProxy::StaticFilter;
+			if (collision_mask & physics::KinematicFilter)
+				collision_filter_mask |= btBroadphaseProxy::KinematicFilter;
+			if (collision_mask & physics::DebrisFilter)
+				collision_filter_mask |= btBroadphaseProxy::DebrisFilter;
+			if (collision_mask & physics::SensorTrigger)
+				collision_filter_mask |= btBroadphaseProxy::SensorTrigger;
+			if (collision_mask & physics::CharacterFilter)
+				collision_filter_mask |= btBroadphaseProxy::CharacterFilter;
+
+			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::KinematicFilter | btBroadphaseProxy::SensorTrigger, collision_filter_mask);
 
 			return collision_object;
 		}
@@ -418,6 +432,9 @@ namespace gemini
 			btVector3 ray_start(start.x, start.y, start.z);
 			btVector3 ray_end(destination.x, destination.y, destination.z);
 
+			// Ignored object must be valid!
+			assert(ignored_object);
+
 			BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object);
 			btCollisionObject* obj = bullet_object->get_collision_object();
 
@@ -501,6 +518,20 @@ namespace gemini
 
 
 			return result;
-		}
+		} // sweep
+
+		bool PhysicsInterface::update_shape_geometry(ICollisionShape* shape, const glm::vec3* vertices, size_t total_vertices)
+		{
+			BulletCollisionShape* bullet_shape = static_cast<BulletCollisionShape*>(shape);
+			assert(bullet_shape != 0);
+
+			// TODO: check this shape is correct! It will probably trash
+			// the memory of a non convex hull shape.
+			btConvexHullShape* hull_shape = static_cast<btConvexHullShape*>(bullet_shape->get_shape());
+			assert(hull_shape != 0);
+
+			hull_shape->updatePoints((const btScalar*)vertices, total_vertices, sizeof(glm::vec3));
+			return true;
+		} // update_shape_geometry
 	} // namespace physics
 } // namespace gemini

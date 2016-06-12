@@ -26,6 +26,7 @@
 
 #include <core/mathlib.h>
 #include <core/typedefs.h>
+#include <renderer/color.h>
 #include <core/interpolation.h>
 #include <runtime/runtime.h>
 
@@ -101,6 +102,8 @@ public:
 	// returns the camera's 'eye' position
 	virtual glm::vec3 get_origin() const = 0;
 	virtual glm::vec3 get_target() const = 0;
+	virtual glm::vec3 get_up() const = 0;
+	virtual glm::vec3 get_right() const = 0;
 
 	// return the vertical field of view for this camera
 	virtual float get_fov() const = 0;
@@ -133,6 +136,8 @@ public:
 
 // distance and field of view driven from pitch.
 
+#include <sdk/physics_collisionobject.h>
+
 class QuaternionFollowCamera : public GameCamera
 {
 private:
@@ -160,6 +165,8 @@ private:
 	//float player_height;
 
 	float distance_to_target;
+	float desired_distance_to_target;
+	float desired_distance;
 
 	float field_of_view;
 
@@ -173,11 +180,25 @@ private:
 	float auto_orient_seconds;
 	size_t auto_orienting;
 
+
+	gemini::physics::ICollisionObject* collision_object;
+	gemini::physics::ICollisionShape* collision_shape;
+	glm::vec3 cam_vertices[6];
+
+
+	glm::vec3 perform_raycast(const glm::vec3& start, const glm::vec3& direction, const gemini::Color& color);
+
+	// correct camera position by testing collision
+	void collision_correct();
+
 public:
 	QuaternionFollowCamera();
+	virtual ~QuaternionFollowCamera();
 
 	virtual glm::vec3 get_origin() const override;
 	virtual glm::vec3 get_target() const override;
+	virtual glm::vec3 get_up() const override;
+	virtual glm::vec3 get_right() const override;
 	virtual float get_fov() const override;
 	virtual CameraType get_type() const override { return CameraType::FollowCamera; }
 	virtual void move_view(float yaw, float pitch) override;
@@ -204,6 +225,8 @@ public:
 
 	virtual glm::vec3 get_origin() const override;
 	virtual glm::vec3 get_target() const override;
+	virtual glm::vec3 get_up() const override;
+	virtual glm::vec3 get_right() const override;
 	virtual float get_fov() const override;
 	virtual CameraType get_type() const override { return CameraType::FixedCamera; }
 	virtual void move_view(float yaw, float pitch) override;
@@ -249,9 +272,17 @@ public:
 
 	GameCamera* get_top_camera();
 
-	// get origin and view vectors
+	// get origin position
 	glm::vec3 get_origin() const;
+
+	// return camera's view vector
 	glm::vec3 get_target() const;
+
+	// return camera's up vector
+	glm::vec3 get_up() const;
+
+	// return camera's right vector
+	glm::vec3 get_right() const;
 
 	// get field of view
 	float get_field_of_view() const;

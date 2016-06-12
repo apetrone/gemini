@@ -126,6 +126,19 @@ namespace mathlib
 	float unsigned_atan2(float y, float x);
 
 	float wrap_euler_angle(float rads);
+
+
+	void compute_frustum_corners(
+		glm::vec3* near_corners,
+		glm::vec3* front_corners,
+		float nearz,
+		float farz,
+		float aspect_ratio,
+		float field_of_view,
+		const glm::vec3& origin,
+		const glm::vec3& view,
+		const glm::vec3& up,
+		const glm::vec3& right);
 }
 
 #if 0

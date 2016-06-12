@@ -1203,10 +1203,10 @@ public:
 	{
 		if (game_interface)
 		{
-			if (event.subtype == kernel::JoystickButton && event.is_down)
-			{
-				gemini::audio::SoundHandle_t sound_handle = gemini::audio::play_sound(test_sound, 0);
-			}
+			//if (event.subtype == kernel::JoystickButton && event.is_down)
+			//{
+			//	gemini::audio::SoundHandle_t sound_handle = gemini::audio::play_sound(test_sound, 0);
+			//}
 
 			game_interface->on_event(event);
 		}
@@ -1438,7 +1438,7 @@ Options:
 		assert(test_sound);
 
 		assets::Sound* canond = gemini::assets::sounds()->load_from_path("sounds/canond");
-		background_music = audio::play_sound(canond, 0);
+		//background_music = audio::play_sound(canond, 0);
 
 
 		gemini::physics::startup();

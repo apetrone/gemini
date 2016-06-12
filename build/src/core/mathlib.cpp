@@ -168,6 +168,50 @@ namespace mathlib
 		}
 		return rads;
 	}
+
+	void compute_frustum_corners(
+		glm::vec3* near_corners,
+		glm::vec3* front_corners,
+		float nearz,
+		float farz,
+		float aspect_ratio,
+		float field_of_view,
+		const glm::vec3& origin,
+		const glm::vec3& view,
+		const glm::vec3& up,
+		const glm::vec3& right)
+	{
+		// extract camera frustum planes
+		// given: aspect_ratio
+		// fov
+		// near plane distance.
+		// - dimensions of the near plane are calculated as follows:
+		float near_height = 2.0f * tan(field_of_view * 0.5f) * nearz;
+		float near_width = (near_height * aspect_ratio);
+
+		// far plane
+		float far_height = 2.0f * tan(field_of_view * 0.5f) * farz;
+		float far_width = (far_height * aspect_ratio);
+
+		//camera_position = fc->get_origin();
+		//target_position = fc->get_target();
+		//up_vector = fc->get_up();
+		//right_vector = fc->get_right();
+
+		glm::vec3 near_point = (origin + view * nearz);
+		glm::vec3 far_point = (origin + view * farz);
+
+		// bottom left, bottom right, top right, top left; (ccw)
+		near_corners[0] = (near_point - (up * near_height * 0.5f) - (right * near_width * 0.5f));
+		near_corners[1] = (near_point - (up * near_height * 0.5f) + (right * near_width * 0.5f));
+		near_corners[2] = (near_point + (up * near_height * 0.5f) + (right * near_width * 0.5f));
+		near_corners[3] = (near_point + (up * near_height * 0.5f) - (right * near_width * 0.5f));
+
+		front_corners[0] = (far_point - (up * far_height * 0.5f) - (right * far_width * 0.5f));
+		front_corners[1] = (far_point - (up * far_height * 0.5f) + (right * far_width * 0.5f));
+		front_corners[2] = (far_point + (up * far_height * 0.5f) + (right * far_width * 0.5f));
+		front_corners[3] = (far_point + (up * far_height * 0.5f) - (right * far_width * 0.5f));
+	} // compute_frustum_corners
 }
 
 

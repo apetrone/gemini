@@ -50,7 +50,7 @@ namespace gemini
 			virtual physics::ICollisionObject* create_physics_model(int32_t model_index, ObjectProperties& properties);
 			virtual physics::ICollisionObject* create_character_object(ICollisionShape* shape);
 			virtual physics::ICollisionObject* create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation);
-			virtual physics::ICollisionObject* create_kinematic_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation);
+			virtual physics::ICollisionObject* create_kinematic_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, uint16_t collision_mask = SensorTrigger);
 
 			virtual physics::ICollisionShape* create_capsule(float radius_meters, float height_meters);
 			virtual physics::ICollisionShape* create_box(const glm::vec3& dimensions);
@@ -64,6 +64,8 @@ namespace gemini
 
 			virtual RaycastInfo raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
 			virtual SweepTestResult sweep(ICollisionObject* source_object, ICollisionShape* shape, const glm::vec3& start, const glm::vec3& end, float angle_threshold);
+
+			virtual bool update_shape_geometry(ICollisionShape* shape, const glm::vec3* vertices, size_t total_vertices);
 		};
 
 	} // namespace physics
