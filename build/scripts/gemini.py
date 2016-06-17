@@ -1,7 +1,7 @@
 import os
 import logging
 
-from pegasus.models import Product, ProductType, Dependency
+from pegasus.models import Product, ProductType, Dependency, FileGroup
 
 
 # GCC 4.3+ needs -std=c++0x
@@ -36,12 +36,6 @@ def assert_dependency(found, message):
 
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
-		"src/engine/physics/*.c*",
-		"src/engine/physics/*.h*",
-
-		"src/engine/physics/bullet/*.c*",
-		"src/engine/physics/bullet/*.h*",
-
 		"src/sdk/include/**.h"
 	]
 
@@ -747,6 +741,7 @@ def get_sdk(arguments, links, **kwargs):
 	sdk.sources += [
 		# glob all sdk files
 		"src/sdk/*.cpp",
+		"src/sdk/*.h",
 
 		# glob all includes
 		"src/sdk/include/sdk/*.h",
@@ -1076,10 +1071,6 @@ def products(arguments, **kwargs):
 
 		games = [game]
 
-	gemini.sources += [
-		"src/engine/gemini.cpp"
-	]
-
 	gemini.dependencies += [
 		libruntime,
 		librenderer,
@@ -1099,8 +1090,25 @@ def products(arguments, **kwargs):
 
 	setup_driver(arguments, gemini, target_platform)
 
+	physics_group = FileGroup(
+		name="physics",
+		sources=[
+			FileGroup(
+				name="bullet",
+				sources=["src/engine/physics/bullet/*.*"]
+			),
+			"src/engine/physics/physics.cpp",
+			"src/engine/physics/physics.h",
+			"src/engine/physics/physics_common.h",
+			"src/engine/physics/physics_interface.cpp",
+			"src/engine/physics/physics_interface.h"
+		]
+	)
+
 	# more sources
 	gemini.sources += [
+		physics_group,
+
 		"src/engine/audio.cpp",
 		"src/engine/audio.h",
 		"src/engine/debugdraw_interface.cpp",
@@ -1138,8 +1146,7 @@ def products(arguments, **kwargs):
 		macosx.links = [
 			"Cocoa.framework",
 			"OpenGL.framework",
-			"AudioToolbox.framework",
-			"OpenAL.framework"
+			"AudioToolbox.framework"
 		]
 
 		# TODO: This path is relative to the *project*
