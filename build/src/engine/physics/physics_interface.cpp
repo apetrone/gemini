@@ -393,6 +393,15 @@ namespace gemini
 			return collision_shape;
 		}
 
+		physics::ICollisionShape* PhysicsInterface::create_convex_shape(const glm::vec3* vertices, size_t total_vertices)
+		{
+			BulletCollisionShape* collision_shape = MEMORY_NEW(BulletCollisionShape, core::memory::global_allocator());
+			collision_shapes.push_back(collision_shape);
+			btConvexHullShape* shape = new btConvexHullShape((const btScalar*)vertices, total_vertices, sizeof(glm::vec3));
+			collision_shape->set_shape(shape);
+			return collision_shape;
+		}
+
 		void PhysicsInterface::destroy_object(ICollisionObject* object)
 		{
 			MEMORY_DELETE(object, core::memory::global_allocator());

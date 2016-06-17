@@ -56,6 +56,7 @@ namespace gemini
 			virtual physics::ICollisionShape* create_box(const glm::vec3& dimensions);
 			virtual physics::ICollisionShape* create_cylinder(float radius_meters, float height_meters);
 			virtual physics::ICollisionShape* create_sphere(float radius_meters);
+			virtual physics::ICollisionShape* create_convex_shape(const glm::vec3* vertices, size_t total_vertices);
 
 			virtual void destroy_object(ICollisionObject* object);
 
