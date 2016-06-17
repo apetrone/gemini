@@ -147,11 +147,6 @@ def setup_common_libs(arguments, product, target_platform):
 	]
 
 	linux = product.layout(platform="linux")
-	if target_platform.matches("linux"):
-		found_alsa = target_platform.find_include_path("alsa/version.h")
-		if found_alsa:
-			linux.links.append("asound")
-
 	linux.cflags += [
 		"-Wpedantic"
 	]
@@ -456,6 +451,14 @@ def get_libcore(arguments, target_platform):
 
 
 	linux = libcore.layout(platform="linux")
+
+	if target_platform.matches("linux"):
+		found_alsa_version = target_platform.find_include_path("alsa/version.h")
+		found_alsa_soundlib = target_platform.find_include_path("alsa/asoundlib.h")
+		assert_dependency(found_alsa_version and found_alsa_soundlib, "ALSA Not Found!")
+		linux.links.append("asound")
+
+
 	linux.sources += [
 		# audio
 		"src/core/platform/audio/linux/linux_alsa.cpp",

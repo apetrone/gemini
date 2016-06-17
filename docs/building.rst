@@ -52,7 +52,7 @@ Debian/Ubuntu/SteamOS
 
 	.. code-block:: bash
 
-		sudo apt-get install sox libopenal-dev libudev-dev
+		sudo apt-get install sox libasound2-dev libudev-dev
 
 	If building with X11; you need X11 libs.
 
