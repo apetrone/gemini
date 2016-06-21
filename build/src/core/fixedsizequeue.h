@@ -97,13 +97,13 @@ public:
 
 	const Type& operator[](int index) const
 	{
-		assert(tail_index > index);
-		return elements[tail_index - index - 1];
+		assert(total_elements > index);
+		return elements[index];
 	}
 
 	Type& operator[](int index)
 	{
-		assert(tail_index > index);
-		return elements[tail_index - index - 1];
+		assert(total_elements > index);
+		return elements[index];
 	}
 }; // FixedSizeQueue
