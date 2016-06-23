@@ -57,7 +57,7 @@
 // https://msdn.microsoft.com/en-us/library/windows/desktop/dd316756(v=vs.85).aspx
 
 #include <platform/audio.h>
-#include <platform/platform.h>
+#include <platform/platform_internal.h>
 
 #include <core/atomic.h>
 #include <core/logging.h>
@@ -90,15 +90,12 @@ void safe_release(T** ptr)
 
 namespace platform
 {
-	// state we need for audio.
-	IAudioClient* audio_client = nullptr;
-	IAudioRenderClient* render_client = nullptr;
-	IAudioClock* audio_clock = nullptr;
-	HANDLE audio_event_handle = INVALID_HANDLE_VALUE;
-	HANDLE submission_event_handle = INVALID_HANDLE_VALUE;
-	HANDLE submission_thread_handle = INVALID_HANDLE_VALUE;
-	HANDLE submission_exited_thread = INVALID_HANDLE_VALUE;
+	struct win32_audio_device
+	{
+		IMMDevice* endpoint;
+	};
 
+	// state we need for audio.
 	struct win32_wasapi_state
 	{
 		uint32_t sample_rate_hz;
@@ -107,9 +104,37 @@ namespace platform
 		void* context;
 		uint64_t last_frame_count;
 		float audio_clock_frequency_denominator;
+		Array<audio_device*, PlatformAllocatorType> devices;
+
+		IAudioClient* audio_client;
+		IAudioRenderClient* render_client;
+		IAudioClock* audio_clock;
+		HANDLE audio_event_handle;
+		HANDLE submission_event_handle;
+		HANDLE submission_thread_handle;
+		HANDLE submission_exited_thread;
+
+		win32_wasapi_state()
+			: devices(16, get_platform_allocator())
+		{
+			sample_rate_hz = 0;
+			buffer_frame_count = 0;
+			audio_pull_callback = nullptr;
+			context = nullptr;
+			last_frame_count = 0;
+			audio_clock_frequency_denominator = 0.0f;
+
+			audio_client = nullptr;
+			render_client = nullptr;
+			audio_clock = nullptr;
+			audio_event_handle = INVALID_HANDLE_VALUE;
+			submission_event_handle = INVALID_HANDLE_VALUE;
+			submission_thread_handle = INVALID_HANDLE_VALUE;
+			submission_exited_thread = INVALID_HANDLE_VALUE;
+		}
 	};
 
-	win32_wasapi_state audio_state;
+	win32_wasapi_state* audio_state;
 
 	static HRESULT check_wasapi_error(HRESULT input)
 	{
@@ -166,20 +191,20 @@ namespace platform
 		for (;;)
 		{
 			// block until the next audio buffer is signaled
-			WaitForSingleObject(audio_event_handle, INFINITE);
+			WaitForSingleObject(audio_state->audio_event_handle, INFINITE);
 
-			if (WaitForSingleObject(submission_event_handle, 0) == WAIT_OBJECT_0)
+			if (WaitForSingleObject(audio_state->submission_event_handle, 0) == WAIT_OBJECT_0)
 			{
 				// This thread was signaled to exit.
 				break;
 			}
-			else if (audio_client)
+			else if (audio_state->audio_client)
 			{
 				// update the sample position from the device
 				UINT64 position;
-				HRESULT clock_fetch = audio_clock->GetPosition(&position, NULL);
+				HRESULT clock_fetch = audio_state->audio_clock->GetPosition(&position, NULL);
 				assert(SUCCEEDED(clock_fetch));
-				float seconds_pos = (position * audio_state.audio_clock_frequency_denominator);
+				float seconds_pos = (position * audio_state->audio_clock_frequency_denominator);
 				state->last_frame_count = static_cast<uint64_t>(state->sample_rate_hz * seconds_pos);
 				//LOGV("seconds_pos %i [%2.2f] (actual: %2.2f)\n", state->last_frame_count, state->last_frame_count/static_cast<float>(state->sample_rate_hz), seconds_pos);
 
@@ -187,12 +212,12 @@ namespace platform
 				UINT32 frames_available = 0;
 
 				// get padding in existing buffer
-				assert(S_OK == audio_client->GetCurrentPadding(&padding_frames));
+				assert(S_OK == audio_state->audio_client->GetCurrentPadding(&padding_frames));
 
 				// get available frames
 				BYTE* new_buffer;
 				frames_available = state->buffer_frame_count - padding_frames;
-				DWORD get_buffer_result = render_client->GetBuffer(
+				DWORD get_buffer_result = audio_state->render_client->GetBuffer(
 					frames_available,
 					&new_buffer
 				);
@@ -201,13 +226,13 @@ namespace platform
 				// fill the buffer
 				state->audio_pull_callback(new_buffer, frames_available, state->sample_rate_hz, state->context);
 
-				DWORD release_buffer_result = render_client->ReleaseBuffer(frames_available, 0);
+				DWORD release_buffer_result = audio_state->render_client->ReleaseBuffer(frames_available, 0);
 				assert(check_wasapi_error(release_buffer_result) == S_OK);
 			}
 		}
 
 		// signal to the main thread that the submission thread is exiting.
-		SetEvent(submission_exited_thread);
+		SetEvent(audio_state->submission_exited_thread);
 		return 0;
 	} // win32_audio_submission_thread
 
@@ -262,103 +287,38 @@ namespace platform
 
 			safe_release(&properties);
 		}
-
-		device.opaque = static_cast<void*>(endpoint);
 	} // populate_audio_device_from_endpoint
 
-	platform::Result audio_enumerate_devices(Array<audio_device>& devices)
+	platform::Result audio_enumerate_devices(Array<audio_device*>& devices)
 	{
-		// try to create the device enumerator instance.
-		IMMDeviceEnumerator* device_enumerator;
-		HRESULT create_enumerator_result = CoCreateInstance(
-			__uuidof(MMDeviceEnumerator),
-			0,
-			CLSCTX_ALL,
-			__uuidof(IMMDeviceEnumerator),
-			reinterpret_cast<LPVOID*>(&device_enumerator)
-		);
-
-		if (FAILED(create_enumerator_result))
+		//devices.resize(audio_state->devices.size());
+		for (size_t index = 0; index < audio_state->devices.size(); ++index)
 		{
-			return platform::Result::failure("IMMDeviceEnumerator creation failed");
+			audio_device* device = audio_state->devices[index];
+			audio_device dev = *device;
+			devices.push_back(device);
 		}
-
-		// let's enumerate the audio endpoint devices.
-		const EDataFlow device_type = eRender; // eRender, eCapture, eAll.
-		const DWORD state_mask = DEVICE_STATE_ACTIVE;
-		IMMDeviceCollection* device_collection;
-		HRESULT enum_result = device_enumerator->EnumAudioEndpoints(device_type, state_mask, &device_collection);
-		if (FAILED(enum_result))
-		{
-			return platform::Result::failure("Failed to enumerate devices");
-		}
-		else
-		{
-			// Retrieve the default device.
-			// This should be listed first in the device array.
-			IMMDevice* default_render_device;
-			if (FAILED(device_enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &default_render_device)))
-			{
-				return platform::Result::failure("Get default render device failed");
-			}
-
-			UINT device_count;
-			device_collection->GetCount(&device_count);
-
-			devices.resize(static_cast<size_t>(device_count));
-
-			wchar_t* default_device_uuid = nullptr;
-			default_render_device->GetId(&default_device_uuid);
-
-			for (UINT index = 0; index < device_count; ++index)
-			{
-				IMMDevice* device;
-				if (SUCCEEDED(device_collection->Item(index, &device)))
-				{
-					wchar_t* device_uuid = nullptr;
-					device->GetId(&device_uuid);
-
-					populate_audio_device_from_endpoint(devices[index], device);
-
-					if (wcscmp(device_uuid, default_device_uuid) == 0)
-					{
-						// Skip the default device we already populated and
-						// make sure it appears first in the list.
-						devices.swap(index, 0);
-					}
-
-					CoTaskMemFree(device_uuid);
-				}
-			}
-
-			// release default device resources
-			assert(default_device_uuid);
-			CoTaskMemFree(default_device_uuid);
-			safe_release(&default_render_device);
-
-			// finally, free the device_collection.
-			safe_release(&device_collection);
-		}
-
-		safe_release(&device_enumerator);
 
 		return platform::Result::success();
 	} // audio_enumerate_devices
 
-	platform::Result audio_open_output_device(const audio_device& device)
+	platform::Result audio_open_output_device(audio_device* device)
 	{
 		// If you hit this, the audio_client was already valid before open.
-		assert(audio_client == nullptr);
+		assert(audio_state->audio_client == nullptr);
 
-		assert(device.type == AudioDeviceType::Output);
+		assert(device->type == AudioDeviceType::Output);
 
-		IMMDevice* endpoint = static_cast<IMMDevice*>(device.opaque);
+		// Access the win32 instance we stored behind the audio_device.
+		win32_audio_device* win32_instance = reinterpret_cast<win32_audio_device*>(device + 1);
+		IMMDevice* endpoint = win32_instance->endpoint;
+		assert(endpoint);
 
 		// try to activate the render device.
 		if (FAILED(endpoint->Activate(__uuidof(IAudioClient),
 			CLSCTX_ALL,
 			0,
-			reinterpret_cast<LPVOID*>(&audio_client))))
+			reinterpret_cast<LPVOID*>(&audio_state->audio_client))))
 		{
 			return platform::Result::failure("Output device Activation failed");
 		}
@@ -366,18 +326,18 @@ namespace platform
 		//
 		// setup the audio format:
 		// 44.1kHz, 2 channels, 16-bits per sample.
-		audio_state.sample_rate_hz = 44100;
+		audio_state->sample_rate_hz = 44100;
 
 		WAVEFORMATEX* mix_format;
-		audio_client->GetMixFormat(&mix_format);
+		audio_state->audio_client->GetMixFormat(&mix_format);
 
 		const UINT32 mix_sample_size = mix_format->nBlockAlign;
-		assert(mix_format->nSamplesPerSec == audio_state.sample_rate_hz);
+		assert(mix_format->nSamplesPerSec == audio_state->sample_rate_hz);
 		WAVEFORMATEX waveformat;
 		memset(&waveformat, 0, sizeof(WAVEFORMATEX));
 		waveformat.nChannels = 2;
 		waveformat.wFormatTag = WAVE_FORMAT_PCM;
-		waveformat.nSamplesPerSec = audio_state.sample_rate_hz;
+		waveformat.nSamplesPerSec = audio_state->sample_rate_hz;
 		waveformat.wBitsPerSample = 16;
 		waveformat.nBlockAlign = static_cast<uint32_t>((waveformat.nChannels * waveformat.wBitsPerSample) / 8);
 		waveformat.nAvgBytesPerSec = (waveformat.nSamplesPerSec * waveformat.nBlockAlign);
@@ -402,7 +362,7 @@ namespace platform
 		//}
 
 		const DWORD stream_flags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
-		HRESULT stream_initialize = audio_client->Initialize(
+		HRESULT stream_initialize = audio_state->audio_client->Initialize(
 			AUDCLNT_SHAREMODE_SHARED,
 			stream_flags,
 			0,
@@ -424,44 +384,44 @@ namespace platform
 		//LOGV("period: %2.2f; hz: %2.2f\n", seconds_period, (1.0 / seconds_period));
 
 		// assign the audio_event_handle created on startup to the audio client.
-		HRESULT set_event_result = audio_client->SetEventHandle(audio_event_handle);
+		HRESULT set_event_result = audio_state->audio_client->SetEventHandle(audio_state->audio_event_handle);
 		assert(set_event_result == S_OK);
 
 		// cache the buffer size
-		HRESULT get_buffer_size_result = audio_client->GetBufferSize(&audio_state.buffer_frame_count);
+		HRESULT get_buffer_size_result = audio_state->audio_client->GetBufferSize(&audio_state->buffer_frame_count);
 		assert(get_buffer_size_result == S_OK);
-		//LOGV("buffer size: %i\n", audio_state.buffer_frame_count);
+		//LOGV("buffer size: %i\n", audio_state->buffer_frame_count);
 
 		// clean up mix format
 		CoTaskMemFree(mix_format);
 
-		audio_clock = nullptr;
-		HRESULT service_result = audio_client->GetService(
+		audio_state->audio_clock = nullptr;
+		HRESULT service_result = audio_state->audio_client->GetService(
 			__uuidof(IAudioClock),
-			reinterpret_cast<LPVOID*>(&audio_clock)
+			reinterpret_cast<LPVOID*>(&audio_state->audio_clock)
 		);
 		assert(SUCCEEDED(service_result));
 
 		UINT64 audio_clock_frequency;
-		audio_clock->GetFrequency(&audio_clock_frequency);
-		audio_state.audio_clock_frequency_denominator = (1.0f / static_cast<float>(audio_clock_frequency));
+		audio_state->audio_clock->GetFrequency(&audio_clock_frequency);
+		audio_state->audio_clock_frequency_denominator = (1.0f / static_cast<float>(audio_clock_frequency));
 
 		// Next; we need to create a render client to output audio.
-		HRESULT get_service_result = audio_client->GetService(
+		HRESULT get_service_result = audio_state->audio_client->GetService(
 			__uuidof(IAudioRenderClient),
-			reinterpret_cast<LPVOID*>(&render_client)
+			reinterpret_cast<LPVOID*>(&audio_state->render_client)
 		);
 		assert(get_service_result == S_OK);
 
-		HRESULT start_result = audio_client->Start();
+		HRESULT start_result = audio_state->audio_client->Start();
 		assert(start_result == S_OK);
 
 		DWORD thread_id;
-		submission_thread_handle = CreateThread(
+		audio_state->submission_thread_handle = CreateThread(
 			NULL,										// security attributes
 			0,											// initial size of stack in bytes
 			win32_audio_submission_thread,				// start address
-			static_cast<LPVOID>(&audio_state),			// thread's data parameter
+			static_cast<LPVOID>(audio_state),			// thread's data parameter
 			0,											// creation flags
 			&thread_id									// thread id
 		);
@@ -472,11 +432,102 @@ namespace platform
 	void audio_close_output_device()
 	{
 		// If you hit this, close device was called before opening a device.
-		assert(audio_client);
+		assert(audio_state->audio_client);
 
-		audio_client->Stop();
-		safe_release(&audio_client);
+		audio_state->audio_client->Stop();
+		safe_release(&audio_state->audio_client);
 	} // audio_close_output_device
+
+	void create_device_list(win32_wasapi_state* state)
+	{
+		// try to create the device enumerator instance.
+		IMMDeviceEnumerator* device_enumerator;
+		HRESULT create_enumerator_result = CoCreateInstance(
+			__uuidof(MMDeviceEnumerator),
+			0,
+			CLSCTX_ALL,
+			__uuidof(IMMDeviceEnumerator),
+			reinterpret_cast<LPVOID*>(&device_enumerator)
+		);
+
+		if (FAILED(create_enumerator_result))
+		{
+			// platform::Result::failure("IMMDeviceEnumerator creation failed");
+			return;
+		}
+
+		// let's enumerate the audio endpoint devices.
+		const EDataFlow device_type = eRender; // eRender, eCapture, eAll.
+		const DWORD state_mask = DEVICE_STATE_ACTIVE;
+		IMMDeviceCollection* device_collection;
+		HRESULT enum_result = device_enumerator->EnumAudioEndpoints(device_type, state_mask, &device_collection);
+		if (FAILED(enum_result))
+		{
+			//platform::Result::failure("Failed to enumerate devices");
+			return;
+		}
+		else
+		{
+			// Retrieve the default device.
+			// This should be listed first in the device array.
+			IMMDevice* default_render_device;
+			if (FAILED(device_enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &default_render_device)))
+			{
+				//platform::Result::failure("Get default render device failed");
+				return;
+			}
+
+			UINT device_count;
+			device_collection->GetCount(&device_count);
+
+			state->devices.resize(static_cast<size_t>(device_count));
+
+			wchar_t* default_device_uuid = nullptr;
+			default_render_device->GetId(&default_device_uuid);
+
+			for (UINT index = 0; index < device_count; ++index)
+			{
+				IMMDevice* device;
+				if (SUCCEEDED(device_collection->Item(index, &device)))
+				{
+					wchar_t* device_uuid = nullptr;
+					device->GetId(&device_uuid);
+
+					const size_t audio_device_size = sizeof(audio_device) + sizeof(win32_audio_device);
+
+					char* memory = static_cast<char*>(MEMORY_ALLOC(audio_device_size, get_platform_allocator()));
+					assert(memory);
+
+					audio_device* instance = new (memory) audio_device();
+					win32_audio_device* win32_instance = new (memory + sizeof(audio_device)) win32_audio_device();
+					win32_instance->endpoint = device;
+
+					state->devices[index] = instance;
+
+					populate_audio_device_from_endpoint(*state->devices[index], device);
+
+					if (wcscmp(device_uuid, default_device_uuid) == 0)
+					{
+						// Skip the default device we already populated and
+						// make sure it appears first in the list.
+						state->devices.swap(index, 0);
+					}
+
+					CoTaskMemFree(device_uuid);
+				}
+			}
+
+			// release default device resources
+			assert(default_device_uuid);
+			CoTaskMemFree(default_device_uuid);
+			safe_release(&default_render_device);
+
+			// finally, free the device_collection.
+			safe_release(&device_collection);
+		}
+
+		safe_release(&device_enumerator);
+	} // create_device_list
 
 	platform::Result audio_startup()
 	{
@@ -488,9 +539,11 @@ namespace platform
 			return platform::Result::failure("COM initialization failed");
 		}
 
+		audio_state = MEMORY_NEW(win32_wasapi_state, get_platform_allocator());
+
 		// this is used by IAudioClient to signal our worker thread
 		// when we can populate the buffer.
-		audio_event_handle = CreateEvent(
+		audio_state->audio_event_handle = CreateEvent(
 			NULL,
 			FALSE,
 			FALSE,
@@ -498,7 +551,7 @@ namespace platform
 		);
 
 		// this controls whether or not the submission thread will exit.
-		submission_event_handle = CreateEvent(
+		audio_state->submission_event_handle = CreateEvent(
 			NULL,
 			TRUE,
 			FALSE,
@@ -506,14 +559,15 @@ namespace platform
 		);
 
 		// flags the main thread that the submission thread has exited.
-		submission_exited_thread = CreateEvent(
+		audio_state->submission_exited_thread = CreateEvent(
 			NULL,
 			TRUE,
 			FALSE,
 			NULL
 		);
 
-		memset(&audio_state, 0, sizeof(win32_wasapi_state));
+		// cache the list of devices on system.
+		create_device_list(audio_state);
 
 		return platform::Result::success();
 	} // audio_startup
@@ -521,11 +575,11 @@ namespace platform
 	void audio_shutdown()
 	{
 		// trigger the exit of the submission thread.
-		SetEvent(audio_event_handle);
-		SetEvent(submission_event_handle);
+		SetEvent(audio_state->audio_event_handle);
+		SetEvent(audio_state->submission_event_handle);
 
 		// wait until the thread successfully exits.
-		WaitForSingleObject(submission_exited_thread, INFINITE);
+		WaitForSingleObject(audio_state->submission_exited_thread, INFINITE);
 
 		// It seems that we can introduce a sleep and have the
 		// sound taper off smoothly as opposed to abruptly stopping.
@@ -533,27 +587,35 @@ namespace platform
 		Sleep(300);
 
 		// cleanup all events.
-		CloseHandle(audio_event_handle);
-		CloseHandle(submission_event_handle);
-		CloseHandle(submission_exited_thread);
+		CloseHandle(audio_state->audio_event_handle);
+		CloseHandle(audio_state->submission_event_handle);
+		CloseHandle(audio_state->submission_exited_thread);
 
 		// now we can releases render and audio clients.
-		safe_release(&render_client);
-		safe_release(&audio_clock);
-		safe_release(&audio_client);
+		safe_release(&audio_state->render_client);
+		safe_release(&audio_state->audio_clock);
+		safe_release(&audio_state->audio_client);
+
+		for (size_t index = 0; index < audio_state->devices.size(); ++index)
+		{
+			audio_device* device = audio_state->devices[index];
+			MEMORY_DEALLOC(device, get_platform_allocator());
+		}
+
+		MEMORY_DELETE(audio_state, get_platform_allocator());
 
 		CoUninitialize();
 	} // audio_shutdown
 
 	void audio_set_callback(audio_sound_callback callback, void* context)
 	{
-		audio_state.audio_pull_callback = callback;
-		audio_state.context = context;
+		audio_state->audio_pull_callback = callback;
+		audio_state->context = context;
 	} // audio_set_callback
 
 	uint64_t audio_frame_position()
 	{
-		return audio_state.last_frame_count;
+		return audio_state->last_frame_count;
 	} // audio_frame_position
 } // namespace platform
 

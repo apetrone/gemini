@@ -43,16 +43,15 @@ namespace platform
 	{
 		core::StackString<128> name;
 		AudioDeviceType type;
-		void* opaque; // internal use only.
 	}; // audio_device
 
 	typedef void (*audio_sound_callback)(void* buffer_frames, size_t buffer_frame_count, size_t sample_rate_hz, void* context);
 
 	// This should list the default device first
-	platform::Result audio_enumerate_devices(Array<audio_device>& devices);
+	platform::Result audio_enumerate_devices(Array<audio_device*>& devices);
 
 	// open audio output device
-	platform::Result audio_open_output_device(const audio_device& device);
+	platform::Result audio_open_output_device(audio_device* device);
 
 	// close active output device
 	void audio_close_output_device();

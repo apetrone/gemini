@@ -111,14 +111,14 @@ UNITTEST(audio)
 	agd.t_sin = 0.0f;
 	agd.wave_type = 0;
 
-	Array<audio_device> devices;
+	Array<audio_device*> devices;
 	audio_enumerate_devices(devices);
 
 	LOGV("total audio devices: %i\n", devices.size());
 	for (size_t index = 0; index < devices.size(); ++index)
 	{
-		const audio_device& device = devices[index];
-		LOGV("device: %s\n", device.name());
+		audio_device* device = devices[index];
+		LOGV("device: %s\n", device->name());
 	}
 
 	// try to open the device
