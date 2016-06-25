@@ -290,7 +290,7 @@ namespace gemini
 
 			platform::audio_startup();
 
-			Array<platform::audio_device> devices;
+			Array<platform::audio_device*> devices;
 			audio_enumerate_devices(devices);
 
 			//LOGV("total audio devices: %i\n", devices.size());
@@ -355,6 +355,8 @@ namespace gemini
 				uint64_t current_frame = platform::audio_frame_position();
 				return (current_frame - instance->sample_count_started) / static_cast<float>(AUDIO_FREQUENCY_HZ);
 			}
+
+			return 0.0f;
 		}
 	} // namespace audio
 } // namespace gemini

@@ -26,8 +26,7 @@
 
 #include "platform_internal.h"
 
-#import <Cocoa/Cocoa.h>
-#import <Foundation/Foundation.h>
+#include <Cocoa/Cocoa.h>
 
 namespace platform
 {
@@ -47,5 +46,8 @@ namespace platform
 		}
 
 		NSString* to_nsstring(const char* input);
+
+		char* cfstringref_to_utf8(CFStringRef string_ref);
+		bool cfstringref_to_buffer(CFStringRef string_ref, char* buffer, size_t max_buffer_size);
 	} // namespace cocoa
 } // namespace platform

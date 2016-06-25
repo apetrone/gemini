@@ -402,6 +402,9 @@ def get_libcore(arguments, target_platform):
 		"src/core/platform/application/cocoa/cocoa_application.mm",
 		"src/core/platform/application/cocoa/cocoa_application.h",
 
+		# audio
+		"src/core/platform/audio/osx/osx_coreaudio.mm",
+
 		# backend
 		"src/core/platform/backend/osx/osx_backend.mm",
 		"src/core/platform/backend/osx/cocoa_common.h",
@@ -444,6 +447,12 @@ def get_libcore(arguments, target_platform):
 		"Cocoa.framework",
 		"IOKit.framework"
 	]
+
+	if arguments.enable_audio:
+		macosx.links += [
+			"AudioToolbox.framework",
+			"CoreAudio.framework"
+		]
 
 	macosx.defines += [
 		"PLATFORM_OPENGL_SUPPORT=1"

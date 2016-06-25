@@ -134,6 +134,34 @@ namespace platform
 
 			return output;
 		}
+
+		char* cfstringref_to_utf8(CFStringRef string_ref)
+		{
+			assert(string_ref);
+
+			CFIndex length = CFStringGetLength(string_ref);
+			CFIndex size = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
+			char* buffer = (char*)malloc(size);
+			assert(buffer);
+
+			if (cfstringref_to_buffer(string_ref, buffer, size))
+			{
+				return buffer;
+			}
+
+			free(buffer);
+			return nullptr;
+		} // cfstringref_to_utf8
+
+		bool cfstringref_to_buffer(CFStringRef string_ref, char* buffer, size_t max_buffer_size)
+		{
+			if (CFStringGetCString(string_ref, buffer, max_buffer_size, kCFStringEncodingUTF8))
+			{
+				return true;
+			}
+
+			return false;
+		} // cfstringref_to_buffer
 	} // namespace cocoa
 
 	// ---------------------------------------------------------------------
