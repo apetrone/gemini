@@ -1038,7 +1038,16 @@ def products(arguments, **kwargs):
 	# Optionally add a game to the list of products.
 	games = []
 	if arguments.with_game:
-		game = Product(name="game", output=ProductType.StaticLibrary)
+
+
+		if target_platform.matches("windows"):
+			game_output_type = ProductType.StaticLibrary
+			# Build gemini with this preprocessor so it can link the game
+			gemini.defines += [ "GEMINI_STATIC_GAME=1" ]
+		else:
+			game_output_type = ProductType.DynamicLibrary
+
+		game = Product(name="game", output=game_output_type)
 		setup_driver(arguments, game, target_platform)
 		GAME_ROOT_PATH = arguments.with_game
 		game.project_root = COMMON_PROJECT_ROOT
@@ -1065,8 +1074,6 @@ def products(arguments, **kwargs):
 			os.path.join(GAME_ROOT_PATH, "src/*.cpp")
 		]
 
-		# Build gemini with this preprocessor so it can link the game
-		gemini.defines += [ "GEMINI_STATIC_GAME=1" ]
 		gemini.dependencies += [ game ]
 
 		games = [game]
