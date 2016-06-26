@@ -51,24 +51,10 @@
 #include <ui/menu.h>
 
 
+#include "project.h"
+
 using namespace platform;
 using namespace renderer;
-
-namespace render2
-{
-	template <class O, class I>
-	O convert(const I& /*input*/)
-	{
-		O a;
-		return a;
-	}
-
-	template <>
-	int convert(const param_string& s)
-	{
-		return atoi(s());
-	}
-}
 
 
 namespace gui
@@ -153,6 +139,16 @@ namespace gui
 
 		virtual void update(gui::Compositor* compositor, float delta_seconds) override
 		{
+			// assuming a horizontal timeline
+			if (frame_width_pixels == 0)
+			{
+				// recompute the distance here
+				frame_width_pixels = (size.width / (float)total_frames);
+			}
+
+			// should be updated before rendering
+			assert(frame_width_pixels > 0);
+
 			Point dimensions = scrubber->dimensions_from_pixels(Point(frame_width_pixels, size.height));
 
 			scrubber->set_dimensions(dimensions);
@@ -165,16 +161,6 @@ namespace gui
 		{
 			// TODO: should get this from the style
 			const gemini::Color frame_color = gemini::Color::from_rgba(96, 96, 96, 255);
-
-			// assuming a horizontal timeline
-			if (frame_width_pixels == 0)
-			{
-				// recompute the distance here
-				frame_width_pixels = (size.width / (float)total_frames);
-			}
-
-			// should be updated before rendering
-			assert(frame_width_pixels > 0);
 
 			// draw the background
 			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, gemini::Color::from_rgba(64, 64, 64, 255));
@@ -340,7 +326,10 @@ public:
 	{
 		flags |= gui::Panel::Flag_CanMove;
 	}
-};
+}; // AssetProcessingPanel
+
+
+
 
 
 
@@ -461,6 +450,14 @@ public:
 	}
 
 	// menu handlers
+
+	void on_file_new(void)
+	{
+	}
+
+	void on_file_open()
+	{
+	}
 
 	void on_file_quit(void)
 	{
@@ -647,7 +644,7 @@ public:
 			gui::Timeline* timeline = new gui::Timeline(compositor);
 			timeline->set_bounds(0, 550, 800, 50);
 			timeline->set_frame_range(0, 30);
-			Timeline->on_scrubber_changed.bind<EditorKernel, &EditorKernel::timeline_scrubber_changed>(this);
+			timeline->on_scrubber_changed.bind<EditorKernel, &EditorKernel::timeline_scrubber_changed>(this);
 			timeline->set_frame(10);
 #endif
 
@@ -681,8 +678,15 @@ public:
 			gui::MenuBar* menubar = new gui::MenuBar(compositor);
 			{
 				gui::Menu* filemenu = new gui::Menu("File", menubar);
+
+				filemenu->add_item("New Project...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_new, this));
+				filemenu->add_item("Open Project...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_open, this));
+				filemenu->add_separator();
 				filemenu->add_item("Quit", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_quit, this));
+
+
 				menubar->add_menu(filemenu);
+
 
 				gui::Menu* windowmenu = new gui::Menu("Window", menubar);
 				windowmenu->add_item("Show Asset Processor", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_window_toggle_asset_processor, this));
