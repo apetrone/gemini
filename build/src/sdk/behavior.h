@@ -61,8 +61,8 @@ namespace behavior
 	{
 		size_t depth;
 
-		BehaviorContext() :
-		depth(0)
+		BehaviorContext()
+			: depth(0)
 		{
 		}
 
@@ -99,9 +99,9 @@ namespace behavior
 	{
 		Behavior* next;
 
-		Condition(const BehaviorName& behavior_name, Behavior& next_behavior) :
-		Behavior(behavior_name),
-		next(&next_behavior)
+		Condition(const BehaviorName& behavior_name, Behavior& next_behavior)
+			: Behavior(behavior_name)
+			, next(&next_behavior)
 		{
 		}
 
@@ -180,8 +180,8 @@ namespace behavior
 	{
 		size_t child_index;
 
-		Sequence(const BehaviorName& behavior_name) :
-		Composite(behavior_name)
+		Sequence(const BehaviorName& behavior_name)
+			: Composite(behavior_name)
 		{
 		}
 
