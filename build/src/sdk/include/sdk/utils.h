@@ -33,6 +33,12 @@ class Entity;
 
 namespace gemini
 {
+	namespace physics
+	{
+		class ICollisionShape;
+		class ICollisionObject;
+	}
+
 	// entity registration
 
 	class IEngineEntity;
@@ -94,5 +100,7 @@ namespace gemini
 		Entity* create_entity_by_classname(const char* classname);
 
 		float clamp_rotation(float value);
+
+		Entity* entity_from_collisionobject(physics::ICollisionObject* object);
 	} // namespace util
 } // namespace gemini

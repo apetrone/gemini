@@ -23,6 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include <sdk/utils.h>
+#include <sdk/physics_collisionobject.h>
 
 namespace gemini
 {
@@ -59,6 +60,11 @@ namespace gemini
 			}
 
 			return value;
+		}
+
+		Entity* entity_from_collisionobject(physics::ICollisionObject* object)
+		{
+			return reinterpret_cast<Entity*>(object->get_user_data());
 		}
 	}
 }
