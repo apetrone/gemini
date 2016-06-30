@@ -378,5 +378,18 @@ namespace gemini
 		{
 			return (delegate_stub != nullptr);
 		}
+	}; // Delegate
+
+
+	template <bool C, class T, class F>
+	struct If
+	{
+		typedef F value;
+	};
+
+	template <class T, class F>
+	struct If<true, T, F>
+	{
+		typedef T value;
 	};
 } // namespace gemini
