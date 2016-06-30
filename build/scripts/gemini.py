@@ -1,7 +1,7 @@
 import os
 import logging
 
-from pegasus.models import Product, ProductType, Dependency
+from pegasus.models import Product, ProductType, Dependency, FileGroup
 
 
 # GCC 4.3+ needs -std=c++0x
@@ -341,34 +341,76 @@ def get_libcore(arguments, target_platform):
 	setup_driver(arguments, libcore, target_platform)
 	libcore.project_root = COMMON_PROJECT_ROOT
 	libcore.root = "../"
+
+
 	libcore.sources += [
-		"src/core/*.cpp",
-		"src/core/*.h",
+		FileGroup(name="memory", sources=[
+			"src/core/memory/debug_tracking_policy.cpp",
+			"src/core/memory/debug_tracking_policy.h",
+			"src/core/memory/heap_allocator.h",
+			"src/core/memory/linear_allocator.h",
+			"src/core/memory/page_allocator.h",
+			"src/core/memory/pool_allocator.h",
+			"src/core/memory/simple_tracking_policy.h",
+			"src/core/memory/stack_allocator.h",
+			"src/core/memory/system_allocator.h",
+			"src/core/memory/zone.h"
+		]),
 
-		"src/core/memory/debug_tracking_policy.cpp",
-		"src/core/memory/debug_tracking_policy.h",
-		"src/core/memory/heap_allocator.h",
-		"src/core/memory/linear_allocator.h",
-		"src/core/memory/page_allocator.h",
-		"src/core/memory/pool_allocator.h",
-		"src/core/memory/simple_tracking_policy.h",
-		"src/core/memory/stack_allocator.h",
-		"src/core/memory/system_allocator.h",
+		FileGroup(name="platform", sources=[
+			"src/core/platform/audio.h",
+			"src/core/platform/graphics_provider.cpp",
+			"src/core/platform/graphics_provider.h",
+			"src/core/platform/input.cpp",
+			"src/core/platform/input.h",
+			"src/core/platform/kernel.cpp",
+			"src/core/platform/kernel.h",
+			"src/core/platform/kernel_events.h",
+			"src/core/platform/platform.cpp",
+			"src/core/platform/platform.h",
+			"src/core/platform/platform_internal.h",
+			"src/core/platform/window.cpp",
+			"src/core/platform/window.h",
+			"src/core/platform/window_provider.cpp",
+			"src/core/platform/window_provider.h"
+		]),
 
-		"src/core/platform/graphics_provider.cpp",
-		"src/core/platform/graphics_provider.h",
-		"src/core/platform/kernel.cpp",
-		"src/core/platform/kernel.h",
-		"src/core/platform/kernel_events.h",
-		"src/core/platform/platform.cpp",
-		"src/core/platform/platform.h",
-		"src/core/platform/platform_internal.h",
-		"src/core/platform/input.cpp",
-		"src/core/platform/input.h",
-		"src/core/platform/window.cpp",
-		"src/core/platform/window.h",
-		"src/core/platform/window_provider.cpp",
-		"src/core/platform/window_provider.h",
+		"src/core/argumentparser.cpp",
+		"src/core/argumentparser.h",
+		"src/core/array.h",
+		"src/core/atomic.cpp",
+		"src/core/atomic.h",
+		"src/core/core.cpp",
+		"src/core/core.h",
+		"src/core/datastream.cpp",
+		"src/core/datastream.h",
+		"src/core/factory.h",
+		"src/core/fixedarray.h",
+		"src/core/fixedsizequeue.h",
+		"src/core/hashset.h",
+		"src/core/interface.h",
+		"src/core/interpolation.h",
+		"src/core/linearfreelist.h",
+		"src/core/logging.h",
+		"src/core/logging_interface.cpp",
+		"src/core/logging_interface.h",
+		"src/core/mathlib.cpp",
+		"src/core/mathlib.h",
+		"src/core/mem.cpp",
+		"src/core/mem.h",
+		"src/core/profiler.cpp",
+		"src/core/profiler.h",
+		"src/core/ringbuffer.h",
+		"src/core/stack.h",
+		"src/core/stackstring.h",
+		"src/core/str.cpp",
+		"src/core/str.h",
+		"src/core/threadsafequeue.h",
+		"src/core/typedefs.h",
+		"src/core/typespec.cpp",
+		"src/core/typespec.h",
+		"src/core/util.cpp",
+		"src/core/util.h",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c")
 	]

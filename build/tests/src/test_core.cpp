@@ -37,6 +37,7 @@
 #include <core/str.h>
 #include <core/stackstring.h>
 #include <core/threadsafequeue.h>
+#include <core/typespec.h>
 #include <core/util.h>
 
 #include <platform/platform.h>
@@ -586,6 +587,13 @@ UNITTEST(linearfreelist)
 }
 
 // ---------------------------------------------------------------------
+// serialization
+// ---------------------------------------------------------------------
+UNITTEST(serialization)
+{
+}
+
+// ---------------------------------------------------------------------
 // str
 // ---------------------------------------------------------------------
 UNITTEST(str)
@@ -622,6 +630,133 @@ UNITTEST(str)
 	TEST_ASSERT(result == 0, case_insensitive_compare);
 }
 
+// ---------------------------------------------------------------------
+// typespection
+// ---------------------------------------------------------------------
+using namespace gemini;
+class MyCustomStruct
+{
+private:
+	int32_t small_value;
+	int64_t large_value;
+	float my_number;
+	//char* c_string;
+
+	int32_t flags;
+
+public:
+
+	// Intrusive
+	template <class Collector>
+	void typespec_info(Collector& collector, uint32_t version)
+	{
+		collector += TYPESPEC_PROPERTY(small_value);
+		collector += TYPESPEC_PROPERTY(large_value);
+		collector += TYPESPEC_PROPERTY(my_number);
+		//collector += TYPESPEC_PROPERTY(c_string);
+
+		if (version > 0)
+		{
+			collector += TYPESPEC_PROPERTY(flags);
+		}
+	}
+}; // MyCustomStruct
+
+
+template <class T>
+class Collector
+{
+public:
+
+	const T& down_cast(const Collector& instance) const
+	{
+		return static_cast<const T&>(instance);
+	}
+
+	T& down_cast(Collector& instance)
+	{
+		return const_cast<T&>(down_cast(static_cast<const Collector&>(instance)));
+	}
+
+	const T& instance() const
+	{
+		return down_cast(*this);
+	}
+
+	T& instance()
+	{
+		return down_cast(*this);
+	}
+
+	template <class T>
+	void operator << (const T& item)
+	{
+		LOGV("operator read\n");
+	}
+
+	template <class T>
+	void operator >> (T* item)
+	{
+		LOGV("operator ptr\n");
+	}
+
+	template <class T>
+	void operator >> (T& item)
+	{
+		this->operator >> (&item);
+	}
+};
+
+
+class MyC : public Collector<MyC>
+{
+
+};
+
+
+
+
+
+// try to expose math types.
+namespace gemini
+{
+	template <class Collector>
+	void typespec_info(Collector& c, uint32_t version, glm::vec3* instance)
+	{
+		c += instance->x;
+		c += instance->y;
+		c += instance->z;
+	}
+}
+
+
+
+struct mc
+{
+	template <class T>
+	void operator += (const TypeSpecClassProperty<T>& property)
+	{
+		LOGV("add property: %s [type: %s, size: %i]\n", property.name, typespec_type_identifier<T>::name, typespec_size<T>::value);
+	}
+};
+
+UNITTEST(typespection)
+{
+	MyC x;
+
+	const MyC& i = x.instance();
+	MyC& v = x.instance();
+
+	//mc collector;
+	//MyCustomStruct cs;
+	//cs.typespec_info(collector, 1);
+
+
+	MyCustomStruct cs;
+	//v << cs;
+	v >> cs;
+
+}
 
 // ---------------------------------------------------------------------
 // util
@@ -648,7 +783,9 @@ UNITTEST(util)
 int main(int, char**)
 {
 	gemini::core_startup();
-	unittest::UnitTest::execute();
+	//unittest::UnitTest::execute();
+	_unittest_serialization_execute();
+	_unittest_typespection_execute();
 	gemini::core_shutdown();
 	return 0;
 }
