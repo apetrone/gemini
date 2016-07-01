@@ -689,32 +689,90 @@ public:
 	}
 
 	template <class T>
-	void operator << (const T& item)
-	{
-		LOGV("operator read\n");
-	}
-
-	template <class T>
-	void operator >> (T* item)
+	void operator<< (T* item)
 	{
 		LOGV("operator ptr\n");
+		instance().write(item);
 	}
 
 	template <class T>
-	void operator >> (T& item)
+	void operator<< (T& item)
 	{
-		this->operator >> (&item);
+		this->operator<< (&item);
 	}
-};
+
+	template <class T>
+	void operator>> (T* item)
+	{
+		LOGV("operator read\n");
+		/*typespec_traits<T>::is_pod::value*/
+		instance().read(item);
+	}
+
+	template <class T>
+	void operator>> (T& item)
+	{
+		this->operator>> (&item);
+	}
+}; // Collector
 
 
 class MyC : public Collector<MyC>
 {
+private:
+	Array<uint8_t> buffer;
+	size_t index;
+public:
 
+
+	MyC()
+	{
+		buffer.resize(1024 * 1024);
+		index = 0;
+	}
+
+	//void read(const int32_t* value)
+	//{
+	//}
+
+	//void write(int32_t* value)
+	//{
+
+	//}
+
+
+	template <class T>
+	void write_pod(T* value)
+	{
+		memcpy(&buffer[index], value, sizeof(T));
+		index += sizeof(T);
+	}
+
+	template <class T>
+	void write(T* value)
+	{
+		write_pod(value);
+	}
+
+	template <class T>
+	void read_pod(T* value)
+	{
+		memcpy(value, &buffer[index], sizeof(T));
+		index += sizeof(T);
+	}
+
+	template <class T>
+	void read(T* value)
+	{
+		read_pod(value);
+	}
+
+
+	void reset()
+	{
+		index = 0;
+	}
 };
-
-
-
 
 
 // try to expose math types.
@@ -740,6 +798,40 @@ struct mc
 	}
 };
 
+
+
+// TypeSpec / Serialization
+
+
+
+template <class T>
+void on_test(T&& head)
+{
+	LOGV("prologue\n");
+	LOGV("\ttype: %s\n", typespec_type_identifier<T>::name);
+	LOGV("epilogue\n");
+}
+
+template <class T, class ... Types>
+void on_test(T&& head, Types&&... tail)
+{
+	on_test(forward<T>(head));
+	on_test(forward<Types>(tail)...);
+}
+
+template <class ... Types>
+void entry(Types&& ... args)
+{
+	on_test(forward<Types>(args)...);
+}
+
+
+// No exceptions.
+
+
+
+
+
 UNITTEST(typespection)
 {
 	MyC x;
@@ -752,10 +844,21 @@ UNITTEST(typespection)
 	//cs.typespec_info(collector, 1);
 
 
-	MyCustomStruct cs;
-	//v << cs;
-	v >> cs;
+	int32_t value = 1983;
+	v << value;
 
+	//MyCustomStruct cs;
+	//v << cs;
+	//v >> cs;
+
+	v.reset();
+
+	int32_t val = 0;
+	v >> val;
+
+	assert(value == val);
+
+	entry<uint32_t, int, float, double>(0, 1, 3.2f, 6.2);
 }
 
 // ---------------------------------------------------------------------
