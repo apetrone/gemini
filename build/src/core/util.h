@@ -171,6 +171,49 @@ namespace core
 
 namespace gemini
 {
+	template <bool C, class T, class F>
+	struct If
+	{
+		typedef F value;
+	};
+
+	template <class T, class F>
+	struct If<true, T, F>
+	{
+		typedef T value;
+	};
+
+	template <class T>
+	struct remove_reference
+	{
+		typedef T type;
+	};
+
+	template <class T>
+	struct remove_reference<T&>
+	{
+		typedef T type;
+	};
+
+	template <class T>
+	struct remove_reference<T&&>
+	{
+		typedef T type;
+	};
+
+	template <class T>
+	T&& forward(typename remove_reference<T>::type& t)
+	{
+		return static_cast<T&&>(t);
+	}
+
+	template <class T>
+	T&& forward(typename remove_reference<T>::type&& t)
+	{
+		return static_cast<T&&>(t);
+	}
+
+
 	// ---------------------------------------------------------------------
 	// event handling / delegate
 	// ---------------------------------------------------------------------
@@ -380,16 +423,4 @@ namespace gemini
 		}
 	}; // Delegate
 
-
-	template <bool C, class T, class F>
-	struct If
-	{
-		typedef F value;
-	};
-
-	template <class T, class F>
-	struct If<true, T, F>
-	{
-		typedef T value;
-	};
 } // namespace gemini
