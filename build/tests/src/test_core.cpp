@@ -688,29 +688,29 @@ public:
 		return down_cast(*this);
 	}
 
-	template <class T>
-	void operator<< (T* item)
+	template <class X>
+	void operator<< (X* item)
 	{
 		LOGV("operator ptr\n");
 		instance().write(item);
 	}
 
-	template <class T>
-	void operator<< (T& item)
+	template <class X>
+	void operator<< (X& item)
 	{
 		this->operator<< (&item);
 	}
 
-	template <class T>
-	void operator>> (T* item)
+	template <class X>
+	void operator>> (X* item)
 	{
 		LOGV("operator read\n");
 		/*typespec_traits<T>::is_pod::value*/
 		instance().read(item);
 	}
 
-	template <class T>
-	void operator>> (T& item)
+	template <class X>
+	void operator>> (X& item)
 	{
 		this->operator>> (&item);
 	}

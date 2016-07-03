@@ -189,6 +189,19 @@ namespace gemini
 		} // find_type_named
 	}; // TypeRegistry
 
+
+	template <class T>
+	T* type_constructor()
+	{
+		return new T;
+	}
+
+	template <class T>
+	void type_destructor(T* ptr)
+	{
+		delete ptr;
+	}
+
 	template <class T>
 	class TypeSpecTypeInfo : public TypeInfo
 	{
@@ -213,16 +226,4 @@ namespace gemini
 			type_destructor(ptr);
 		}
 	}; // TypeSpecTypeInfo
-
-	template <class T>
-	T* type_constructor()
-	{
-		return new T;
-	}
-
-	template <class T>
-	void type_destructor(T* ptr)
-	{
-		delete ptr;
-	}
 } // namespace gemini
