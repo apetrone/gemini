@@ -31,6 +31,8 @@
 
 #include <core/typedefs.h>
 
+#include <cmath> // for isnan
+
 namespace gemini
 {
 	template <class Type>
