@@ -1195,7 +1195,7 @@ def products(arguments, **kwargs):
 
 	gemini.dependencies.append(libsdk)
 
-	rnd = get_rnd(arguments, [libruntime, librenderer, libcore], **kwargs)
+	rnd = get_rnd(arguments, [libruntime, librenderer, libfreetype, libcore], **kwargs)
 	tests = []
 	if arguments.with_tests:
 		tests = get_unit_tests(arguments,
