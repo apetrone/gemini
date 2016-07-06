@@ -31,8 +31,6 @@
 
 #include <core/typedefs.h>
 
-#include <cmath> // for isnan
-
 namespace gemini
 {
 	template <class Type>
@@ -123,7 +121,7 @@ namespace gemini
 			float alpha = (current_time_seconds - start_time) / (t1 - t0);
 	//		LOGV("alpha: %g\n", alpha);
 
-			assert(!isnan(alpha));
+			assert(!std::isnan(alpha));
 			update_value(current_frame, alpha);
 
 
