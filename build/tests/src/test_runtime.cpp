@@ -24,18 +24,22 @@
 // -------------------------------------------------------------
 #include "unit_test.h"
 
-#include <core/core.h>
-#include <core/logging.h>
-
-#include <platform/platform.h>
-
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
 #include <runtime/jobqueue.h>
+#include <runtime/standaloneresourcecache.h>
+
+#include <platform/platform.h>
+
+#include <core/core.h>
+#include <core/logging.h>
+#include <core/mathlib.h>
+#include <core/typespec.h>
+
+#include <ui/panel.h>
+#include <ui/compositor.h>
 
 #include <assert.h>
-
-#include <core/mathlib.h>
 
 // ---------------------------------------------------------------------
 // jobqueue
@@ -168,6 +172,175 @@ UNITTEST(logging)
 	LOGE("This is an error!\n");
 
 	LOGW("Warning, %i parameters missing!\n", 3);
+}
+
+// ---------------------------------------------------------------------
+// user interface
+// ---------------------------------------------------------------------
+class DummyRenderer : public gui::Renderer
+{
+public:
+	virtual void increment_depth() {}
+
+	virtual void startup(gui::Compositor*) {}
+	virtual void shutdown(gui::Compositor*) {}
+
+	virtual void begin_frame(gui::Compositor*) {}
+	virtual void end_frame() {}
+
+	virtual gui::TextureResult texture_create(const char*, gui::TextureHandle&)
+	{
+		return gui::TextureResult_Success;
+	}
+
+	virtual void texture_destroy(const gui::TextureHandle&)
+	{
+	}
+
+	virtual gui::TextureResult texture_info(const gui::TextureHandle&, uint32_t&, uint32_t&, uint8_t&)
+	{
+		return gui::TextureResult_Success;
+	}
+
+	virtual gui::FontResult font_create(const char*, gui::FontHandle&)
+	{
+		return gui::FontResult_Success;
+	}
+
+	virtual void font_destroy(const gui::FontHandle&)
+	{
+	}
+
+	virtual gui::FontResult font_measure_string(const gui::FontHandle&, const char*, size_t, gui::Rect&)
+	{
+		return gui::FontResult_Success;
+	}
+
+	virtual void font_metrics(const gui::FontHandle&, size_t&, int&, int&)
+	{
+	}
+
+	virtual size_t font_draw(const gui::FontHandle&, const char*, size_t, const gui::Rect&, const gemini::Color&, gui::render::Vertex*, size_t)
+	{
+		return 0;
+	}
+
+	virtual size_t font_count_vertices(const gui::FontHandle&, size_t)
+	{
+		return 0;
+	}
+
+	virtual void draw_commands(gui::render::CommandList*, Array<gui::render::Vertex>&)
+	{
+	}
+}; // DummyRenderer
+
+
+class TestPanel : public gui::Panel
+{
+public:
+	TestPanel(gui::Panel* parent)
+		: gui::Panel(parent)
+	{
+	}
+
+	template <class Collector>
+	void typespec_info(Collector& collector, uint32_t /*version*/)
+	{
+		collector += TYPESPEC_PROPERTY(flags);
+		collector += TYPESPEC_PROPERTY(origin);
+
+//		collector += TYPESPEC_PROPERTY(large_value);
+//		collector += TYPESPEC_PROPERTY(my_number);
+		//collector += TYPESPEC_PROPERTY(c_string);
+
+//		if (version > 0)
+//		{
+//			collector += TYPESPEC_PROPERTY(flags);
+//		}
+	}
+}; // TestPanel
+
+
+class MyC : public gemini::Collector<MyC>
+{
+private:
+	Array<uint8_t> buffer;
+	size_t index;
+public:
+
+	MyC()
+	{
+		buffer.resize(1024 * 1024);
+		index = 0;
+	}
+
+	template <class T>
+	void write_pod(T* value)
+	{
+		memcpy(&buffer[index], value, sizeof(T));
+		index += sizeof(T);
+	}
+
+	template <class T>
+	void write(T* value)
+	{
+		write_pod(value);
+	}
+
+	template <class T>
+	void read_pod(T* value)
+	{
+		memcpy(value, &buffer[index], sizeof(T));
+		index += sizeof(T);
+	}
+
+	template <class T>
+	void read(T* value)
+	{
+		read_pod(value);
+	}
+
+	void reset()
+	{
+		index = 0;
+	}
+};
+
+
+// try to expose math types.
+namespace gemini
+{
+	template <class Collector>
+	void typespec_info(Collector& c, uint32_t version, glm::vec3* instance)
+	{
+		c += instance->x;
+		c += instance->y;
+		c += instance->z;
+	}
+}
+
+
+
+
+UNITTEST(user_interface)
+{
+
+
+
+
+
+
+
+	DummyRenderer renderer;
+	renderer::StandaloneResourceCache resource_cache;
+	gui::Compositor* compositor = new gui::Compositor(128, 128, &resource_cache, &renderer);
+	compositor->set_name("compositor");
+
+	TestPanel* test = new TestPanel(compositor);
+
+
+	delete compositor;
 }
 
 int main(int, char**)

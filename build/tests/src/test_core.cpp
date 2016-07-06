@@ -663,129 +663,8 @@ public:
 }; // MyCustomStruct
 
 
-template <class T>
-class Collector
-{
-public:
-
-	const T& down_cast(const Collector& instance) const
-	{
-		return static_cast<const T&>(instance);
-	}
-
-	T& down_cast(Collector& instance)
-	{
-		return const_cast<T&>(down_cast(static_cast<const Collector&>(instance)));
-	}
-
-	const T& instance() const
-	{
-		return down_cast(*this);
-	}
-
-	T& instance()
-	{
-		return down_cast(*this);
-	}
-
-	template <class X>
-	void operator<< (X* item)
-	{
-		LOGV("operator ptr\n");
-		instance().write(item);
-	}
-
-	template <class X>
-	void operator<< (X& item)
-	{
-		this->operator<< (&item);
-	}
-
-	template <class X>
-	void operator>> (X* item)
-	{
-		LOGV("operator read\n");
-		/*typespec_traits<T>::is_pod::value*/
-		instance().read(item);
-	}
-
-	template <class X>
-	void operator>> (X& item)
-	{
-		this->operator>> (&item);
-	}
-}; // Collector
 
 
-class MyC : public Collector<MyC>
-{
-private:
-	Array<uint8_t> buffer;
-	size_t index;
-public:
-
-
-	MyC()
-	{
-		buffer.resize(1024 * 1024);
-		index = 0;
-	}
-
-	//void read(const int32_t* value)
-	//{
-	//}
-
-	//void write(int32_t* value)
-	//{
-
-	//}
-
-
-	template <class T>
-	void write_pod(T* value)
-	{
-		memcpy(&buffer[index], value, sizeof(T));
-		index += sizeof(T);
-	}
-
-	template <class T>
-	void write(T* value)
-	{
-		write_pod(value);
-	}
-
-	template <class T>
-	void read_pod(T* value)
-	{
-		memcpy(value, &buffer[index], sizeof(T));
-		index += sizeof(T);
-	}
-
-	template <class T>
-	void read(T* value)
-	{
-		read_pod(value);
-	}
-
-
-	void reset()
-	{
-		index = 0;
-	}
-};
-
-
-// try to expose math types.
-namespace gemini
-{
-	template <class Collector>
-	void typespec_info(Collector& c, uint32_t version, glm::vec3* instance)
-	{
-		c += instance->x;
-		c += instance->y;
-		c += instance->z;
-	}
-}
 
 
 
@@ -834,6 +713,7 @@ void entry(Types&& ... args)
 
 UNITTEST(typespection)
 {
+#if 0
 	MyC x;
 
 	const MyC& i = x.instance();
@@ -857,6 +737,7 @@ UNITTEST(typespection)
 	v >> val;
 
 	assert(value == val);
+#endif
 
 	entry<uint32_t, int, float, double>(0, 1, 3.2f, 6.2);
 }

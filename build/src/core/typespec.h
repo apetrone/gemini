@@ -226,4 +226,56 @@ namespace gemini
 			type_destructor(ptr);
 		}
 	}; // TypeSpecTypeInfo
+
+
+	template <class T>
+	class Collector
+	{
+	public:
+
+		const T& down_cast(const Collector& instance) const
+		{
+			return static_cast<const T&>(instance);
+		}
+
+		T& down_cast(Collector& instance)
+		{
+			return const_cast<T&>(down_cast(static_cast<const Collector&>(instance)));
+		}
+
+		const T& instance() const
+		{
+			return down_cast(*this);
+		}
+
+		T& instance()
+		{
+			return down_cast(*this);
+		}
+
+		template <class X>
+		void operator<< (X* item)
+		{
+			instance().write(item);
+		}
+
+		template <class X>
+		void operator<< (X& item)
+		{
+			this->operator<< (&item);
+		}
+
+		template <class X>
+		void operator>> (X* item)
+		{
+			/*typespec_traits<T>::is_pod::value*/
+			instance().read(item);
+		}
+
+		template <class X>
+		void operator>> (X& item)
+		{
+			this->operator>> (&item);
+		}
+	}; // Collector
 } // namespace gemini
