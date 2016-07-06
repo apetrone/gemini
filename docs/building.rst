@@ -70,7 +70,7 @@ Arch Linux
 
 	.. code-block:: bash
 
-		pacman -S extra/openal
+		pacman -S alsa-lib
 
 These optional variables should be specified when building for the RaspberryPi.
 
