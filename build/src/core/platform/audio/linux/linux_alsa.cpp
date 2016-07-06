@@ -33,12 +33,12 @@
 
 namespace platform
 {
-	platform::Result audio_enumerate_devices(Array<audio_device>& devices)
+	platform::Result audio_enumerate_devices(Array<audio_device*>& devices)
 	{
 		return platform::Result::failure("Not implemented");
 	} // audio_enumerate_devices
 
-	platform::Result audio_open_output_device(const audio_device& device)
+	platform::Result audio_open_output_device(audio_device* device)
 	{
 		return platform::Result::failure("Not implemented");
 	} // audio_open_output_device
