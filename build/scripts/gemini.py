@@ -267,7 +267,8 @@ def setup_driver(arguments, product, target_platform):
 
 		if arguments.raspberrypi:
 			linux.libdirs += [
-				"/opt/vc/lib"
+				"/opt/vc/lib",
+				"/opt/vc/lib/GL"
 			]
 			linux.links += [
 				# Broadcom
@@ -790,7 +791,6 @@ def get_rnd(arguments, links, **kwargs):
 
 	rnd_linux = rnd.layout(platform="linux")
 	rnd_linux.links += [
-		"GL",
 		"udev",
 		"asound" # TODO: Only if ALSA is found!
 	]
