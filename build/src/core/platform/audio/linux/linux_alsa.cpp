@@ -24,18 +24,76 @@
 // -------------------------------------------------------------
 
 #include <platform/audio.h>
-#include <platform/platform.h>
+#include <platform/platform_internal.h>
 
 #include <core/atomic.h>
 #include <core/logging.h>
 
 #if defined(GEMINI_ENABLE_AUDIO)
 
+// use the newer alsa api
+#define ALSA_PCM_NEW_HW_PARAMS_API
+
+// The old sys/asoundlib is deprecated in favor of this.
+#include <alsa/asoundlib.h>
+
+
+// /usr/share/sounds/alsa/Front_Center.wav
+
+
+// REFERENCES:
+// http://www.linuxjournal.com/article/6735?page=0,1
+
+
 namespace platform
 {
-	platform::Result audio_enumerate_devices(Array<audio_device*>&)
+	struct alsa_audio_device
 	{
-		return platform::Result::failure("Not implemented");
+
+	}; // alsa_audio_state
+
+	struct alsa_audio_state
+	{
+		uint32_t sample_rate_hz;
+		snd_pcm_t* handle;
+		audio_sound_callback audio_pull_calback;
+		Array<audio_device*, platform::PlatformAllocatorType> devices;
+
+		alsa_audio_state()
+			: devices(16, get_platform_allocator())
+		{
+		}
+	}; // alsa_audio_state
+
+	alsa_audio_state* audio_state;
+
+	static int check_alsa_error(int result, const char* action)
+	{
+		if (result < 0)
+		{
+			LOGW("Failed on '%s', error: '%s'\n", action,
+				snd_strerror(result)
+			);
+			assert(0);
+		}
+
+		return result;
+	}
+
+	static void create_device_list(alsa_audio_state* state)
+	{
+
+	}
+
+
+	platform::Result audio_enumerate_devices(Array<audio_device*>& devices)
+	{
+		for (size_t index = 0; index < audio_state->devices.size(); ++index)
+		{
+			devices.push_back(audio_state->devices[index]);
+		}
+
+		return platform::Result::success();
 	} // audio_enumerate_devices
 
 	platform::Result audio_open_output_device(audio_device*)
@@ -49,11 +107,16 @@ namespace platform
 
 	platform::Result audio_startup()
 	{
-		return platform::Result::failure("Not implemented");
+		audio_state = MEMORY_NEW(alsa_audio_state, get_platform_allocator());
+		create_device_list(audio_state);
+
+		return platform::Result::success();
 	} // audio_startup
 
 	void audio_shutdown()
 	{
+		MEMORY_DELETE(audio_state, get_platform_allocator());
+
 	} // audio_shutdown
 
 	void audio_set_callback(audio_sound_callback, void*)
