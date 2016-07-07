@@ -112,7 +112,7 @@ namespace platform
 		{
 		}
 
-		Result EGLGraphicsProvider::startup(WindowProvider* window_provider)
+		Result EGLGraphicsProvider::startup(WindowProvider* /*window_provider*/)
 		{
 			assert(display == EGL_NO_DISPLAY);
 
@@ -164,7 +164,7 @@ namespace platform
 			return Result::success();
 		}
 
-		void EGLGraphicsProvider::shutdown(WindowProvider* window_provider)
+		void EGLGraphicsProvider::shutdown(WindowProvider* /*window_provider*/)
 		{
 			assert(display != EGL_NO_DISPLAY);
 
@@ -274,7 +274,7 @@ namespace platform
 			}
 		}
 
-		void EGLGraphicsProvider::detach_context(NativeWindow* window)
+		void EGLGraphicsProvider::detach_context(NativeWindow* /*window*/)
 		{
 			eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			EGL_CHECK_ERROR("eglMakeCurrent (null)");
@@ -327,7 +327,7 @@ namespace platform
 			EGL_CHECK_ERROR("eglSwapBuffers");
 		}
 
-		void* EGLGraphicsProvider::get_symbol(const char* symbol_name)
+		void* EGLGraphicsProvider::get_symbol(const char* /*symbol_name*/)
 		{
 			return nullptr;
 		}
@@ -337,12 +337,12 @@ namespace platform
 			return sizeof(EGLData);
 		}
 
-		void EGLGraphicsProvider::pre_window_creation(const Parameters& window_parameters, void* graphics_data)
+		void EGLGraphicsProvider::pre_window_creation(const Parameters& /*window_parameters*/, void* /*graphics_data*/)
 		{
 
 		}
 
-		void* EGLGraphicsProvider::get_native_visual(void* graphics_data)
+		void* EGLGraphicsProvider::get_native_visual(void* /*graphics_data*/)
 		{
 			return nullptr;
 		}

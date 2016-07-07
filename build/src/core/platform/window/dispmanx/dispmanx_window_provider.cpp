@@ -104,7 +104,7 @@ namespace platform
 			assert(result == 0);
 		}
 
-		NativeWindow* DispManXWindowProvider::create(const Parameters& parameters, void* native_visual)
+		NativeWindow* DispManXWindowProvider::create(const Parameters& /*parameters*/, void* /*native_visual*/)
 		{
 			return &main_window;
 		}
@@ -113,7 +113,7 @@ namespace platform
 		{
 		}
 
-		Frame DispManXWindowProvider::get_frame(NativeWindow* window) const
+		Frame DispManXWindowProvider::get_frame(NativeWindow* /*window*/) const
 		{
 			Frame frame;
 #if defined(PLATFORM_RASPBERRYPI)
@@ -123,7 +123,7 @@ namespace platform
 			return frame;
 		}
 
-		Frame DispManXWindowProvider::get_render_frame(NativeWindow* window) const
+		Frame DispManXWindowProvider::get_render_frame(NativeWindow* /*window*/) const
 		{
 			Frame frame;
 #if defined(PLATFORM_RASPBERRYPI)

@@ -33,12 +33,12 @@
 
 namespace platform
 {
-	platform::Result audio_enumerate_devices(Array<audio_device*>& devices)
+	platform::Result audio_enumerate_devices(Array<audio_device*>&)
 	{
 		return platform::Result::failure("Not implemented");
 	} // audio_enumerate_devices
 
-	platform::Result audio_open_output_device(audio_device* device)
+	platform::Result audio_open_output_device(audio_device*)
 	{
 		return platform::Result::failure("Not implemented");
 	} // audio_open_output_device
@@ -56,7 +56,7 @@ namespace platform
 	{
 	} // audio_shutdown
 
-	void audio_set_callback(audio_sound_callback callback, void* context)
+	void audio_set_callback(audio_sound_callback, void*)
 	{
 		// audio_state.audio_pull_callback = callback;
 		// audio_state.context = context;

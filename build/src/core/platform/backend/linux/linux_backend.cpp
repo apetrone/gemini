@@ -99,7 +99,7 @@ namespace platform
 	{
 	}
 
-	void backend_update(float delta_milliseconds)
+	void backend_update(float /*delta_milliseconds*/)
 	{
 		platform::window::dispatch_events();
 
