@@ -26,6 +26,7 @@
 
 #include <core/core.h>
 #include <core/logging.h>
+#include <core/typedefs.h>
 
 #include <platform/platform.h>
 
@@ -48,8 +49,8 @@ struct audio_generator_data
 
 void test_callback(void* data, size_t frames_available, size_t sample_rate_hz, void* context)
 {
+	uint32_t max_index = 0;
 	audio_generator_data* agd = static_cast<audio_generator_data*>(context);
-
 	if (agd->wave_type == 0)
 	{
 		// generate a square wave
@@ -66,7 +67,7 @@ void test_callback(void* data, size_t frames_available, size_t sample_rate_hz, v
 			uint32_t index = frame * 2;
 			buffer[index + 0] = static_cast<short>(value * volume);
 			buffer[index + 1] = static_cast<short>(value * volume);
-
+			max_index = index + 1;
 			agd->time_period += 1;
 			if (agd->time_period > frames_per_period)
 			{
@@ -90,6 +91,7 @@ void test_callback(void* data, size_t frames_available, size_t sample_rate_hz, v
 			buffer[index + 0] = static_cast<short>(value * volume);
 			buffer[index + 1] = static_cast<short>(value * volume);
 
+			max_index = (index + 1);
 			// increment the t_sin value
 			agd->t_sin += static_cast<float>((1.0 * sin_per) / wave_period);
 
@@ -100,6 +102,8 @@ void test_callback(void* data, size_t frames_available, size_t sample_rate_hz, v
 			}
 		}
 	}
+
+	platform::audio_frame_position();
 }
 
 UNITTEST(audio)
@@ -123,28 +127,49 @@ UNITTEST(audio)
 
 	// try to open the device
 	platform::Result res = audio_open_output_device(devices[0]);
-
-	audio_set_callback(test_callback, &agd);
-
-	// play a square wave
-	for (size_t index = 0; index < 500; ++index)
+	if (res.succeeded())
 	{
-		thread_sleep(2);
-	}
+		audio_set_callback(test_callback, &agd);
 
-	// play a sine wave
-	agd.wave_type = 1;
-	for (size_t index = 0; index < 500; ++index)
+		// play a square wave
+		uint64_t start = platform::microseconds();
+
+		uint64_t elapsed = 0;
+
+		LOGV("now playing square wave\n");
+		while (elapsed < (1000 * MicrosecondsPerMillisecond))
+		{
+			elapsed = (platform::microseconds() - start);
+		}
+
+		LOGV("now playing sine wave: %2.2f\n", elapsed * SecondsPerMicrosecond);
+
+		// play a sine wave
+		agd.wave_type = 1;
+
+		start = platform::microseconds();
+		elapsed = 0;
+
+		while (elapsed < (1000 * MicrosecondsPerMillisecond))
+		{
+			elapsed = (platform::microseconds() - start);
+		}
+
+		LOGV("finished playing sound %2.2f seconds elapsed.\n", elapsed * SecondsPerMicrosecond);
+
+		audio_close_output_device();
+	}
+	else
 	{
-		thread_sleep(2);
+		LOGE("Audio Open Output Device failed: %s\n", res.message);
 	}
-
-	audio_close_output_device();
 
 	audio_shutdown();
 }
 
 #endif // GEMINI_ENABLE_AUDIO
+
+#if 0
 
 // ---------------------------------------------------------------------
 // platform
@@ -334,7 +359,7 @@ UNITTEST(datetime)
 
 	LOGV("ticks: %zu\n", time_ticks());
 }
-
+#endif
 int main(int, char**)
 {
 	gemini::core_startup();

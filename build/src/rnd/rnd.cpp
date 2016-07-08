@@ -1585,7 +1585,7 @@ platform::Result test_alsa()
 			LOGW("Buffer underrun occurred\n");
 			snd_pcm_prepare(handle);
 		}
-		check_alsa_error(res, "snd_pcm_writei");
+		//check_alsa_error(res, "snd_pcm_writei");
 	}
 
 	// finish playing sound samples
@@ -1613,14 +1613,14 @@ int main(int, char**)
 //	test_serialization();
 //	test_reflection();
 
-#if defined(PLATFORM_LINUX)
+#if defined(PLATFORM_LINUX) && 0
 	const size_t event_size = sizeof(struct input_event);
 	LOGV("event_size: %i\n", event_size);
 
 	test_devices();
 #endif
 
-	test_bno055();
+	// test_bno055();
 
 #if defined(PLATFORM_LINUX)
 	platform::Result test_alsa();

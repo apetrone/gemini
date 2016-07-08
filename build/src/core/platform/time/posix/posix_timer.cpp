@@ -59,6 +59,7 @@ namespace platform
 		struct timespec ts;
 		bool has_monotonic = (clock_gettime(CLOCK_MONOTONIC, &ts) != 0);
 
+		fprintf(stdout, "has_monotonic: %i\n", has_monotonic);
 		get_microseconds = get_microseconds_gettimeofday;
 
 		if (has_monotonic)
