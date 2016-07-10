@@ -174,13 +174,13 @@ namespace gemini
 	template <bool C, class T, class F>
 	struct If
 	{
-		typedef F value;
+		typedef F type;
 	};
 
 	template <class T, class F>
 	struct If<true, T, F>
 	{
-		typedef T value;
+		typedef T type;
 	};
 
 	template <class T>

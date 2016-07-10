@@ -149,7 +149,7 @@ namespace gemini
 
 		static TypeRegistry& instance()
 		{
-			TypeRegistry _type_registry;
+			static TypeRegistry _type_registry;
 			return _type_registry;
 		}
 

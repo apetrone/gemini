@@ -263,6 +263,42 @@ public:
 }; // TestPanel
 
 
+
+
+
+
+template <class T>
+struct typespec_is_class
+{
+	enum {
+		value = 1
+	};
+};
+
+template <class T>
+struct collector_selector_class
+{
+	template <class Collector, class T>
+	static void write(Collector& c, T* value)
+	{
+
+	}
+
+};
+
+template <class T>
+struct collector_selector_pod
+{
+	template <class Collector, class T>
+	static void write(Collector& c, T* value)
+	{
+
+	}
+
+};
+
+using namespace gemini;
+
 class MyC : public gemini::Collector<MyC>
 {
 private:
@@ -286,7 +322,13 @@ public:
 	template <class T>
 	void write(T* value)
 	{
-		write_pod(value);
+		typedef If<typespec_is_class<T>::value,
+			collector_selector_class<T>,
+			collector_selector_pod<T>>::type collector_type;
+
+		collector_type::write(*this, value);
+
+		//write_pod(value);
 	}
 
 	template <class T>
