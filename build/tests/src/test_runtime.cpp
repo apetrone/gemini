@@ -41,6 +41,7 @@
 
 #include <assert.h>
 
+#if 0
 // ---------------------------------------------------------------------
 // jobqueue
 // ---------------------------------------------------------------------
@@ -173,7 +174,7 @@ UNITTEST(logging)
 
 	LOGW("Warning, %i parameters missing!\n", 3);
 }
-
+#endif
 // ---------------------------------------------------------------------
 // user interface
 // ---------------------------------------------------------------------
@@ -338,6 +339,10 @@ UNITTEST(user_interface)
 	compositor->set_name("compositor");
 
 	TestPanel* test = new TestPanel(compositor);
+
+
+	MyC collector;
+	collector << test;
 
 
 	delete compositor;
