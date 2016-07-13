@@ -870,7 +870,7 @@ def get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs):
 
 	orion.sources += [
 		"src/tools/orion/project.cpp",
-		"src/tools/orion/project.h,
+		"src/tools/orion/project.h",
 
 		"src/tools/orion/orion.cpp"
 	]
