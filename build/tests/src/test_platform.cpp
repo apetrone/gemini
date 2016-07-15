@@ -125,51 +125,56 @@ UNITTEST(audio)
 		LOGV("device: %s\n", device->name());
 	}
 
-	// try to open the device
-	platform::Result res = audio_open_output_device(devices[0]);
-	if (res.succeeded())
+	if (devices.size() > 0)
 	{
-		audio_set_callback(test_callback, &agd);
-
-		// play a square wave
-		uint64_t start = platform::microseconds();
-
-		uint64_t elapsed = 0;
-
-		LOGV("now playing square wave\n");
-		while (elapsed < (1000 * MicrosecondsPerMillisecond))
+		// try to open the device
+		platform::Result res = audio_open_output_device(devices[0]);
+		if (res.succeeded())
 		{
-			elapsed = (platform::microseconds() - start);
+			audio_set_callback(test_callback, &agd);
+
+			// play a square wave
+			uint64_t start = platform::microseconds();
+
+			uint64_t elapsed = 0;
+
+			LOGV("now playing square wave\n");
+			while (elapsed < (1000 * MicrosecondsPerMillisecond))
+			{
+				elapsed = (platform::microseconds() - start);
+			}
+
+			LOGV("now playing sine wave: %2.2f\n", elapsed * SecondsPerMicrosecond);
+
+			// play a sine wave
+			agd.wave_type = 1;
+
+			start = platform::microseconds();
+			elapsed = 0;
+
+			while (elapsed < (1000 * MicrosecondsPerMillisecond))
+			{
+				elapsed = (platform::microseconds() - start);
+			}
+
+			LOGV("finished playing sound %2.2f seconds elapsed.\n", elapsed * SecondsPerMicrosecond);
+
+			audio_close_output_device();
 		}
-
-		LOGV("now playing sine wave: %2.2f\n", elapsed * SecondsPerMicrosecond);
-
-		// play a sine wave
-		agd.wave_type = 1;
-
-		start = platform::microseconds();
-		elapsed = 0;
-
-		while (elapsed < (1000 * MicrosecondsPerMillisecond))
+		else
 		{
-			elapsed = (platform::microseconds() - start);
+			LOGE("Audio Open Output Device failed: %s\n", res.message);
 		}
-
-		LOGV("finished playing sound %2.2f seconds elapsed.\n", elapsed * SecondsPerMicrosecond);
-
-		audio_close_output_device();
 	}
 	else
 	{
-		LOGE("Audio Open Output Device failed: %s\n", res.message);
+		LOGE("No audio devices found.\n");
 	}
 
 	audio_shutdown();
 }
 
 #endif // GEMINI_ENABLE_AUDIO
-
-#if 0
 
 // ---------------------------------------------------------------------
 // platform
@@ -359,7 +364,7 @@ UNITTEST(datetime)
 
 	LOGV("ticks: %zu\n", time_ticks());
 }
-#endif
+
 int main(int, char**)
 {
 	gemini::core_startup();
