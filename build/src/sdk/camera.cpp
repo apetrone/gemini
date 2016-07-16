@@ -290,11 +290,11 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 	//	0.0f
 	//);
 
-	renderer::debugdraw::line(
-		target_position,
-		(target_position + (target_facing_direction * 1.0f)),
-		gemini::Color(0.0f, 1.0f, 1.0f)
-	);
+	//renderer::debugdraw::line(
+	//	target_position,
+	//	(target_position + (target_facing_direction * 1.0f)),
+	//	gemini::Color(0.0f, 1.0f, 1.0f)
+	//);
 
 	//renderer::debugdraw::line(
 	//	target_position,
@@ -302,17 +302,17 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 	//	gemini::Color(0.0f, 1.0f, 1.0f)
 	//);
 
-	renderer::debugdraw::line(
-		target_position,
-		(target_position + (camera_direction * 1.0f)),
-		gemini::Color(0.0f, 0.0f, 1.0f)
-	);
+	//renderer::debugdraw::line(
+	//	target_position,
+	//	(target_position + (camera_direction * 1.0f)),
+	//	gemini::Color(0.0f, 0.0f, 1.0f)
+	//);
 
-	renderer::debugdraw::line(
-		target_position,
-		(target_position + (camera_right * 1.0f)),
-		gemini::Color(1.0f, 0.0f, 0.0f)
-	);
+	//renderer::debugdraw::line(
+	//	target_position,
+	//	(target_position + (camera_right * 1.0f)),
+	//	gemini::Color(1.0f, 0.0f, 0.0f)
+	//);
 
 	if ((view_moved == 0) && (auto_orienting == 1) && (interpolation_time > 0.0f))
 	{
