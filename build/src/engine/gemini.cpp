@@ -1466,7 +1466,7 @@ Options:
 
 		open_gamelibrary();
 
-		//navigation::startup();
+		navigation::startup();
 
 		// for debugging
 		if (game_interface)
@@ -1575,10 +1575,10 @@ Options:
 			physics::debug_draw();
 		}
 
-		//if (draw_navigation_debug)
-		//{
-		//	navigation::debugdraw();
-		//}
+		if (draw_navigation_debug)
+		{
+			navigation::debugdraw();
+		}
 
 
 		device->submit();
@@ -1593,7 +1593,7 @@ Options:
 
 	virtual void shutdown()
 	{
-		//navigation::shutdown();
+		navigation::shutdown();
 
 		// shutdown gui
 		if (compositor)
