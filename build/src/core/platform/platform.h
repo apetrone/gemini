@@ -39,6 +39,7 @@
 	#define WIN32_LEAN_AND_MEAN 1
 	#define NOMINMAX
 	#include <windows.h>
+	#include <winsock2.h>
 	#define MAX_PATH_SIZE 260
 	#define PATH_SEPARATOR '\\'
 	#define PATH_SEPARATOR_STRING "\\"
@@ -338,6 +339,75 @@ namespace platform
 	/// @brief Set haptic force on joystick
 	/// force: 0 being off, USHRT_MAX being full.
 	void joystick_set_force(uint32_t index, uint16_t force);
+
+
+	// ---------------------------------------------------------------------
+	// network
+	// ---------------------------------------------------------------------
+#if defined(PLATFORM_WINDOWS)
+	typedef SOCKET net_socket;
+#elif defined(PLATFORM_POSIX)
+	typedef int net_socket;
+#else
+	#error net_socket not defined for this platform!
+#endif
+	enum class net_socket_type
+	{
+		UDP,
+		TCP
+	};
+
+
+	typedef struct sockaddr_in net_address;
+
+	void net_address_init(net_address* address);
+	void net_address_set(net_address* address, const char* ip, uint16_t port);
+	void net_address_host(net_address* address, char* buffer, size_t buffer_size);
+	uint16_t net_address_port(net_address* address);
+	void net_address_port(net_address* address, uint16_t port);
+
+	void net_shutdown();
+
+	// socket functions
+
+	/// @returns 0 on success; -1 on failure
+	net_socket net_socket_open(net_socket_type type);
+
+	// @returns true if socket is valid, false otherwise.
+	bool net_socket_is_valid(net_socket sock);
+
+	void net_socket_close(net_socket sock);
+
+	/// @returns 0 on success
+	int32_t net_socket_bind(net_socket sock, uint16_t port);
+
+	/// @brief Send data (TCP-only)
+	/// @returns bytes written.
+	size_t net_socket_send(net_socket sock, const char* data, size_t data_size);
+
+	/// @brief Send data (UDP-only)
+	/// @returns bytes written.
+	size_t net_socket_sendto(net_socket sock, net_address* destination, const char* data, size_t data_size);
+
+
+	/// @brief Receive data (TCP-only)
+	/// @returns bytes read if > 0; otherwise an error code.
+	int32_t net_socket_recv(net_socket sock, char* buffer, size_t buffer_size);
+
+	/// @brief Receive data (UDP-only)
+	/// @returns bytes read if > 0; otherwise an error code.
+	int32_t net_socket_recvfrom(net_socket sock, net_address* from, char* buffer, size_t buffer_size);
+
+	// socket options
+
+	// enable/disable address re-use
+	int32_t net_socket_set_reuseaddr(net_socket sock, int32_t value);
+
+	// enable/disable blocking i/o
+	int32_t net_socket_set_blocking(net_socket sock, int32_t value);
+
+	// returns 0 on success
+	int32_t net_startup();
 
 	// ---------------------------------------------------------------------
 	// process

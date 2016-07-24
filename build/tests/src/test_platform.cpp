@@ -277,6 +277,57 @@ UNITTEST(filesystem)
 }
 
 // ---------------------------------------------------------------------
+// network
+// ---------------------------------------------------------------------
+
+static bool net_listen_thread = true;
+
+void test_network_thread(platform::Thread* thread)
+{
+	net_socket* sock = static_cast<net_socket*>(thread->user_data);
+	LOGV("launched network listen thread.\n");
+	while (net_listen_thread)
+	{
+		net_address source;
+		char buffer[256] = { 0 };
+		const size_t BUFFER_SIZE = 255;
+		int32_t bytes_available = net_socket_recvfrom(*sock, &source, buffer, BUFFER_SIZE);
+		if (bytes_available > 0)
+		{
+			LOGV("read: %s\n", buffer);
+		}
+	}
+}
+
+UNITTEST(network)
+{
+	int32_t result = net_startup();
+	TEST_ASSERT(result == 0, net_startup);
+
+
+	// create a socket we'll use for UDP receive.
+
+	net_socket sock1 = net_socket_open(net_socket_type::UDP);
+	TEST_ASSERT(net_socket_is_valid(sock1), net_socket_open);
+	int32_t bind_result = net_socket_bind(sock1, 27015);
+	TEST_ASSERT(bind_result == 0, net_socket_bind);
+
+	platform::Thread* handle = platform::thread_create(test_network_thread, &sock1);
+
+	LOGV("Closing thread in 5 seconds...\n");
+	platform::thread_sleep(5000);
+
+	net_listen_thread = false;
+
+	platform::thread_sleep(200);
+
+	platform::thread_join(handle);
+	platform::thread_destroy(handle);
+
+	net_shutdown();
+}
+
+// ---------------------------------------------------------------------
 // serial
 // ---------------------------------------------------------------------
 UNITTEST(serial)

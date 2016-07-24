@@ -42,6 +42,9 @@
 		unittest::UnitTest::increment_failures();\
 	}
 
+#define TEST_EXECUTE(name)\
+	_unittest_##name##_execute()
+
 #if 0
 USAGE:
 

@@ -293,7 +293,8 @@ def setup_driver(arguments, product, target_platform):
 		"Shlwapi",
 		"user32",
 		"OpenGL32", # for wglGetProcAddress
-		"Gdi32"		# for ChoosePixelFormat, SetPixelFormat
+		"Gdi32",	# for ChoosePixelFormat, SetPixelFormat
+		"ws2_32"	# for Windows Socks
 	]
 
 	# For COM use.
@@ -308,7 +309,8 @@ def setup_driver(arguments, product, target_platform):
 		"Shlwapi",
 		"user32",
 		"OpenGL32", # for wglGetProcAddress
-		"Gdi32"		# for ChoosePixelFormat, SetPixelFormat
+		"Gdi32",	# for ChoosePixelFormat, SetPixelFormat
+		"ws2_32"	# for Windows Socks
 	]
 
 	# For COM use.
@@ -556,6 +558,9 @@ def get_libcore(arguments, target_platform):
 		# joystick
 		"src/core/platform/joystick/win32/win32_joystick.cpp",
 
+		# network
+		"src/core/platform/network/win32/win32_network.cpp",
+
 		# serial
 		"src/core/platform/serial/win32/win32_serial.cpp",
 
@@ -801,7 +806,8 @@ def get_rnd(arguments, links, **kwargs):
 		"shell32",
 		"ole32",
 		"user32",
-		"oleaut32"
+		"oleaut32",
+		"ws2_32"
 	]
 
 	return rnd
@@ -1192,7 +1198,8 @@ def products(arguments, **kwargs):
 			"advapi32",
 			"shell32",
 			"ole32",
-			"user32"
+			"user32",
+			"ws2_32"
 		]
 
 	iphoneos = gemini.layout(platform="iphoneos")
