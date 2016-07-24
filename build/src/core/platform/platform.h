@@ -362,7 +362,7 @@ namespace platform
 
 	void net_address_init(net_address* address);
 	void net_address_set(net_address* address, const char* ip, uint16_t port);
-	void net_address_host(net_address* address, char* buffer, size_t buffer_size);
+	int32_t net_address_host(net_address* address, char* buffer, size_t buffer_size);
 	uint16_t net_address_port(net_address* address);
 	void net_address_port(net_address* address, uint16_t port);
 
@@ -386,8 +386,8 @@ namespace platform
 	size_t net_socket_send(net_socket sock, const char* data, size_t data_size);
 
 	/// @brief Send data (UDP-only)
-	/// @returns bytes written.
-	size_t net_socket_sendto(net_socket sock, net_address* destination, const char* data, size_t data_size);
+/// @returns bytes read if > 0; otherwise an error code.
+	int32_t net_socket_sendto(net_socket sock, net_address* destination, const char* data, size_t data_size);
 
 
 	/// @brief Receive data (TCP-only)

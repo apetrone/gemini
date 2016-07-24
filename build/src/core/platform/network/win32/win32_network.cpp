@@ -48,7 +48,7 @@ namespace platform
 
 		if (ip)
 		{
-			int32_t result = inet_pton(AF_INET, ip, &address);
+			int32_t result = inet_pton(AF_INET, ip, &address->sin_addr);
 			// result == 0: src does not contain a character string representing a valid network address.
 			// result == -1: errno set to EAFNOSUPPORT.
 			assert(result > 0);
@@ -59,9 +59,12 @@ namespace platform
 		}
 	}
 
-	void net_address_host(net_address* address, char* buffer, size_t buffer_size)
+	int32_t net_address_host(net_address* address, char* buffer, size_t buffer_size)
 	{
+		assert(buffer_size >= INET_ADDRSTRLEN);
 
+		const char* result = inet_ntop(AF_INET, &address->sin_addr, buffer, buffer_size);
+		return result != nullptr;
 	} // net_address_host
 
 	uint16_t net_address_port(net_address* address)
@@ -112,9 +115,10 @@ namespace platform
 	/// @returns bytes written.
 	size_t net_socket_send(net_socket sock, const char* data, size_t data_size);
 
-	/// @brief Send data (UDP-only)
-	/// @returns bytes written.
-	size_t net_socket_sendto(net_socket sock, net_address* destination, const char* data, size_t data_size);
+	int32_t net_socket_sendto(net_socket sock, net_address* destination, const char* data, size_t data_size)
+	{
+		return sendto(sock, data, data_size, 0, (const struct sockaddr*)destination, sizeof(net_address));
+	}
 
 	int32_t net_socket_recv(net_socket sock, char* buffer, size_t buffer_size);
 
@@ -126,11 +130,18 @@ namespace platform
 
 	// socket options
 
-	// enable/disable address re-use
-	int32_t net_socket_set_reuseaddr(net_socket sock, int32_t value);
+	int32_t net_socket_set_reuseaddr(net_socket sock, int32_t value)
+	{
+		DWORD result = 0;
+		result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&result, sizeof(DWORD));
+		return result;
+	} // net_socket_set_reuseaddr
 
-	// enable/disable blocking i/o
-	int32_t net_socket_set_blocking(net_socket sock, int32_t value);
+	int32_t net_socket_set_blocking(net_socket sock, int32_t value)
+	{
+		DWORD non_blocking = value ? 1 : 0;
+		return ioctlsocket(sock, FIONBIO, &non_blocking);
+	} // net_socket_set_blocking
 
 	int32_t net_startup()
 	{
