@@ -282,6 +282,202 @@ UNITTEST(filesystem)
 
 static bool net_listen_thread = true;
 
+const size_t TOTAL_SENSORS = 2;
+
+struct bno055_packet_t
+{
+	uint8_t header;
+	uint8_t data[8 * TOTAL_SENSORS];
+	uint8_t footer;
+
+	bno055_packet_t()
+	{
+		header = 0xba;
+		footer = 0xff;
+	}
+
+	bool is_valid() const
+	{
+		return (header == 0xba) && (footer == 0xff);
+	}
+
+	glm::quat get_orientation(uint32_t sensor_index = 0) const
+	{
+		int16_t x = 0;
+		int16_t y = 0;
+		int16_t z = 0;
+		int16_t w = 0;
+
+		const uint8_t* buffer = (data + (sensor_index * 8));
+
+		// they are 16-bit LSB
+		x = (((uint16_t)buffer[3]) << 8) | ((uint16_t)buffer[2]);
+		y = (((uint16_t)buffer[5]) << 8) | ((uint16_t)buffer[4]);
+		z = (((uint16_t)buffer[7]) << 8) | ((uint16_t)buffer[6]);
+		w = (((uint16_t)buffer[1]) << 8) | ((uint16_t)buffer[0]);
+
+		const double QUANTIZE = (1.0 / 16384.0);
+
+		return glm::quat(w * QUANTIZE, x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
+	}
+}; // bno055_packet_t
+
+// Returns true if timeout_msec has passed since target_msec.
+// If true, sets target_msec to millis().
+bool msec_passed(uint64_t& target_msec, uint32_t timeout_msec)
+{
+	uint64_t current_milliseconds = platform::microseconds() * MillisecondsPerMicrosecond;
+	assert(current_milliseconds >= target_msec);
+	if ((current_milliseconds - target_msec) > timeout_msec)
+	{
+		//LOGV("msec_passed: %d ms\n", (current_milliseconds - target_msec));
+		target_msec = current_milliseconds;
+		return true;
+	}
+
+	return false;
+} // msec_passed
+
+void test_network_thread(platform::Thread* thread)
+{
+	net_socket* sock = static_cast<net_socket*>(thread->user_data);
+	LOGV("launched network listen thread.\n");
+
+	const size_t PACKET_SIZE = sizeof(bno055_packet_t);
+	const size_t MAX_PACKET_DATA = 4 * PACKET_SIZE;
+	char buffer[MAX_PACKET_DATA];
+	size_t current_index = 0;
+
+	// Waiting for a client to connect. Reply to broadcasts.
+	const uint8_t STATE_WAITING = 1;
+
+	// Waiting for the client to accept handshake.
+	const uint8_t STATE_HANDSHAKE = 2;
+
+	// Streaming with a client.
+	const uint8_t STATE_STREAMING = 3;
+
+	const uint32_t HANDSHAKE_VALUE = 1985;
+
+	uint8_t current_state = STATE_WAITING;
+
+	uint64_t last_client_ping_msec = 0;
+
+	// Time to wait until sending a 'ping' back to the client to force
+	// a keep-alive.
+	const uint64_t CLIENT_PING_DELAY_MSEC = 1000;
+	net_address client_address;
+
+	const uint64_t CLIENT_TIMEOUT_MSEC = 3000;
+	uint64_t last_client_contact_msec = 0;
+
+
+	while (net_listen_thread)
+	{
+		net_address source;
+
+		uint64_t current_milliseconds = platform::microseconds() * MillisecondsPerMicrosecond;
+
+		if (current_state == STATE_STREAMING)
+		{
+			if (msec_passed(last_client_contact_msec, CLIENT_TIMEOUT_MSEC))
+			{
+				LOGV("Assuming the client is dead. Waiting for connections...\n");
+				// Assume the client is dead.
+				current_state = STATE_WAITING;
+				continue;
+			}
+
+			if (msec_passed(last_client_ping_msec, CLIENT_PING_DELAY_MSEC))
+			{
+				uint32_t ping_value = 2000;
+				net_socket_sendto(*sock, &client_address, (const char*)&ping_value, sizeof(uint32_t));
+			}
+		}
+
+		timeval zero_timeval;
+		zero_timeval.tv_sec = 0;
+		zero_timeval.tv_usec = 1;
+
+		fd_set receive;
+		FD_ZERO(&receive);
+		FD_SET(*sock, &receive);
+
+		fd_set transmit;
+		FD_ZERO(&transmit);
+		FD_SET(*sock, &transmit);
+
+		select(1, &receive, &transmit, nullptr, &zero_timeval);
+
+		if (FD_ISSET(*sock, &receive))
+		{
+			int32_t bytes_available = net_socket_recvfrom(*sock, &source, buffer, PACKET_SIZE);
+			if (bytes_available > 0)
+			{
+				if (current_state == STATE_STREAMING)
+				{
+					last_client_contact_msec = current_milliseconds;
+					bno055_packet_t* packet = reinterpret_cast<bno055_packet_t*>(buffer);
+					if (packet->is_valid())
+					{
+						for (size_t index = 0; index < TOTAL_SENSORS; ++index)
+						{
+							glm::quat q = packet->get_orientation(index);
+							LOGV("q[%i]: %2.2f, %2.2f, %2.2f, %2.2f\n", index, q.x, q.y, q.z, q.w);
+						}
+					}
+					else
+					{
+						LOGV("Received invalid packet!\n");
+					}
+				}
+				else if (current_state == STATE_WAITING)
+				{
+					uint32_t request = (*reinterpret_cast<uint32_t*>(buffer));
+					if (request == 1983)
+					{
+						char ip[22] = { 0 };
+						net_address_host(&source, ip, 22);
+						uint16_t port = net_address_port(&source);
+						LOGV("Mocap client at %s:%i; initiating handshake (%i)...\n", ip, port, HANDSHAKE_VALUE);
+						net_socket_sendto(*sock, &source, (const char*)&HANDSHAKE_VALUE, sizeof(uint32_t));
+						current_state = STATE_HANDSHAKE;
+					}
+					else
+					{
+						LOGW("Request value is invalid.\n");
+					}
+				}
+				else if (current_state == STATE_HANDSHAKE)
+				{
+					LOGV("received data while handshaking: %i\n", bytes_available);
+					uint32_t request = (*reinterpret_cast<uint32_t*>(buffer));
+					if (request == HANDSHAKE_VALUE)
+					{
+						char ip[22] = { 0 };
+						net_address_host(&source, ip, 22);
+						uint16_t port = net_address_port(&source);
+						LOGV("Connected with mocap client at %s:%i.\n", ip, port);
+						uint32_t response = 65535;
+						net_socket_sendto(*sock, &source, (const char*)response, sizeof(uint32_t));
+
+						net_address_set(&client_address, ip, port);
+						last_client_contact_msec = platform::microseconds() * MillisecondsPerMicrosecond;
+
+						current_state = STATE_STREAMING;
+					}
+					else
+					{
+						LOGV("handshake did not match! (received: %i, expected: %i)\n", request, HANDSHAKE_VALUE);
+						current_state = STATE_WAITING;
+					}
+				}
+			}
+		}
+	}
+}
+
+#if 0
 void test_network_thread(platform::Thread* thread)
 {
 	net_socket* sock = static_cast<net_socket*>(thread->user_data);
@@ -298,6 +494,7 @@ void test_network_thread(platform::Thread* thread)
 		}
 	}
 }
+#endif
 
 UNITTEST(network)
 {
@@ -309,19 +506,21 @@ UNITTEST(network)
 
 	net_socket sock1 = net_socket_open(net_socket_type::UDP);
 	TEST_ASSERT(net_socket_is_valid(sock1), net_socket_open);
+
+	net_socket_set_blocking(sock1, 0);
 	int32_t bind_result = net_socket_bind(sock1, 27015);
 	TEST_ASSERT(bind_result == 0, net_socket_bind);
 
 	platform::Thread* handle = platform::thread_create(test_network_thread, &sock1);
 
 	LOGV("Closing thread in 5 seconds...\n");
-	platform::thread_sleep(5000);
+	platform::thread_sleep(100000);
 
 	net_listen_thread = false;
 
 	platform::thread_sleep(200);
 
-	platform::thread_join(handle);
+	platform::thread_join(handle, 1000);
 	platform::thread_destroy(handle);
 
 	net_shutdown();
@@ -419,7 +618,9 @@ UNITTEST(datetime)
 int main(int, char**)
 {
 	gemini::core_startup();
-	unittest::UnitTest::execute();
+	//unittest::UnitTest::execute();
+	TEST_EXECUTE(network);
+
 	gemini::core_shutdown();
 	return 0;
 }
