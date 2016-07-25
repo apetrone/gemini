@@ -64,6 +64,8 @@
 		typedef pthread_t ThreadId;
 	} // namespace platform
 
+	#include <netinet/in.h> // for sockaddr_in
+
 	#define GEMINI_EXPORT
 #else
 	#error Unknown platform!
@@ -383,7 +385,7 @@ namespace platform
 
 	/// @brief Send data (TCP-only)
 	/// @returns bytes written.
-	size_t net_socket_send(net_socket sock, const char* data, size_t data_size);
+	int32_t net_socket_send(net_socket sock, const char* data, size_t data_size);
 
 	/// @brief Send data (UDP-only)
 /// @returns bytes read if > 0; otherwise an error code.

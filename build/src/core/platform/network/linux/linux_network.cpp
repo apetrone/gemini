@@ -27,7 +27,11 @@
 
 #include <core/logging.h>
 
-#include <ws2tcpip.h> // for socklen_t
+#include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <unistd.h> // warning: implicit declaration of function 'close'
 
 namespace platform
 {
@@ -48,14 +52,14 @@ namespace platform
 
 		if (ip)
 		{
-			int32_t result = inet_pton(AF_INET, ip, &address->sin_addr);
+			int32_t result = inet_pton(AF_INET, ip, &address);
 			// result == 0: src does not contain a character string representing a valid network address.
 			// result == -1: errno set to EAFNOSUPPORT.
 			assert(result > 0);
 		}
 		else
 		{
-			address->sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+			address->sin_addr.s_addr = htonl(INADDR_ANY);
 		}
 	}
 
@@ -63,7 +67,7 @@ namespace platform
 	{
 		assert(buffer_size >= INET_ADDRSTRLEN);
 
-		const char* result = inet_ntop(AF_INET, &address->sin_addr, buffer, buffer_size);
+		const char* result = inet_ntop(AF_INET, &address, buffer, buffer_size);
 		return result != nullptr;
 	} // net_address_host
 
@@ -87,8 +91,8 @@ namespace platform
 	/// @returns 0 on success; -1 on failure
 	net_socket net_socket_open(net_socket_type type)
 	{
-		DWORD sock_type = (type == net_socket_type::UDP) ? SOCK_DGRAM : SOCK_STREAM;
-		DWORD protocol = (type == net_socket_type::UDP) ? IPPROTO_UDP : IPPROTO_TCP;
+		int32_t sock_type = (type == net_socket_type::UDP) ? SOCK_DGRAM : SOCK_STREAM;
+		int32_t protocol = (type == net_socket_type::UDP) ? IPPROTO_UDP : IPPROTO_TCP;
 		return socket(AF_INET, sock_type, protocol);
 	} // net_socket_open
 
@@ -99,7 +103,7 @@ namespace platform
 
 	void net_socket_close(net_socket sock)
 	{
-		closesocket(sock);
+		close(sock);
 	} // net_socket_close
 
 	int32_t net_socket_bind(net_socket sock, uint16_t port)
@@ -111,19 +115,20 @@ namespace platform
 		return bind(sock, (const struct sockaddr*)&address, sizeof(net_address));
 	} // net_sock_bind
 
-	/// @brief Send data (TCP-only)
-	/// @returns bytes written.
 	int32_t net_socket_send(net_socket sock, const char* data, size_t data_size)
 	{
-		return 0;
+		return -1;
 	} // net_socket_send
 
 	int32_t net_socket_sendto(net_socket sock, net_address* destination, const char* data, size_t data_size)
 	{
 		return sendto(sock, data, data_size, 0, (const struct sockaddr*)destination, sizeof(net_address));
-	}
+	} // net_socket_sendto
 
-	int32_t net_socket_recv(net_socket sock, char* buffer, size_t buffer_size);
+	int32_t net_socket_recv(net_socket sock, char* buffer, size_t buffer_size)
+	{
+		return -1;
+	} // net_socket_recv
 
 	int32_t net_socket_recvfrom(net_socket sock, net_address* from, char* buffer, size_t buffer_size)
 	{
@@ -135,21 +140,17 @@ namespace platform
 
 	int32_t net_socket_set_reuseaddr(net_socket sock, int32_t value)
 	{
-		DWORD result = 0;
-		result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&result, sizeof(DWORD));
-		return result;
+		return setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(int32_t));
 	} // net_socket_set_reuseaddr
 
 	int32_t net_socket_set_blocking(net_socket sock, int32_t value)
 	{
-		DWORD non_blocking = value ? 1 : 0;
-		return ioctlsocket(sock, FIONBIO, &non_blocking);
+		int32_t non_blocking = value ? 1 : 0;
+		return fcntl(sock, F_SETFL, O_NONBLOCK, non_blocking);
 	} // net_socket_set_blocking
 
 	int32_t net_startup()
 	{
-		struct WSAData wsdata;
-		WORD version = MAKEWORD(2, 2);
-		return WSAStartup(version, &wsdata);
-	}
+		return 0;
+	} // net_startup
 } // namespace platform
