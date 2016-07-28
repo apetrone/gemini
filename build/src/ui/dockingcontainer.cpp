@@ -66,7 +66,7 @@ namespace gui
 		else if (args.type == Event_CursorDragEnter)
 		{
 			LOGV("DockingContainer handle Event_CursorDragEnter\n");
-			colors[0] = gemini::Color(1.0f, 0.0f, 0.0f);
+			colors[0] = gemini::Color(1.0f, 1.0f, 0.0f);
 		}
 		else if (args.type == Event_CursorDragExit)
 		{

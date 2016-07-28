@@ -41,6 +41,7 @@
 #include <core/fixedarray.h>
 #include <core/logging.h>
 #include <core/profiler.h>
+#include <core/mathlib.h>
 
 #include <ui/ui.h>
 #include <ui/compositor.h>
@@ -50,11 +51,218 @@
 #include <ui/dockingcontainer.h>
 #include <ui/menu.h>
 
+#include <sdk/camera.h>
+#include <sdk/game_api.h>
+#include <sdk/utils.h>
+
+#include <renderer/debug_draw.h>
+
 
 #include "project.h"
 
 using namespace platform;
 using namespace renderer;
+using namespace gemini;
+
+bool net_listen_thread = true;
+const size_t TOTAL_SENSORS = 2;
+
+glm::quat sensors[TOTAL_SENSORS];
+
+struct bno055_packet_t
+{
+	uint8_t header;
+	uint8_t data[8 * TOTAL_SENSORS];
+	uint8_t footer;
+
+	bno055_packet_t()
+	{
+		header = 0xba;
+		footer = 0xff;
+	}
+
+	bool is_valid() const
+	{
+		return (header == 0xba) && (footer == 0xff);
+	}
+
+	glm::quat get_orientation(uint32_t sensor_index = 0) const
+	{
+		int16_t x = 0;
+		int16_t y = 0;
+		int16_t z = 0;
+		int16_t w = 0;
+
+		const uint8_t* buffer = (data + (sensor_index * 8));
+
+		// they are 16-bit LSB
+		x = (((uint16_t)buffer[3]) << 8) | ((uint16_t)buffer[2]);
+		y = (((uint16_t)buffer[5]) << 8) | ((uint16_t)buffer[4]);
+		z = (((uint16_t)buffer[7]) << 8) | ((uint16_t)buffer[6]);
+		w = (((uint16_t)buffer[1]) << 8) | ((uint16_t)buffer[0]);
+
+		const double QUANTIZE = (1.0 / 16384.0);
+
+		return glm::quat(w * QUANTIZE, x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
+	}
+}; // bno055_packet_t
+
+// Returns true if timeout_msec has passed since target_msec.
+// If true, sets target_msec to millis().
+bool msec_passed(uint64_t& target_msec, uint32_t timeout_msec)
+{
+	uint64_t current_milliseconds = platform::microseconds() * MillisecondsPerMicrosecond;
+	assert(current_milliseconds >= target_msec);
+	if ((current_milliseconds - target_msec) > timeout_msec)
+	{
+		//LOGV("msec_passed: %d ms\n", (current_milliseconds - target_msec));
+		target_msec = current_milliseconds;
+		return true;
+	}
+
+	return false;
+} // msec_passed
+
+void sensor_thread(platform::Thread* thread)
+{
+	net_socket* sock = static_cast<net_socket*>(thread->user_data);
+	LOGV("launched network listen thread.\n");
+
+	const size_t PACKET_SIZE = sizeof(bno055_packet_t);
+	const size_t MAX_PACKET_DATA = 4 * PACKET_SIZE;
+	char buffer[MAX_PACKET_DATA];
+	size_t current_index = 0;
+
+	// Waiting for a client to connect. Reply to broadcasts.
+	const uint8_t STATE_WAITING = 1;
+
+	// Waiting for the client to accept handshake.
+	const uint8_t STATE_HANDSHAKE = 2;
+
+	// Streaming with a client.
+	const uint8_t STATE_STREAMING = 3;
+
+	const uint32_t HANDSHAKE_VALUE = 1985;
+
+	uint8_t current_state = STATE_WAITING;
+
+	uint64_t last_client_ping_msec = 0;
+
+	// Time to wait until sending a 'ping' back to the client to force
+	// a keep-alive.
+	const uint64_t CLIENT_PING_DELAY_MSEC = 1000;
+	net_address client_address;
+
+	const uint64_t CLIENT_TIMEOUT_MSEC = 3000;
+	uint64_t last_client_contact_msec = 0;
+
+
+	while (net_listen_thread)
+	{
+		net_address source;
+
+		uint64_t current_milliseconds = platform::microseconds() * MillisecondsPerMicrosecond;
+
+		if (current_state == STATE_STREAMING)
+		{
+			if (msec_passed(last_client_contact_msec, CLIENT_TIMEOUT_MSEC))
+			{
+				LOGV("Assuming the client is dead. Waiting for connections...\n");
+				// Assume the client is dead.
+				current_state = STATE_WAITING;
+				continue;
+			}
+
+			if (msec_passed(last_client_ping_msec, CLIENT_PING_DELAY_MSEC))
+			{
+				uint32_t ping_value = 2000;
+				net_socket_sendto(*sock, &client_address, (const char*)&ping_value, sizeof(uint32_t));
+			}
+		}
+
+		timeval zero_timeval;
+		zero_timeval.tv_sec = 0;
+		zero_timeval.tv_usec = 1;
+
+		fd_set receive;
+		FD_ZERO(&receive);
+		FD_SET(*sock, &receive);
+
+		fd_set transmit;
+		FD_ZERO(&transmit);
+		FD_SET(*sock, &transmit);
+
+		select(1, &receive, &transmit, nullptr, &zero_timeval);
+
+		if (FD_ISSET(*sock, &receive))
+		{
+			int32_t bytes_available = net_socket_recvfrom(*sock, &source, buffer, PACKET_SIZE);
+			if (bytes_available > 0)
+			{
+				if (current_state == STATE_STREAMING)
+				{
+					last_client_contact_msec = current_milliseconds;
+					bno055_packet_t* packet = reinterpret_cast<bno055_packet_t*>(buffer);
+					if (packet->is_valid())
+					{
+						for (size_t index = 0; index < TOTAL_SENSORS; ++index)
+						{
+							glm::quat q = packet->get_orientation(index);
+							//LOGV("q[%i]: %2.2f, %2.2f, %2.2f, %2.2f\n", index, q.x, q.y, q.z, q.w);
+							sensors[index] = q;
+						}
+					}
+					else
+					{
+						LOGV("Received invalid packet!\n");
+					}
+				}
+				else if (current_state == STATE_WAITING)
+				{
+					uint32_t request = (*reinterpret_cast<uint32_t*>(buffer));
+					if (request == 1983)
+					{
+						char ip[22] = { 0 };
+						net_address_host(&source, ip, 22);
+						uint16_t port = net_address_port(&source);
+						LOGV("Mocap client at %s:%i; initiating handshake (%i)...\n", ip, port, HANDSHAKE_VALUE);
+						net_socket_sendto(*sock, &source, (const char*)&HANDSHAKE_VALUE, sizeof(uint32_t));
+						current_state = STATE_HANDSHAKE;
+					}
+					else
+					{
+						LOGW("Request value is invalid.\n");
+					}
+				}
+				else if (current_state == STATE_HANDSHAKE)
+				{
+					LOGV("received data while handshaking: %i\n", bytes_available);
+					uint32_t request = (*reinterpret_cast<uint32_t*>(buffer));
+					if (request == HANDSHAKE_VALUE)
+					{
+						char ip[22] = { 0 };
+						net_address_host(&source, ip, 22);
+						uint16_t port = net_address_port(&source);
+						LOGV("Connected with mocap client at %s:%i.\n", ip, port);
+						uint32_t response = 65535;
+						net_socket_sendto(*sock, &source, (const char*)response, sizeof(uint32_t));
+
+						net_address_set(&client_address, ip, port);
+						last_client_contact_msec = platform::microseconds() * MillisecondsPerMicrosecond;
+
+						current_state = STATE_STREAMING;
+					}
+					else
+					{
+						LOGV("handshake did not match! (received: %i, expected: %i)\n", request, HANDSHAKE_VALUE);
+						current_state = STATE_WAITING;
+					}
+				}
+			}
+		}
+	}
+}
+
 
 
 namespace gui
@@ -260,11 +468,10 @@ namespace gui
 		gemini::Delegate<void (render2::RenderTarget*)> on_render_content;
 
 	private:
-		//
 		render2::RenderTarget* target;
 		int handle;
 	}; // RenderableSurface
-}
+} // namespace gui
 
 struct MyVertex
 {
@@ -367,6 +574,24 @@ private:
 
 	core::logging::Handler log_handler;
 
+	Camera camera;
+
+	float yaw;
+	float pitch;
+
+	bool left_down;
+	bool right_down;
+	bool forward_down;
+	bool backward_down;
+
+	uint64_t last_time;
+
+	bool should_move_view;
+
+
+	net_socket data_socket;
+	platform::Thread* sensor_thread_handle;
+
 public:
 	EditorKernel()
 		: active(true)
@@ -377,12 +602,47 @@ public:
 		, value(0.0f)
 		, container(nullptr)
 	{
+		yaw = 0.0f;
+		pitch = 0.0f;
+
+		left_down = right_down = forward_down = backward_down = false;
+
+		last_time = 0;
+
+		should_move_view = false;
+		sensor_thread_handle = nullptr;
+		data_socket = -1;
 	}
 
 	virtual ~EditorKernel() {}
 
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
+
+	virtual void event(kernel::KeyboardEvent& event)
+	{
+		if (event.key == gemini::BUTTON_ESCAPE && event.is_down)
+		{
+			set_active(false);
+		}
+		//else
+		//{
+		//	LOGV("key is_down: '%s', name: '%s', modifiers: %zu\n", event.is_down ? "Yes" : "No", gemini::key_name(event.key), event.modifiers);
+		//}
+
+		if (event.key == BUTTON_A)
+			left_down = event.is_down;
+
+		if (event.key == BUTTON_D)
+			right_down = event.is_down;
+
+		if (event.key == BUTTON_W)
+			forward_down = event.is_down;
+
+		if (event.key == BUTTON_S)
+			backward_down = event.is_down;
+	}
+
 
 	virtual void event(kernel::SystemEvent& event)
 	{
@@ -418,15 +678,33 @@ public:
 			if (event.subtype == kernel::MouseMoved)
 			{
 				compositor->cursor_move_absolute(event.mx, event.my);
+
+				if (should_move_view)
+				{
+					if (event.dx != 0 || event.dy != 0)
+					{
+						const float sensitivity = .10f;
+						camera.move_view(event.dx, event.dy);
+					}
+				}
 			}
 			else if (event.subtype == kernel::MouseButton)
 			{
 				if (event.is_down)
 				{
+					if (event.button == MouseButton::MOUSE_LEFT)
+					{
+						should_move_view = true;
+					}
+
 					platform::window::set_mouse_tracking(true);
 				}
 				else
 				{
+					if (event.button == MouseButton::MOUSE_LEFT)
+					{
+						should_move_view = false;
+					}
 					platform::window::set_mouse_tracking(false);
 				}
 				compositor->cursor_button(input_to_gui[event.button], event.is_down);
@@ -524,7 +802,15 @@ public:
 
 			params.window_title = "orion";
 			main_window = platform::window::create(params);
+
+			// set perspective on camera
+			camera.perspective(60.0f, (int)params.frame.width, (int)params.frame.height, 0.01f, 1024.0f);
+			camera.set_position(glm::vec3(0.0f, 5.0f, 10.0f));
+			camera.set_type(Camera::FIRST_PERSON);
+			camera.update_view();
 		}
+
+
 
 		// old renderer initialize
 		{
@@ -611,6 +897,9 @@ public:
 
 		font::startup(device);
 
+		// initialize debug draw
+		::renderer::debugdraw::startup(device);
+
 #if 0
 		// load the gui
 		{
@@ -652,23 +941,27 @@ public:
 			// try and use a docking container for fun.
 			container = new gui::DockingContainer(compositor);
 			container->set_name("docking_container");
-			container->set_dimensions(0.5f, 0.5f);
+			container->set_dimensions(0.6f, 0.6f);
+
 
 
 	#if 1
 			gui::Panel* tp = new gui::Panel(compositor);
 			tp->set_dimensions(0.1f, 0.1f);
+			tp->set_origin(700, 0.0f);
 			tp->set_background_color(gemini::Color(1.0f, 0.5f, 0.0f));
 			tp->set_flags(tp->get_flags() | gui::Panel::Flag_CanMove);
 			tp->set_name("draggable_test_panel");
 	#endif
 #endif
 
+#if 0
 			asset_processor = new AssetProcessingPanel(compositor);
 			asset_processor->set_origin(0.0f, 25.0f);
 			asset_processor->set_dimensions(1.0f, 0.05f);
 			asset_processor->set_background_color(gemini::Color(0.25f, 0.25f, 0.25f));
 			//asset_processor->set_visible(false);
+#endif
 
 
 
@@ -738,7 +1031,38 @@ public:
 
 		}
 #endif
+
+		// inertial motion capture
+		// imc library.
+		// header (on connect)
+		// version
+		// # sensors
+
+		// each packet contains data for N sensors
+		// plus a 4-byte sequence id.
+
+		// 1. visualization 3d scene
+		// 2. record sensor data
+		// 3. play back sensor data
+
+
+
+
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
+		int32_t startup_result = net_startup();
+		assert(startup_result == 0);
+
+		data_socket = net_socket_open(net_socket_type::UDP);
+		assert(net_socket_is_valid(data_socket));
+
+		int32_t bind_result = net_socket_bind(data_socket, 27015);
+		assert(bind_result == 0);
+
+		net_listen_thread = true;
+		sensor_thread_handle = platform::thread_create(sensor_thread, &data_socket);
+
+
+
 
 		return kernel::NoError;
 	}
@@ -747,7 +1071,8 @@ public:
 
 	virtual void tick()
 	{
-		platform::window::dispatch_events();
+		uint64_t current_time = platform::microseconds();
+		platform::update(kernel::parameters().framedelta_milliseconds);
 
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
@@ -756,6 +1081,35 @@ public:
 		value = glm::clamp(value, 0.0f, 1.0f);
 		if (value == 0.0f || value == 1.0f)
 			multiplifer *= -1;
+
+
+		{
+			kernel::Parameters& params = kernel::parameters();
+			const float movement_factor = 30.0f;
+
+			if (left_down)
+				camera.move_left(movement_factor * params.framedelta_seconds);
+			if (right_down)
+				camera.move_right(movement_factor * params.framedelta_seconds);
+			if (forward_down)
+				camera.move_forward(movement_factor * params.framedelta_seconds);
+			if (backward_down)
+				camera.move_backward(movement_factor * params.framedelta_seconds);
+
+			camera.update_view();
+		}
+
+
+		renderer::debugdraw::text(20, 100, "Left Click + Drag: Rotate Camera", gemini::Color(1.0f, 1.0f, 1.0f));
+		renderer::debugdraw::text(20, 120, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
+
+		for (size_t index = 0; index < TOTAL_SENSORS; ++index)
+		{
+			glm::mat4 m = glm::toMat4(sensors[index]);
+			renderer::debugdraw::axes(m, 3.0f);
+		}
+
+		::renderer::debugdraw::update(kernel::parameters().framedelta_seconds);
 
 		if (compositor)
 		{
@@ -767,10 +1121,15 @@ public:
 
 		modelview_matrix = glm::mat4(1.0f);
 		projection_matrix = glm::ortho(0.0f, window_frame.width, window_frame.height, 0.0f, -1.0f, 1.0f);
-		pipeline->constants().set("modelview_matrix", &modelview_matrix);
-		pipeline->constants().set("projection_matrix", &projection_matrix);
+		//const glm::vec3& p = camera.get_position();
+		//LOGV("p: %2.2f, %2.2f, %2.2f\n", p.x, p.y, p.z);
 
-		value = 0.15f;
+		modelview_matrix = camera.get_modelview();
+		projection_matrix = camera.get_projection();
+		//pipeline->constants().set("modelview_matrix", &modelview_matrix);
+		//pipeline->constants().set("projection_matrix", &projection_matrix);
+
+		value = 0.0f;
 
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
@@ -783,8 +1142,8 @@ public:
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 
 		serializer->pipeline(pipeline);
-//		serializer->vertex_buffer(vertex_buffer);
-//		serializer->draw(0, 3);
+		//serializer->vertex_buffer(vertex_buffer);
+		//serializer->draw(0, 3);
 		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
 
@@ -795,9 +1154,9 @@ public:
 			compositor->draw();
 		}
 
+		::renderer::debugdraw::render(modelview_matrix, projection_matrix, window_frame.width, window_frame.height);
+
 		device->submit();
-
-
 
 		platform::window::swap_buffers(main_window);
 
@@ -807,11 +1166,30 @@ public:
 #endif
 
 //		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
+
+		kernel::Parameters& params = kernel::parameters();
+		params.current_frame++;
+
+
+		// calculate delta ticks in milliseconds
+		params.framedelta_milliseconds = (current_time - last_time) * SecondsPerMillisecond;
+
+		// cache the value in seconds
+		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
+		last_time = current_time;
 	}
 
 
 	virtual void shutdown()
 	{
+		net_listen_thread = false;
+
+		platform::thread_join(sensor_thread_handle, 1000);
+		platform::thread_destroy(sensor_thread_handle);
+
+		net_shutdown();
+		::renderer::debugdraw::shutdown();
+
 		// remove the log handler
 		core::logging::instance()->remove_handler(&log_handler);
 
@@ -843,19 +1221,6 @@ public:
 		platform::window::shutdown();
 
 		gemini::runtime_shutdown();
-	}
-
-
-	virtual void event(kernel::KeyboardEvent& event)
-	{
-		if (event.key == gemini::BUTTON_ESCAPE && event.is_down)
-		{
-			set_active(false);
-		}
-		else
-		{
-			LOGV("key is_down: '%s', name: '%s', modifiers: %zu\n", event.is_down ? "Yes" : "No", gemini::key_name(event.key), event.modifiers);
-		}
 	}
 
 };
