@@ -52,7 +52,6 @@
 #include <sdk/engine_api.h>
 #include <sdk/game_api.h>
 #include <sdk/experimental_api.h>
-#include <sdk/debugdraw_api.h>
 #include <sdk/shared.h>
 #include <sdk/physics_api.h>
 
@@ -404,7 +403,7 @@ class ModelInterface : public gemini::IModelInterface
 				}
 
 #if defined(GEMINI_DEBUG_BONES)
-				debugdraw::instance()->text(origin.x,
+				debugdraw::text(origin.x,
 					origin.y + (12.0f * bone_index),
 					core::str::format("%2i) '%s' | rot: [%2.2f, %2.2f, %2.2f, %2.2f]", bone_index,
 					mesh->skeleton[bone_index].name(),

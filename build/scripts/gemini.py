@@ -1130,8 +1130,6 @@ def products(arguments, **kwargs):
 
 		"src/engine/audio.cpp",
 		"src/engine/audio.h",
-		"src/engine/debugdraw_interface.cpp",
-		"src/engine/debugdraw_interface.h",
 		"src/engine/gemini.cpp",
 		"src/engine/navigation.cpp",
 		"src/engine/navigation.h",

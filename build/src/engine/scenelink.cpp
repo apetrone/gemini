@@ -27,12 +27,12 @@
 #include "scenelink.h"
 
 #include <renderer/renderstream.h>
+#include <renderer/debug_draw.h>
 
 
 #include <assets/asset_shader.h>
 #include <assets/asset_material.h>
 
-#include <sdk/debugdraw_api.h>
 #include <sdk/engine_api.h>
 #include <sdk/iengineentity.h>
 #include <sdk/model_api.h>
