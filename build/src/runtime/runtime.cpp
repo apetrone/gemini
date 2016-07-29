@@ -95,7 +95,9 @@ namespace gemini
 	platform::Result runtime_startup(const char* application_data_path, std::function<void(const char*)> custom_path_setup)
 	{
 		platform::PathString root_path = platform::get_program_directory();
+		LOGV("root_path: %s\n", root_path());
 		platform::PathString content_path = platform::fs_content_directory();
+		LOGV("content_path: %s\n", content_path());
 
 		// create file system instance
 		core::filesystem::IFileSystem* filesystem = MEMORY_NEW(core::filesystem::FileSystemInterface, core::memory::global_allocator());
