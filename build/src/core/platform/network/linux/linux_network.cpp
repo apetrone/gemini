@@ -43,16 +43,11 @@ namespace platform
 	void net_address_set(net_address* address, const char* ip, uint16_t port)
 	{
 		address->sin_family = AF_INET;
-		address->sin_port = htons(port);
-
-		if (port > 0)
-		{
-			net_address_port(address, port);
-		}
+		net_address_port(address, port);
 
 		if (ip)
 		{
-			int32_t result = inet_pton(AF_INET, ip, &address);
+			int32_t result = inet_pton(AF_INET, ip, &address->sin_addr);
 			// result == 0: src does not contain a character string representing a valid network address.
 			// result == -1: errno set to EAFNOSUPPORT.
 			assert(result > 0);
@@ -106,13 +101,9 @@ namespace platform
 		close(sock);
 	} // net_socket_close
 
-	int32_t net_socket_bind(net_socket sock, uint16_t port)
+	int32_t net_socket_bind(net_socket sock, net_address* interface)
 	{
-		net_address address;
-		net_address_init(&address);
-		net_address_set(&address, nullptr, port);
-
-		return bind(sock, (const struct sockaddr*)&address, sizeof(net_address));
+		return bind(sock, (const struct sockaddr*)interface, sizeof(net_address));
 	} // net_sock_bind
 
 	int32_t net_socket_send(net_socket sock, const char* data, size_t data_size)
