@@ -1055,7 +1055,11 @@ public:
 		data_socket = net_socket_open(net_socket_type::UDP);
 		assert(net_socket_is_valid(data_socket));
 
-		int32_t bind_result = net_socket_bind(data_socket, 27015);
+		net_address addr;
+		net_address_init(&addr);
+		net_address_set(&addr, "0.0.0.0", 27015);
+
+		int32_t bind_result = net_socket_bind(data_socket, &addr);
 		assert(bind_result == 0);
 
 		net_listen_thread = true;
