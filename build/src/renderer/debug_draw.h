@@ -41,24 +41,21 @@ namespace font
 	struct Handle;
 } // namespace font
 
-namespace renderer
+namespace debugdraw
 {
-	namespace debugdraw
-	{
-		void startup(render2::Device* render_device);
-		void shutdown();
+	void startup(render2::Device* render_device);
+	void shutdown();
 
-		void update(float deltamsec);
-		void render(const glm::mat4& modelview, const glm::mat4& projection, int viewport_width, int viewport_height);
+	void update(float deltamsec);
+	void render(const glm::mat4& modelview, const glm::mat4& projection, int viewport_width, int viewport_height);
 
-		void axes(const glm::mat4& transform, float axis_length, float duration = 0.0f);
-		void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration = 0.0f);
-		void box(const glm::vec3& mins, const glm::vec3& maxs, const gemini::Color& color, float duration = 0.0f);
-		void point(const glm::vec3& pt, const gemini::Color& color, float size = 2.0, float duration = 0.0f);
-		void line(const glm::vec3& start, const glm::vec3& end, const gemini::Color& color, float duration = 0.0f);
-		void sphere(const glm::vec3& center, const gemini::Color& color, float radius = 2.0, float duration = 0.0f);
-		void text(int x, int y, const char* string, const gemini::Color& color, float duration = 0.0f);
-		void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const gemini::Color& color, float duration = 0.0f);
-		void camera(const glm::vec3& origin, const glm::vec3& view, float duration = 0.0f);
-	} // namespace debugdraw
-} // namespace renderer
+	void axes(const glm::mat4& transform, float axis_length, float duration = 0.0f);
+	void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration = 0.0f);
+	void box(const glm::vec3& mins, const glm::vec3& maxs, const gemini::Color& color, float duration = 0.0f);
+	void point(const glm::vec3& pt, const gemini::Color& color, float size = 2.0, float duration = 0.0f);
+	void line(const glm::vec3& start, const glm::vec3& end, const gemini::Color& color, float duration = 0.0f);
+	void sphere(const glm::vec3& center, const gemini::Color& color, float radius = 2.0, float duration = 0.0f);
+	void text(int x, int y, const char* string, const gemini::Color& color, float duration = 0.0f);
+	void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const gemini::Color& color, float duration = 0.0f);
+	void camera(const glm::vec3& origin, const glm::vec3& view, float duration = 0.0f);
+} // namespace debugdraw

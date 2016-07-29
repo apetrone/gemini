@@ -898,7 +898,7 @@ public:
 		font::startup(device);
 
 		// initialize debug draw
-		::renderer::debugdraw::startup(device);
+		debugdraw::startup(device);
 
 #if 0
 		// load the gui
@@ -1100,16 +1100,16 @@ public:
 		}
 
 
-		renderer::debugdraw::text(20, 100, "Left Click + Drag: Rotate Camera", gemini::Color(1.0f, 1.0f, 1.0f));
-		renderer::debugdraw::text(20, 120, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
+		debugdraw::text(20, 100, "Left Click + Drag: Rotate Camera", gemini::Color(1.0f, 1.0f, 1.0f));
+		debugdraw::text(20, 120, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
 
 		for (size_t index = 0; index < TOTAL_SENSORS; ++index)
 		{
 			glm::mat4 m = glm::toMat4(sensors[index]);
-			renderer::debugdraw::axes(m, 3.0f);
+			debugdraw::axes(m, 1.0f);
 		}
 
-		::renderer::debugdraw::update(kernel::parameters().framedelta_seconds);
+		debugdraw::update(kernel::parameters().framedelta_seconds);
 
 		if (compositor)
 		{
@@ -1129,7 +1129,7 @@ public:
 		//pipeline->constants().set("modelview_matrix", &modelview_matrix);
 		//pipeline->constants().set("projection_matrix", &projection_matrix);
 
-		value = 0.0f;
+		value = 0.35f;
 
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
@@ -1154,7 +1154,7 @@ public:
 			compositor->draw();
 		}
 
-		::renderer::debugdraw::render(modelview_matrix, projection_matrix, window_frame.width, window_frame.height);
+		debugdraw::render(modelview_matrix, projection_matrix, window_frame.width, window_frame.height);
 
 		device->submit();
 
@@ -1188,7 +1188,7 @@ public:
 		platform::thread_destroy(sensor_thread_handle);
 
 		net_shutdown();
-		::renderer::debugdraw::shutdown();
+		debugdraw::shutdown();
 
 		// remove the log handler
 		core::logging::instance()->remove_handler(&log_handler);

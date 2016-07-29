@@ -44,8 +44,6 @@
 #include <core/mathlib.h>
 #include <core/util.h>
 
-namespace debugdraw = ::renderer::debugdraw;
-
 namespace gemini
 {
 	namespace navigation

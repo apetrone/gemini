@@ -185,21 +185,21 @@ void FollowCamera::tick(float step_interval_seconds)
 	);
 
 #if 0
-	renderer::debugdraw::line(
+	debugdraw::line(
 		target_position,
 		(target_position + (view * 1.0f)),
 		gemini::Color(0.0f, 0.0f, 1.0f)
 	);
 #endif
 
-	renderer::debugdraw::camera(
+	debugdraw::camera(
 		position,
 		view,
 		0.0f
 	);
 
 #if 0
-	renderer::debugdraw::point(target_position, gemini::Color(1.0f, 0.0f, 1.0f), 0.1f);
+	debugdraw::point(target_position, gemini::Color(1.0f, 0.0f, 1.0f), 0.1f);
 #endif
 }
 

@@ -57,7 +57,6 @@
 
 #include "input.h"
 
-#include "debugdraw_interface.h"
 #include "assets/asset_font.h"
 #include "assets/asset_shader.h"
 #include "assets/asset_mesh.h"
@@ -801,7 +800,6 @@ public:
 	virtual gemini::physics::IPhysicsInterface* physics() { return physics_interface; }
 	virtual IExperimental* experiment() { return experimental_interface; }
 	virtual core::logging::ILog* log() { return core::logging::instance(); }
-	virtual gemini::IDebugDraw* debugdraw() { return gemini::debugdraw::instance(); }
 	virtual gemini::IAudioInterface* audio() { return gemini::audio::instance(); }
 
 	virtual void* allocate(size_t size)
@@ -892,7 +890,7 @@ public:
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		newview.width = frame.width;
 		newview.height = frame.height;
-		::renderer::debugdraw::render(newview.modelview, newview.projection, newview.width, newview.height);
+		debugdraw::render(newview.modelview, newview.projection, newview.width, newview.height);
 	}
 
 	virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height)
@@ -1423,9 +1421,7 @@ Options:
 			font::startup(device);
 
 			// initialize debug draw
-			::renderer::debugdraw::startup(device);
-			DebugDrawInterface* debug_draw = MEMORY_NEW(DebugDrawInterface, core::memory::global_allocator());
-			gemini::debugdraw::set_instance(debug_draw);
+			debugdraw::startup(device);
 		}
 
 		// initialize main subsystems
@@ -1506,9 +1502,9 @@ Options:
 		// set the baseline for the font
 		int x = 250;
 		int y = 16;
-		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", params.framedelta_milliseconds), Color());
+		debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", params.framedelta_milliseconds), Color());
 		y += 12;
-		::renderer::debugdraw::text(x, y, core::str::format("allocations = %i, total %2.2f MB\n",
+		debugdraw::text(x, y, core::str::format("allocations = %i, total %2.2f MB\n",
 			core::memory::global_allocator().get_zone()->get_active_allocations(),
 			core::memory::global_allocator().get_zone()->get_active_bytes() / (float)(1024 * 1024)), Color());
 		y += 12;
@@ -1523,7 +1519,7 @@ Options:
 			// this is going to be incorrect unless this is placed in the step.
 			// additionally, these aren't interpolated: figure how to; for example,
 			// draw hit boxes for a moving player with this system.
-			::renderer::debugdraw::update(params.step_interval_seconds /** MillisecondsPerSecond*/);
+			debugdraw::update(params.step_interval_seconds /** MillisecondsPerSecond*/);
 
 			// subtract the interval from the accumulator
 			accumulator -= params.step_interval_seconds;
@@ -1626,9 +1622,7 @@ Options:
 		hotloading::shutdown();
 		animation::shutdown();
 		gemini::physics::shutdown();
-		::renderer::debugdraw::shutdown();
-		IDebugDraw* debug_draw = gemini::debugdraw::instance();
-		MEMORY_DELETE(debug_draw, core::memory::global_allocator());
+		debugdraw::shutdown();
 		audio::shutdown();
 		assets::shutdown();
 

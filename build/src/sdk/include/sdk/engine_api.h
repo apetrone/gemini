@@ -67,7 +67,6 @@ namespace gemini
 		virtual physics::IPhysicsInterface* physics() = 0;
 		virtual IExperimental* experiment() = 0;
 		virtual core::logging::ILog* log() = 0;
-		virtual IDebugDraw* debugdraw() = 0;
 		virtual IAudioInterface* audio() = 0;
 
 		// memory hooks
