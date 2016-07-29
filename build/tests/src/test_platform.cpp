@@ -407,7 +407,8 @@ void test_network_thread(platform::Thread* thread)
 		FD_ZERO(&transmit);
 		FD_SET(*sock, &transmit);
 
-		select(1, &receive, &transmit, nullptr, &zero_timeval);
+		int select_result = select((*sock)+1, &receive, &transmit, nullptr, &zero_timeval);
+		assert(select_result >= 0);
 
 		if (FD_ISSET(*sock, &receive))
 		{
@@ -507,14 +508,19 @@ UNITTEST(network)
 	net_socket sock1 = net_socket_open(net_socket_type::UDP);
 	TEST_ASSERT(net_socket_is_valid(sock1), net_socket_open);
 
-	net_socket_set_blocking(sock1, 0);
-	int32_t bind_result = net_socket_bind(sock1, 27015);
+	net_address interface;
+	net_address_init(&interface);
+	net_address_set(&interface, "127.0.0.1", 27015);
+
+
+	// net_socket_set_blocking(sock1, 0);
+	int32_t bind_result = net_socket_bind(sock1, &interface);
 	TEST_ASSERT(bind_result == 0, net_socket_bind);
 
 	platform::Thread* handle = platform::thread_create(test_network_thread, &sock1);
 
 	LOGV("Closing thread in 5 seconds...\n");
-	platform::thread_sleep(100000);
+	platform::thread_sleep(30000);
 
 	net_listen_thread = false;
 

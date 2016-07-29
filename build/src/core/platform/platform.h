@@ -381,7 +381,7 @@ namespace platform
 	void net_socket_close(net_socket sock);
 
 	/// @returns 0 on success
-	int32_t net_socket_bind(net_socket sock, uint16_t port);
+	int32_t net_socket_bind(net_socket sock, net_address* interface);
 
 	/// @brief Send data (TCP-only)
 	/// @returns bytes written.
