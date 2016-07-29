@@ -102,13 +102,9 @@ namespace platform
 		closesocket(sock);
 	} // net_socket_close
 
-	int32_t net_socket_bind(net_socket sock, uint16_t port)
+	int32_t net_socket_bind(net_socket sock, net_address* address)
 	{
-		net_address address;
-		net_address_init(&address);
-		net_address_set(&address, nullptr, port);
-
-		return bind(sock, (const struct sockaddr*)&address, sizeof(net_address));
+		return bind(sock, (const struct sockaddr*)address, sizeof(net_address));
 	} // net_sock_bind
 
 	/// @brief Send data (TCP-only)
