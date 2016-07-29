@@ -955,7 +955,7 @@ public:
 	#endif
 #endif
 
-#if 0
+#if 1
 			asset_processor = new AssetProcessingPanel(compositor);
 			asset_processor->set_origin(0.0f, 25.0f);
 			asset_processor->set_dimensions(1.0f, 0.05f);
