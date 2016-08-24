@@ -65,7 +65,7 @@ using namespace renderer;
 using namespace gemini;
 
 bool net_listen_thread = true;
-const size_t TOTAL_SENSORS = 2;
+const size_t TOTAL_SENSORS = 3;
 
 glm::quat sensors[TOTAL_SENSORS];
 
@@ -155,6 +155,8 @@ void sensor_thread(platform::Thread* thread)
 
 	const uint64_t CLIENT_TIMEOUT_MSEC = 3000;
 	uint64_t last_client_contact_msec = 0;
+
+	const uint32_t DISCONNECT_VALUE = 2005;
 
 
 	while (net_listen_thread)
@@ -260,6 +262,16 @@ void sensor_thread(platform::Thread* thread)
 				}
 			}
 		}
+	}
+
+
+
+	if (current_state == STATE_STREAMING)
+	{
+		// send disconnect
+		int32_t value = DISCONNECT_VALUE;
+		net_socket_sendto(*sock, &client_address, (const char*)&value, sizeof(uint32_t));
+		thread_sleep(500);
 	}
 }
 
@@ -541,6 +553,14 @@ public:
 
 
 
+glm::quat transform_sensor_rotation(const glm::quat& q)
+{
+	// this bit of code converts the coordinate system of the BNO055
+	// to that of gemini.
+	glm::quat flipped(q.w, q.x, -q.z, -q.y);
+	glm::quat y = glm::quat(glm::vec3(0, mathlib::degrees_to_radians(180), 0));
+	return glm::inverse(y * flipped);
+}
 
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -559,6 +579,8 @@ private:
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
 
+	glm::mat4 joint_offets[TOTAL_SENSORS];
+	glm::quat zeroed_orientations[TOTAL_SENSORS];
 //	GLsync fence;
 
 	gui::Compositor* compositor;
@@ -641,6 +663,15 @@ public:
 
 		if (event.key == BUTTON_S)
 			backward_down = event.is_down;
+
+		if (event.key == BUTTON_SPACE)
+		{
+			LOGV("freezing rotations\n");
+			for (size_t index = 0; index < TOTAL_SENSORS; ++index)
+			{
+				zeroed_orientations[index] = transform_sensor_rotation(sensors[index]);
+			}
+		}
 	}
 
 
@@ -1065,9 +1096,6 @@ public:
 		net_listen_thread = true;
 		sensor_thread_handle = platform::thread_create(sensor_thread, &data_socket);
 
-
-
-
 		return kernel::NoError;
 	}
 
@@ -1105,13 +1133,53 @@ public:
 
 
 		debugdraw::text(20, 100, "Left Click + Drag: Rotate Camera", gemini::Color(1.0f, 1.0f, 1.0f));
-		debugdraw::text(20, 120, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
+		debugdraw::text(20, 116, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
+		debugdraw::text(20, 132, "Space: Calibrate / Freeze Rotations", gemini::Color(1.0f, 1.0f, 1.0f));
 
+		glm::quat local_rotations[TOTAL_SENSORS];
+
+		// We need to adjust the coordinate frame from the sensor to the engine.
+		local_rotations[0] = glm::inverse(zeroed_orientations[0]) * transform_sensor_rotation(sensors[0]);
+		local_rotations[1] = glm::inverse(local_rotations[0]) * glm::inverse(zeroed_orientations[1]) * transform_sensor_rotation(sensors[1]);
+		local_rotations[2] = glm::inverse(local_rotations[1]) * glm::inverse(zeroed_orientations[2]) * transform_sensor_rotation(sensors[2]);
+
+		//local_rotations[1] = sensors[1] * glm::inverse(sensors[0]);
+
+		// temp: setup joint offsets
+		joint_offets[0] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+		joint_offets[1] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.254f));
+		joint_offets[2] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.254f));
+
+
+		glm::mat4 world_poses[TOTAL_SENSORS];
+		glm::vec3 last_origin;
+
+		glm::mat4 parent_pose;
 		for (size_t index = 0; index < TOTAL_SENSORS; ++index)
 		{
-			glm::mat4 m = glm::toMat4(sensors[index]);
-			debugdraw::axes(m, 1.0f);
+			glm::mat4 m = glm::toMat4(local_rotations[index]);
+			glm::mat4 local_pose = (joint_offets[index] * m);
+			glm::mat4 parent_pose;
+			if (index > 0)
+			{
+				parent_pose = world_poses[(index-1)];
+			}
+
+			glm::mat4& world_pose = world_poses[index];
+			world_pose = parent_pose * local_pose;
+
+			debugdraw::axes(world_pose, 0.1f);
+
+			glm::vec3 origin = glm::vec3(glm::column(world_pose, 3));
+			if (index > 0)
+			{
+				debugdraw::line(last_origin, origin, Color::from_rgba(255, 128, 0, 255));
+			}
+			last_origin = origin;
+
 		}
+
+		//debugdraw::axes(glm::mat4(1.0f), 1.0f);
 
 		debugdraw::update(kernel::parameters().framedelta_seconds);
 
