@@ -562,6 +562,12 @@ glm::quat transform_sensor_rotation(const glm::quat& q)
 	return glm::inverse(y * flipped);
 }
 
+struct mocap_frame_t
+{
+	uint32_t frame_index;
+	glm::quat poses[TOTAL_SENSORS];
+};
+
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -592,6 +598,10 @@ private:
 	gui::DockingContainer* container;
 	AssetProcessingPanel* asset_processor;
 
+
+	Array<mocap_frame_t> mocap_frames;
+	size_t current_mocap_frame;
+
 	float value;
 
 	core::logging::Handler log_handler;
@@ -610,6 +620,9 @@ private:
 
 	bool should_move_view;
 
+	bool is_recording_frames;
+	bool is_playing_frames;
+
 
 	net_socket data_socket;
 	platform::Thread* sensor_thread_handle;
@@ -623,6 +636,8 @@ public:
 		, texture(nullptr)
 		, value(0.0f)
 		, container(nullptr)
+		, is_recording_frames(false)
+		, is_playing_frames(false)
 	{
 		yaw = 0.0f;
 		pitch = 0.0f;
@@ -772,6 +787,37 @@ public:
 	{
 		set_active(false);
 	}
+
+	void on_record_start(void)
+	{
+		mocap_frames.clear();
+		current_mocap_frame = 0;
+		is_recording_frames = true;
+	}
+
+	void on_record_stop(void)
+	{
+		is_recording_frames = false;
+
+		// TODO@apetrone: write frames out
+
+		LOGV("Recorded %i frames\n", mocap_frames.size());
+	}
+
+	void on_playback_start(void)
+	{
+		current_mocap_frame = 0;
+		is_playing_frames = true;
+		is_recording_frames = false;
+		LOGV("start playback of %i frames...\n", mocap_frames.size());
+	}
+
+	void on_playback_stop(void)
+	{
+		is_playing_frames = false;
+		LOGV("stopped playback.\n");
+	}
+
 
 	void on_window_toggle_asset_processor(void)
 	{
@@ -1007,9 +1053,15 @@ public:
 				filemenu->add_item("Open Project...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_open, this));
 				filemenu->add_separator();
 				filemenu->add_item("Quit", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_quit, this));
-
-
 				menubar->add_menu(filemenu);
+
+
+				gui::Menu* record = new gui::Menu("Sensor", menubar);
+				record->add_item("Start Recording...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_record_start, this));
+				record->add_item("Stop Recording", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_record_stop, this));
+				record->add_item("Start Playback...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_playback_start, this));
+				record->add_item("Stop Playback", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_playback_stop, this));
+				menubar->add_menu(record);
 
 
 				gui::Menu* windowmenu = new gui::Menu("Window", menubar);
@@ -1155,6 +1207,22 @@ public:
 		glm::vec3 last_origin;
 
 		glm::mat4 parent_pose;
+
+		mocap_frame_t mocap_frame;
+
+		if (is_playing_frames)
+		{
+			memcpy(local_rotations, mocap_frames[current_mocap_frame].poses, sizeof(glm::quat) * TOTAL_SENSORS);
+			current_mocap_frame++;
+
+			if (current_mocap_frame > (mocap_frames.size() - 1))
+			{
+				is_playing_frames = false;
+				LOGV("reached end of playback buffer at %i frames.\n", current_mocap_frame);
+			}
+		}
+
+
 		for (size_t index = 0; index < TOTAL_SENSORS; ++index)
 		{
 			glm::mat4 m = glm::toMat4(local_rotations[index]);
@@ -1177,8 +1245,18 @@ public:
 			}
 			last_origin = origin;
 
+			//mocap_frame.poses[index] = local_rotations[index];
 		}
 
+
+		if (is_recording_frames)
+		{
+			memcpy(mocap_frame.poses, local_rotations, sizeof(glm::quat) * TOTAL_SENSORS);
+			mocap_frame.frame_index = current_mocap_frame;
+			current_mocap_frame++;
+
+			mocap_frames.push_back(mocap_frame);
+		}
 		//debugdraw::axes(glm::mat4(1.0f), 1.0f);
 
 		debugdraw::update(kernel::parameters().framedelta_seconds);
