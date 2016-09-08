@@ -925,20 +925,23 @@ namespace debugdraw
 
 		assert(total_vertices_required % 3 == 0);
 		const size_t new_vertexbuffer_size = sizeof(font::FontVertex) * total_vertices_required;
-		device->buffer_resize(text_buffer, new_vertexbuffer_size);
-		device->buffer_upload(text_buffer, &text_vertex_cache[0], new_vertexbuffer_size);
+		if (new_vertexbuffer_size > 0)
+		{
+			device->buffer_resize(text_buffer, new_vertexbuffer_size);
+			device->buffer_upload(text_buffer, &text_vertex_cache[0], new_vertexbuffer_size);
 
-		render2::CommandQueue* queue = device->create_queue(pass);
-		render2::CommandSerializer* serializer = device->create_serializer(queue);
+			render2::CommandQueue* queue = device->create_queue(pass);
+			render2::CommandSerializer* serializer = device->create_serializer(queue);
 
-		serializer->pipeline(text_pipeline);
-		serializer->vertex_buffer(text_buffer);
-		render2::Texture* texture = font::get_font_texture(text_handle);
-		assert(texture);
-		serializer->texture(texture, 0);
-		serializer->draw(0, total_vertices_required);
-		device->queue_buffers(queue, 1);
-		device->destroy_serializer(serializer);
+			serializer->pipeline(text_pipeline);
+			serializer->vertex_buffer(text_buffer);
+			render2::Texture* texture = font::get_font_texture(text_handle);
+			assert(texture);
+			serializer->texture(texture, 0);
+			serializer->draw(0, total_vertices_required);
+			device->queue_buffers(queue, 1);
+			device->destroy_serializer(serializer);
+		}
 
 		text_vertex_cache.clear(false);
 		text_list->reset();
