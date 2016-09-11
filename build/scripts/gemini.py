@@ -294,7 +294,8 @@ def setup_driver(arguments, product, target_platform):
 		"user32",
 		"OpenGL32", # for wglGetProcAddress
 		"Gdi32",	# for ChoosePixelFormat, SetPixelFormat
-		"ws2_32"	# for Windows Socks
+		"ws2_32",	# for Windows Socks
+		"Comdlg32"  # for Common Dialogs
 	]
 
 	# For COM use.
@@ -310,7 +311,8 @@ def setup_driver(arguments, product, target_platform):
 		"user32",
 		"OpenGL32", # for wglGetProcAddress
 		"Gdi32",	# for ChoosePixelFormat, SetPixelFormat
-		"ws2_32"	# for Windows Socks
+		"ws2_32",	# for Windows Socks
+		"Comdlg32"  # for Common Dialogs
 	]
 
 	# For COM use.
