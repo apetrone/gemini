@@ -34,3 +34,6 @@
 [submodule "build/dependencies/freetype2"]
 	path = build/dependencies/freetype2
 	url = git://github.com/apetrone/freetype2
+[submodule "build/assets"]
+	path = build/assets
+	url = git://github.com/apetrone/gemini-assets
