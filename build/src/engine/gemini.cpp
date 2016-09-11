@@ -1267,14 +1267,8 @@ public:
 		// parse command line values
 		std::vector<std::string> arguments;
 		core::argparse::ArgumentParser parser;
-		const platform::MainParameters& mainparams = platform::get_mainparameters();
-#if defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE)
-		arguments = parser.split_tokens(mainparams.argc, mainparams.argv);
-#elif defined(PLATFORM_WINDOWS)
-		arguments = parser.split_tokens(mainparams.commandline);
-#else
-	#error Not implemented on this platform!
-#endif
+
+		runtime_load_arguments(arguments, parser);
 
 		core::argparse::VariableMap vm;
 		const char* docstring = R"(

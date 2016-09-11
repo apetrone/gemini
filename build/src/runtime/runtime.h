@@ -32,9 +32,20 @@
 #include <core/mathlib.h>
 #include <core/interpolation.h>
 
+#include <string>
+#include <vector>
+
 namespace platform
 {
 	struct Result;
+}
+
+namespace core
+{
+	namespace argparse
+	{
+		class ArgumentParser;
+	}
 }
 
 namespace gemini
@@ -48,7 +59,7 @@ namespace gemini
 	void runtime_shutdown();
 
 
-
+	void runtime_load_arguments(std::vector<std::string>& arguments, ::core::argparse::ArgumentParser& parser);
 
 
 

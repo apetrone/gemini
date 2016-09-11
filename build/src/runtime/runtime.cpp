@@ -29,6 +29,7 @@
 #include <core/logging.h>
 #include <core/str.h>
 #include <core/config.h>
+#include <core/argumentparser.h>
 
 #include <platform/platform.h>
 
@@ -166,4 +167,16 @@ namespace gemini
 		core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
 		MEMORY_DELETE(filesystem, core::memory::global_allocator());
 	} // shutdown
+
+	void runtime_load_arguments(std::vector<std::string>& arguments, ::core::argparse::ArgumentParser& parser)
+	{
+		const platform::MainParameters& mainparams = platform::get_mainparameters();
+#if defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE)
+		arguments = parser.split_tokens(mainparams.argc, mainparams.argv);
+#elif defined(PLATFORM_WINDOWS)
+		arguments = parser.split_tokens(mainparams.commandline);
+#else
+	#error Not implemented on this platform!
+#endif
+	} // runtime_load_arguments
 } // namespace gemini
