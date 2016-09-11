@@ -42,6 +42,7 @@
 #include <core/logging.h>
 #include <core/profiler.h>
 #include <core/mathlib.h>
+#include <core/argumentparser.h>
 
 #include <ui/ui.h>
 #include <ui/compositor.h>
@@ -601,6 +602,7 @@ private:
 
 	Array<mocap_frame_t> mocap_frames;
 	size_t current_mocap_frame;
+	PathString current_mocap_filename;
 
 	float value;
 
@@ -790,26 +792,113 @@ public:
 
 	void on_record_start(void)
 	{
-		mocap_frames.clear();
-		current_mocap_frame = 0;
-		is_recording_frames = true;
+		if (is_recording_frames == false)
+		{
+			current_mocap_filename.clear();
+			Array<PlatformExtensionDescription> extensions;
+			extensions.push_back(PlatformExtensionDescription("Sensor Stream", "sensor"));
+
+			platform::Result save_result = platform::show_save_dialog(
+				"Save Sensor Stream",
+				0, /* Flags */
+				extensions,
+				"sensor",
+				current_mocap_filename
+			);
+
+			if (save_result.succeeded())
+			{
+				LOGV("Save stream to: %s\n", current_mocap_filename());
+				mocap_frames.clear();
+				current_mocap_frame = 0;
+				is_recording_frames = true;
+			}
+		}
 	}
 
 	void on_record_stop(void)
 	{
-		is_recording_frames = false;
+		if (is_recording_frames)
+		{
+			is_recording_frames = false;
 
-		// TODO@apetrone: write frames out
+			platform::File handle = platform::fs_open(current_mocap_filename(), FileMode_Write);
+			if (handle.is_open())
+			{
+				// 1. Total Sensors (poses)
+				platform::fs_write(handle, &TOTAL_SENSORS, sizeof(TOTAL_SENSORS), 1);
 
-		LOGV("Recorded %i frames\n", mocap_frames.size());
+				// 2. Total frames.
+				const size_t total_frames = mocap_frames.size();
+				platform::fs_write(handle, &total_frames, sizeof(size_t), 1);
+
+				// 3. All frames.
+				for (size_t index = 0; index < total_frames; ++index)
+				{
+					mocap_frame_t& frame = mocap_frames[index];
+
+					for (size_t pose = 0; pose < TOTAL_SENSORS; ++pose)
+					{
+						const glm::quat& rotation = frame.poses[pose];
+						platform::fs_write(handle, (const void*)&rotation, sizeof(glm::quat), 1);
+					}
+				}
+
+				platform::fs_close(handle);
+			}
+
+			LOGV("Recorded %i frames\n", mocap_frames.size());
+			current_mocap_filename.clear();
+			current_mocap_frame = 0;
+			mocap_frames.clear();
+		}
 	}
 
 	void on_playback_start(void)
 	{
-		current_mocap_frame = 0;
-		is_playing_frames = true;
-		is_recording_frames = false;
-		LOGV("start playback of %i frames...\n", mocap_frames.size());
+		Array<PathString> paths;
+		platform::Result open_result = platform::show_open_dialog("Choose Sensor Stream", 0, paths);
+		if (open_result.succeeded())
+		{
+			LOGV("loading sensor stream '%s'\n", paths[0]());
+			platform::File handle = platform::fs_open(paths[0](), FileMode_Read);
+			if (handle.is_open())
+			{
+				// 1. Total Sensors (poses)
+				size_t total_sensors = 0;
+				platform::fs_read(handle, &total_sensors, sizeof(size_t), 1);
+
+				// If you hit this, the file loaded differs in the number of sensors
+				// it contains vs the number of sensors this now supports.
+				assert(total_sensors == TOTAL_SENSORS);
+
+				// 2. Read Total Frames
+				size_t total_frames = 0;
+				platform::fs_read(handle, &total_frames, sizeof(size_t), 1);
+
+				LOGV("found %i total frames...\n", total_frames);
+				mocap_frames.resize(total_frames);
+
+				// 3. All frames.
+				for (size_t index = 0; index < total_frames; ++index)
+				{
+					mocap_frame_t& frame = mocap_frames[index];
+					frame.frame_index = index;
+					for (size_t pose = 0; pose < total_sensors; ++pose)
+					{
+						glm::quat& rotation = frame.poses[pose];
+						platform::fs_read(handle, (void*)&rotation, sizeof(glm::quat), 1);
+					}
+				}
+			}
+
+			// Set state to playback.
+			current_mocap_frame = 0;
+			is_playing_frames = true;
+			is_recording_frames = false;
+
+			LOGV("start playback of %i frames...\n", mocap_frames.size());
+		}
 	}
 
 	void on_playback_stop(void)
@@ -858,7 +947,55 @@ public:
 
 	virtual kernel::Error startup()
 	{
-		gemini::runtime_startup("arcfusion.net/orion");
+		// parse command line values
+		std::vector<std::string> arguments;
+		core::argparse::ArgumentParser parser;
+		core::StackString<MAX_PATH_SIZE> content_path;
+
+		runtime_load_arguments(arguments, parser);
+
+		core::argparse::VariableMap vm;
+		const char* docstring = R"(
+Usage:
+	--assets=<content_path>
+
+Options:
+	-h, --help  Show this help screen
+	--version  Display the version number
+	--assets=<content_path>  The path to load content from
+	)";
+
+		if (parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
+		{
+			std::string path = vm["--assets"];
+			content_path = platform::make_absolute_path(path.c_str());
+		}
+		else
+		{
+			return kernel::CoreFailed;
+		}
+
+
+		std::function<void(const char*)> custom_path_setup = [&](const char* application_data_path)
+		{
+			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
+			PathString root_path = platform::get_program_directory();
+
+			// the root path is the current binary path
+			filesystem->root_directory(root_path);
+
+			// the content directory is where we'll find our assets
+			filesystem->content_directory(content_path);
+
+			// load engine settings (from content path)
+			//load_config(config);
+
+			// the application path can be specified in the config (per-game basis)
+			//const platform::PathString application_path = platform::get_user_application_directory(config.application_directory.c_str());
+			filesystem->user_application_directory(application_data_path);
+		};
+
+		gemini::runtime_startup("arcfusion.net/orion", custom_path_setup);
 
 		// create a platform window
 		{
@@ -1245,6 +1382,7 @@ public:
 			}
 			last_origin = origin;
 
+			debugdraw::sphere(origin, Color::from_rgba(255, 0, 0, 255), 0.025f);
 			//mocap_frame.poses[index] = local_rotations[index];
 		}
 
