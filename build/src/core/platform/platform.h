@@ -571,6 +571,18 @@ namespace platform
 	// ---------------------------------------------------------------------
 	// other platform stuff
 	// ---------------------------------------------------------------------
+	struct PlatformExtensionDescription
+	{
+		const char* description;
+		const char* extension;
+
+		PlatformExtensionDescription(const char* desc = nullptr, const char* ext = nullptr)
+			: description(desc)
+			, extension(ext)
+		{
+		}
+	};
+
 	namespace OpenDialogFlags
 	{
 		constexpr uint8_t ShowHiddenFiles 		= 1;	// show hidden files
@@ -581,5 +593,17 @@ namespace platform
 	} // namespace OpenDialogFlags
 
 	Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths);
+
+	namespace SaveDialogFlags
+	{
+
+	} // namespace SaveDialogFlags
+
+
+	Result show_save_dialog(const char* title,
+							uint32_t save_flags,
+							const Array<PlatformExtensionDescription>& extensions,
+							const PathString& default_extension,
+							PathString& filename);
 
 } // namespace platform

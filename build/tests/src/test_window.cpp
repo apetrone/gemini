@@ -181,6 +181,22 @@ public:
 			main_window = platform::window::create(params);
 		}
 
+#if 0
+		Array<PlatformExtensionDescription> extensions;
+		extensions.push_back(PlatformExtensionDescription("Animation Session", "session"));
+		extensions.push_back(PlatformExtensionDescription("Animation", "animation"));
+		extensions.push_back(PlatformExtensionDescription("Any File", "*"));
+
+		PathString output;
+		platform::show_save_dialog("Save something", 0, extensions, "session", output);
+		LOGV("output is %s\n", output());
+#endif
+
+#if 0
+		Array<PathString> paths;
+		platform::show_open_dialog("Open Something", 0, paths);
+		LOGV("path selected: %s\n", paths[0]());
+#endif
 
 		// initialize the renderer
 		{
@@ -277,6 +293,7 @@ public:
 		font = font::load_from_memory(&data[0], data.size(), 16);
 
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
+
 
 		return kernel::NoError;
 	}
