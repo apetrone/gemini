@@ -218,12 +218,14 @@ namespace gui
 		}
 	} // remove_child
 
-	void Compositor::find_new_hot(ScreenInt dx, ScreenInt dy)
+	bool Compositor::find_new_hot(ScreenInt dx, ScreenInt dy)
 	{
 		Panel* last_hot = hot;
 
 		Point cursor(last_cursor.x, last_cursor.y);
 		Panel* newhot = get_capture();
+
+		bool event_handled = false;
 
 		if (!get_capture())
 		{
@@ -256,6 +258,7 @@ namespace gui
 						args.sender = this;
 						args.target = last_hot;
 						last_hot->handle_event(args);
+						event_handled = event_handled || args.handled;
 					}
 
 					if (hot)
@@ -272,9 +275,11 @@ namespace gui
 						args.sender = this;
 						args.target = hot;
 						hot->handle_event(args);
+						event_handled = event_handled || args.handled;
 					}
 				}
 			}
+
 		}
 
 		if (get_capture())
@@ -299,6 +304,7 @@ namespace gui
 			if (target)
 			{
 				target->handle_event(args);
+				event_handled = event_handled || args.handled;
 			}
 
 			Panel* last_drop_target = drop_target;
@@ -320,6 +326,7 @@ namespace gui
 					hoverargs.sender = this;
 					hoverargs.target = last_drop_target;
 					last_drop_target->handle_event(hoverargs);
+					event_handled = event_handled || hoverargs.handled;
 				}
 
 				if (drop_target)
@@ -335,6 +342,7 @@ namespace gui
 					hoverargs.sender = this;
 					hoverargs.target = drop_target;
 					drop_target->handle_event(hoverargs);
+					event_handled = event_handled || hoverargs.handled;
 				}
 			}
 		}
@@ -351,10 +359,13 @@ namespace gui
 			args.sender = this;
 			args.target = hot;
 			hot->handle_event(args);
+			event_handled = event_handled || args.handled;
 		}
-	}
 
-	void Compositor::cursor_move_absolute(ScreenInt x, ScreenInt y)
+		return event_handled;
+	} // find_new_hot
+
+	bool Compositor::cursor_move_absolute(ScreenInt x, ScreenInt y)
 	{
 		ScreenInt dx = static_cast<ScreenInt>(x - last_cursor.x);
 		ScreenInt dy = static_cast<ScreenInt>(y - last_cursor.y);
@@ -364,8 +375,10 @@ namespace gui
 			last_cursor.x = x;
 			last_cursor.y = y;
 
-			find_new_hot(dx, dy);
+			return find_new_hot(dx, dy);
 		} // any mouse delta movement
+
+		return false;
 	} // cursor_move_absolute
 
 	void Compositor::cursor_button( CursorButton::Type button, bool is_down )
