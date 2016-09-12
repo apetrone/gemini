@@ -356,6 +356,8 @@ namespace gui
 					on_scrubber_changed(current_frame);
 				}
 			}
+
+			args.handled = true;
 		} // handle_event
 
 		virtual void update(gui::Compositor* compositor, float delta_seconds) override
@@ -725,9 +727,9 @@ public:
 
 			if (event.subtype == kernel::MouseMoved)
 			{
-				compositor->cursor_move_absolute(event.mx, event.my);
+				bool handled = compositor->cursor_move_absolute(event.mx, event.my);
 
-				if (should_move_view)
+				if (!handled && should_move_view)
 				{
 					if (event.dx != 0 || event.dy != 0)
 					{

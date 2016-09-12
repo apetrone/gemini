@@ -91,8 +91,8 @@ namespace gui
 
 		ResourceCache* get_resource_cache() const { return resource_cache; }
 
-		// events
-		void cursor_move_absolute(ScreenInt x, ScreenInt y);
+		// events: returns true if event was handled by a Panel.
+		bool cursor_move_absolute(ScreenInt x, ScreenInt y);
 		void cursor_button(CursorButton::Type button, bool is_down);
 		void cursor_scroll(int32_t direction);
 		void key_event(uint32_t unicode, bool is_down, uint32_t character, uint16_t modifiers);
@@ -109,7 +109,7 @@ namespace gui
 		virtual void process_events();
 
 	private:
-		void find_new_hot(ScreenInt dx, ScreenInt dy);
+		bool find_new_hot(ScreenInt dx, ScreenInt dy);
 
 		Array<render::Vertex> vertex_buffer;
 		Array<render::Vertex>* get_vertex_buffer() { return &vertex_buffer; }
