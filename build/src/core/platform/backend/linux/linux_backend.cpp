@@ -357,5 +357,19 @@ namespace platform
 		return version;
 	}
 
+	Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths)
+	{
+		return Result::failure("Not implemented.");
+	} // show_open_dialog
+
+	Result show_save_dialog(const char* title,
+							uint32_t save_flags,
+							const Array<PlatformExtensionDescription>& extensions,
+							const PathString& default_extension,
+							PathString& filename)
+	{
+		return Result::failure("Not implemented.");
+	} // show_save_dialog
+
 } // namespace platform
 
