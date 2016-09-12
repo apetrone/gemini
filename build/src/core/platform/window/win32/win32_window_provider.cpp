@@ -489,6 +489,13 @@ namespace platform
 
 					// handle keyboard events
 					case WM_SYSKEYDOWN:
+					{
+						if (wparam == VK_F4)
+						{
+							// Handle Alt+F4
+							return DefWindowProc(hwnd, message, wparam, lparam);
+						}
+					}
 					case WM_SYSKEYUP:
 					case WM_KEYDOWN:
 					case WM_KEYUP:
