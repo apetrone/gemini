@@ -1145,7 +1145,7 @@ Options:
 			compositor->set_name("compositor");
 
 
-#if 0
+#if 1
 			gui::Timeline* timeline = new gui::Timeline(compositor);
 			timeline->set_bounds(0, 550, 800, 50);
 			timeline->set_frame_range(0, 30);
@@ -1196,9 +1196,9 @@ Options:
 
 
 				gui::Menu* record = new gui::Menu("Sensor", menubar);
-				record->add_item("Start Recording...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_record_start, this));
+				record->add_item("Save New Stream...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_record_start, this));
 				record->add_item("Stop Recording", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_record_stop, this));
-				record->add_item("Start Playback...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_playback_start, this));
+				record->add_item("Open Stream...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_playback_start, this));
 				record->add_item("Stop Playback", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_playback_stop, this));
 				menubar->add_menu(record);
 
@@ -1323,9 +1323,10 @@ Options:
 		}
 
 
-		debugdraw::text(20, 100, "Left Click + Drag: Rotate Camera", gemini::Color(1.0f, 1.0f, 1.0f));
-		debugdraw::text(20, 116, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
-		debugdraw::text(20, 132, "Space: Calibrate / Freeze Rotations", gemini::Color(1.0f, 1.0f, 1.0f));
+		int32_t yoffset = 130;
+		debugdraw::text(20, yoffset, "Left Click + Drag: Rotate Camera", gemini::Color(1.0f, 1.0f, 1.0f));
+		debugdraw::text(20, yoffset+16, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
+		debugdraw::text(20, yoffset+32, "Space: Calibrate / Freeze Rotations", gemini::Color(1.0f, 1.0f, 1.0f));
 
 		glm::quat local_rotations[TOTAL_SENSORS];
 
