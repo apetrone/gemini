@@ -263,7 +263,7 @@ void sensor_thread(platform::Thread* thread)
 						uint16_t port = net_address_port(&source);
 						LOGV("Connected with mocap client at %s:%i.\n", ip, port);
 						uint32_t response = 65535;
-						net_socket_sendto(*sock, &source, (const char*)response, sizeof(uint32_t));
+						net_socket_sendto(*sock, &source, (const char*)&response, sizeof(uint32_t));
 
 						net_address_set(&client_address, ip, port);
 						last_client_contact_msec = platform::microseconds() * MillisecondsPerMicrosecond;
