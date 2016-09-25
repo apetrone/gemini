@@ -87,6 +87,16 @@ struct bno055_packet_t
 		return (header == 0xba) && (footer == 0xff);
 	}
 
+	uint8_t get_header() const
+	{
+		return header;
+	}
+
+	uint8_t get_footer() const
+	{
+		return footer;
+	}
+
 	glm::quat get_orientation(uint32_t sensor_index = 0) const
 	{
 		int16_t x = 0;
@@ -130,6 +140,8 @@ void sensor_thread(platform::Thread* thread)
 	LOGV("launched network listen thread.\n");
 
 	const size_t PACKET_SIZE = sizeof(bno055_packet_t);
+	LOGV("packet size is %i bytes\n", PACKET_SIZE);
+
 	const size_t MAX_PACKET_DATA = 4 * PACKET_SIZE;
 	char buffer[MAX_PACKET_DATA];
 	size_t current_index = 0;
@@ -170,6 +182,7 @@ void sensor_thread(platform::Thread* thread)
 		{
 			if (msec_passed(last_client_contact_msec, CLIENT_TIMEOUT_MSEC))
 			{
+				LOGV("No communication from client in %i msec\n", CLIENT_TIMEOUT_MSEC);
 				LOGV("Assuming the client is dead. Waiting for connections...\n");
 				// Assume the client is dead.
 				current_state = STATE_WAITING;
@@ -203,9 +216,10 @@ void sensor_thread(platform::Thread* thread)
 			int32_t bytes_available = net_socket_recvfrom(*sock, &source, buffer, PACKET_SIZE);
 			if (bytes_available > 0)
 			{
+				LOGV("-> received %i bytes...\n", bytes_available);
+				last_client_contact_msec = current_milliseconds;
 				if (current_state == STATE_STREAMING)
 				{
-					last_client_contact_msec = current_milliseconds;
 					bno055_packet_t* packet = reinterpret_cast<bno055_packet_t*>(buffer);
 					if (packet->is_valid())
 					{
@@ -218,7 +232,7 @@ void sensor_thread(platform::Thread* thread)
 					}
 					else
 					{
-						LOGV("Received invalid packet!\n");
+						LOGV("Received invalid packet! (header = %x, footer = %x)\n", packet->get_header(), packet->get_footer());
 					}
 				}
 				else if (current_state == STATE_WAITING)
