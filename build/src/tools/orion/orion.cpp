@@ -195,7 +195,8 @@ void sensor_thread(platform::Thread* thread)
 		FD_ZERO(&transmit);
 		FD_SET(*sock, &transmit);
 
-		select(1, &receive, &transmit, nullptr, &zero_timeval);
+		int select_result = select((*sock) + 1, &receive, &transmit, nullptr, &zero_timeval);
+		assert(select_result >= 0);
 
 		if (FD_ISSET(*sock, &receive))
 		{
