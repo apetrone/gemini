@@ -83,6 +83,8 @@ namespace platform
 			XEvent last_key_release;
 			Atom atom_delete_window;
 
+			uint32_t virtual_key_map[256];
+
 			// Keep track of mouse coordinates last event
 			// in order to calculate the deltas.
 			int last_x;

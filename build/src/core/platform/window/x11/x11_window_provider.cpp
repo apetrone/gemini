@@ -38,6 +38,10 @@
 // see if we can replace this with XRandR
 #include <X11/extensions/Xinerama.h>
 
+#include <X11/XKBlib.h>
+
+using namespace gemini;
+
 namespace platform
 {
 	namespace window
@@ -79,6 +83,12 @@ namespace platform
 			last_x(0),
 			last_y(0)
 		{
+			memset(virtual_key_map, 0, sizeof(uint32_t) * 256);
+
+			// populate the virtual key
+			virtual_key_map[XK_A] = Button::BUTTON_A;
+			virtual_key_map[XK_B] = Button::BUTTON_B;
+			virtual_key_map[XK_Escape] = Button::BUTTON_ESCAPE;
 		}
 
 		X11WindowProvider::~X11WindowProvider()
@@ -283,6 +293,7 @@ namespace platform
 
 			kernel::SystemEvent sysevent;
 			kernel::MouseEvent mouseevent;
+			kernel::KeyboardEvent keyevent;
 
 			uint32_t x11_mouse_to_platform[] = {
 				gemini::MOUSE_INVALID, 	// AnyButton
@@ -329,14 +340,31 @@ namespace platform
 
 				case KeyPress:
 				case KeyRelease:
-					length = XLookupString(&event.xkey, buffer, 32, &keysym, NULL);
-					if (length > 0)
+					// length = XLookupString(&event.xkey, buffer, 32, &keysym, NULL);
+					// if (length > 0)
 					{
-						fprintf(stdout, "key: %s\n", buffer);
+						// fprintf(stdout, "key: %s\nKeyboardEvent", buffer);
 
-						// TODO: map virtual key to input key:
-						// http://www.kbdedit.com/manual/low_level_vk_list.html
-						//xkeymap.keysym.sym
+						// XKeysymToKeycode(display, )
+
+						KeySym sym = XkbKeycodeToKeysym(display,
+														event.xkey.keycode,
+														0, event.xkey.state & ShiftMask ? 1 : 0);
+
+						if (sym != NoSymbol)
+						{
+							// http://blog.eisbehr.org/5-working_with_xlib_series_2_-_keyboard_input.html
+
+							// TODO: map virtual key to input key:
+							// http://www.kbdedit.com/manual/low_level_vk_list.html
+							//xkeymap.keysym.sym
+							keyevent.is_down = (event.type == KeyPress) ? true : false;
+							keyevent.modifiers = 0;
+							keyevent.unicode = 0;
+							keyevent.key = virtual_key_map[sym];
+							fprintf(stdout, "sym is: %i, key is: %i\n", sym, keyevent.key);
+							kernel::event_dispatch(keyevent);
+						}
 					}
 					break;
 
