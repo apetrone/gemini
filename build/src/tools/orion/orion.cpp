@@ -1156,6 +1156,8 @@ Options:
 			gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(resource_cache);
 			gui_renderer->set_device(device);
 
+			assert(window_frame.width > 0);
+			assert(window_frame.height > 0);
 			compositor = new gui::Compositor(window_frame.width, window_frame.height, &resource_cache, gui_renderer);
 			compositor->set_name("compositor");
 
@@ -1165,7 +1167,7 @@ Options:
 			timeline->set_bounds(0, 550, 800, 50);
 			timeline->set_frame_range(0, 30);
 			timeline->on_scrubber_changed.bind<EditorKernel, &EditorKernel::timeline_scrubber_changed>(this);
-			timeline->set_frame(10);
+			timeline->set_frame(0);
 #endif
 
 #if 0
