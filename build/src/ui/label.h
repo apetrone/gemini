@@ -30,6 +30,7 @@
 #include "ui/scrollable.h"
 
 #include <core/typedefs.h>
+#include <core/typespec.h>
 
 #include <string>
 
@@ -37,6 +38,7 @@ namespace gui
 {
 	class Label : public ScrollablePanel
 	{
+		TYPESPEC_DECLARE_CLASS(Label, ScrollablePanel);
 	public:
 		Label(Panel* parent);
 

@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2015- Adam Petrone
+// Copyright (C) 2016- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,44 +22,38 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "ui/panel.h"
-#include "ui/events.h"
-#include "ui/utils.h"
-
-#include <core/typespec.h>
-
-#include <string>
+#include <ui/ui.h>
+#include <ui/utils.h>
+#include <ui/events.h>
 
 namespace gui
 {
-	class Slider : public gui::Panel
+	const char* event_type_to_string(EventType type)
 	{
-		TYPESPEC_DECLARE_CLASS(Slider, Panel);
-	public:
-		Slider(Panel* parent);
+		switch (type)
+		{
+			case Invalid: return "Invalid";
+			case Event_CursorEnter: return "Event_CursorEnter";
+			case Event_CursorExit: return "Event_CursorExit";
+			case Event_FocusGain: return "Event_FocusGain";
+			case Event_FocusLost: return "Event_FocusLost";
+			case Event_CursorMove: return "Event_CursorMove";
+			case Event_CursorDrag: return "Event_CursorDrag";
+			case Event_CursorDropMove: return "Event_CursorDropMove";
+			case Event_CursorDragEnter: return "Event_CursorDragEnter";
+			case Event_CursorDragExit: return "Event_CursorDragExit";
+			case Event_CursorDrop: return "Event_CursorDrop";
+			case Event_CursorScroll: return "Event_CursorScroll";
+			case Event_CursorButtonPressed: return "Event_CursorButtonPressed";
+			case Event_CursorButtonReleased: return "Event_CursorButtonReleased";
+			case Event_KeyButtonPressed: return "Event_KeyButtonPressed";
+			case Event_KeyButtonReleased: return "Event_KeyButtonReleased";
+			case Event_Click: return "Event_Click";
+			default: return "Invalid";
+		}
 
-		virtual void handle_event(gui::EventArgs& args) override;
+		return "Invalid";
+	} // event_type_to_string
 
-		virtual void update(gui::Compositor* compositor, float delta_seconds) override;
-		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands);
-
-		virtual void set_value(float new_value);
-		virtual float get_value() const { return current_value; }
-		virtual bool point_in_capture_rect(const Point&) const override { return true; }
-		gemini::Delegate<void (float)> on_value_changed;
-
-	protected:
-
-		Point get_left_edge();
-		Point get_right_edge();
-
-		//
-		float current_value;
-
-		Panel* drag_handle;
-
-		float drag_handle_width;
-	};
 } // namespace gui

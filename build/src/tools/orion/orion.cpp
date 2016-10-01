@@ -387,9 +387,7 @@ namespace gui
 			// should be updated before rendering
 			assert(frame_width_pixels > 0);
 
-			Point dimensions = scrubber->dimensions_from_pixels(Point(frame_width_pixels, size.height));
-
-			scrubber->set_dimensions(dimensions);
+			scrubber->set_size(frame_width_pixels, size.height);
 			scrubber->set_origin((current_frame * frame_width_pixels), 0.0f);
 
 			Panel::update(compositor, delta_seconds);
@@ -713,12 +711,11 @@ public:
 	{
 		if (event.subtype == kernel::WindowResized)
 		{
-			platform::window::Frame frame = platform::window::get_render_frame(main_window);
-
 			assert(device);
-			device->backbuffer_resized(frame.width, frame.height);
+			device->backbuffer_resized(event.render_width, event.render_height);
 
-			compositor->resize(frame.width, frame.height);
+			assert(compositor);
+			compositor->resize(event.window_width, event.window_height);
 		}
 		else if (event.subtype == kernel::WindowClosed)
 		{
@@ -1162,7 +1159,7 @@ Options:
 			compositor->set_name("compositor");
 
 
-#if 1
+#if 0
 			gui::Timeline* timeline = new gui::Timeline(compositor);
 			timeline->set_bounds(0, 550, 800, 50);
 			timeline->set_frame_range(0, 30);
@@ -1185,10 +1182,17 @@ Options:
 			tp->set_background_color(gemini::Color(1.0f, 0.5f, 0.0f));
 			tp->set_flags(tp->get_flags() | gui::Panel::Flag_CanMove);
 			tp->set_name("draggable_test_panel");
+
+			tp = new gui::Panel(compositor);
+			tp->set_dimensions(0.1f, 0.1f);
+			tp->set_origin(700, 200);
+			tp->set_background_color(gemini::Color(0.5f, 0.5f, 0.7f));
+			tp->set_flags(tp->get_flags() | gui::Panel::Flag_CanMove);
+			tp->set_name("draggable_test_panel");
 	#endif
 #endif
 
-#if 1
+#if 0
 			asset_processor = new AssetProcessingPanel(compositor);
 			asset_processor->set_origin(0.0f, 25.0f);
 			asset_processor->set_dimensions(1.0f, 0.05f);
@@ -1200,7 +1204,7 @@ Options:
 
 
 // add a menu
-#if 1
+#if 0
 			gui::MenuBar* menubar = new gui::MenuBar(compositor);
 			{
 				gui::Menu* filemenu = new gui::Menu("File", menubar);
@@ -1422,7 +1426,6 @@ Options:
 		if (compositor)
 		{
 			compositor->tick(static_cast<float>(kernel::parameters().step_interval_seconds));
-			compositor->process_events();
 		}
 
 		platform::window::Frame window_frame = platform::window::get_frame(main_window);

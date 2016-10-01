@@ -27,8 +27,9 @@
 #include "ui/panel.h"
 #include "ui/utils.h"
 
-#include <stdint.h>
+#include <core/typespec.h>
 
+#include <stdint.h>
 
 namespace gui
 {
@@ -37,6 +38,7 @@ namespace gui
 
 	class Graph : public Panel
 	{
+		TYPESPEC_DECLARE_CLASS(Graph, Panel);
 	protected:
 		float* values;
 		bool show_baseline;

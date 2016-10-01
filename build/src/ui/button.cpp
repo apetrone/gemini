@@ -28,12 +28,15 @@
 #include "ui/compositor.h"
 #include "ui/renderer.h"
 
+#include <core/logging.h>
+
+TYPESPEC_REGISTER_CLASS(gui::Button);
+
 namespace gui
 {
 	Button::Button(Panel* parent) : Panel(parent)
 	{
 		pressed_color = gemini::Color::from_rgba(255, 0, 0, 255);
-
 		state = 0;
 	} // Button
 
@@ -49,14 +52,10 @@ namespace gui
 			if (args.cursor_button == CursorButton::Left)
 			{
 				args.compositor->set_focus(this);
-				current_color = pressed_color;
-				state = 1;
+				state = 2;
 
 				EventArgs message = args;
 				message.type = Event_CursorButtonPressed;
-
-				// TODO: Do we still need the queue event stuff?
-				//args.compositor->queue_event(message);
 
 				if (on_pressed.is_valid())
 				{
@@ -70,33 +69,35 @@ namespace gui
 		{
 			if (args.cursor_button == CursorButton::Left)
 			{
-				if (args.compositor->get_hot() == this )
+				if (hit_test_local(args.local))
 				{
-					current_color = hover_color;
-
 					EventArgs message = args;
 					message.type = Event_Click;
-					args.compositor->queue_event(message);
-					state = 0;
 					if (on_click.is_valid())
 					{
 						on_click(message);
 					}
-					args.handled = true;
+
+					state = 1;
 				}
+				else
+				{
+					state = 0;
+				}
+
+				args.handled = true;
 			}
 		}
 		else if (args.type == Event_CursorExit)
 		{
-			if (args.capture != this)
-			{
-				current_color = background_color;
-				state = 0;
-				args.handled = true;
-			}
+			state = 0;
+			args.handled = true;
 		}
-
-		Panel::handle_event(args);
+		else if (args.type == Event_CursorEnter)
+		{
+			state = 1;
+			args.handled = true;
+		}
 	} // handle_event
 
 	void Button::update(Compositor* compositor, float delta_seconds)
@@ -107,23 +108,31 @@ namespace gui
 		{
 			current_color = background_color;
 		}
+		else if (state == 1)
+		{
+			current_color = hover_color;
+		}
+		else if (state == 2)
+		{
+			current_color = pressed_color;
+		}
 
 		gui::Rect font_dims;
 		compositor->get_renderer()->font_measure_string(font_handle, this->text.c_str(), text.size(), font_dims);
 
 		// We need floor to snap to pixel boundaries; not fractional pixels;
 		// which would introduce artifacts.
+
+		// centered
 		text_origin.x = glm::floor((size.width / 2.0f) - (font_dims.width()/2.0f));
 		text_origin.y = glm::floor((size.height / 2.0f) - (font_dims.height()/2.0f) + glm::max((float)font_height, font_dims.height()));
+
+		// top
+		//text_origin = Point(0, glm::floor(glm::max((float)font_height, font_dims.height())));
 	} // update
 
 	void Button::render(Compositor* compositor, Renderer* /*renderer*/, gui::render::CommandList& render_commands)
 	{
-		if (compositor->get_hot() == this && state == 0)
-		{
-			current_color = hover_color;
-		}
-
 		render_commands.add_rectangle(
 			geometry[0],
 			geometry[1],

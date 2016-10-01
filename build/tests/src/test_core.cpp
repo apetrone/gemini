@@ -37,6 +37,7 @@
 #include <core/str.h>
 #include <core/stackstring.h>
 #include <core/threadsafequeue.h>
+#include <core/typespec.h>
 #include <core/util.h>
 
 #include <platform/platform.h>
@@ -621,6 +622,113 @@ UNITTEST(str)
 	result = core::str::case_insensitive_compare(base, "string test number one", 0);
 	TEST_ASSERT(result == 0, case_insensitive_compare);
 }
+
+
+TYPESPEC_REGISTER_POD(uint32_t);
+
+
+class Test
+{
+public:
+	TYPESPEC_DECLARE_CLASS_NOBASE(Test)
+
+	virtual ~Test() {}
+
+	virtual void speak()
+	{
+		LOGV("Test speak\n");
+	}
+};
+TYPESPEC_REGISTER_CLASS(Test);
+
+
+class DerivedTest : public Test
+{
+public:
+	TYPESPEC_DECLARE_CLASS(DerivedTest, Test)
+
+	virtual void speak() override
+	{
+		LOGV("DerivedTest speak\n");
+	}
+};
+TYPESPEC_REGISTER_CLASS(DerivedTest);
+
+template <class T>
+struct MyTest
+{
+	static T* instance;
+};
+
+// template <>
+// Test* MyTest<Test>::instance = &(Test());
+
+// ---------------------------------------------------------------------
+// typespec
+// ---------------------------------------------------------------------
+UNITTEST(typespec)
+{
+	size_t value = STRING_HASH32("hello");
+	TEST_ASSERT(value == STRING_HASH32("hello"), string_hash32);
+
+
+
+	LOGV("type of int is: %s\n", TypeSpecName<uint32_t>::value);
+	LOGV("type of int is: %i\n", TypeSpecIdentifier<uint32_t>::value);
+	LOGV("size of type uint32_t is %i\n", TypeSpecSize<uint32_t>::value);
+
+	uint32_t b = 32;
+
+	uint32_t* a = &b;
+
+	Test klass;
+	LOGV("size of Test = %i\n", sizeof(Test));
+	LOGV("Test name = %s, identifier = %i\n", klass.typespec()->name(), klass.typespec()->identifier());
+	if (klass.typespec()->identifier() == TYPESPEC_IDENTIFIER("Test"))
+	{
+		LOGV("type is a Test\n");
+	}
+
+	DerivedTest derived;
+	LOGV("size of DerivedTest = %i\n", sizeof(DerivedTest));
+	LOGV("DerivedTest name = %s, identifier = %i\n", derived.typespec()->name(), derived.typespec()->identifier());
+	if (derived.typespec()->identifier() == TYPESPEC_IDENTIFIER("DerivedTest"))
+	{
+		LOGV("type is a DerivedTest\n");
+	}
+
+
+	if (STRING_HASH32("uint32_t") == typespec_identifier_from_value(a))
+	{
+		LOGV("a is a uint32_t\n");
+	}
+
+	DerivedTest second_derived;
+	TEST_ASSERT(derived.typespec() == second_derived.typespec(), typespec);
+
+	// const char* t = typespec_name_from_value(a);
+	// assert(t);
+
+//	if (is_same_type(a, "uint32_t"))
+//	{
+//		LOGV("types match!\n");
+//	}
+//	else
+//	{
+//		LOGV("types don't match\n");
+//	}
+
+	//uint32_t value = hash_string<5>("hello");
+}
+
+//template <class T>
+//bool is_same_type(T* value, const char* type_name)
+//{
+//	const char* deduced_type_name = typespec_name_from_value(value);
+//	return core::str::case_insensitive_compare(type_name, deduced_type_name, 0) == 0;
+//}
+
+
 
 
 // ---------------------------------------------------------------------

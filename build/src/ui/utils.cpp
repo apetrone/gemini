@@ -51,6 +51,13 @@ namespace gui
 		return width;
 	}
 
+	Size Size::operator += (const Size& other)
+	{
+		width += other.width;
+		height += other.height;
+		return Size(width, height);
+	}
+
 	// ---------------------------------------------------------------------
 	// Rect
 	// ---------------------------------------------------------------------
@@ -104,13 +111,13 @@ namespace gui
 
 	bool Rect::is_point_inside(const Point& pt) const
 	{
-		if (origin.x >= pt.x)
+		if (origin.x > pt.x)
 			return false;
-		else if (origin.y >= pt.y)
+		else if (origin.y > pt.y)
 			return false;
-		else if ((origin.x + size.width) <= pt.x)
+		else if ((origin.x + size.width) < pt.x)
 			return false;
-		else if ((origin.y + size.height) <= pt.y)
+		else if ((origin.y + size.height) < pt.y)
 			return false;
 
 		return true;

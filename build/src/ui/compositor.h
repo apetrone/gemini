@@ -27,10 +27,11 @@
 #include "ui/panel.h"
 #include "ui/events.h"
 
+#include <core/typespec.h>
+
 namespace gui
 {
 	class Renderer;
-	class Listener;
 
 	namespace render
 	{
@@ -38,22 +39,28 @@ namespace gui
 		struct CommandList;
 	}
 
+	class EventFilter
+	{
+	public:
+		// Returns true if the event should propagate forward.
+		// Returns false if the event should not.
+		virtual bool event_can_propagate(Panel* target, EventArgs& event) = 0;
+	};
+
 	class Compositor : public Panel
 	{
+		TYPESPEC_DECLARE_CLASS(Compositor, Panel);
 	public:
 		Panel* focus;
 		Panel* hot;
 		Panel* capture;
 		Panel* drop_target;
 		CursorButton::Type capture_button;
-		PanelVector zsorted;
+
 
 		Point last_cursor;
 		size_t next_z_depth;
-		Listener* listener;
 
-		EventArgs queue[16];
-		uint16_t next_message;
 		uint32_t key_modifiers;
 
 		render::CommandList command_list;
@@ -74,17 +81,16 @@ namespace gui
 		void set_focus(Panel* panel);
 
 		Panel* get_hot() { return hot; }
-		void set_hot(Panel* panel) { hot = panel; }
+		void set_hot(Panel* panel);
 
 		Panel* get_capture() { return capture; }
-		void set_capture(Panel* panel, CursorButton::Type button) { capture = panel; capture_button = button; }
+		void set_capture(Panel* panel, CursorButton::Type button);
 
 		const Point& get_cursor_position() const { return last_cursor; }
 
 		Renderer* get_renderer() const { return renderer; }
 
 		void send_to_front(Panel* panel);
-		void sort_zorder(Panel* panel);
 
 		virtual void add_child(Panel* panel);
 		virtual void remove_child(Panel* panel);
@@ -104,18 +110,28 @@ namespace gui
 		Panel* find_panel_at_location(const Point& location, uint32_t flags, Panel* ignore = nullptr);
 		Panel* find_deepest_panel_at_location(Panel* root, const Point& location, uint32_t flags, Panel* ignore = nullptr);
 
-		virtual void set_listener(Listener* listener);
-		virtual void queue_event(const EventArgs& args);
-		virtual void process_events();
+		// install an event filter on the compositor
+		void install_event_filter(EventFilter* filter);
+
+		// remove an existing event filter on the compositor
+		void remove_event_filter();
 
 	private:
 		bool find_new_hot(ScreenInt dx, ScreenInt dy);
+
+		// Returns whether or not the event was handled by the panel
+		bool dispatch_event_to_panel(Panel* panel, EventArgs& args);
+
+		// Dispatch an event recursively from compositor to Panel.
+		// Returns whether or not the event was handled.
+		bool dispatch_recursive(Panel* panel, EventArgs& args);
 
 		Array<render::Vertex> vertex_buffer;
 		Array<render::Vertex>* get_vertex_buffer() { return &vertex_buffer; }
 
 		ResourceCache* resource_cache;
 		Renderer* renderer;
+		EventFilter* event_filter;
 	}; // struct Compositor
 
 } // namespace gui

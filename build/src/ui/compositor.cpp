@@ -24,22 +24,15 @@
 // -------------------------------------------------------------
 #include "ui/compositor.h"
 #include "ui/renderer.h"
+#include <ui/layout.h>
 #include <core/logging.h>
 
-#include <algorithm>
+#include <algorithm> // for std::sort
+
+TYPESPEC_REGISTER_CLASS(gui::Compositor);
 
 namespace gui
 {
-	struct ZSort_Panel_Descending
-	{
-		bool operator()(Panel* left, Panel* right)
-		{
-			// This must obey strict weak ordering; so we'll have to come up
-			// with another plan.
-			return (left->z_depth < right->z_depth);
-		}
-	}; // ZSort_Panel_Descending
-
 	struct ZSort_Panel_AlwaysOnTop_Descending
 	{
 		bool operator()(Panel* left, Panel* right)
@@ -48,11 +41,12 @@ namespace gui
 		}
 	}; // ZSort_Panel_AlwaysOnTop_Descending
 
-	Compositor::Compositor(ScreenInt width, ScreenInt height, ResourceCache* cache, Renderer* renderer) :
-		Panel(nullptr),
-		command_list(this, &vertex_buffer),
-		resource_cache(cache),
-		renderer(renderer)
+	Compositor::Compositor(ScreenInt width, ScreenInt height, ResourceCache* cache, Renderer* renderer)
+		: Panel(nullptr)
+		, command_list(this, &vertex_buffer)
+		, resource_cache(cache)
+		, renderer(renderer)
+		, event_filter(nullptr)
 	{
 		size.width = width;
 		size.height = height;
@@ -69,11 +63,8 @@ namespace gui
 		set_capture(0, CursorButton::None);
 
 		next_z_depth = 0;
-		listener = 0;
 
 		key_modifiers = 0;
-
-		next_message = 0;
 
 		// We cannot start without a valid resource cache
 		assert(cache);
@@ -99,7 +90,6 @@ namespace gui
 			panel->update(this, delta_seconds);
 		}
 
-		process_events();
 		flags &= ~Flag_TransformIsDirty;
 	} // update
 
@@ -111,14 +101,15 @@ namespace gui
 		vertex_buffer.resize(0);
 
 		renderer->begin_frame(this);
-		for(PanelVector::reverse_iterator it = zsorted.rbegin(); it != zsorted.rend(); ++it)
-		{
-			Panel* panel = (*it);
-			if (panel->is_visible())
-			{
-				panel->render(this, renderer, command_list);
-			}
-		}
+
+		render_children(this, renderer, command_list);
+
+		// draw hot
+		//if (hot)
+		//{
+		//	hot->render_geometry(command_list, gemini::Color(1.0f, 0.0f, 0.0f, 0.5f));
+		//}
+
 		renderer->draw_commands(&command_list, vertex_buffer);
 		renderer->end_frame();
 	} // draw
@@ -140,64 +131,62 @@ namespace gui
 			if (focus)
 			{
 				focus_args.type = Event_FocusLost;
-				focus->handle_event(focus_args);
+				focus_args.target = focus;
+				dispatch_recursive(focus, focus_args);
 			}
 
 			if (panel)
 			{
+				focus_args.handled = false;
 				focus_args.type = Event_FocusGain;
 				focus_args.target = panel;
-				panel->handle_event(focus_args);
+				dispatch_recursive(panel, focus_args);
 			}
 		}
 
 		focus = panel;
 	}
 
+	void Compositor::set_hot(Panel* panel)
+	{
+		//if (panel)
+		//{
+		//	LOGV("set hot to %s\n", panel->get_name());
+		//}
+		//else
+		//{
+		//	LOGV("set hot to NULL\n");
+		//}
+		hot = panel;
+	}
+
+	void Compositor::set_capture(Panel* panel, CursorButton::Type button)
+	{
+		//if (panel)
+		//{
+		//	LOGV("set capture panel to %s\n", panel->get_name());
+		//}
+		//else
+		//{
+		//	LOGV("set capture panel to NULL\n");
+		//}
+		capture = panel;
+		capture_button = button;
+	}
+
 	void Compositor::send_to_front(Panel* panel)
 	{
 		if (panel && panel->can_send_to_front())
 		{
-			sort_zorder(panel);
+			zsort_children(panel);
+			std::sort(zsorted.begin(), zsorted.end(), ZSort_Panel_AlwaysOnTop_Descending());
 		}
 	} // send_to_front
-
-	void Compositor::sort_zorder(Panel* panel)
-	{
-		if (!panel)
-		{
-			return;
-		}
-
-		size_t old_z = panel->z_depth;
-
-		// search the zlist for the top window
-		for( PanelVector::iterator it = zsorted.begin(); it != zsorted.end(); ++it )
-		{
-			Panel* target = (*it);
-
-			if (target->z_depth == old_z)
-			{
-				target->z_depth = 0;
-				break;
-			}
-			else
-			{
-				target->z_depth++;
-			}
-		}
-
-		std::sort(zsorted.begin(), zsorted.end(), ZSort_Panel_Descending());
-		std::sort(zsorted.begin(), zsorted.end(), ZSort_Panel_AlwaysOnTop_Descending());
-	} // sort_zorder
 
 	void Compositor::add_child(Panel* panel)
 	{
 		Panel::add_child(panel);
-
-		zsorted.push_back(panel);
-		panel->z_depth = next_z_depth++;
-		sort_zorder(panel);
+		std::sort(zsorted.begin(), zsorted.end(), ZSort_Panel_AlwaysOnTop_Descending());
 	} // add_child
 
 	void Compositor::remove_child(Panel* panel)
@@ -218,76 +207,90 @@ namespace gui
 		}
 	} // remove_child
 
+	bool hit_test_panel(Panel* panel, const Point& location, uint32_t option_flags)
+	{
+		assert(panel != nullptr);
+
+		// TODO: convert compositor coordinates to panel local coordinates
+		const Point local_coords = panel->compositor_to_local(location);
+		const bool passed_flags = panel->has_flags(option_flags);
+		const bool hit_test = panel->hit_test_local(local_coords);
+		const bool result = passed_flags && hit_test;
+		//		if (!result)
+		//		{
+		//			fprintf(stdout, "[%s] local_coords = %2.2f, %2.2f [flags: %s, hit_test: %s]\n",
+		//				panel->get_name(),
+		//				local_coords.x,
+		//				local_coords.y,
+		//				passed_flags ? "Yes" : "No",
+		//				hit_test ? "Yes" : "No"
+		//			);
+		//		}
+
+		return result;
+	} // hit_test_panel
+
 	bool Compositor::find_new_hot(ScreenInt dx, ScreenInt dy)
 	{
-		Panel* last_hot = hot;
-
 		Point cursor(last_cursor.x, last_cursor.y);
-		Panel* newhot = get_capture();
+		Panel* newhot = nullptr;
 
 		bool event_handled = false;
+
+		const uint32_t panel_flags = (Panel::Flag_CursorEnabled | Panel::Flag_IsVisible);
 
 		if (!get_capture())
 		{
 			// There is no captured panel:
 			// - moving the mouse tries to find a new hot panel
-			newhot = find_panel_at_location(cursor, Panel::Flag_CursorEnabled | Panel::Flag_IsVisible);
-			hot = newhot;
 
-			if (newhot)
+			newhot = find_panel_at_location(cursor, panel_flags);
+
+			if (newhot != hot)
 			{
-				// if hot changed
-				if (hot != last_hot)
+				if (hot)
 				{
-					if (hot && listener)
-					{
-						listener->hot_changed(last_hot, hot);
-					}
+					// mouse exit
+					EventArgs args(this, Event_CursorExit);
+					args.cursor = cursor;
+					args.hot = hot;
+					args.focus = get_focus();
+					args.capture = get_capture();
+					args.delta.x = dx;
+					args.delta.y = dy;
+					args.sender = this;
+					args.target = hot;
+					event_handled = dispatch_recursive(hot, args) || event_handled;
+				}
 
-					if (last_hot)
-					{
-						// mouse exit
-						EventArgs args(this, Event_CursorExit);
-						args.cursor = cursor;
-						args.hot = last_hot;
-						args.focus = get_focus();
-						args.capture = get_capture();
-						args.delta.x = dx;
-						args.delta.y = dy;
-						args.local = last_hot->compositor_to_local(cursor);
-						args.sender = this;
-						args.target = last_hot;
-						last_hot->handle_event(args);
-						event_handled = event_handled || args.handled;
-					}
-
-					if (hot)
-					{
-						// mouse enter
-						EventArgs args(this, Event_CursorEnter);
-						args.cursor = cursor;
-						args.hot = hot;
-						args.focus = get_focus();
-						args.capture = get_capture();
-						args.delta.x = dx;
-						args.delta.y = dy;
-						args.local = hot->compositor_to_local(cursor);
-						args.sender = this;
-						args.target = hot;
-						hot->handle_event(args);
-						event_handled = event_handled || args.handled;
-					}
+				if (newhot)
+				{
+					// if hot changed
+					// mouse enter
+					EventArgs args(this, Event_CursorEnter);
+					args.cursor = cursor;
+					args.hot = newhot;
+					args.focus = get_focus();
+					args.capture = get_capture();
+					args.delta.x = dx;
+					args.delta.y = dy;
+					args.sender = this;
+					args.target = newhot;
+					event_handled = dispatch_recursive(newhot, args) || event_handled;
 				}
 			}
 
+			set_hot(newhot);
 		}
 
 		if (get_capture())
 		{
+			newhot = find_panel_at_location(cursor, panel_flags);
+
 			// There is a captured panel.
 			// - A drag event is happening to the capture.
 			// - A drag and drop event from capture to... drop_target.
-			Panel* target = get_capture();
+//			Panel* target = get_capture();
 
 			EventArgs args(this, Event_CursorDrag);
 			args.cursor_button = capture_button;
@@ -297,14 +300,23 @@ namespace gui
 			args.capture = get_capture();
 			args.delta.x = dx;
 			args.delta.y = dy;
-			args.local = focus->compositor_to_local(cursor);
 			args.sender = this;
 			args.target = get_capture();
+			event_handled = dispatch_recursive(get_capture(), args) || event_handled;
 
-			if (target)
+			if (drop_target)
 			{
-				target->handle_event(args);
-				event_handled = event_handled || args.handled;
+				EventArgs args(this, Event_CursorDropMove);
+				args.cursor_button = capture_button;
+				args.cursor = cursor;
+				args.hot = focus;
+				args.focus = get_focus();
+				args.capture = get_capture();
+				args.delta.x = dx;
+				args.delta.y = dy;
+				args.sender = this;
+				args.target = drop_target;
+				event_handled = dispatch_recursive(drop_target, args) || event_handled;
 			}
 
 			Panel* last_drop_target = drop_target;
@@ -315,35 +327,67 @@ namespace gui
 			{
 				if (last_drop_target)
 				{
-					EventArgs hoverargs(this, Event_CursorDragExit);
+					EventArgs hoverargs(this, Event_CursorDropExit);
 					hoverargs.cursor_button = capture_button;
 					hoverargs.cursor = cursor;
 					hoverargs.hot = last_drop_target;
 					hoverargs.focus = get_focus();
 					hoverargs.delta.x = dx;
 					hoverargs.delta.y = dy;
-					hoverargs.local = last_drop_target->compositor_to_local(cursor);
 					hoverargs.sender = this;
 					hoverargs.target = last_drop_target;
-					last_drop_target->handle_event(hoverargs);
-					event_handled = event_handled || hoverargs.handled;
+					event_handled = dispatch_recursive(last_drop_target, args) || event_handled;
 				}
 
 				if (drop_target)
 				{
-					EventArgs hoverargs(this, Event_CursorDragEnter);
+					EventArgs hoverargs(this, Event_CursorDropEnter);
 					hoverargs.cursor_button = capture_button;
 					hoverargs.cursor = cursor;
 					hoverargs.hot = drop_target;
 					hoverargs.focus = get_focus();
 					hoverargs.delta.x = dx;
 					hoverargs.delta.y = dy;
-					hoverargs.local = drop_target->compositor_to_local(cursor);
 					hoverargs.sender = this;
 					hoverargs.target = drop_target;
-					drop_target->handle_event(hoverargs);
-					event_handled = event_handled || hoverargs.handled;
+					event_handled = dispatch_recursive(drop_target, args) || event_handled;
 				}
+			}
+
+			if (newhot != hot)
+			{
+				if (hot)
+				{
+					// mouse exit
+					EventArgs args(this, Event_CursorDragExit);
+					args.cursor = cursor;
+					args.hot = newhot;
+					args.focus = get_focus();
+					args.capture = get_capture();
+					args.delta.x = dx;
+					args.delta.y = dy;
+					args.sender = this;
+					args.target = hot;
+					event_handled = dispatch_recursive(hot, args) || event_handled;
+				}
+
+				if (newhot)
+				{
+					// if hot changed
+					// mouse enter
+					EventArgs args(this, Event_CursorDragEnter);
+					args.cursor = cursor;
+					args.hot = newhot;
+					args.focus = get_focus();
+					args.capture = get_capture();
+					args.delta.x = dx;
+					args.delta.y = dy;
+					args.sender = this;
+					args.target = newhot;
+					event_handled = dispatch_recursive(newhot, args) || event_handled;
+				}
+
+				hot = newhot;
 			}
 		}
 		else if (hot)
@@ -355,15 +399,86 @@ namespace gui
 			args.capture = get_capture();
 			args.delta.x = dx;
 			args.delta.y = dy;
-			args.local = hot->compositor_to_local(cursor);
 			args.sender = this;
 			args.target = hot;
-			hot->handle_event(args);
-			event_handled = event_handled || args.handled;
+			event_handled = dispatch_recursive(hot, args) || event_handled;
 		}
 
 		return event_handled;
 	} // find_new_hot
+
+	bool Compositor::dispatch_event_to_panel(Panel* panel, EventArgs& args)
+	{
+		//LOGV("-> dispatch %s to panel %s\n", event_type_to_string(args.type), panel->get_name());
+		bool propagate_event = true;
+		if (event_filter)
+		{
+			propagate_event = event_filter->event_can_propagate(panel, args);
+		}
+
+		if (propagate_event)
+		{
+			Layout* layout = panel->get_layout();
+			if (layout)
+			{
+				layout->handle_event(args);
+			}
+
+			if (!args.handled)
+			{
+				panel->handle_event(args);
+			}
+		}
+
+		return propagate_event && (!args.handled);
+	} // dispatch_event_to_panel
+
+	bool Compositor::dispatch_recursive(Panel* panel, EventArgs& args)
+	{
+
+		if (panel == this)
+		{
+			return false;
+		}
+
+		//if (panel->get_parent() == args.compositor)
+		//{
+		//	LOGV("---------------------\n");
+		//}
+
+		bool result = dispatch_recursive(panel->get_parent(), args);
+		if (!result)
+		{
+			args.local = panel->compositor_to_local(args.cursor);
+
+			bool propagate_event = true;
+			if (event_filter)
+			{
+				propagate_event = event_filter->event_can_propagate(panel, args);
+			}
+
+			if (propagate_event)
+			{
+				Layout* layout = panel->get_layout();
+				if (layout)
+				{
+					layout->handle_event(args);
+				}
+
+				if (!args.handled)
+				{
+					//LOGV("dispatch event to %s\n", panel->get_name());
+					panel->handle_event(args);
+				}
+			}
+			else
+			{
+				return true;
+			}
+		}
+
+		return args.handled;
+	} // dispatch_recursive
 
 	bool Compositor::cursor_move_absolute(ScreenInt x, ScreenInt y)
 	{
@@ -381,39 +496,53 @@ namespace gui
 		return false;
 	} // cursor_move_absolute
 
-	void Compositor::cursor_button( CursorButton::Type button, bool is_down )
+	void Compositor::cursor_button(CursorButton::Type button, bool is_down)
 	{
+		bool event_handled = false;
 		if (is_down)
 		{
-			// We must report the focus panel has lost focus FIRST.
 			Panel* panel = get_hot();
-
-			// Then we have to dispatch the button press to the new panel.
-			EventArgs args(this, Event_CursorButtonPressed);
-			args.focus = get_focus();
-			args.hot = panel;
-			args.capture = panel;
-			args.cursor_button = button;
-			args.cursor = last_cursor;
-			args.sender = this;
-
 			if (panel)
 			{
+				// Then we have to dispatch the button press to the new panel.
+				EventArgs args(this, Event_CursorButtonPressed);
+				args.focus = get_focus();
+				args.hot = panel;
+				args.capture = panel;
+				args.cursor_button = button;
+				args.cursor = last_cursor;
+				args.sender = this;
 				args.target = panel;
-				args.local = panel->compositor_to_local(last_cursor);
-				panel->handle_event(args);
-			}
+				event_handled = dispatch_recursive(panel, args) || event_handled;
 
-			// Lastly, can dispatch the FocusGain message to the new panel.
-			if (panel != focus)
+				if (!event_handled)
+				{
+					if (panel != focus)
+					{
+						set_focus(panel);
+					}
+				}
+			}
+			else
 			{
-				set_focus(panel);
+				if (panel != focus)
+				{
+					set_focus(panel);
+				}
 			}
-
 
 			set_hot(panel);
-			set_capture(panel, button);
 
+			if (panel && panel->point_in_capture_rect(panel->compositor_to_local(last_cursor)) && panel->has_flags(Flag_CanMove))
+			{
+				set_capture(panel, button);
+			}
+			else
+			{
+				set_capture(nullptr, button);
+			}
+
+			// TODO: the event dispatch should re-order the panel!
 			send_to_front(panel);
 		}
 		else
@@ -427,36 +556,36 @@ namespace gui
 			args.cursor = last_cursor;
 			args.sender = this;
 
-
-			if (args.focus)
+			if (get_hot())
 			{
-				args.target = get_focus();
-				args.local = args.focus->compositor_to_local(last_cursor);
-				args.focus->handle_event(args);
+				args.target = get_hot();
+				event_handled = dispatch_recursive(get_hot(), args) || event_handled;
 			}
 
-			if (get_capture())
-			{
-				args.target = get_capture();
-				args.type = Event_CursorExit;
-				args.capture = nullptr;
-				get_capture()->handle_event(args);
-			}
+			//if (get_capture())
+			//{
+			//	args.target = get_capture();
+			//	args.type = Event_CursorExit;
+			//	args.capture = nullptr;
+			//	//dispatch_event_to_panel(get_capture(), args);
+			//	dispatch_topdown_event(get_capture(), last_cursor, args, Flag_CursorEnabled);
+			//}
 
 			if (drop_target)
 			{
 				// dispatch drop event
-				args.target = drop_target;
 				args.type = Event_CursorDrop;
 				args.capture = get_capture();
-				args.local = drop_target->compositor_to_local(last_cursor);
-				drop_target->handle_event(args);
+				args.target = drop_target;
+				event_handled = dispatch_recursive(drop_target, args) || event_handled;
 			}
 
 			set_capture(0, CursorButton::None);
 			find_new_hot(0, 0);
 			drop_target = nullptr;
 		}
+
+		// return event_handled;
 	} // cursor_button
 
 	void Compositor::cursor_scroll(int32_t direction)
@@ -469,13 +598,12 @@ namespace gui
 		args.modifiers = key_modifiers;
 		args.wheel = direction;
 		args.sender = this;
+		args.target = args.hot;
 
 		Panel* panel = args.hot;
 		if (panel)
 		{
-			args.target = panel;
-			args.local = panel->compositor_to_local(last_cursor);
-			panel->handle_event(args);
+			dispatch_recursive(panel, args);
 		}
 	} // cursor_scroll
 
@@ -490,14 +618,13 @@ namespace gui
 		args.cursor = last_cursor;
 		args.modifiers = key_modifiers;
 		args.sender = this;
+		args.target = args.focus;
 
 		// key events are directed to the panel in focus
 		Panel* panel = args.focus;
 		if (panel)
 		{
-			args.target = panel;
-			args.local = panel->compositor_to_local(last_cursor);
-			panel->handle_event(args);
+			dispatch_recursive(panel, args);
 		}
 	} // key_event
 
@@ -510,27 +637,16 @@ namespace gui
 		flags |= Flag_TransformIsDirty;
 	} // resize
 
-	bool hit_test_panel(Panel* panel, const Point& location, uint32_t option_flags)
+	bool hit_test_layout(Panel* panel, const Point& location)
 	{
-		assert(panel != nullptr);
+		Layout* layout = panel->get_layout();
+		if (layout == nullptr)
+			return false;
 
-		// TODO: convert compositor coordinates to panel local coordinates
 		const Point local_coords = panel->compositor_to_local(location);
-		const bool passed_flags = panel->has_flags(option_flags);
-		const bool hit_test = panel->hit_test_local(local_coords);
-		const bool result = passed_flags && hit_test;
-//		if (!result)
-//		{
-//			fprintf(stdout, "[%s] local_coords = %2.2f, %2.2f [flags: %s, hit_test: %s]\n",
-//				panel->get_name(),
-//				local_coords.x,
-//				local_coords.y,
-//				passed_flags ? "Yes" : "No",
-//				hit_test ? "Yes" : "No"
-//			);
-//		}
-
-		return result;
+		const bool hit_layout = layout->hit_test_local(local_coords);
+		LOGV("test panel's layout %s, result => %i\n", panel->get_name(), hit_layout);
+		return hit_layout;
 	}
 
 	Panel* Compositor::find_panel_at_location(const Point& location, uint32_t option_flags, Panel* ignore)
@@ -545,7 +661,7 @@ namespace gui
 			}
 		}
 
-		return nullptr;
+		return this;
 	} // find_panel_at_location
 
 	Panel* Compositor::find_deepest_panel_at_location(Panel* root, const gui::Point& location, uint32_t option_flags, Panel* ignore)
@@ -576,42 +692,14 @@ namespace gui
 		}
 	} // find_deepest_panel_point
 
-	void Compositor::set_listener(Listener* event_listener)
+	void Compositor::install_event_filter(EventFilter* filter)
 	{
-		listener = event_listener;
-	} // set_listener
+		event_filter = filter;
+	} // install_event_filter
 
-	void Compositor::queue_event(const EventArgs& args)
+	void Compositor::remove_event_filter()
 	{
-		if (next_message == 15)
-		{
-			fprintf(stderr, "Overflow event queue! Ignoring event\n");
-			return;
-		}
+		event_filter = nullptr;
+	} // remove_event_filter
 
-		queue[next_message] = args;
-
-
-		++next_message;
-	}
-
-	void Compositor::process_events()
-	{
-		next_message = 0;
-		if (listener == 0)
-		{
-			// no one to listen to our events!
-			return;
-		}
-
-		for (uint16_t i = 0; i < 16; ++i)
-		{
-			EventArgs& event = queue[i];
-			if (event.type != Invalid)
-			{
-				listener->handle_event(event);
-				event.type = Invalid;
-			}
-		}
-	}
 } // namespace gui

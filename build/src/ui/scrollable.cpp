@@ -27,6 +27,8 @@
 #include "ui/compositor.h"
 //#include <renderer/color.h>
 
+TYPESPEC_REGISTER_CLASS(gui::ScrollablePanel);
+
 namespace gui
 {
 	static const float SCROLL_BAR_WIDTH = 12;
@@ -55,25 +57,25 @@ namespace gui
 
 	void ScrollablePanel::handle_event(gui::EventArgs& args)
 	{
-		Panel::handle_event(args);
-
 		if (args.type == Event_CursorScroll)
 		{
 			// TODO: Handle cursor scrolling. Should update the content
 			// scroll and scroll bar position.
-//			if (vertical_bar->is_visible())
-//			{
-//				gui::Rect content_rect;
-//				get_content_bounds(content_rect);
-//				scroll_offset.y -= (args.wheel* 5.0f);
-//				if (scroll_offset.y < 0.0f)
-//					scroll_offset.y = 0;
-//			}
+			if (vertical_bar->is_visible())
+			{
+				gui::Rect content_rect;
+				get_content_bounds(content_rect);
+				scroll_offset.y -= (args.wheel* 5.0f);
+				if (scroll_offset.y < 0.0f)
+					scroll_offset.y = 0;
+			}
 		}
 		else if (args.type == Event_KeyButtonPressed)
 		{
 			// TODO: handle home, end, page up, page down, left arrow, right arrow
 		}
+
+		//Panel::handle_event(args);
 	} // handle_event
 
 
@@ -95,11 +97,10 @@ namespace gui
 		const float vertical_content_overflow = (content_rect.height() - size.height);
 		if (vertical_content_overflow > 0)
 		{
-			float vratio = size.height / content_rect.height();
-			vratio = glm::min(vratio, 1.0f);
+			float vheight = size.height * (size.height / content_rect.height());
 			vertical_bar->set_origin(size.width-SCROLL_BAR_WIDTH, 0);
 			vertical_bar->set_size(gui::Size(SCROLL_BAR_WIDTH, size.height-SCROLL_BAR_WIDTH));
-			vertical_bar->set_button_dimensions(1.0f, vratio);
+			vertical_bar->set_button_size(vertical_bar->get_size().width, vheight);
 		}
 		vertical_bar->set_visible((vertical_content_overflow > 0) ? true : false);
 	}

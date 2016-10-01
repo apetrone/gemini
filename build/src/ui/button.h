@@ -27,6 +27,7 @@
 #include "ui/panel.h"
 #include "ui/events.h"
 
+#include <core/typespec.h>
 
 namespace gui
 {
@@ -35,6 +36,8 @@ namespace gui
 
 	class Button : public Panel
 	{
+		TYPESPEC_DECLARE_CLASS(Button, Panel);
+
 	public:
 		Button(Panel* parent);
 		virtual ~Button();

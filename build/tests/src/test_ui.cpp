@@ -26,6 +26,8 @@
 
 #include <core/logging.h>
 #include <core/profiler.h>
+#include <core/argumentparser.h>
+#include <core/typespec.h>
 
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
@@ -51,6 +53,7 @@
 #include <ui/label.h>
 #include <ui/tabcontrol.h>
 #include <ui/menu.h>
+#include <ui/layout.h>
 
 #include <assert.h>
 
@@ -64,6 +67,7 @@ using namespace renderer;
 #define GEMINI_TEST_TABCONTROL		1 // 9 draw calls
 #define GEMINI_TEST_BUTTON			1 // 6 draw calls (2 per button)
 #define GEMINI_TEST_SLIDER			1 // 5 draw calls
+#define GEMINI_TEST_LAYOUT			1
 
 // enable this to enable and test audio
 //#define TEST_AUDIO 1
@@ -99,6 +103,49 @@ struct MyVertex
 		color[1] = green;
 		color[2] = blue;
 		color[3] = alpha;
+	}
+};
+
+class TestEventFilter : public gui::EventFilter
+{
+public:
+#if 0
+public:
+	//gemini::audio::SoundHandle focus_sound;
+	//gemini::audio::SoundHandle hot_sound;
+
+	TestUIListener()
+	{
+		//hot_sound = gemini::audio::load_sound("sounds/select.wav");
+		//focus_sound = gemini::audio::load_sound("sounds/confirm.wav");
+	}
+
+	virtual void focus_changed(gui::Panel* old_focus, gui::Panel* new_focus)
+	{
+
+	}
+
+	virtual void hot_changed(gui::Panel* old_hot, gui::Panel* new_hot)
+	{
+		//hot_sound = gemini::audio::load_sound("sounds/select.wav");
+		//gemini::audio::play_sound(hot_sound, 0);
+	}
+
+	virtual void handle_event(const gui::EventArgs& event)
+	{
+		if (event.type == gui::Event_Click)
+		{
+			//focus_sound = gemini::audio::load_sound("sounds/confirm.wav");
+			//gemini::audio::play_sound(focus_sound, 0);
+		}
+	}
+#endif
+
+
+	bool event_can_propagate(gui::Panel* target, gui::EventArgs& event)
+	{
+		LOGV("test event: %i\n", event.type);
+		return true;
 	}
 };
 
@@ -185,40 +232,6 @@ namespace gui
 	}
 } // namespace gui
 
-
-class TestUIListener : public gui::Listener
-{
-public:
-	//gemini::audio::SoundHandle focus_sound;
-	//gemini::audio::SoundHandle hot_sound;
-
-	TestUIListener()
-	{
-		//hot_sound = gemini::audio::load_sound("sounds/select.wav");
-		//focus_sound = gemini::audio::load_sound("sounds/confirm.wav");
-	}
-
-	virtual void focus_changed(gui::Panel* old_focus, gui::Panel* new_focus)
-	{
-
-	}
-
-	virtual void hot_changed(gui::Panel* old_hot, gui::Panel* new_hot)
-	{
-		//hot_sound = gemini::audio::load_sound("sounds/select.wav");
-		//gemini::audio::play_sound(hot_sound, 0);
-	}
-
-	virtual void handle_event(const gui::EventArgs& event)
-	{
-		if (event.type == gui::Event_Click)
-		{
-			//focus_sound = gemini::audio::load_sound("sounds/confirm.wav");
-			//gemini::audio::play_sound(focus_sound, 0);
-		}
-	}
-};
-
 // ---------------------------------------------------------------------
 // TestUi
 // ---------------------------------------------------------------------
@@ -235,19 +248,21 @@ class TestUi : public kernel::IKernel,
 	gui::Label* label;
 	gui::Slider* slider;
 	gui::Label* slider_label;
+	gui::TabControl* tab_control;
+
 	GUIRenderer renderer;
 	StandaloneResourceCache resource_cache;
 
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
 
+	TestEventFilter test_filter;
+
 	float countdown;
 
 #if defined(TEST_AUDIO)
 	gemini::audio::SoundHandle music;
 #endif
-
-	gui::Listener* listener;
 
 public:
 	virtual void event(kernel::KeyboardEvent& event)
@@ -296,6 +311,7 @@ public:
 		{
 		case kernel::WindowResized:
 		{
+			assert(event.render_width > 0 && event.render_height > 0);
 			LOGV("window resized: %i x %i\n", event.render_width, event.render_height);
 			if (device)
 			{
@@ -343,6 +359,8 @@ public:
 	void test_button_clicked(gui::EventArgs& args)
 	{
 		fprintf(stdout, "test_button_clicked\n");
+
+		tab_control->remove_tab(0);
 	}
 
 	void on_new_project()
@@ -380,6 +398,8 @@ public:
 		compositor = new gui::Compositor(width, height, &resource_cache, &renderer);
 		compositor->set_name("main_compositor");
 
+		//compositor->install_event_filter(&test_filter);
+
 		platform::window::Frame frame = platform::window::get_render_frame(native_window);
 
 		// Window frame is invalid!
@@ -396,52 +416,127 @@ public:
 		// test the menu bar
 #if GEMINI_TEST_MENU
 		gui::MenuBar* menubar = new gui::MenuBar(compositor);
+		menubar->set_name("MenuBar");
 
 		gui::Menu* filemenu = new gui::Menu("File", menubar);
 		filemenu->add_item("New Project", MAKE_MEMBER_DELEGATE(void(), TestUi, &TestUi::on_new_project, this));
 		filemenu->add_item("Open Project...", MAKE_MEMBER_DELEGATE(void(), TestUi, &TestUi::on_open_project, this));
 		filemenu->add_separator();
 		filemenu->add_item("Quit", MAKE_MEMBER_DELEGATE(void(), TestUi, &TestUi::on_quit, this));
+		filemenu->set_name("FileMenu");
 		menubar->add_menu(filemenu);
 
 		gui::Menu* deploymenu = new gui::Menu("Deploy", menubar);
 		deploymenu->add_item("Package...", MAKE_MEMBER_DELEGATE(void(), TestUi, &TestUi::on_package, this));
 		deploymenu->add_separator();
 		deploymenu->add_item("Package and Run", MAKE_MEMBER_DELEGATE(void(), TestUi, &TestUi::on_package_and_run, this));
+		deploymenu->set_name("DeployMenu");
 		menubar->add_menu(deploymenu);
 
 		gui::Menu* helpmenu = new gui::Menu("Help", menubar);
 		helpmenu->add_item("About...", gemini::Delegate<void()>());
+		helpmenu->set_name("HelpMenu");
 		menubar->add_menu(helpmenu);
 #endif
 
 #if GEMINI_TEST_PANEL
-		gui::HBoxLayout* panel_layout = new gui::HBoxLayout();
-
-		gui::Panel* test_panel = new gui::Panel(compositor);
-		test_panel->set_origin(0, 24);
-		test_panel->set_maximum_size(gui::Size(400, 400));
-		//test_panel->set_rotation(mathlib::degrees_to_radians(-15));
-		test_panel->set_background_color(gemini::Color(0.5f, 0.0f, 0.5f, 1.0f));
-		test_panel->set_layout(panel_layout);
-
-		const size_t TOTAL_BUTTONS = 32;
-		const float COLOR_INCREMENT = (1.0f / TOTAL_BUTTONS);
-		for (size_t index = 0; index < TOTAL_BUTTONS; ++index)
 		{
-			gui::Button* button0 = new gui::Button(test_panel);
-			const float inc = COLOR_INCREMENT * index;
-			button0->set_background_color(gemini::Color(inc, 0.5f + (inc < 0.5) ? inc : -0.5f, (1.0f - (COLOR_INCREMENT*index))));
-			button0->set_font("fonts/debug.ttf", 16);
-			button0->set_text(core::str::format("button %i", index));
-			button0->set_name("button");
+			gui::VerticalLayout* panel_layout = new gui::VerticalLayout();
+
+			gui::Panel* test_panel = new gui::Panel(compositor);
+			test_panel->set_origin(0, 24);
+			test_panel->set_maximum_size(gui::Size(400, 400));
+			//test_panel->set_rotation(mathlib::degrees_to_radians(-15));
+			test_panel->set_background_color(gemini::Color(0.5f, 0.0f, 0.5f, 1.0f));
+			test_panel->set_layout(panel_layout);
+			test_panel->set_size(400, 400);
+
+			const size_t TOTAL_ROWS = 12;
+			const size_t TOTAL_COLS = 4;
+			const size_t TOTAL_BUTTONS = (TOTAL_ROWS * TOTAL_COLS);
+			const float COLOR_INCREMENT = (1.0f / TOTAL_BUTTONS);
+			size_t index = 0;
+			for (size_t row = 0; row < TOTAL_ROWS; ++row)
+			{
+				gui::HorizontalLayout* horizontal = new gui::HorizontalLayout();
+
+				for (size_t col = 0; col < TOTAL_COLS; ++col)
+				{
+					gui::Button* button0 = new gui::Button(test_panel);
+					const float inc = COLOR_INCREMENT * index;
+					button0->set_background_color(gemini::Color(inc, 0.5f + (inc < 0.5) ? inc : -0.5f, (1.0f - (COLOR_INCREMENT*index))));
+					button0->set_font("fonts/debug.ttf", 16);
+					button0->set_text(core::str::format("button %i", index));
+					button0->set_name(core::str::format("button %i", index));
+					horizontal->add_panel(button0);
+					index++;
+				}
+
+				panel_layout->add_layout(horizontal);
+			}
 		}
 #endif
 
-		// setup the frame rate graph
-#if GEMINI_TEST_GRAPH
-		listener = MEMORY_NEW(TestUIListener, core::memory::global_allocator());
-		compositor->set_listener(listener);
+#if GEMINI_TEST_LAYOUT
+		{
+
+
+			gui::Panel* test_panel = new gui::Panel(compositor);
+			gui::VerticalLayout* layout = new gui::VerticalLayout();
+			test_panel->set_origin(900, 260);
+			//test_panel->set_maximum_size(gui::Size(400, 400));
+			test_panel->set_size(gui::Size(256, 400));
+			//test_panel->set_rotation(mathlib::degrees_to_radians(-15));
+			test_panel->set_background_color(gemini::Color(0.5f, 0.0f, 0.5f, 1.0f));
+			test_panel->set_layout(layout);
+			test_panel->set_flags(test_panel->get_flags() | gui::Panel::Flag_CanMove);
+			test_panel->set_name("Experiment");
+
+			//gui::HorizontalLayout* test = new gui::HorizontalLayout();
+
+			for (size_t index = 0; index < 5; ++index)
+			{
+#if 0
+				if (index == 1 || index == 2)
+				{
+
+
+					continue;
+				}
+#endif
+
+#if 1
+				if (index == 1 || index == 3)
+				{
+					gui::Spacer* spacer = new gui::Spacer();
+					spacer->set_size(gui::Size(40, 40));
+					layout->add_spacer(spacer);
+					continue;
+				}
+				else if (index == 2)
+				{
+					gui::HorizontalLayout* hlayout = new gui::HorizontalLayout();
+					layout->add_layout(hlayout);
+
+					gui::Button* b1 = new gui::Button(test_panel);
+					b1->set_origin(0, 0);
+					b1->set_size(128, 40);
+					b1->set_name(core::str::format("button %i", index));
+					b1->set_text(core::str::format("button %i", index));
+					b1->set_font("fonts/debug.ttf", 16);
+					hlayout->add_panel(b1);
+					continue;
+				}
+#endif
+				gui::Button* b1 = new gui::Button(test_panel);
+				b1->set_origin(0, 0);
+				b1->set_size(128, 40);
+				b1->set_name(core::str::format("button %i", index));
+				b1->set_text(core::str::format("button %i", index));
+				b1->set_font("fonts/debug.ttf", 16);
+				layout->add_panel(b1);
+			}
+		}
 #endif
 
 #if defined(TEST_AUDIO) && 0
@@ -465,10 +560,10 @@ public:
 #endif
 
 		// setup the framerate graph
-#if 1
+#if GEMINI_TEST_GRAPH
 		graph = new gui::Graph(compositor);
 		graph->set_origin(width - 250, 24);
-		graph->set_dimensions(graph->dimensions_from_pixels(gui::Point(250, 100)));
+		graph->set_size(250, 100);
 		graph->set_maximum_size(gui::Size(250, 100));
 		graph->set_font(dev_font, dev_font_size);
 		graph->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
@@ -479,10 +574,10 @@ public:
 		graph->enable_baseline(true, 16.6f, gemini::Color::from_rgba(255, 0, 255, 255));
 #endif
 
-#if 1
+#if GEMINI_TEST_GRAPH
 		waveform = new gui::DebugWaveformPanel(compositor);
 		waveform->set_origin(width - 250, 120);
-		waveform->set_dimensions(waveform->dimensions_from_pixels(gui::Point(250, 100)));
+		waveform->set_size(250, 100);
 		waveform->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
 
 #endif
@@ -490,13 +585,14 @@ public:
 		// test tab panel
 #if GEMINI_TEST_TABCONTROL
 		gui::TabControl* tab = new gui::TabControl(compositor);
+		tab_control = tab;
 		tab->set_origin(425, 30);
-		tab->set_dimensions(tab->dimensions_from_pixels(gui::Point(250, 250)));
+		tab->set_size(250, 250);
 		tab->set_name("tab_panel");
 
 		label = new gui::Label(tab);
 		label->set_origin(50, 115);
-		label->set_dimensions(label->dimensions_from_pixels(gui::Point(110, 40)));
+		label->set_size(110, 40);
 		label->set_background_color(gemini::Color::from_rgba(32, 32, 32, 255));
 		label->set_foreground_color(gemini::Color::from_rgba(0, 255, 0, 255));
 		label->set_font(dev_font, dev_font_size);
@@ -506,18 +602,31 @@ public:
 		{
 			label->append_text(str);
 		}
-
+		label->set_name("scrolly label");
 		tab->add_tab(0, "test", label);
 
 		{
 			label = new gui::Label(tab);
 			label->set_origin(50, 115);
-			label->set_dimensions(label->dimensions_from_pixels(gui::Point(110, 40)));
+			label->set_size(110, 40);
 			label->set_background_color(gemini::Color::from_rgba(32, 32, 32, 255));
 			label->set_foreground_color(gemini::Color::from_rgba(255, 0, 0, 255));
 			label->set_font(dev_font, dev_font_size);
 			label->set_text("adam 0123456789");
+			label->set_name("test2_label");
 			tab->add_tab(1, "test2", label);
+		}
+
+		{
+			label = new gui::Label(tab);
+			label->set_origin(50, 115);
+			label->set_size(110, 40);
+			label->set_background_color(gemini::Color::from_rgba(32, 32, 32, 255));
+			label->set_foreground_color(gemini::Color::from_rgba(255, 0, 0, 255));
+			label->set_font(dev_font, dev_font_size);
+			label->set_text("i can click things");
+			label->set_name("test3_label");
+			tab->add_tab(1, "test3", label);
 		}
 #endif
 		// test buttons
@@ -528,13 +637,13 @@ public:
 		uint32_t button_width = 320;
 		uint32_t button_height = 50;
 		uint32_t button_spacing = 10;
-		const size_t total_buttons = 4;
+		const size_t total_buttons = 3;
 		//uint32_t vertical_offset = 0;
 		uint32_t origin_x = (compositor->get_size().width / 2.0f) - (button_width / 2.0f);
 		uint32_t origin_y = (compositor->get_size().height / 2.0f) - ((button_height*total_buttons) / 2.0f);
 
 		const char* captions[total_buttons] = {
-			"New Game",
+			//"New Game",
 			"Test Button",
 			"Test Two",
 			"Test Three"
@@ -546,11 +655,12 @@ public:
 		{
 			gui::Button* button = new gui::Button(compositor);
 			button->set_origin(origin_x, origin_y);
-			button->set_dimensions(button->dimensions_from_pixels(gui::Point(button_width, button_height)));
+			button->set_size(button_width, button_height);
 			button->set_font(menu_font, menu_font_size);
 			button->set_text(captions[index]);
 			button->set_background_color(button_background);
 			button->set_hover_color(button_hover);
+			button->set_name(captions[index]);
 			button->on_click.bind<TestUi, &TestUi::test_button_clicked>(this);
 
 			origin_y += button_height + button_spacing;
@@ -558,7 +668,7 @@ public:
 		}
 
 
-		buttons[0]->set_visible(false);
+		//buttons[0]->set_visible(false);
 #endif
 
 		// test slider
@@ -567,7 +677,7 @@ public:
 		// slider label to check value
 		slider_label = new gui::Label(compositor);
 		slider_label->set_origin(230, 450);
-		slider_label->set_dimensions(slider_label->dimensions_from_pixels(gui::Point(40, 30)));
+		slider_label->set_size(40, 30);
 		slider_label->set_background_color(gemini::Color::from_rgba(0, 0, 0, 0));
 		slider_label->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
 		slider_label->set_text("empty");
@@ -576,7 +686,7 @@ public:
 		gui::Size slider_size(200, 30);
 		slider = new gui::Slider(compositor);
 		slider->set_origin(20, 450);
-		slider->set_dimensions(slider->dimensions_from_pixels(gui::Point(200, 40)));
+		slider->set_size(200, 40);
 		slider->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
 		slider->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
 		slider->on_value_changed.bind<TestUi, &TestUi::slider_value_changed>(this);
@@ -587,11 +697,66 @@ public:
 
 	virtual kernel::Error startup()
 	{
+
+
+
+
+
+		// parse command line values
+		std::vector<std::string> arguments;
+		core::argparse::ArgumentParser parser;
+		core::StackString<MAX_PATH_SIZE> content_path;
+
+		gemini::runtime_load_arguments(arguments, parser);
+
+		core::argparse::VariableMap vm;
+		const char* docstring = R"(
+Usage:
+	--assets=<content_path>
+
+Options:
+	-h, --help  Show this help screen
+	--version  Display the version number
+	--assets=<content_path>  The path to load content from
+	)";
+
+		if (parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
+		{
+			std::string path = vm["--assets"];
+			content_path = platform::make_absolute_path(path.c_str());
+		}
+		else
+		{
+			return kernel::CoreFailed;
+		}
+
+
+		std::function<void(const char*)> custom_path_setup = [&](const char* application_data_path)
+		{
+			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
+			platform::PathString root_path = platform::get_program_directory();
+
+			// the root path is the current binary path
+			filesystem->root_directory(root_path);
+
+			// the content directory is where we'll find our assets
+			filesystem->content_directory(content_path);
+
+			// load engine settings (from content path)
+			//load_config(config);
+
+			// the application path can be specified in the config (per-game basis)
+			//const platform::PathString application_path = platform::get_user_application_directory(config.application_directory.c_str());
+			filesystem->user_application_directory(application_data_path);
+		};
+
+
+
 		PROFILE_BEGIN("test_ui");
 		// sample for three seconds and then close.
 		countdown = 3.0f;
 
-		gemini::runtime_startup("arcfusion.net/gemini/test_ui");
+		gemini::runtime_startup("arcfusion.net/gemini/test_ui", custom_path_setup);
 
 		platform::window::startup(platform::window::RenderingBackend_Default);
 
@@ -603,8 +768,6 @@ public:
 			platform::window::Frame frame = platform::window::screen_frame(i);
 			LOGV("display %lu rect = %2.2f, %2.2f, %2.2f x %2.2f\n", (unsigned long)i, frame.x, frame.y, frame.width, frame.height);
 		}
-
-
 
 		// create a test window
 		platform::window::Parameters params;
@@ -836,9 +999,6 @@ public:
 
 	virtual void shutdown()
 	{
-		compositor->set_listener(nullptr);
-		MEMORY_DELETE(listener, core::memory::global_allocator());
-
 		// shutdown/destroy the gui
 		delete compositor;
 

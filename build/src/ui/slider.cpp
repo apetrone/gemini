@@ -26,6 +26,8 @@
 #include "ui/renderer.h"
 #include "ui/compositor.h"
 
+TYPESPEC_REGISTER_CLASS(gui::Slider);
+
 namespace gui
 {
 	// TODO: move this to the style
@@ -38,12 +40,11 @@ namespace gui
 		, drag_handle(nullptr)
 		, drag_handle_width(0.0f)
 	{
+		set_flags(get_flags() | Flag_CanMove);
 		drag_handle = new Panel(this);
 		drag_handle->set_background_color(gemini::Color::from_rgba(0, 255, 255, 255));
 		const uint32_t handle_flags = drag_handle->get_flags();
 		drag_handle->set_flags(handle_flags & ~Flag_CursorEnabled);
-		drag_handle->set_origin(0, 0);
-		drag_handle->set_dimensions(1.0f, 1.0f);
 	}
 
 	void Slider::handle_event(gui::EventArgs &args)
@@ -78,6 +79,8 @@ namespace gui
 			{
 				on_value_changed(current_value);
 			}
+
+			args.compositor->set_focus(this);
 			args.handled = true;
 		}
 		else if (args.type == gui::Event_KeyButtonReleased)
@@ -122,7 +125,7 @@ namespace gui
 
 		Size handle_size = get_size();
 
-		drag_handle->set_dimensions(HANDLE_WIDTH_DIMENSION, HANDLE_HEIGHT_DIMENSION);
+		drag_handle->set_size(size.width * HANDLE_WIDTH_DIMENSION, size.height * HANDLE_HEIGHT_DIMENSION);
 		float handle_height = (handle_size.height - (HANDLE_HEIGHT_DIMENSION * handle_size.height)) / 2.0f;
 
 		drag_handle->set_origin(xvalue, handle_height);

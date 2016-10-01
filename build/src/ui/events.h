@@ -70,11 +70,32 @@ namespace gui
 		Event_CursorExit,
 		Event_FocusGain,
 		Event_FocusLost,
+
+		// Sent for each mouse movement on the hot panel.
 		Event_CursorMove,
-		Event_CursorDrag,				// panel is being dragged
-		Event_CursorDragEnter,			// a drag enters this panel
-		Event_CursorDragExit,			// a drag exits this panel
-		Event_CursorDrop,				// dropped onto this panel
+
+		// Sent for each mouse movement on the focus panel
+		// when a panel is 'captured'.
+		Event_CursorDrag,
+
+		// Sent for each mouse movement to the target drop panels
+		// when a panel is 'captured'.
+		Event_CursorDropMove,
+
+		// Sent once when cursor enters target panel with a captured panel.
+		Event_CursorDropEnter,
+
+		// Sent once when cursor leaves target panel with a captured panel.
+		Event_CursorDropExit,
+
+		// Sent once when the cursor enters the source panel while captured.
+		Event_CursorDragEnter,
+
+		// Sent once when the cursor exits the source panel while captured.
+		Event_CursorDragExit,
+
+		// Sent when the captured panel is dropped onto the target panel.
+		Event_CursorDrop,
 		Event_CursorScroll,
 		Event_CursorButtonPressed,
 		Event_CursorButtonReleased,
@@ -84,6 +105,8 @@ namespace gui
 
 		Event_Click
 	};
+
+	const char* event_type_to_string(EventType type);
 
 	class EventArgs
 	{
@@ -156,16 +179,5 @@ namespace gui
 			return *this;
 		}
 	}; // EventArgs
-
-	class Listener
-	{
-	public:
-		virtual ~Listener() {}
-
-		virtual void focus_changed(Panel* old_focus, Panel* new_focus) = 0;
-		virtual void hot_changed(Panel* old_hot, Panel* new_hot) = 0;
-
-		virtual void handle_event(const EventArgs& event) = 0;
-	};
 
 } // namespace gui

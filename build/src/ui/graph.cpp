@@ -28,6 +28,8 @@
 
 #include <string.h> // for memset
 
+TYPESPEC_REGISTER_CLASS(gui::Graph);
+
 namespace gui
 {
 	const float GRAPH_LEFT_TEXT_MARGIN = 2.0f;

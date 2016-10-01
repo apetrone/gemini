@@ -27,6 +27,11 @@
 #include "ui/compositor.h"
 #include <renderer/color.h>
 
+#include <core/logging.h>
+
+TYPESPEC_REGISTER_CLASS(gui::ScrollButton);
+TYPESPEC_REGISTER_CLASS(gui::Scrollbar);
+
 namespace gui
 {
 	ScrollButton::ScrollButton(gui::Panel* parent, uint32_t direction)
@@ -51,20 +56,26 @@ namespace gui
 		bootun->set_visible(false);
 
 		deferred_flags = 0;
+		set_flags(get_flags() | Flag_CanMove);
 
 		is_dragging = false;
 	}
 
 	void Scrollbar::handle_event(gui::EventArgs& args)
 	{
+		if (args.target)
+			LOGV("handle_event for %s\n", args.target->get_name());
+
 		if (args.type == gui::Event_CursorDrag)
 		{
 			if (is_dragging)
 			{
+				LOGV("move scrollbar\n");
 				const float max_y = (size.height - bootun->get_size().height);
 				const float new_y = glm::clamp(args.local.y - initial_click.y, 0.0f, max_y);
 				set_scroll_value((new_y / max_y));
 				args.handled = true;
+				args.compositor->set_focus(bootun);
 			}
 		}
 		else if (args.type == gui::Event_CursorButtonPressed)
@@ -76,6 +87,10 @@ namespace gui
 				is_dragging = true;
 				bootun->set_background_color(gemini::Color::from_rgba(128, 64, 0, 255));
 				args.handled = true;
+			}
+			else
+			{
+				LOGV("unhandled thing\n");
 			}
 		}
 		else if (args.type == gui::Event_CursorButtonReleased)
@@ -102,10 +117,10 @@ namespace gui
 		Panel::handle_event(args);
 	}
 
-	void Scrollbar::set_button_dimensions(float x, float y)
+	void Scrollbar::set_button_size(float width, float height)
 	{
 		bootun->set_visible(true);
-		bootun->set_dimensions(x, y);
+		bootun->set_size(width, height);
 	}
 
 	void Scrollbar::set_scroll_value(float new_value)

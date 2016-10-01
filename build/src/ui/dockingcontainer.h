@@ -30,6 +30,7 @@
 //#include "ui/scrollable.h"
 
 #include <core/typedefs.h>
+#include <core/typespec.h>
 
 // The design is inspired in part by:
 // http://www.codeproject.com/Articles/140209/Building-a-Docking-Window-Management-Solution-in-W
@@ -66,10 +67,14 @@ namespace gui
 {
 	class DockingContainer : public Panel
 	{
+		TYPESPEC_DECLARE_CLASS(DockingContainer, Panel);
+
 	private:
 		// left, right, top, bottom, center
 		gui::Rect regions[5];
 		gemini::Color colors[5];
+
+		void reset_colors();
 
 
 	public:

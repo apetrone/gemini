@@ -1243,7 +1243,7 @@ public:
 
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		root->set_origin(0, 0);
-		root->set_dimensions(root->dimensions_from_pixels(gui::Point(frame.width, frame.height)));
+		root->set_size(frame.width, frame.height);
 		root->set_background_color(Color(0, 0, 0, 0));
 
 #if defined(DEBUG_FRAMERATE)
@@ -1251,7 +1251,7 @@ public:
 		graph = new gui::Graph(root);
 		graph->set_name("frametime_graph");
 		graph->set_origin(width - 250, 0);
-		graph->set_dimensions(graph->dimensions_from_pixels(gui::Point(250, 100)));
+		graph->set_size(250, 100);
 		graph->set_font("fonts/debug.ttf", 16);
 		graph->set_background_color(Color::from_rgba(10, 10, 10, 210));
 		graph->set_foreground_color(Color::from_rgba(255, 255, 255, 255));

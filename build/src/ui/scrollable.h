@@ -31,6 +31,7 @@
 
 #include <core/typedefs.h>
 #include <core/logging.h>
+#include <core/typespec.h>
 
 #include <string>
 
@@ -38,6 +39,8 @@ namespace gui
 {
 	class ScrollablePanel : public gui::Panel
 	{
+		TYPESPEC_DECLARE_CLASS(ScrollablePanel, Panel);
+
 	public:
 		ScrollablePanel(gui::Panel* parent);
 		virtual void update(gui::Compositor* compositor, float delta_seconds) override;

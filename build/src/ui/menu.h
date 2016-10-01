@@ -26,56 +26,46 @@
 
 
 #include <ui/button.h>
+#include <core/typespec.h>
 
 namespace gui
 {
+	class Menu;
 	class MenuButton : public gui::Button
 	{
+		TYPESPEC_DECLARE_CLASS(MenuButton, Button);
+
 	public:
-		MenuButton(gui::Panel* parent);
-		virtual void handle_event(EventArgs& args) override;
-	}; // MenuButton
+		MenuButton(Panel* parent, Menu* menu);
+
+		Menu* get_menu();
+
+	private:
+		Menu* menu;
+	};
+
+
+	enum MenuItemType
+	{
+		MenuItem_Invalid,
+		MenuItem_Item,
+		MenuItem_DropDown,
+		MenuItem_Menu,
+		MenuItem_Separator
+	};
 
 	class Menu : public gui::Panel
 	{
-		gui::MenuButton* item;
+		TYPESPEC_DECLARE_CLASS(Menu, Panel);
 
-		enum MenuItemType
-		{
-			MenuItem_Invalid,
-			MenuItem_Item,
-			MenuItem_Menu,
-			MenuItem_Separator
-		};
+		MenuItemType item_type;
 
-		struct MenuItem
-		{
-			MenuItemType type;
-			const char* label;
-			class Menu* menu;
-			float height;
-			Rect hit_rect;
-			gemini::Delegate<void()> action;
+		gemini::Delegate<void()> action;
 
-			MenuItem()
-				: type(MenuItem_Invalid)
-				, label(nullptr)
-				, menu(nullptr)
-				, height(0.0)
-			{
-			}
-		};
-
-		Array<MenuItem> items;
-		uint32_t menu_is_expanded;
-
-		gui::Point menu_origin;
+		std::string text;
+		Point text_origin;
 		FontHandle font_handle;
 		int32_t font_height;
-
-		Rect expanded_rect;
-
-		void update_color();
 
 	public:
 		Menu(const char* label, Panel* parent);
@@ -83,25 +73,22 @@ namespace gui
 		void add_menu(Menu* menu);
 		void add_separator();
 
-		void show();
-		void hide();
-		void toggle();
-		bool is_open() const;
+		const char* get_text() const;
 
-		gui::Button* get_button() { return item; }
+		void set_type(MenuItemType type);
 
 		virtual void handle_event(EventArgs& args) override;
-		virtual bool hit_test_local(const Point& local_point) const override;
+		virtual void update(Compositor* compositor, float delta_seconds) override;
 		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
-
-		const gui::Rect& get_expanded_rect() const { return expanded_rect; }
+		virtual bool point_in_capture_rect(const Point&) const override { return true; }
 	}; // Menu
 
 
 	class MenuBar : public Panel
 	{
+		TYPESPEC_DECLARE_CLASS(MenuBar, Panel);
+
 		float next_origin;
-		Menu* last_menu;
 
 		// is the menu bar currently showing an open menu?
 		bool is_displaying_menu;
@@ -112,5 +99,8 @@ namespace gui
 		void add_menu(Menu* menu);
 		virtual void handle_event(EventArgs& args) override;
 		virtual bool hit_test_local(const Point& local_point) const override;
+		virtual bool point_in_capture_rect(const Point&) const override { return true; }
+
+		Menu* find_menu_at_location(const Point& local_point);
 	}; // class MenuBar
 } // namespace gui

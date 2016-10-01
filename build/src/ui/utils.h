@@ -101,6 +101,8 @@ namespace gui
 		Size(DimensionType _width = 0, DimensionType _height = 0);
 		void set_width(DimensionType in_width);
 		DimensionType get_width() const;
+
+		Size operator += (const Size& other);
 	}; // Size
 
 	//

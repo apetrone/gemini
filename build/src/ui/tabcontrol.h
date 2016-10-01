@@ -31,23 +31,32 @@
 #include <ui/button.h>
 
 #include <core/typedefs.h>
+#include <core/typespec.h>
 
 namespace gui
 {
 	class TabControl : public Panel
 	{
+		TYPESPEC_DECLARE_CLASS(TabControl, Panel);
+
 		class TabButton : public Button
 		{
+			TYPESPEC_DECLARE_CLASS(TabButton, Button);
+
 		public:
 			TabButton(Panel* parent, const std::string& name)
 				: Button(parent)
 				, panel(nullptr)
 			{
 				set_text(name);
+				flags |= Flag_CanDrop | Flag_CanMove;
 			}
 
 			Panel* get_panel() const { return panel; }
 			void set_panel(Panel* target) { panel = target; }
+
+			virtual void handle_event(EventArgs& args) override;
+			virtual void render(Compositor* compositor, Renderer* renderer, render::CommandList& render_commands) override;
 
 		private:
 			Panel* panel;
@@ -57,40 +66,29 @@ namespace gui
 		size_t current_tab;
 		TabButton* active_tab;
 
+		size_t current_tab_index;
+
+		Point last_position;
+		Point tab_position;
+
 		// the size of a tab's clickable region
 		Size tab_size;
 
 		FontHandle font;
+
+		bool in_preview_mode;
 
 	public:
 		TabControl(Panel* root);
 
 		virtual void update(Compositor* compositor, float delta_seconds) override;
 		virtual void render(Compositor* compositor, Renderer* renderer, render::CommandList& render_commands) override;
-
+		virtual void handle_event(EventArgs& args) override;
 		void add_tab(size_t index, const std::string& name, Panel* panel);
 		void remove_tab(size_t index);
 		void show_tab(size_t index);
 
-		void tab_clicked(EventArgs& args)
-		{
-			TabButton* tab = nullptr;
-			size_t index = 0;
-			for (TabButton* current : tabs)
-			{
-				if (args.hot == current)
-				{
-					tab = current;
-					break;
-				}
-				++index;
-			}
-
-			if (tab)
-			{
-				show_tab(index);
-			}
-		}
+		//void tab_clicked(EventArgs& args);
 
 		size_t get_active_tab_index() const { return current_tab+1; }
 	};

@@ -28,6 +28,7 @@
 #include "ui/utils.h"
 
 #include <core/stackstring.h>
+#include <core/typespec.h>
 
 #include <stdint.h>
 #include <new> // for size_t
@@ -41,36 +42,14 @@ namespace gui
 	class Renderer;
 	class EventArgs;
 	class Panel;
+	class Layout;
 
 	typedef std::vector<Panel*> PanelVector;
 
-	class Layout
-	{
-	public:
-		Layout();
-		virtual ~Layout();
-		virtual void update(Panel* parent, PanelVector& children) = 0;
-
-		// memory overrides
-		void* operator new(size_t bytes);
-		void operator delete(void* memory);
-	}; // class Layout
-
-	class HBoxLayout : public Layout
-	{
-	private:
-		float left_margin;
-		float right_margin;
-		float top_margin;
-	public:
-		HBoxLayout();
-		~HBoxLayout();
-
-		virtual void update(Panel* parent, PanelVector& children) override;
-	}; // class HBoxLayout
-
 	class Panel
 	{
+		TYPESPEC_DECLARE_CLASS_NOBASE(Panel)
+
 	public:
 		// memory overrides
 		void* operator new(size_t bytes);
@@ -95,6 +74,7 @@ namespace gui
 		TextureHandle background;
 		Panel* parent;
 		PanelVector children;
+		PanelVector zsorted;
 		void* userdata;
 		bool visible;
 		gemini::Color background_color;
@@ -106,10 +86,6 @@ namespace gui
 		virtual void set_bounds(const ScreenInt x, const ScreenInt y, const DimensionType width, const DimensionType height);
 		virtual void set_bounds(const Rect& bounds);
 
-		virtual void set_dimensions(float x, float y);
-		virtual void set_dimensions(const Point& dimensions);
-		virtual const Point& get_dimensions() const { return dimensions; }
-
 		// compute content bounds (may exceed compositor bounds)
 		virtual void get_content_bounds(Rect& bounds) const;
 
@@ -119,11 +95,16 @@ namespace gui
 		virtual void update(Compositor* compositor, float delta_seconds);
 		virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 		virtual void render_children(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
+		void render_geometry(gui::render::CommandList& render_commands, const gemini::Color& color);
 		virtual void set_background_image(Compositor* compositor, const char* path);
 		virtual void set_background_color(const gemini::Color& color);
 		virtual void set_foreground_color(const gemini::Color& color);
 		virtual void set_visible(bool is_visible);
 		virtual bool is_visible() const;
+
+		size_t total_children() const;
+		Panel* child_at(size_t index);
+		Panel* child_at(size_t index) const;
 
 		// Return the minimum size of this panel
 		virtual void measure(Size& size) const;
@@ -132,6 +113,9 @@ namespace gui
 		virtual void resize(const Size& requested_size);
 
 		void set_maximum_size(const Size& max_size);
+
+		// bring this panel forward in its parent's rendering order.
+		void bring_to_front();
 
 		// ---------------------------------------------------------------------
 		// hit tests
@@ -158,34 +142,34 @@ namespace gui
 		// ---------------------------------------------------------------------
 		// other utils
 		// ---------------------------------------------------------------------
-		// traverse the hierarchy and find the parent compositor
-		Compositor* get_compositor();
-
-		Point pixels_from_dimensions(const Point& dimensions) const;
-		Point dimensions_from_pixels(const Point& pixels) const;
-
-		const Point& get_origin() const { return origin; }
-		virtual void set_origin(float x, float y);
-
-		const Size& get_size() const { return size; }
-		void set_size(const Size& new_size);
-
-		const char* get_name() const { return debug_name(); }
-		void set_name(const char* name) { debug_name = name; }
 
 		// convert compositor coordinates to local panel coordinates
 		Point compositor_to_local(const Point& location);
 
-		glm::mat3 get_transform(size_t index) const;
+		virtual bool point_in_capture_rect(const Point& local) const;
 
-		Layout* get_layout() const { return layout; }
 		void set_layout(Layout* layout_instance);
+		void set_name(const char* name) { debug_name = name; }
+		virtual void set_origin(float x, float y);
+		void set_origin(const Point& origin);
+		void set_size(const Size& new_size);
+		void set_size(uint32_t width, uint32_t height);
+
+		void swap_child(size_t first_index, size_t second_index);
+
+		// traverse the hierarchy and find the parent compositor
+		Compositor* get_compositor();
+		Layout* get_layout() const { return layout; }
+		const char* get_name() const { return debug_name(); }
+		const Point& get_origin() const { return origin; }
+		Panel* get_parent() { return parent; }
+		const Size& get_size() const { return size; }
+		glm::mat3 get_transform(size_t index) const;
 
 	protected:
 
-		void update_size_from_dimensions();
-
 		void update_transform(Compositor*);
+		void zsort_children(Panel* pane);
 
 		uint32_t flags;
 
@@ -203,10 +187,6 @@ namespace gui
 		// the vertical direction.
 		Size maximum_size;
 
-		// normalized panel dimensions [0,1] as a percentage
-		// of the parent's dimensions.
-		Point dimensions;
-
 		friend class Compositor;
 
 		// Panels will transform through the following spaces:
@@ -221,10 +201,14 @@ namespace gui
 		// local scaling factor applied on top of initial dimensions
 		glm::vec2 scale;
 
-		// local rotation applied to panel
+		// local rotation applied to panel (in radians)
 		real z_rotation;
 
 		glm::vec2 geometry[4];
+
+		// 'Capture' rectangle tested when compositor needs to set
+		// a capture on a panel. Might not need this...
+		Rect capture_rect;
 
 		Layout* layout;
 	}; // class Panel

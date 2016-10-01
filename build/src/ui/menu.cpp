@@ -25,63 +25,37 @@
 #include <ui/compositor.h>
 #include <ui/menu.h>
 
+#include <core/logging.h>
+
+TYPESPEC_REGISTER_CLASS(gui::Menu);
+TYPESPEC_REGISTER_CLASS(gui::MenuButton);
+TYPESPEC_REGISTER_CLASS(gui::MenuBar);
+
 namespace gui
 {
 	const uint32_t MENU_ITEM_BORDER = 2;
-	const uint32_t MENU_ITEM_SEPARATOR_HEIGHT = 1;
-
+	const uint32_t MENU_ITEM_SEPARATOR_HEIGHT = 2;
 
 	// MenuButton
 
-	MenuButton::MenuButton(gui::Panel* parent)
-		: gui::Button(parent)
+	MenuButton::MenuButton(Panel* parent, Menu* target_menu)
+		: Button(parent)
 	{
+		menu = target_menu;
 	}
 
-	void MenuButton::handle_event(EventArgs& args)
+	Menu* MenuButton::get_menu()
 	{
-		// events that propagate from this should point to the parent
-		// (menu) as the target.
-		args.target = parent;
-		Panel::handle_event(args);
-	}
-
+		return menu;
+	} // get_menu
 
 	// Menu
 
-	void Menu::update_color()
-	{
-		if (menu_is_expanded)
-		{
-			set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 1.0f));
-			item->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 1.0f));
-			item->set_hover_color(gemini::Color(0.0f, 0.0f, 0.0f, 1.0f));
-		}
-		else
-		{
-			set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
-			item->set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
-			item->set_hover_color(gemini::Color(0.2f, 0.2f, 0.2f, 1.0f));
-		}
-	} // update_color
-
 	Menu::Menu(const char* label, Panel* parent)
 		: Panel(parent)
-		, menu_is_expanded(0)
 	{
 		flags |= Flag_CursorEnabled;
 		set_name(label);
-		item = new gui::MenuButton(this);
-
-		set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
-
-		item->set_font("fonts/debug.ttf", 16);
-		item->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
-		item->set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
-		item->set_hover_color(gemini::Color(0.2f, 0.2f, 0.2f, 1.0f));
-		item->set_origin(0, 0);
-		item->set_dimensions(1.0f, 1.0f);
-		item->set_text(label);
 
 		font_handle = get_compositor()->get_resource_cache()->create_font("fonts/debug.ttf", 16);
 
@@ -92,230 +66,188 @@ namespace gui
 
 		Rect name_bounds;
 		get_compositor()->get_renderer()->font_measure_string(font_handle, label, core::str::len(label), name_bounds);
-		float dimx = static_cast<float>((name_bounds.width() + 8.0) / parent->get_size().width);
-		set_dimensions(dimx, 1.0f);
+		uint32_t dimx = static_cast<uint32_t>(name_bounds.width() + 8);
+		set_size(dimx, static_cast<uint32_t>(parent->get_size().height));
+
+		set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
+		set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
+
+		text = label;
 	}
 
-	void Menu::add_item(const char* name, const gemini::Delegate<void()>& action)
+	void Menu::add_item(const char* name, const gemini::Delegate<void()>& linked_action)
 	{
-		MenuItem menu_item;
-		menu_item.type = MenuItem_Item;
-		menu_item.label = name;
-		menu_item.action = action;
-		items.push_back(menu_item);
+		Menu* instance = new Menu(name, this);
+		instance->item_type = MenuItem_Item;
+		instance->action = linked_action;
+		instance->set_size(40, 40);
 	} // add_item
 
-	void Menu::add_menu(Menu* menu)
+	void Menu::add_menu(Menu* /*menu*/)
 	{
-		MenuItem menu_item;
-		menu_item.type = MenuItem_Menu;
-		menu_item.menu = menu;
-		items.push_back(menu_item);
+		// Implement sub menus!
+		assert(0);
+		//MenuItem menu_item;
+		//menu_item.type = MenuItem_Menu;
+		//menu_item.menu = menu;
+		//items.push_back(menu_item);
 	} // add_menu
 
 	void Menu::add_separator()
 	{
-		MenuItem menu_item;
-		menu_item.type = MenuItem_Separator;
-		menu_item.height = MENU_ITEM_SEPARATOR_HEIGHT;
-		items.push_back(menu_item);
+		Menu* instance = new Menu("", this);
+		instance->item_type = MenuItem_Separator;
+		instance->set_size(1, MENU_ITEM_SEPARATOR_HEIGHT);
+		instance->set_background_color(gemini::Color(0.2f, 0.2f, 0.2f, 1.0f));
 	} // add_separator
 
-	void Menu::show()
+	const char* Menu::get_text() const
 	{
-		menu_is_expanded = 1;
-		update_color();
-	} // show
+		return text.c_str();
+	}
 
-	void Menu::hide()
+	void Menu::set_type(MenuItemType type)
 	{
-		menu_is_expanded = 0;
-		update_color();
-	} // hide
-
-	void Menu::toggle()
-	{
-		menu_is_expanded = static_cast<uint32_t>(static_cast<bool>(!menu_is_expanded));
-		update_color();
-	} // toggle
-
-	bool Menu::is_open() const
-	{
-		return (menu_is_expanded == 1);
-	} // is_open
+		item_type = type;
+	}
 
 	void Menu::handle_event(EventArgs& args)
 	{
-		if (args.type == Event_FocusGain)
+		if (item_type == MenuItem_Item)
 		{
-			show();
-		}
-		else if (args.type == Event_FocusLost)
-		{
-			hide();
-		}
-		else if (args.type == Event_CursorButtonReleased)
-		{
-			MenuItem* found_item = nullptr;
-			Point local_cursor = compositor_to_local(args.cursor) - Point(0, size.height);
-			Rect test_rect;
-			for (MenuItem& current_item : items)
+			if (args.type == Event_CursorButtonPressed && args.target == this)
 			{
-				if (current_item.hit_rect.is_point_inside(local_cursor))
-				{
-					found_item = &current_item;
-					break;
-				}
+				args.compositor->set_focus(this);
+				args.handled = 1;
 			}
-
-			if (found_item)
+			else if (args.type == Event_CursorButtonReleased && args.target == this)
 			{
-				get_compositor()->set_focus(nullptr);
-
-				assert(found_item->action.is_valid());
-				found_item->action();
-
-				args.handled = true;
+				action();
+				args.handled = 1;
 			}
 		}
-
-		// don't handle anything; just pass this on.
-		Panel::handle_event(args);
+		else if (item_type == MenuItem_DropDown || item_type == MenuItem_Menu)
+		{
+			// Clicked on a menu item child of this menu -- so we hide this menu.
+			if (args.type == Event_CursorButtonReleased && args.target->get_parent() == this)
+			{
+				set_visible(false);
+			}
+		}
 	} // handle_event
 
-	bool Menu::hit_test_local(const Point& local_point) const
+	void Menu::update(Compositor* compositor, float delta_seconds)
 	{
-		if (menu_is_expanded)
+		Panel::update(compositor, delta_seconds);
+
+		// local menu offset
+		Point local_offset = Point(0, 0);
+
+		// recompute the max menu size
+		Size max_menu_size;
+
+		// first pass, we need the maximum width of the menu items.
+		for (size_t index = 0; index < total_children(); ++index)
 		{
-			if (expanded_rect.is_point_inside(local_point))
+			Panel* child = children[index];
+			Menu* menu = static_cast<Menu*>(child);
+
+			if (menu->item_type == MenuItem_Item)
 			{
-				return true;
+				gui::Rect string_bounds;
+				compositor->get_renderer()->font_measure_string(font_handle, menu->text.c_str(), core::str::len(menu->text.c_str()), string_bounds);
+				menu->size.height = string_bounds.height() + 16; // add some padding to the height (+16)
+				max_menu_size.width = glm::max(max_menu_size.width, string_bounds.width() + 16);
+				max_menu_size.height += menu->size.height;
 			}
+			else if (menu->item_type == MenuItem_Separator)
+			{
+				max_menu_size.height += menu->size.height;
+			}
+
+			menu->set_origin(local_offset);
+
+			local_offset.y += menu->size.height;
 		}
 
-		return Panel::hit_test_local(local_point);
-	} // hit_test_local
+		if (item_type == MenuItem_Item)
+		{
+			gui::Rect font_dims;
+			compositor->get_renderer()->font_measure_string(font_handle, this->text.c_str(), text.size(), font_dims);
+
+			// We need floor to snap to pixel boundaries; not fractional pixels;
+			// which would introduce artifacts.
+
+			// centered
+			text_origin.x = 6; // glm::floor((size.width / 2.0f) - (font_dims.width() / 2.0f));
+			text_origin.y = glm::floor((size.height / 2.0f) - (font_dims.height() / 2.0f) + glm::max((float)font_height, font_dims.height()));
+		}
+
+		// Second pass, resize the items.
+		for (size_t index = 0; index < total_children(); ++index)
+		{
+			Panel* child = children[index];
+			Menu* menu = static_cast<Menu*>(child);
+
+			menu->set_size(static_cast<uint32_t>(max_menu_size.width), static_cast<uint32_t>(menu->size.height));
+		}
+
+		// Separators *MAY* have zero width/height.
+		// Don't hit the asserts in the compositor.
+		if (item_type != MenuItem_Separator)
+		{
+			size = max_menu_size;
+		}
+	} // update
 
 	void Menu::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
 	{
-		const gemini::Color highlight_color(0.2f, 0.2f, 0.2f, 1.0f);
+		 // draw the background of the menu
 
-		if (menu_is_expanded)
+		if (item_type != MenuItem_DropDown)
 		{
-			// local menu offset
-			Point local_offset = Point(0, size.height);//  compositor_to_local(menu_origin);
-			const Point padding(8, 16);
+			gemini::Color background_color(0.0f, 0.0f, 0.0f, 1.0f);
 
-			// first pass, we need the maximum width of the menu items.
-			Size max_menu_size;
-			for (MenuItem& menu_item : items)
+			if (item_type == MenuItem_Item && compositor->get_hot() == this)
 			{
-				if (menu_item.type == MenuItem_Item)
-				{
-					gui::Rect string_bounds;
-					compositor->get_renderer()->font_measure_string(font_handle, menu_item.label, core::str::len(menu_item.label), string_bounds);
-					max_menu_size.width = glm::max(max_menu_size.width, string_bounds.width() + padding.x + padding.x);
-					max_menu_size.height += menu_item.height = string_bounds.height() + 16; // add some padding to the height
-				}
-				else if (menu_item.type == MenuItem_Separator)
-				{
-					max_menu_size.height += menu_item.height;
-				}
+				// get this from style.
+				background_color = gemini::Color(0.2f, 0.2f, 0.2f, 1.0f);
+			}
+			else if (item_type == MenuItem_Separator)
+			{
+				background_color = gemini::Color(0.3f, 0.3f, 0.3f, 1.0f);
 			}
 
-			expanded_rect = Rect(local_offset, max_menu_size);
 
-			// draw the background of the menu
+			Point data[4];
+			data[0] = Point(0, 0);
+			data[1] = Point(0, size.height);
+			data[2] = Point(size.width, size.height);
+			data[3] = Point(size.width, 0);
+
+			render_commands.add_rectangle(
+				transform_point(get_transform(0), data[0]),
+				transform_point(get_transform(0), data[1]),
+				transform_point(get_transform(0), data[2]),
+				transform_point(get_transform(0), data[3]),
+				-1,
+				background_color
+			);
+
+			if (item_type == MenuItem_Item)
 			{
+				gui::Rect draw_bounds;
+				draw_bounds.size = size;
+				draw_bounds.origin = transform_point(local_transform, text_origin);
 
-				Point data[4];
-				data[0] = local_offset;
-				data[1] = local_offset + Point(0, max_menu_size.height);
-				data[2] = local_offset + Point(max_menu_size.width, max_menu_size.height);
-				data[3] = local_offset + Point(max_menu_size.width, 0);
-
-				render_commands.add_rectangle(
-					transform_point(get_transform(0), data[0]),
-					transform_point(get_transform(0), data[1]),
-					transform_point(get_transform(0), data[2]),
-					transform_point(get_transform(0), data[3]),
-					-1,
-					gemini::Color(0.0f, 0.0f, 0.0f, 1.0f)
-					);
-			}
-
-			// calculate the local cursor in this menu's space
-			const Point& composite_cursor = compositor->get_cursor_position();
-
-			// we have to factor in the menu_origin in local space.
-			Point local_cursor = compositor_to_local(composite_cursor) - local_offset;
-
-			expanded_rect = Rect(local_offset, max_menu_size);
-			float current_item_offset = 0;
-			size_t index = 0;
-			for (MenuItem& menu_item : items)
-			{
-				if (menu_item.type == MenuItem_Item)
+				if (!text.empty())
 				{
-					Size menu_size;
-					menu_size.width = max_menu_size.width;
-					menu_size.height = menu_item.height;
-
-					Point data[4];
-					data[0] = local_offset + Point(MENU_ITEM_BORDER, MENU_ITEM_BORDER);
-					data[1] = local_offset + Point(MENU_ITEM_BORDER, menu_size.height - MENU_ITEM_BORDER);
-					data[2] = local_offset + Point(menu_size.width - MENU_ITEM_BORDER, menu_size.height - MENU_ITEM_BORDER);
-					data[3] = local_offset + Point(menu_size.width - MENU_ITEM_BORDER, MENU_ITEM_BORDER);
-
-					menu_item.hit_rect.origin.y = current_item_offset;
-					menu_item.hit_rect.size = menu_size;
-
-
-					gemini::Color draw_color = gemini::Color(0.0f, 0.0f, 0.0f, 1.0f);
-					gemini::Color font_color = gemini::Color(1.0f, 1.0f, 1.0f);
-					if (menu_item.hit_rect.is_point_inside(local_cursor))
-					{
-						draw_color = highlight_color;
-					}
-
-					render_commands.add_rectangle(
-						transform_point(get_transform(0), data[0]),
-						transform_point(get_transform(0), data[1]),
-						transform_point(get_transform(0), data[2]),
-						transform_point(get_transform(0), data[3]),
-						-1,
-						draw_color
-						);
-
-					if (menu_item.label)
-					{
-						Rect font_rect;
-						font_rect.origin = transform_point(get_transform(0), local_offset);
-						font_rect.size = menu_size;
-						font_rect.origin.x += 8;
-						font_rect.origin.y += font_height + 8;
-						render_commands.add_font(font_handle, menu_item.label, core::str::len(menu_item.label), font_rect, font_color);
-					}
-
-					current_item_offset += menu_item.height;
-					local_offset.y += menu_item.height;
+					render_commands.add_font(font_handle, text.c_str(), text.size(), draw_bounds, foreground_color);
 				}
-				else if (menu_item.type == MenuItem_Separator)
-				{
-					Point start(0, local_offset.y);
-					Point end(max_menu_size.width, local_offset.y);
-					render_commands.add_line(
-						transform_point(get_transform(0), start),
-						transform_point(get_transform(0), end), highlight_color);
-					current_item_offset += menu_item.height;
-					local_offset.y += menu_item.height;
-				}
-
-				index++;
 			}
 		}
 
-		Panel::render(compositor, renderer, render_commands);
+		Panel::render_children(compositor, renderer, render_commands);
 	} // render
 
 
@@ -323,8 +255,7 @@ namespace gui
 
 	MenuBar::MenuBar(Panel* parent)
 		: Panel(parent)
-		, next_origin(4.0f)
-		, last_menu(nullptr)
+		, next_origin(0.0f)
 		, is_displaying_menu(false)
 	{
 		flags |= Flag_CursorEnabled | Flag_AlwaysOnTop;
@@ -339,52 +270,123 @@ namespace gui
 
 	void MenuBar::add_menu(Menu* menu)
 	{
-		const Point& menu_dimensions = menu->get_dimensions();
-		menu->set_origin(next_origin, 0.0f);
-		next_origin += (menu_dimensions.x * size.width);
+		MenuButton* button = new MenuButton(this, menu);
+		button->set_name(menu->get_text());
+		button->set_font("fonts/debug.ttf", 16);
+		button->set_origin(next_origin, 0.0f);
+		button->set_size(menu->get_size());
+		button->set_text(menu->get_text());
+
+		button->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
+		button->set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
+		button->set_hover_color(gemini::Color(0.2f, 0.2f, 0.2f, 1.0f));
+
+		add_child(button);
+
+		menu->set_type(MenuItem_DropDown);
+		menu->set_origin(next_origin, size.height);
+		menu->set_visible(false);
+		add_child(menu);
+
+		next_origin += menu->get_size().width;
 	} // add_menu
 
 	void MenuBar::handle_event(EventArgs& args)
 	{
-		if (args.target != this)
+		// Handle the user clicking on MenuButtons to toggle their menu's
+		// visibility.
+		const TypeSpecInfo* target_type = args.target->typespec();
+		if (target_type->identifier() == TYPESPEC_IDENTIFIER("gui::MenuButton"))
 		{
-			Menu* menu = static_cast<Menu*>(args.target);
-			if (args.type == Event_CursorButtonPressed)
+			MenuButton* menu_button = static_cast<MenuButton*>(args.target);
+			Menu* menu = menu_button->get_menu();
+			if (args.type == Event_CursorButtonPressed && (menu->item_type == MenuItem_DropDown))
 			{
-				// Pressing a top-level menu item should
-				// toggle the menu show/hide.
-				menu->toggle();
-				last_menu = menu;
-			}
-			else if (args.type == Event_CursorEnter)
-			{
-				// When the cursor hovers over an expanded menu item,
-				// it must switch focus to that menu.
-				if (last_menu && (last_menu != menu) && last_menu->is_open())
+				if (menu->is_visible())
 				{
-					get_compositor()->set_focus(menu);
+					menu->set_visible(false);
+					args.compositor->set_focus(nullptr);
+					args.handled = 1;
 				}
+				else
+				{
+					menu->set_visible(true);
+					args.compositor->set_focus(menu);
+					args.handled = 1;
+				}
+			}
 
-				last_menu = menu;
+			// User is hovering over a different menu than is currently focused.
+			if (args.focus && args.type == Event_CursorMove)
+			{
+				const TypeSpecInfo* focus_typespec = args.focus->typespec();
+				if (focus_typespec->identifier() == TYPESPEC_IDENTIFIER("gui::Menu"))
+				{
+					Menu* focus_menu = static_cast<Menu*>(args.focus);
+					if (focus_menu->is_visible() && (focus_menu != menu_button->get_menu()) && focus_menu->item_type == MenuItem_DropDown)
+					{
+						focus_menu->set_visible(false);
+						menu_button->get_menu()->set_visible(true);
+						args.compositor->set_focus(menu_button->get_menu());
+						args.handled = 1;
+					}
+				}
+			}
+		}
+		else if (target_type->identifier() == TYPESPEC_IDENTIFIER("gui::Menu") && args.type == Event_FocusLost)
+		{
+			// Focus changed from menu to another panel; hide panel.
+			Menu* menu = static_cast<Menu*>(args.target);
+			if (menu->item_type == MenuItem_DropDown)
+			{
+				menu->set_visible(false);
+				args.handled = 1;
 			}
 		}
 
-		args.handled = 1;
+		if (args.type == Event_CursorButtonPressed && args.target == this)
+		{
+			args.compositor->set_focus(this);
+			args.handled = 1;
+		}
+
+		Panel::handle_event(args);
 	} // handle_event
+
+	Menu* MenuBar::find_menu_at_location(const Point& local_point)
+	{
+		// Test other menu items...
+		for (size_t index = 0; index < total_children(); ++index)
+		{
+			Menu* child = static_cast<Menu*>(child_at(index));
+			Point test_point = local_point - child->get_origin();
+			if (child->hit_test_local(test_point))
+			{
+				return child;
+			}
+		}
+
+		return nullptr;
+	} // find_menu_at_location
 
 	bool MenuBar::hit_test_local(const Point& local_point) const
 	{
-		if (last_menu && last_menu->is_open())
+		bool hit_panel = Panel::hit_test_local(local_point);
+		if (!hit_panel)
 		{
-			gui::Rect expanded_rect = last_menu->get_expanded_rect();
-			expanded_rect.origin += last_menu->get_origin();
-			if (expanded_rect.is_point_inside(local_point))
+			// Test other menu items if the panel hit failed...
+			for (size_t index = 0; index < total_children(); ++index)
 			{
-				return true;
+				Panel* child = child_at(index);
+				Point test_point = local_point - child->get_origin();
+				if (child->has_flags(Flag_CursorEnabled | Flag_IsVisible) && child->hit_test_local(test_point))
+				{
+					return true;
+				}
 			}
 		}
 
-		return Panel::hit_test_local(local_point);
+		return hit_panel;
 	} // hit_test_local
 
 } // namespace gui

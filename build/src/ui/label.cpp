@@ -27,6 +27,8 @@
 #include "ui/compositor.h"
 #include <renderer/color.h>
 
+TYPESPEC_REGISTER_CLASS(gui::Label);
+
 namespace gui
 {
 	static const float LABEL_LEFT_MARGIN = 2;

@@ -553,6 +553,11 @@ namespace platform
 						sysevent.subtype = kernel::WindowResized;
 						sysevent.render_width = sysevent.window_width = static_cast<int16_t>(LOWORD(lparam));
 						sysevent.render_height = sysevent.window_height = static_cast<int16_t>(HIWORD(lparam));
+						// Due to windows sending is a resize event and then
+						// having parameters be set to zero, assert here when
+						// it happens for further diagnosis.
+						assert(sysevent.render_width > 0 && sysevent.window_width > 0);
+						assert(sysevent.render_height > 0 && sysevent.window_height > 0);
 						sysevent.window = window;
 						kernel::event_dispatch(sysevent);
 						return 0;

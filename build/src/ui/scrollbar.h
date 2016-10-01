@@ -30,6 +30,7 @@
 #include "ui/utils.h"
 
 #include <core/typedefs.h>
+#include <core/typespec.h>
 
 #include <string>
 
@@ -37,6 +38,7 @@ namespace gui
 {
 	class ScrollButton : public Button
 	{
+		TYPESPEC_DECLARE_CLASS(ScrollButton, Button);
 	public:
 		ScrollButton(Panel* parent, uint32_t direction = 0);
 
@@ -51,6 +53,7 @@ namespace gui
 
 	class Scrollbar : public Panel
 	{
+		TYPESPEC_DECLARE_CLASS(Scrollbar, Panel);
 	public:
 		Scrollbar(Panel* parent, uint32_t direction);
 
@@ -59,11 +62,13 @@ namespace gui
 		// set the button dimensions on this scrollbar
 		// can be used by ScrollablePanels to set the side of the buttons
 		// depending on the content size.
-		void set_button_dimensions(float x, float y);
+		void set_button_size(float width, float height);
 
 		void set_scroll_value(float new_value);
 
 		gemini::Delegate<void (float)> on_scroll_value_changed;
+
+		virtual bool point_in_capture_rect(const Point&) const { return true; }
 
 	protected:
 

@@ -29,70 +29,129 @@
 
 #include <core/logging.h>
 
+TYPESPEC_REGISTER_CLASS(gui::DockingContainer);
+
 namespace gui
 {
 	DockingContainer::DockingContainer(Panel* parent)
 		: Panel(parent)
 	{
+		reset_colors();
+		flags |= Flag_CanDrop;
+	} // DockingContainer
+
+	void DockingContainer::reset_colors()
+	{
 		for (size_t index = 0; index < 5; ++index)
 		{
-			colors[index] = gemini::Color(0.0f, 0.0f, 0.0f, 1.0f);
+			colors[index] = gemini::Color(0.0f, 0.0f, 0.0f, 0.0f);
 		}
-
-		regions[0].set(0.0f, 0.0f, 50.0f, 50.0f);
-
-		//flags |= Flag_CanMove;
-		flags |= Flag_CanDrop;
-	}
+	} // reset_colors
 
 	void DockingContainer::handle_event(EventArgs& args)
 	{
 		if (args.type == Event_CursorMove)
 		{
-			if (regions[0].is_point_inside(args.local))
+			reset_colors();
+
+			for (size_t index = 0; index < 5; ++index)
 			{
-				//if (args.compositor->get_capture())
+				if (regions[index].is_point_inside(args.local))
 				{
-					colors[0] = gemini::Color(1.0f, 0.0f, 0.0f);
+					if (args.compositor->get_capture())
+					{
+						colors[index] = gemini::Color(0.0f, 0.25f, 0.5f, 0.5f);
+						break;
+					}
 				}
-			}
-			else
-			{
-				colors[0] = gemini::Color(0.0f, 0.0f, 0.0f, 1.0f);
 			}
 
 			args.handled = 1;
 		}
 		else if (args.type == Event_CursorDragEnter)
 		{
-			LOGV("DockingContainer handle Event_CursorDragEnter\n");
-			colors[0] = gemini::Color(1.0f, 1.0f, 0.0f);
 		}
 		else if (args.type == Event_CursorDragExit)
 		{
-			LOGV("DockingContainer handle Event_CursorDragExit\n");
-			colors[0] = gemini::Color(0.0f, 0.0f, 0.0f);
+			reset_colors();
+		}
+		else if (args.type == Event_CursorDropMove)
+		{
+			reset_colors();
+			for (size_t index = 0; index < 5; ++index)
+			{
+				if (regions[index].is_point_inside(args.local))
+				{
+					colors[index] = gemini::Color(0.0f, 0.25f, 0.5f, 0.5f);
+					break;
+				}
+			}
+
+			args.handled = 1;
 		}
 		else if (args.type == Event_CursorDrop)
 		{
-			LOGV("docking container handle Event_CursorDrop at %2.2f, %2.2f\n", args.local.x, args.local.y);
-			colors[0] = gemini::Color(0.0f, 0.0f, 1.0f);
+			for (size_t index = 0; index < 5; ++index)
+			{
+				if (regions[index].is_point_inside(args.local))
+				{
+					LOGV("docking container handle Event_CursorDrop at %2.2f, %2.2f\n", args.local.x, args.local.y);
+
+					add_child(args.capture);
+					args.capture->set_size(Size(regions[index].width(), regions[index].height()));
+					args.capture->set_origin(regions[index].origin);
+					args.handled = 1;
+					break;
+				}
+			}
+
+			reset_colors();
 		}
 
 		Panel::handle_event(args);
-	}
+	} // handle_event
 
 	void DockingContainer::update(Compositor* compositor, float delta_seconds)
 	{
-		//for (size_t index = 0; index < 5; ++index)
-		//{
-		//	colors[index] = gemini::Color(0.0f, 0.0f, 0.0f, 1.0f);
-		//}
-
-
-
+#if 0
 		Panel::update(compositor, delta_seconds);
-	}
+
+		float width = dimensions.x;
+		float height = dimensions.y;
+
+		float side_width = (width * 0.15f);
+		float rect_width = 2 * side_width;
+		float center_width = width - rect_width;
+
+		float vert_height = (height * 0.15f);
+		float rect_height = 2 * vert_height;
+		float center_height = height - rect_height;
+
+		Point leftover = pixels_from_dimensions(Point(center_width+side_width, center_height + vert_height));
+
+		Point topleft = pixels_from_dimensions(Point(side_width, 0.0f));
+
+		Point pix = pixels_from_dimensions(Point(side_width, vert_height));
+
+		Point full = pixels_from_dimensions(dimensions);
+		Point cw = pixels_from_dimensions(Point(center_width, center_height));
+
+		// left
+		regions[0].set(0.0f, 0.0f, pix.x, full.y);
+
+		// top
+		regions[1].set(topleft.x, 0.0f, cw.x, pix.y);
+
+		// right
+		regions[2].set(leftover.x, 0.0f, pix.x, full.y);
+
+		// bottom
+		regions[3].set(topleft.x, leftover.y, cw.x, pix.y);
+
+		// center
+		regions[4].set(pix.x, pix.y, cw.x, cw.y);
+#endif
+	} // update
 
 	void DockingContainer::render(Compositor* compositor,
 						Renderer* renderer,
@@ -100,74 +159,24 @@ namespace gui
 	{
 		Panel::render(compositor, renderer, render_commands);
 
-
-		gui::Point region[4];
-
-
-
-		region[0] = transform_point(get_transform(0), Point(regions[0].origin.x, regions[0].origin.y+regions[0].size.height));
-		region[1] = transform_point(get_transform(0), Point(regions[0].origin.x+regions[0].size.width, regions[0].origin.y+regions[0].size.height));
-		region[2] = transform_point(get_transform(0), Point(regions[0].origin.x+regions[0].size.width, regions[0].origin.y));
-		region[3] = transform_point(get_transform(0), Point(regions[0].origin.x, regions[0].origin.y));
-
-		render_commands.add_rectangle(
-			region[0],
-			region[1],
-			region[2],
-			region[3],
-			render::WhiteTexture,
-			colors[0]
-		);
-
-#if 0
-		render_commands.add_rectangle(
-			geometry[0],
-			geometry[1],
-			geometry[2],
-			geometry[3],
-			render::WhiteTexture,
-			background_color
-		);
-
-		if (text.empty())
-			return;
-
-		const int32_t upper_bound = (LABEL_TOP_MARGIN - font_height);
-		const int32_t lower_bound = (LABEL_TOP_MARGIN + size.height + font_height);
-
-		// draw cache items
-		float item_offset = 0.0f;
-		for (const font_cache_entry& item : font_cache)
+		// draw all regions
+		for (size_t index = 0; index < 5; ++index)
 		{
-			Rect current_rect;
-			current_rect.origin = item.origin - scroll_offset;
-			current_rect.size = size;
+			gui::Point region[4];
+			region[0] = transform_point(get_transform(0), Point(regions[index].origin.x, regions[index].origin.y + regions[index].size.height));
+			region[1] = transform_point(get_transform(0), Point(regions[index].origin.x + regions[index].size.width, regions[index].origin.y + regions[index].size.height));
+			region[2] = transform_point(get_transform(0), Point(regions[index].origin.x + regions[index].size.width, regions[index].origin.y));
+			region[3] = transform_point(get_transform(0), Point(regions[index].origin.x, regions[index].origin.y));
 
-			// Don't draw text above the panel. This shouldn't overlap
-			// by more than a single line -- clipping will take care of it.
-			if (current_rect.origin.y < upper_bound)
-				continue;
-
-			// Don't draw text below the panel. This shouldn't overlap
-			// by more than a single line -- clipping will take care of it.
-			if ((current_rect.origin.y+item.height) > (lower_bound + item.height))
-				break;
-
-			current_rect.origin = transform_point(get_transform(0), current_rect.origin);
-
-			render_commands.add_font(font_handle, &text[item.start], item.length, current_rect, foreground_color);
+			render_commands.add_rectangle(
+				region[0],
+				region[1],
+				region[2],
+				region[3],
+				render::WhiteTexture,
+				colors[index]
+			);
 		}
-
-		//const bool content_larger_than_bounds = content_bounds.height() > size.height;
-		//if (content_larger_than_bounds)
-		//{
-		//	Point start(origin.x, origin.y + content_bounds.height());
-		//	Point end(origin.x + size.width, origin.y + content_bounds.height());
-		//	render_commands.add_line(start, end, gemini::Color::from_rgba(0, 255, 0, 255));
-		//}
-
-		render_children(compositor, renderer, render_commands);
-#endif
-	}
+	} // render
 
 } // namespace gui

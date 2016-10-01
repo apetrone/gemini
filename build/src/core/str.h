@@ -32,6 +32,9 @@
 
 typedef std::string String;
 
+#define STRING_HASH32(string_value)\
+	::core::str::hash_string32<::core::str::const_length(string_value)>(string_value)
+
 namespace core
 {
 	namespace str
@@ -65,5 +68,25 @@ namespace core
 
 		std::vector<std::string> split(const std::string& input, const std::string& substring);
 		std::string trim_left(const std::string& input, const std::string& chars = "\t ");
+
+		template <size_t N>
+		constexpr size_t const_length(char const(&)[N])
+		{
+			return N-1;
+		}
+
+		// It would help if I made this a better hash function in the future;
+		// but for now, let's see how many collisions this causes.
+		template <size_t index>
+		constexpr uint32_t hash_string32(const char* string)
+		{
+			return hash_string32<index - 1>(string) + ((string[index] * index) & 0x0000ff);
+		}
+
+		template <>
+		constexpr uint32_t hash_string32<size_t(-1)>(const char*)
+		{
+			return 0x0;
+		}
 	} // namespace str
 } // namespace core
