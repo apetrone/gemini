@@ -83,12 +83,41 @@ namespace platform
 			last_x(0),
 			last_y(0)
 		{
-			memset(virtual_key_map, 0, sizeof(uint32_t) * 256);
-
 			// populate the virtual key
 			virtual_key_map[XK_A] = Button::BUTTON_A;
 			virtual_key_map[XK_B] = Button::BUTTON_B;
+			virtual_key_map[XK_C] = Button::BUTTON_C;
+			virtual_key_map[XK_D] = Button::BUTTON_D;
+			virtual_key_map[XK_E] = Button::BUTTON_E;
+			virtual_key_map[XK_F] = Button::BUTTON_F;
+			virtual_key_map[XK_G] = Button::BUTTON_G;
+			virtual_key_map[XK_H] = Button::BUTTON_H;
+			virtual_key_map[XK_I] = Button::BUTTON_I;
+			virtual_key_map[XK_J] = Button::BUTTON_J;
+			virtual_key_map[XK_K] = Button::BUTTON_K;
+			virtual_key_map[XK_L] = Button::BUTTON_L;
+			virtual_key_map[XK_M] = Button::BUTTON_M;
+			virtual_key_map[XK_N] = Button::BUTTON_N;
+			virtual_key_map[XK_O] = Button::BUTTON_O;
+			virtual_key_map[XK_P] = Button::BUTTON_P;
+			virtual_key_map[XK_Q] = Button::BUTTON_Q;
+			virtual_key_map[XK_R] = Button::BUTTON_R;
+			virtual_key_map[XK_S] = Button::BUTTON_S;
+			virtual_key_map[XK_T] = Button::BUTTON_T;
+			virtual_key_map[XK_U] = Button::BUTTON_U;
+			virtual_key_map[XK_V] = Button::BUTTON_V;
+			virtual_key_map[XK_W] = Button::BUTTON_W;
+			virtual_key_map[XK_X] = Button::BUTTON_X;
+			virtual_key_map[XK_Y] = Button::BUTTON_Y;
+			virtual_key_map[XK_Z] = Button::BUTTON_Z;
+
 			virtual_key_map[XK_Escape] = Button::BUTTON_ESCAPE;
+
+			virtual_key_map[XK_BackSpace] = Button::BUTTON_BACKSPACE;
+			virtual_key_map[XK_Tab] = Button::BUTTON_TAB;
+			virtual_key_map[XK_Return] = Button::BUTTON_RETURN;
+			virtual_key_map[XK_Pause] = Button::BUTTON_PAUSE;
+			virtual_key_map[XK_Delete] = Button::BUTTON_DELETE;
 		}
 
 		X11WindowProvider::~X11WindowProvider()
@@ -312,6 +341,7 @@ namespace platform
 				gemini::MOUSE_MOUSE5,	// Button9
 			};
 
+			// https://tronche.com/gui/x/xlib/events/keyboard-pointer/keyboard-pointer.html#XKeyEvent
 			switch(event.type)
 			{
 				// input focus has changed:
@@ -340,33 +370,19 @@ namespace platform
 
 				case KeyPress:
 				case KeyRelease:
-					// length = XLookupString(&event.xkey, buffer, 32, &keysym, NULL);
-					// if (length > 0)
 					{
-						// fprintf(stdout, "key: %s\nKeyboardEvent", buffer);
-
-						// XKeysymToKeycode(display, )
-
-						KeySym sym = XkbKeycodeToKeysym(display,
-														event.xkey.keycode,
-														0, event.xkey.state & ShiftMask ? 1 : 0);
-
+						KeySym sym = XKeycodeToKeysym(display, event.xkey.keycode, event.xkey.state & ShiftMask ? 1 : 0);
 						if (sym != NoSymbol)
 						{
 							// http://blog.eisbehr.org/5-working_with_xlib_series_2_-_keyboard_input.html
-
-							// TODO: map virtual key to input key:
-							// http://www.kbdedit.com/manual/low_level_vk_list.html
-							//xkeymap.keysym.sym
 							keyevent.is_down = (event.type == KeyPress) ? true : false;
 							keyevent.modifiers = 0;
 							keyevent.unicode = 0;
 							keyevent.key = virtual_key_map[sym];
-							fprintf(stdout, "sym is: %i, key is: %i\n", sym, keyevent.key);
 							kernel::event_dispatch(keyevent);
 						}
+						break;
 					}
-					break;
 
 				case ButtonPress:
 				case ButtonRelease:

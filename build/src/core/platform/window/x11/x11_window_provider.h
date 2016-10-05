@@ -25,6 +25,8 @@
 #pragma once
 
 #include <core/config.h>
+#include <core/hashset.h>
+
 #include "window_provider.h"
 
 #include <X11/Xlib.h>
@@ -83,7 +85,7 @@ namespace platform
 			XEvent last_key_release;
 			Atom atom_delete_window;
 
-			uint32_t virtual_key_map[256];
+			HashSet<uint32_t, uint32_t> virtual_key_map;
 
 			// Keep track of mouse coordinates last event
 			// in order to calculate the deltas.
