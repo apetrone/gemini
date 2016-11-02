@@ -40,6 +40,7 @@
 
 
 using platform::PathString;
+using namespace core;
 
 namespace gemini
 {
@@ -179,4 +180,98 @@ namespace gemini
 	#error Not implemented on this platform!
 #endif
 	} // runtime_load_arguments
+
+	short runtime_standard_port_for_service(const char * service)
+	{
+		if (core::str::case_insensitive_compare(service, "http", 4) == 0)
+		{
+			return 80;
+		}
+		else if (core::str::case_insensitive_compare(service, "https", 5) == 0)
+		{
+			return 443;
+		}
+
+		return 0;
+	} // net_standard_port_for_service
+
+	int32_t runtime_decompose_url(const char* url, char* filename, char* hostname, char* service_type, uint16_t* port)
+	{
+		const size_t url_length = str::len(url);
+		const char* cur = url;
+		const char* svc;
+		int32_t slash_position = -1;
+		int32_t host_start = -1;
+		svc = str::strstr(url, "://");
+		if (svc)
+		{
+			// found a service.
+			str::copy(service_type, url, (svc - url));
+		}
+
+		// if the last character is a '/' then our job is easy
+		if (url[url_length - 1] == '/')
+		{
+			//printf( "URL ends with a /\n" );
+			slash_position = url_length - 1;
+		}
+
+
+		for (size_t index = 0; index < url_length; ++index)
+		{
+			if (host_start == -1 && cur[index] == '/' && cur[index + 1] == '/')
+			{
+				//printf( "Found Host Start: %i\n", i+2 );
+				host_start = index + 2;
+			}
+			else if (host_start == -1 && cur[index] == '.')
+			{
+				host_start = 0;
+			}
+
+			if (slash_position == -1 && cur[index] == '/' && cur[index - 1] != '/' && cur[index + 1] != '/')
+			{
+				//printf( "Found Slash Pos: %i\n", i );
+				slash_position = index;
+				break;
+			}
+		}
+
+		// special case when there is no ending slash
+		if (slash_position == -1)
+		{
+			filename[0] = '/';
+			slash_position = url_length;
+		}
+		else
+		{
+			for (size_t file_index = 0, source_index = slash_position; source_index < url_length; ++source_index, ++file_index)
+			{
+				filename[file_index] = url[source_index];
+
+			}
+		}
+
+		for (size_t index = 0, source_index = host_start; source_index < slash_position; ++source_index, ++index)
+		{
+			hostname[index] = url[source_index];
+		}
+
+
+		// see if a special port was specified
+		cur = strchr(hostname, ':');
+		if (cur != 0)
+		{
+			// truncate host name
+			hostname[cur - hostname] = 0;
+			*port = atoi(cur + 1);
+		}
+		else
+		{
+			*port = runtime_standard_port_for_service(service_type);
+		}
+
+
+		return 0;
+	} // net_decompose_url
 } // namespace gemini

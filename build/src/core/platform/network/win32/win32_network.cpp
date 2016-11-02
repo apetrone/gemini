@@ -25,6 +25,8 @@
 
 #include <platform/platform_internal.h>
 
+#include <core/str.h>
+
 #include <core/logging.h>
 
 // Ignore these warnings in Microsoft's headers.
@@ -116,17 +118,20 @@ namespace platform
 
 	/// @brief Send data (TCP-only)
 	/// @returns bytes written.
-	int32_t net_socket_send(net_socket /*sock*/, const char* /*data*/, size_t /*data_size*/)
+	int32_t net_socket_send(net_socket sock, const char* data, size_t data_size)
 	{
-		return 0;
+		return send(sock, data, static_cast<int>(data_size), 0);
 	} // net_socket_send
 
 	int32_t net_socket_sendto(net_socket sock, net_address* destination, const char* data, size_t data_size)
 	{
 		return sendto(sock, data, static_cast<int>(data_size), 0, (const struct sockaddr*)destination, sizeof(net_address));
-	}
+	} // net_socket_sendto
 
-	int32_t net_socket_recv(net_socket sock, char* buffer, size_t buffer_size);
+	int32_t net_socket_recv(net_socket sock, char* buffer, size_t buffer_size)
+	{
+		return recv(sock, buffer, static_cast<int>(buffer_size), 0);
+	} // net_socket_recv
 
 	int32_t net_socket_recvfrom(net_socket sock, net_address* from, char* buffer, size_t buffer_size)
 	{
@@ -154,5 +159,47 @@ namespace platform
 		struct WSAData wsdata;
 		WORD version = MAKEWORD(2, 2);
 		return WSAStartup(version, &wsdata);
-	}
+	} // net_startup
+
+	int32_t net_ipv4_by_hostname(const char* hostname, const char* service, char ip_address[16])
+	{
+		// https://msdn.microsoft.com/en-us/library/ms738520(v=vs.85).aspx
+
+		struct addrinfo hints;
+		struct addrinfo* addr_result = nullptr;
+		struct addrinfo* address_info = nullptr;
+		struct sockaddr_in* sock_address = nullptr;
+
+		memset(&hints, 0, sizeof(struct addrinfo));
+
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_CANONNAME;
+
+		int result = getaddrinfo(hostname, service, &hints, &addr_result);
+		if (result != 0)
+		{
+			LOGV("getaddrinfo failed: %s\n", gai_strerrorA(result));
+			return -1;
+		}
+
+		// scan results
+		for (address_info = addr_result; address_info; address_info = address_info->ai_next)
+		{
+			if (address_info->ai_family == PF_INET)
+			{
+				sock_address = (struct sockaddr_in*)address_info->ai_addr;
+				core::str::copy(ip_address, (inet_ntoa(sock_address->sin_addr)), 16);
+				break;
+			}
+		}
+
+		freeaddrinfo(addr_result);
+
+		return 0;
+	} // net_ipv4_by_hostname
+
+	int32_t net_socket_connect(net_socket sock, net_address& to)
+	{
+		return connect(sock, (sockaddr*)&to, sizeof(net_address));
+	} // net_socket_connect
 } // namespace platform

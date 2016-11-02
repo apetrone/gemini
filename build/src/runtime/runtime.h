@@ -61,6 +61,7 @@ namespace gemini
 
 	void runtime_load_arguments(std::vector<std::string>& arguments, ::core::argparse::ArgumentParser& parser);
 
+	int32_t runtime_decompose_url(const char* url, char* filename, char* hostname, char* service_type, uint16_t* port);
 
 
 

@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <unistd.h> // warning: implicit declaration of function 'close'
+#include <netdb.h>
 
 namespace platform
 {
@@ -108,7 +109,7 @@ namespace platform
 
 	int32_t net_socket_send(net_socket sock, const char* data, size_t data_size)
 	{
-		return -1;
+		return send(sock, data, static_cast<int>(data_size), 0);
 	} // net_socket_send
 
 	int32_t net_socket_sendto(net_socket sock, net_address* destination, const char* data, size_t data_size)
@@ -118,7 +119,7 @@ namespace platform
 
 	int32_t net_socket_recv(net_socket sock, char* buffer, size_t buffer_size)
 	{
-		return -1;
+		return recv(sock, buffer, static_cast<int>(buffer_size), 0);
 	} // net_socket_recv
 
 	int32_t net_socket_recvfrom(net_socket sock, net_address* from, char* buffer, size_t buffer_size)
@@ -144,4 +145,33 @@ namespace platform
 	{
 		return 0;
 	} // net_startup
+
+	int32_t net_ipv4_by_hostname(const char* hostname, const char* /*service*/, char ip_address[16])
+	{
+		// http://man7.org/linux/man-pages/man3/gethostbyname.3.html
+
+		struct hostent* host_ent = nullptr;
+		struct in_addr** address_list = nullptr;
+
+		if ((host_ent = gethostbyname(hostname)) == nullptr)
+		{
+			LOGV("gethostbyname failed with errno: %i\n", errno);
+			return -1;
+		}
+
+		address_list = (struct in_addr**)host_ent->h_addr_list;
+
+		for (int32_t index = 0; address_list[index] != nullptr; ++index)
+		{
+			core::str::copy(ip_address, inet_ntoa(*address_list[index]), 16);
+			break;
+		}
+
+		return 0;
+	} // net_ipv4_by_hostname
+
+	int32_t net_socket_connect(net_socket sock, net_address& to)
+	{
+		return connect(sock, (sockaddr*)&to, sizeof(net_address));
+	} // net_socket_connect
 } // namespace platform
