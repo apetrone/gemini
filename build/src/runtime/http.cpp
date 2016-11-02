@@ -39,5 +39,24 @@
 
 namespace gemini
 {
+	http_download_state* http_request_file(const char* url, const char* temp_path, const char* user_agent)
+	{
+		char service[32] = { 0 };
+		char filename[256] = { 0 };
+		char hostname[1024] = { 0 };
+		char host[1024] = { 0 };
+		char get_request[1024] = { 0 };
 
+		// ipv4
+		char ip[32] = { 0 };
+
+		uint16_t port = 0;
+
+		// create a socket
+
+
+
+
+		return nullptr;
+	}
 } // namespace gemini

@@ -28,7 +28,33 @@
 // #include <core/util.h> // for std::function
 // #include <platform/platform.h>
 
+
+
 namespace gemini
 {
+	const size_t HTTP_MAX_HEADER_STRING_SIZE = 256;
+	const size_t HTTP_BUFFER_SIZE = 65535;
+
+	struct http_download_state
+	{
+		//
+		size_t content_length;
+
+		// total bytes read from remote
+		size_t bytes_read;
+
+		size_t completed;
+		size_t total_bytes_in;
+
+		size_t flags;
+
+		void* userdata;
+	};
+
+
+	//void http_process_header(const char* line, size_t length, http_download_state& state);
+
+
+	http_download_state* http_request_file(const char* url, const char* temp_path, const char* user_agent);
 
 } // namespace gemini
