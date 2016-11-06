@@ -666,6 +666,8 @@ public:
 		should_move_view = false;
 		sensor_thread_handle = nullptr;
 		data_socket = -1;
+
+		asset_processor = nullptr;
 	}
 
 	virtual ~EditorKernel() {}
@@ -927,7 +929,6 @@ public:
 		assert(asset_processor);
 		asset_processor->set_visible(!asset_processor->is_visible());
 	}
-
 
 
 	void timeline_scrubber_changed(size_t current_frame)
@@ -1192,10 +1193,10 @@ Options:
 	#endif
 #endif
 
-#if 0
+#if 1
 			asset_processor = new AssetProcessingPanel(compositor);
 			asset_processor->set_origin(0.0f, 25.0f);
-			asset_processor->set_dimensions(1.0f, 0.05f);
+			asset_processor->set_size(400, 100);
 			asset_processor->set_background_color(gemini::Color(0.25f, 0.25f, 0.25f));
 			//asset_processor->set_visible(false);
 #endif
@@ -1204,7 +1205,7 @@ Options:
 
 
 // add a menu
-#if 0
+#if 1
 			gui::MenuBar* menubar = new gui::MenuBar(compositor);
 			{
 				gui::Menu* filemenu = new gui::Menu("File", menubar);
