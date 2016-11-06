@@ -73,6 +73,8 @@ namespace gemini
 			Geometry();
 			~Geometry();
 
+			Geometry& operator=(const Geometry& rhs) = delete;
+
 			// set this geometry up for rendering
 			void render_setup();
 

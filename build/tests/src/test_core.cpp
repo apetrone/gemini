@@ -122,7 +122,7 @@ UNITTEST(Array)
 	// test const value iteration
 	for (const int& value : abc)
 	{
-		value;
+		LOGV("value %i\n", value);
 	}
 
 	abc.erase(60);
@@ -132,7 +132,7 @@ UNITTEST(Array)
 	TEST_ASSERT(abc.size() == 1, size_after_erase);
 	for (const int& value : abc)
 	{
-		value;
+		LOGV("value %i\n", value);
 	}
 
 

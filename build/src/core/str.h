@@ -33,7 +33,7 @@
 typedef std::string String;
 
 #define STRING_HASH32(string_value)\
-	::core::str::hash_string32<::core::str::const_length(string_value)>(string_value)
+	::core::str::hash_string32< ::core::str::const_length(string_value) >(string_value)
 
 namespace core
 {

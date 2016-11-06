@@ -217,7 +217,7 @@ namespace platform
 				// get available frames
 				BYTE* new_buffer;
 				frames_available = state->buffer_frame_count - padding_frames;
-				DWORD get_buffer_result = audio_state->render_client->GetBuffer(
+				HRESULT get_buffer_result = audio_state->render_client->GetBuffer(
 					frames_available,
 					&new_buffer
 				);
@@ -226,7 +226,7 @@ namespace platform
 				// fill the buffer
 				state->audio_pull_callback(new_buffer, frames_available, state->sample_rate_hz, state->context);
 
-				DWORD release_buffer_result = audio_state->render_client->ReleaseBuffer(frames_available, 0);
+				HRESULT release_buffer_result = audio_state->render_client->ReleaseBuffer(frames_available, 0);
 				assert(check_wasapi_error(release_buffer_result) == S_OK);
 			}
 		}
@@ -270,12 +270,12 @@ namespace platform
 				// This assert is hit if this string won't fit in our StackString.
 				assert(device.name.max_size() - 1 >= name_length);
 
-				DWORD conversion_result = WideCharToMultiByte(CP_UTF8,
+				int conversion_result = WideCharToMultiByte(CP_UTF8,
 					0, // CP_UTF8 requires flags to be 0.
 					device_name.pwszVal,
-					name_length,
+					static_cast<int>(name_length),
 					&device.name[0],
-					device.name.max_size() - 1,
+					static_cast<int>(device.name.max_size() - 1),
 					NULL,
 					NULL
 				);

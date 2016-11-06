@@ -56,9 +56,9 @@ void test_callback(void* data, size_t frames_available, size_t sample_rate_hz, v
 		// generate a square wave
 		const float volume = 0.5f;
 
-		const uint32_t frames_per_period = sample_rate_hz / 256;
+		const uint32_t frames_per_period = static_cast<uint32_t>(sample_rate_hz) / 256;
 		const uint32_t half_period = frames_per_period / 2;
-		const uint32_t total_frames = frames_available;
+		const uint32_t total_frames = static_cast<uint32_t>(frames_available);
 
 		int16_t* buffer = reinterpret_cast<int16_t*>(data);
 		for (uint32_t frame = 0; frame < total_frames; ++frame)

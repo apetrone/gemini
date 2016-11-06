@@ -184,7 +184,7 @@ namespace core
 				StackStringType out;
 				out = _data;
 				out._length = static_cast<size_t>(pos-_data);
-				out[ out._length ] = '\0';
+				out[ static_cast<int>(out._length) ] = '\0';
 				return out;
 			}
 

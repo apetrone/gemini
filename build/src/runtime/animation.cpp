@@ -62,7 +62,7 @@ namespace gemini
 
 		void KeyframeList::allocate(size_t key_count)
 		{
-			total_keys = key_count;
+			total_keys = static_cast<uint32_t>(key_count);
 			keys = MEMORY_NEW_ARRAY(Keyframe, total_keys, core::memory::global_allocator());
 		}
 

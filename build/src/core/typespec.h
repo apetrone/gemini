@@ -30,29 +30,29 @@
 
 #define TYPESPEC_REGISTER_NAME(C)\
 	template <>\
-	const char* TypeSpecName<C>::value = #C
+	const char* TypeSpecName< C >::value = #C
 
 #define TYPESPEC_IDENTIFIER(x)	STRING_HASH32(x)
 #define TYPESPEC_REGISTER_IDENTIFIER(C)\
 	template <>\
-	size_t TypeSpecIdentifier<C>::value = TYPESPEC_IDENTIFIER(#C)
+	size_t TypeSpecIdentifier< C >::value = TYPESPEC_IDENTIFIER(#C)
 
 #define TYPESPEC_REGISTER_SIZE(C)\
 	template <>\
-	unsigned int TypeSpecSize<C>::value = sizeof(C)
+	unsigned int TypeSpecSize< C >::value = sizeof(C)
 
 #define TYPESPEC_DECLARE_CLASS(C, B)\
 	public:\
 	virtual const TypeSpecInfo* typespec() const override\
 	{\
-		return typespec_make_info<C>();\
+		return typespec_make_info< C >();\
 	}
 
 #define TYPESPEC_DECLARE_CLASS_NOBASE(C)\
 	public:\
 	virtual const TypeSpecInfo* typespec() const\
 	{\
-		return typespec_make_info<C>();\
+		return typespec_make_info< C >();\
 	}
 
 // Used to register classes.

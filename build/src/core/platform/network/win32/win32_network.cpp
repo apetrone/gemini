@@ -27,7 +27,14 @@
 
 #include <core/logging.h>
 
+// Ignore these warnings in Microsoft's headers.
+#pragma warning(push)
+#pragma warning(disable: 4365) // conversion from 'bool' to 'BOOLEAN', signed/unsigned mismatch
+#pragma warning(disable: 4574) // 'INCL_WINSOCK_API_TYPEDEFS' is defined to be '0': did you mean to use '#if INCL_WINSOCK_API_TYPEDEFS'?
+
 #include <ws2tcpip.h> // for socklen_t
+
+#pragma warning(pop)
 
 namespace platform
 {
@@ -87,8 +94,8 @@ namespace platform
 	/// @returns 0 on success; -1 on failure
 	net_socket net_socket_open(net_socket_type type)
 	{
-		DWORD sock_type = (type == net_socket_type::UDP) ? SOCK_DGRAM : SOCK_STREAM;
-		DWORD protocol = (type == net_socket_type::UDP) ? IPPROTO_UDP : IPPROTO_TCP;
+		int sock_type = (type == net_socket_type::UDP) ? SOCK_DGRAM : SOCK_STREAM;
+		int protocol = (type == net_socket_type::UDP) ? IPPROTO_UDP : IPPROTO_TCP;
 		return socket(AF_INET, sock_type, protocol);
 	} // net_socket_open
 
@@ -109,14 +116,14 @@ namespace platform
 
 	/// @brief Send data (TCP-only)
 	/// @returns bytes written.
-	int32_t net_socket_send(net_socket sock, const char* data, size_t data_size)
+	int32_t net_socket_send(net_socket /*sock*/, const char* /*data*/, size_t /*data_size*/)
 	{
 		return 0;
 	} // net_socket_send
 
 	int32_t net_socket_sendto(net_socket sock, net_address* destination, const char* data, size_t data_size)
 	{
-		return sendto(sock, data, data_size, 0, (const struct sockaddr*)destination, sizeof(net_address));
+		return sendto(sock, data, static_cast<int>(data_size), 0, (const struct sockaddr*)destination, sizeof(net_address));
 	}
 
 	int32_t net_socket_recv(net_socket sock, char* buffer, size_t buffer_size);
@@ -124,21 +131,21 @@ namespace platform
 	int32_t net_socket_recvfrom(net_socket sock, net_address* from, char* buffer, size_t buffer_size)
 	{
 		socklen_t from_length = sizeof(net_address);
-		return recvfrom(sock, buffer, buffer_size, 0, (struct sockaddr*)from, &from_length);
+		return recvfrom(sock, buffer, static_cast<int>(buffer_size), 0, (struct sockaddr*)from, &from_length);
 	} // net_socket_recvfrom
 
 	// socket options
 
 	int32_t net_socket_set_reuseaddr(net_socket sock, int32_t value)
 	{
-		DWORD result = 0;
+		int result = value;
 		result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&result, sizeof(DWORD));
 		return result;
 	} // net_socket_set_reuseaddr
 
 	int32_t net_socket_set_blocking(net_socket sock, int32_t value)
 	{
-		DWORD non_blocking = value ? 1 : 0;
+		u_long non_blocking = static_cast<u_long>(value) ? 1UL : 0UL;
 		return ioctlsocket(sock, FIONBIO, &non_blocking);
 	} // net_socket_set_blocking
 
