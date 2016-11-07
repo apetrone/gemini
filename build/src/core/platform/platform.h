@@ -411,6 +411,11 @@ namespace platform
 	// returns 0 on success
 	int32_t net_startup();
 
+	int32_t net_ipv4_by_hostname(const char* hostname, const char* service, char ip_address[16]);
+
+	// Connect to a remote server (TCP only)
+	int32_t net_socket_connect(net_socket sock, net_address& to);
+
 	// ---------------------------------------------------------------------
 	// process
 	// ---------------------------------------------------------------------
