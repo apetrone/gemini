@@ -26,14 +26,33 @@
 
 #include <core/typedefs.h>
 // #include <core/util.h> // for std::function
-// #include <platform/platform.h>
+ #include <platform/platform.h>
 
 
 
 namespace gemini
 {
-	const size_t HTTP_MAX_HEADER_STRING_SIZE = 256;
-	const size_t HTTP_BUFFER_SIZE = 65535;
+	const size_t HTTP_STATUS_OK = 200;
+	const size_t HTTP_STATUS_FORBIDDEN = 403;
+	const size_t HTTP_STATUS_NOT_FOUND = 404;
+	const size_t HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
+
+
+	enum HttpFlag
+	{
+		HTTP_FLAG_ACTIVE = 1,
+		HTTP_FLAG_READ_HEADERS = 2,
+		HTTP_FLAG_READ_CONTENT = 4,
+		HTTP_FLAG_ERROR = 8
+	};
+
+	struct http_request
+	{
+		int32_t status;
+		char message[32];
+		int32_t protocol_major;
+		int32_t protocol_minor;
+	};
 
 	struct http_download_state
 	{
@@ -41,20 +60,31 @@ namespace gemini
 		size_t content_length;
 
 		// total bytes read from remote
-		size_t bytes_read;
+		uint32_t bytes_read;
+
+		// total bytes sent to remote
+		uint32_t bytes_sent;
 
 		size_t completed;
 		size_t total_bytes_in;
 
-		size_t flags;
+		uint16_t flags;
+
+		platform::net_socket socket;
 
 		void* userdata;
 	};
 
+	bool http_startup();
+	void http_shutdown();
 
-	//void http_process_header(const char* line, size_t length, http_download_state& state);
-
+	// update active requests
+	void http_update();
 
 	http_download_state* http_request_file(const char* url, const char* temp_path, const char* user_agent);
+	int32_t http_process_headers(http_download_state* state, const char* lines, size_t header_length, http_request* request);
+
+	uint32_t http_active_download_count();
+
 
 } // namespace gemini

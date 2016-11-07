@@ -33,6 +33,8 @@
 #include <runtime/filesystem.h>
 #include <runtime/jobqueue.h>
 
+#include <runtime/http.h>
+
 #include <assert.h>
 
 #include <core/mathlib.h>
@@ -46,6 +48,7 @@ void print_string(const char* data)
 	LOGV("thread: 0x%x, string: %s\n", (size_t)platform::thread_id(), data);
 }
 
+#if 0
 UNITTEST(jobqueue)
 {
 	const size_t MAX_JOB_ITERATIONS = 6;
@@ -136,7 +139,9 @@ UNITTEST(jobqueue)
 	LOGV("destroying workers...\n");
 	jq.destroy_workers();
 }
+#endif
 
+#if 0
 // ---------------------------------------------------------------------
 // filesystem
 // ---------------------------------------------------------------------
@@ -154,7 +159,31 @@ UNITTEST(filesystem)
 	//	platform::PathString absolute_path;
 	//	TEST_ASSERT(fs->get_absolute_path_for_content(absolute_path, "conf/shaders.conf") == false, get_absolute_path_for_content_missing);
 }
+#endif
 
+// ---------------------------------------------------------------------
+// http
+// ---------------------------------------------------------------------
+UNITTEST(http)
+{
+	platform::net_startup();
+
+	gemini::http_startup();
+
+	gemini::http_request_file("http://localhost:8000/essential_cyberpunk.jpg", "e:\\download.jpg", "Test");
+
+	while (gemini::http_active_download_count() > 0)
+	{
+		gemini::http_update();
+	}
+
+	gemini::http_shutdown();
+
+	platform::net_shutdown();
+}
+
+
+#if 0
 // ---------------------------------------------------------------------
 // logging
 // ---------------------------------------------------------------------
@@ -169,6 +198,7 @@ UNITTEST(logging)
 
 	LOGW("Warning, %i parameters missing!\n", 3);
 }
+#endif
 
 int main(int, char**)
 {
