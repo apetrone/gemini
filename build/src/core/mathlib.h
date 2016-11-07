@@ -73,6 +73,11 @@ typedef float real;
 		LOGV("%s pos: %2.2f, %2.2f, %2.2f\n", #mat, pos.x, pos.y, pos.z);\
 	}
 
+#define PRINT_VEC4(v) \
+	LOGV("%s: [%2.2f, %2.2f, %2.2f, %2.2f]\n", \
+	#v,\
+	v.x, v.y, v.z, v.w);
+
 #define PRINT_VEC3(v) \
 	LOGV("%s:[%2.2f, %2.2f, %2.2f]\n", \
 	#v,\
