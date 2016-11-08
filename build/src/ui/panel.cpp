@@ -81,17 +81,7 @@ namespace gui
 
 	Panel::~Panel()
 	{
-		PanelVector::iterator it, end;
-		it = children.begin();
-		end = children.end();
-		for(; it != end; ++it)
-		{
-			Panel* panel = (*it);
-			panel->~Panel();
-			gui::_gfree(panel);
-		}
-
-		children.clear();
+		clear_children();
 
 		if (layout)
 		{
@@ -368,6 +358,27 @@ namespace gui
 		assert(index < total_children());
 		return children[index];
 	} // child_at
+
+	void Panel::clear_children()
+	{
+		PanelVector::iterator it, end;
+		it = children.begin();
+		end = children.end();
+		for (; it != end; ++it)
+		{
+			Panel* panel = (*it);
+			panel->~Panel();
+			gui::_gfree(panel);
+		}
+
+		children.clear();
+		zsorted.clear();
+
+		if (get_layout())
+		{
+			get_layout()->clear_children();
+		}
+	} // clear_children
 
 	void Panel::measure(Size& minimum_size) const
 	{

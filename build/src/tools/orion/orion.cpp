@@ -51,6 +51,7 @@
 #include <ui/label.h>
 #include <ui/dockingcontainer.h>
 #include <ui/menu.h>
+#include <ui/layout.h>
 
 #include <sdk/camera.h>
 #include <sdk/game_api.h>
@@ -499,6 +500,45 @@ namespace gui
 		render2::RenderTarget* target;
 		int handle;
 	}; // RenderableSurface
+
+
+	class DialoguePanel : public Panel
+	{
+		Array<core::StackString<32>> options;
+
+		gui::VerticalLayout* vertical_layout;
+
+	public:
+		DialoguePanel(Panel* parent)
+			: Panel(parent)
+		{
+			vertical_layout = new gui::VerticalLayout();
+			set_layout(vertical_layout);
+			set_flags(get_flags() | Flag_CanMove);
+		}
+
+		void clicked_on_item(EventArgs& args)
+		{
+			LOGV("item click %s\n", args.target->get_name());
+		}
+
+		void present_options(const Array<core::StackString<32>>& options)
+		{
+			clear_children();
+
+			for (size_t index = 0; index < options.size(); ++index)
+			{
+				Button* button = new Button(this);
+				button->set_font("fonts/debug.ttf", 16);
+				button->set_text(options[index]());
+				button->set_name(options[index]());
+				button->on_click.bind<DialoguePanel, &DialoguePanel::clicked_on_item>(this);
+				vertical_layout->add_panel(button);
+				add_child(button);
+			}
+		} // present_options
+
+	}; // DialoguePanel
 } // namespace gui
 
 struct MyVertex
@@ -1202,7 +1242,19 @@ Options:
 #endif
 
 
+			gui::DialoguePanel* dp = new gui::DialoguePanel(compositor);
+			dp->set_size(400, 400);
+			dp->set_origin(50, 50);
 
+			Array<core::StackString<32>> options;
+
+			options.push_back("Option 1");
+			options.push_back("Option 2");
+			options.push_back("Option 3");
+			options.push_back("Option 4");
+			options.push_back("Option 5");
+
+			dp->present_options(options);
 
 // add a menu
 #if 1

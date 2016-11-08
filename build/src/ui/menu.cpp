@@ -339,8 +339,12 @@ namespace gui
 			Menu* menu = static_cast<Menu*>(args.target);
 			if (menu->item_type == MenuItem_DropDown)
 			{
-				menu->set_visible(false);
-				args.handled = 1;
+				// Don't hide a top level menu after we've clicked an item on that menu.
+				if (args.capture && args.capture->get_parent() != args.target)
+				{
+					menu->set_visible(false);
+					args.handled = 1;
+				}
 			}
 		}
 

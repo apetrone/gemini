@@ -344,6 +344,11 @@ namespace gui
 		update_children(child_origin, dimensions);
 	} // update
 
+	void BoxLayout::clear_children()
+	{
+		items.clear();
+	} // clear_children
+
 	//
 	// Horizontal Layout
 	//

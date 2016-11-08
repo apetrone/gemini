@@ -53,6 +53,8 @@ namespace gui
 		// memory overrides
 		void* operator new(size_t bytes);
 		void operator delete(void* memory);
+
+		virtual void clear_children() = 0;
 	}; // class Layout
 
 	enum LayoutItem
@@ -153,6 +155,8 @@ namespace gui
 		virtual void handle_event(EventArgs& args) override {}
 
 		virtual void update_children(Point& origin, Size size) = 0;
+
+		virtual void clear_children() override;
 	};
 
 	class HorizontalLayout : public BoxLayout

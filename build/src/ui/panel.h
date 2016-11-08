@@ -106,6 +106,8 @@ namespace gui
 		Panel* child_at(size_t index);
 		Panel* child_at(size_t index) const;
 
+		void clear_children();
+
 		// Return the minimum size of this panel
 		virtual void measure(Size& size) const;
 
