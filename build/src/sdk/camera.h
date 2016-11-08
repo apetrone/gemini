@@ -129,6 +129,9 @@ public:
 	// Get the target object's facing direction.
 	virtual glm::vec3 get_target_direction() const = 0;
 
+	// Get the camera's facing / eye vector
+	virtual glm::vec3 get_camera_direction() const = 0;
+
 	// Reset this camera's view.
 	virtual void reset_view() = 0;
 }; // GameCamera
@@ -207,6 +210,7 @@ public:
 	virtual void set_target_position(const glm::vec3& player_position) override;
 	virtual void set_target_direction(const glm::vec3& direction) override;
 	virtual glm::vec3 get_target_direction() const override;
+	virtual glm::vec3 get_camera_direction() const override;
 	virtual void reset_view() override;
 
 	void set_follow_distance(float target_distance);
@@ -235,6 +239,7 @@ public:
 	virtual void set_target_position(const glm::vec3& player_position) override;
 	virtual void set_target_direction(const glm::vec3& direction) override;
 	virtual glm::vec3 get_target_direction() const override;
+	virtual glm::vec3 get_camera_direction() const override;
 	virtual void reset_view() override;
 };
 
@@ -298,6 +303,7 @@ public:
 	void set_target_direction(const glm::vec3& direction);
 
 	glm::vec3 get_target_direction() const;
+	glm::vec3 get_camera_direction() const;
 };
 
 struct Camera

@@ -114,6 +114,11 @@ public:
 		return glm::vec3(0.0f, 0.0f, 0.0f);
 	}
 
+	virtual glm::vec3 get_camera_direction() const override
+	{
+		return glm::vec3(0.0f, 0.0f, 0.0f);
+	}
+
 	virtual void reset_view() override
 	{
 	}
@@ -383,6 +388,11 @@ glm::vec3 QuaternionFollowCamera::get_target_direction() const
 	return target_facing_direction;
 }
 
+glm::vec3 QuaternionFollowCamera::get_camera_direction() const
+{
+	return camera_direction;
+}
+
 void QuaternionFollowCamera::reset_view()
 {
 	glm::vec3 new_direction = target_facing_direction; //glm::vec3(0.0f, 0.0f, -1.0f); //
@@ -475,6 +485,11 @@ void FixedCamera::set_target_direction(const glm::vec3& direction)
 glm::vec3 FixedCamera::get_target_direction() const
 {
 	return glm::vec3(0.0f, 0.0f, 0.0f);
+}
+
+glm::vec3 FixedCamera::get_camera_direction() const
+{
+	return glm::vec3(0.0f, 0.0f, -1.0f);
 }
 
 void FixedCamera::reset_view()
@@ -636,6 +651,12 @@ glm::vec3 CameraMixer::get_target_direction() const
 {
 	const CameraBlend& blend = cameras.top();
 	return blend.camera->get_target_direction();
+}
+
+glm::vec3 CameraMixer::get_camera_direction() const
+{
+	const CameraBlend& blend = cameras.top();
+	return blend.camera->get_camera_direction();
 }
 
 // --------------------------------------------------------
