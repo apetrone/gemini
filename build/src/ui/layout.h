@@ -140,7 +140,7 @@ namespace gui
 		Array<LayoutRecord> items;
 		Size fixed_size;
 
-		void recursive_update(const Size& size, size_t& fixed_size_children);
+		void recursive_update(const Size& size, size_t& fixed_size_children, size_t& visible_children);
 
 	public:
 		virtual ~BoxLayout();

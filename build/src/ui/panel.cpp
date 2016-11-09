@@ -198,13 +198,8 @@ namespace gui
 			origin.y += args.delta.y;
 			flags |= Flag_TransformIsDirty;
 			args.handled = true;
-			LOGV("Moved panel %s to %2.2f, %2.2f\n", get_name(), origin.x, origin.y);
+			//LOGV("Moved panel '%s' to %2.2f, %2.2f\n", get_name(), origin.x, origin.y);
 		}
-//		else if (!args.handled && args.type == Event_CursorButtonPressed)
-//		{
-//			LOGV("set focus to panel %s\n", get_name());
-//			get_compositor()->set_focus(this);
-//		}
 	} // handle_event
 
 	void Panel::update(Compositor* compositor, float delta_seconds)

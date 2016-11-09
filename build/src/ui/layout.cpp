@@ -312,7 +312,7 @@ namespace gui
 		items.push_back(item);
 	} // add_spacer
 
-	void BoxLayout::recursive_update(const Size& size, size_t& fixed_size_children)
+	void BoxLayout::recursive_update(const Size& size, size_t& fixed_size_children, size_t& visible_children)
 	{
 		fixed_size = Size(0, 0);
 
@@ -324,6 +324,15 @@ namespace gui
 			//record.desired = Size(0, 0);
 			//record.fixed = Size(0, 0);
 
+			if (record.type == LayoutItem_Panel)
+			{
+				Panel* panel = static_cast<Panel*>(record.object);
+				if (!panel->has_flags(Panel::Flag_IsVisible))
+				{
+					continue;
+				}
+			}
+
 			if (record.type == LayoutItem_Spacer)
 			{
 				Spacer* spacer = static_cast<Spacer*>(record.object);
@@ -331,6 +340,8 @@ namespace gui
 				//record.fixed = spacer->get_size();
 				++fixed_size_children;
 			}
+
+			++visible_children;
 		}
 	} // recursive_update
 
@@ -355,15 +366,21 @@ namespace gui
 	void HorizontalLayout::update_children(Point& child_origin, Size size)
 	{
 		size_t fixed_size_children = 0;
-		recursive_update(size, fixed_size_children);
-		float item_width = (size.width - fixed_size.width) / (items.size() - fixed_size_children);
+		size_t visible_children;
+		recursive_update(size, fixed_size_children, visible_children);
+		float item_width = (size.width - fixed_size.width) / (visible_children - fixed_size_children);
 		for (size_t index = 0; index < items.size(); ++index)
 		{
 			float prev_origin_y = child_origin.y;
 			LayoutRecord& record = items[index];
 			if (record.type == LayoutItem_Panel)
 			{
-				Panel* panel = (Panel*)record.object;
+				Panel* panel = static_cast<Panel*>(record.object);
+				if (!panel->has_flags(Panel::Flag_IsVisible))
+				{
+					continue;
+				}
+
 				panel->set_origin(child_origin.x, child_origin.y);
 				panel->set_size(item_width, size.height);
 				size.width -= item_width;
@@ -390,8 +407,9 @@ namespace gui
 	void VerticalLayout::update_children(Point& child_origin, Size size)
 	{
 		size_t fixed_size_children = 0;
-		recursive_update(size, fixed_size_children);
-		float item_height = (size.height - fixed_size.height) / (items.size() - fixed_size_children);
+		size_t visible_children;
+		recursive_update(size, fixed_size_children, visible_children);
+		float item_height = (size.height - fixed_size.height) / (visible_children - fixed_size_children);
 		for (size_t index = 0; index < items.size(); ++index)
 		{
 			float prev_origin_x = child_origin.x;
@@ -399,6 +417,11 @@ namespace gui
 			if (record.type == LayoutItem_Panel)
 			{
 				Panel* panel = static_cast<Panel*>(record.object);
+				if (!panel->has_flags(Panel::Flag_IsVisible))
+				{
+					continue;
+				}
+
 				panel->set_origin(child_origin.x, child_origin.y);
 				panel->set_size(size.width, item_height);
 				size.height -= item_height;
@@ -417,20 +440,5 @@ namespace gui
 			}
 			child_origin.x = prev_origin_x;
 		}
-	}
-
-	//void VerticalLayout::render(Compositor* compositor, Panel* panel, gui::render::CommandList& render_commands)
-	//{
-
-	//}
-
-	//bool VerticalLayout::hit_test_local(const Point& local_point) const
-	//{
-	//	return false;
-	//}
-
-	//void VerticalLayout::handle_event(EventArgs& args)
-	//{
-
-	//}
+	} // update_children
 } // namespace gui
