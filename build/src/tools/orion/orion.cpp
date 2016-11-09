@@ -500,80 +500,6 @@ namespace gui
 		render2::RenderTarget* target;
 		int handle;
 	}; // RenderableSurface
-
-
-	struct DialogueState
-	{
-		Array<core::StackString<32>> options;
-
-
-		DialogueState()
-		{
-
-		}
-	};
-
-
-	class DialoguePanel : public Panel
-	{
-		Array<core::StackString<32>> options;
-
-		DialogueState* dialogue_state;
-		gui::VerticalLayout* vertical_layout;
-
-		size_t offset;
-	public:
-		DialoguePanel(Panel* parent, DialogueState* ds)
-			: Panel(parent)
-			, dialogue_state(ds)
-		{
-			vertical_layout = new gui::VerticalLayout();
-			set_layout(vertical_layout);
-			set_flags(get_flags() | Flag_CanMove);
-			offset = 0;
-
-
-			for (size_t index = 0; index < 10; ++index)
-			{
-				Button* button = new Button(this);
-				button->set_font("fonts/debug.ttf", 16);
-				//button->set_text();
-				button->set_name(core::str::format("dialogue button %i", index));
-				button->on_click.bind<DialoguePanel, &DialoguePanel::clicked_on_item>(this);
-				vertical_layout->add_panel(button);
-				add_child(button);
-				button->set_visible(false);
-			}
-		}
-
-		void clicked_on_item(EventArgs& args)
-		{
-			LOGV("item click %s\n", args.target->get_name());
-			LOGV("present with %i %i\n", offset, 3);
-			present_options(dialogue_state->options, offset, 3);
-		}
-
-		void present_options(const Array<core::StackString<32>>& options, size_t start, size_t total)
-		{
-			offset = (start + total);
-
-			// hide all buttons to start
-			for (size_t index = 0; index < children.size(); ++index)
-			{
-				Button* button = static_cast<Button*>(children[index]);
-				button->set_visible(false);
-			}
-
-			// show only required buttons
-			for (size_t index = start; index < (start + total); ++index)
-			{
-				Button* button = static_cast<Button*>(children[index-start]);
-				button->set_text(options[index]());
-				button->set_visible(true);
-			}
-		} // present_options
-
-	}; // DialoguePanel
 } // namespace gui
 
 struct MyVertex
@@ -714,8 +640,6 @@ private:
 
 	bool is_recording_frames;
 	bool is_playing_frames;
-
-	gui::DialogueState ds;
 
 	net_socket data_socket;
 	platform::Thread* sensor_thread_handle;
@@ -1276,28 +1200,6 @@ Options:
 			asset_processor->set_background_color(gemini::Color(0.25f, 0.25f, 0.25f));
 			//asset_processor->set_visible(false);
 #endif
-
-			ds.options.push_back("Option 1");
-			ds.options.push_back("Option 2");
-			ds.options.push_back("Option 3");
-			ds.options.push_back("Option 4");
-			ds.options.push_back("Option 5");
-			ds.options.push_back("Option 6");
-			ds.options.push_back("Option 7");
-			ds.options.push_back("Option 8");
-			ds.options.push_back("Option 9");
-			ds.options.push_back("Option 10");
-			ds.options.push_back("Option 11");
-			ds.options.push_back("Option 12");
-
-			gui::DialoguePanel* dp = new gui::DialoguePanel(compositor, &ds);
-			dp->set_size(400, 400);
-			dp->set_origin(50, 50);
-
-
-
-			dp->present_options(ds.options, 0, 3);
-
 
 // add a menu
 #if 1
