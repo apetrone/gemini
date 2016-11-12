@@ -85,8 +85,7 @@ namespace gui
 
 		if (layout)
 		{
-			layout->~Layout();
-			gui::_gfree(layout);
+			delete layout;
 			layout = nullptr;
 		}
 	} // ~Panel

@@ -120,8 +120,6 @@ namespace gui
 	private:
 		// Only fixed sizes are supported.
 		Size size;
-
-		Direction direction;
 	};
 
 	class BoxLayout : public Layout

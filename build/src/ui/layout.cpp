@@ -269,22 +269,7 @@ namespace gui
 	//
 	BoxLayout::~BoxLayout()
 	{
-		// Iterate over items in the layout.
-		// The layout is responsible for removing child spacers and layouts.
-		for (size_t index = 0; index < items.size(); ++index)
-		{
-			const LayoutRecord& record = items[index];
-			if (record.type == LayoutItem_Spacer)
-			{
-				Spacer* spacer = static_cast<Spacer*>(record.object);
-				delete spacer;
-			}
-			else if (record.type == LayoutItem_Layout)
-			{
-				BoxLayout* layout = static_cast<BoxLayout*>(record.object);
-				delete layout;
-			}
-		}
+		clear_children();
 	}
 
 
@@ -357,6 +342,22 @@ namespace gui
 
 	void BoxLayout::clear_children()
 	{
+		// Iterate over items in the layout.
+		// The layout is responsible for removing child spacers and layouts.
+		for (size_t index = 0; index < items.size(); ++index)
+		{
+			const LayoutRecord& record = items[index];
+			if (record.type == LayoutItem_Spacer)
+			{
+				Spacer* spacer = static_cast<Spacer*>(record.object);
+				delete spacer;
+			}
+			else if (record.type == LayoutItem_Layout)
+			{
+				BoxLayout* layout = static_cast<BoxLayout*>(record.object);
+				delete layout;
+			}
+		}
 		items.clear();
 	} // clear_children
 
