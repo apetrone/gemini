@@ -54,6 +54,9 @@ namespace gui
 		void on_vertical_scroll(float value);
 		void on_horizontal_scroll(float value);
 
+		// vertical scrollbar is being used.
+		bool has_vertical_scrollbar() const;
+
 		Scrollbar* horizontal_bar;
 		Scrollbar* vertical_bar;
 		Point scroll_offset;

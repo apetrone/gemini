@@ -49,8 +49,9 @@ namespace gui
 
 	void Label::update(Compositor* compositor, float delta_seconds)
 	{
-		update_text_cache();
+
 		ScrollablePanel::update(compositor, delta_seconds);
+		update_text_cache();
 	}
 
 	void Label::render(Compositor* compositor,
@@ -175,7 +176,12 @@ namespace gui
 				else if (enable_word_wrap && (text[index] == ' '))
 				{
 					renderer->font_measure_string(font_handle, &text[last_start], (index - last_start), text_bounds);
-					if (text_bounds.width() > size.width)
+					float test_width = content_bounds.width();
+					if (has_vertical_scrollbar())
+					{
+						test_width -= vertical_bar->get_size().width;
+					}
+					if (text_bounds.width() > test_width)
 					{
 						// we need to wrap text starting from last index;
 						create_cache_entry(last_word_break, last_start, origin_offset);

@@ -121,4 +121,9 @@ namespace gui
 	{
 		LOGV("horizontal: %2.2f\n", value);
 	} // on_horizontal_scroll
+
+	bool ScrollablePanel::has_vertical_scrollbar() const
+	{
+		return vertical_bar->is_visible();
+	} // has_vertical_scrollbar
 } // namespace gui
