@@ -261,6 +261,8 @@ namespace platform
 		panel.allowsMultipleSelection 	= (open_flags & OpenDialogFlags::AllowMultiselect) ? YES : NO;
 		//panel.allowedFileTypes = @[@"conf"];
 
+		[panel setAllowsOtherFileTypes:YES];
+
 		NSInteger modal_result = [panel runModal];
 
 		if (modal_result == NSFileHandlingPanelOKButton)
@@ -279,6 +281,40 @@ namespace platform
 		return Result::failure("User cancelled dialog");
 	}
 
+
+	Result show_save_dialog(const char* title,
+							uint32_t save_flags,
+							const Array<PlatformExtensionDescription>& extensions,
+							const PathString& default_extension,
+							PathString& filename)
+	{
+
+		NSSavePanel* panel 				= [NSSavePanel savePanel];
+		panel.title 					= cocoa::to_nsstring(title);
+		panel.showsHiddenFiles			= (save_flags & SaveDialogFlags::ShowHiddenFiles) ? YES : NO;
+		panel.canCreateDirectories		= (save_flags & SaveDialogFlags::CanCreateDirectories) ? YES : NO;
+
+		[panel setAllowsOtherFileTypes:YES];
+
+		NSMutableArray* filetypes = [[NSMutableArray alloc] init];
+		for(size_t index = 0; index < extensions.size(); ++index)
+		{
+			const PlatformExtensionDescription& description = extensions[index];
+			[filetypes addObject:cocoa::to_nsstring(description.extension)];
+		}
+
+
+		[panel setAllowedFileTypes: filetypes];
+
+		NSInteger modal_result = [panel runModal];
+		if (modal_result == NSFileHandlingPanelOKButton)
+		{
+			filename = cocoa::nsstring_to_stackstring<PathString>([panel.URL.path stringByResolvingSymlinksInPath]);
+			return Result::success();
+		}
+
+		return Result::failure("User cancelled dialog");
+	}
 
 
 	class CocoaProcess : public Process

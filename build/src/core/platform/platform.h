@@ -65,6 +65,7 @@
 	} // namespace platform
 
 	#include <netinet/in.h> // for sockaddr_in
+	#include <sys/select.h>
 
 	#define GEMINI_EXPORT
 #else
@@ -596,7 +597,8 @@ namespace platform
 
 	namespace SaveDialogFlags
 	{
-
+		constexpr uint8_t ShowHiddenFiles 		= 1;	// show hidden files
+		constexpr uint8_t CanCreateDirectories	= 2;	// directories can be created through this dialog
 	} // namespace SaveDialogFlags
 
 

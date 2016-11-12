@@ -873,7 +873,7 @@ public:
 	void on_playback_start(void)
 	{
 		Array<PathString> paths;
-		platform::Result open_result = platform::show_open_dialog("Choose Sensor Stream", 0, paths);
+		platform::Result open_result = platform::show_open_dialog("Choose Sensor Stream", OpenDialogFlags::CanChooseFiles, paths);
 		if (open_result.succeeded())
 		{
 			LOGV("loading sensor stream '%s'\n", paths[0]());
