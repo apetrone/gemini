@@ -543,7 +543,7 @@ namespace gui
 			return;
 		}
 
-		// reset thi panel's zdepth
+		// reset this panel's zdepth
 		panel->z_depth = 0;
 
 		size_t zdepth = 1;

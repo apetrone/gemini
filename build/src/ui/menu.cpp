@@ -178,7 +178,7 @@ namespace gui
 			// We need floor to snap to pixel boundaries; not fractional pixels;
 			// which would introduce artifacts.
 
-			// centered
+			// left-aligned
 			text_origin.x = 6; // glm::floor((size.width / 2.0f) - (font_dims.width() / 2.0f));
 			text_origin.y = glm::floor((size.height / 2.0f) - (font_dims.height() / 2.0f) + glm::max((float)font_height, font_dims.height()));
 		}

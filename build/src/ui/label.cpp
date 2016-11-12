@@ -150,7 +150,14 @@ namespace gui
 
 			glm::vec2 origin_offset = glm::vec2(LABEL_LEFT_MARGIN, LABEL_TOP_MARGIN);
 			origin_offset.y += font_height;
+			content_bounds.size.width = size.width;
 			content_bounds.size.height = static_cast<DimensionType>(-font_height);
+
+
+			const bool enable_word_wrap = true;
+
+			int32_t width = 0.0f;
+			// TODO: word wrap!
 
 			const size_t character_count = text.size();
 			for (size_t index = 0; index < character_count+1; ++index)
@@ -176,6 +183,7 @@ namespace gui
 						origin_offset.x = LABEL_LEFT_MARGIN;
 						origin_offset.y += font_height + best_height;
 						content_bounds.size.height += font_height + best_height;
+						width += text_bounds.width;
 					}
 
 					if (is_last_character)
