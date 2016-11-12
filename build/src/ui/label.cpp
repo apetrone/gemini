@@ -140,7 +140,6 @@ namespace gui
 			size_t height;
 			int ascender, descender;
 			renderer->font_metrics(font_handle, height, ascender, descender);
-			float best_height = static_cast<float>(font_height);
 			content_bounds.origin = origin + scroll_offset;
 
 			cache_is_dirty = 0;
@@ -153,45 +152,64 @@ namespace gui
 			content_bounds.size.width = size.width;
 			content_bounds.size.height = static_cast<DimensionType>(-font_height);
 
-
 			const bool enable_word_wrap = true;
 
-			int32_t width = 0.0f;
-			// TODO: word wrap!
+			// keep track of the last segment in text to handle word wraps.
+			size_t last_word_break = 0;
 
 			const size_t character_count = text.size();
 			for (size_t index = 0; index < character_count+1; ++index)
 			{
 				const bool is_last_character = (index == character_count);
+
+				Rect text_bounds;
+
 				if (text[index] == '\n' || is_last_character)
 				{
-					if ((index - last_start) > 1)
-					{
-						font_cache_entry cs;
-						cs.start = last_start;
-						cs.length = (index - last_start);
-						cs.origin = origin_offset;
-
-						last_start = index;
-
-						Rect text_bounds;
-						renderer->font_measure_string(font_handle, &text[cs.start], cs.length, text_bounds);
-						best_height = glm::max(static_cast<float>(font_height), text_bounds.height());
-
-						cs.height = font_height + best_height;
-						font_cache.push_back(cs);
-						origin_offset.x = LABEL_LEFT_MARGIN;
-						origin_offset.y += font_height + best_height;
-						content_bounds.size.height += font_height + best_height;
-						width += text_bounds.width;
-					}
-
+					create_cache_entry(index, last_start, origin_offset);
 					if (is_last_character)
 					{
 						break;
 					}
 				}
+				else if (enable_word_wrap && (text[index] == ' '))
+				{
+					renderer->font_measure_string(font_handle, &text[last_start], (index - last_start), text_bounds);
+					if (text_bounds.width() > size.width)
+					{
+						// we need to wrap text starting from last index;
+						create_cache_entry(last_word_break, last_start, origin_offset);
+						// reset index, last_start. Advance it past the space.
+						index = (last_word_break + 1);
+						last_start = (index + 1);
+					}
+					last_word_break = index;
+				}
 			}
 		}
-	}
+	} // update_text_cache
+
+	void Label::create_cache_entry(size_t& index, size_t& last_start, Point& origin_offset)
+	{
+		Renderer* renderer = get_compositor()->get_renderer();
+		if ((index - last_start) > 1)
+		{
+			font_cache_entry cs;
+			cs.start = last_start;
+			cs.length = (index - last_start);
+			cs.origin = origin_offset;
+
+			last_start = index;
+
+			Rect text_bounds;
+			renderer->font_measure_string(font_handle, &text[cs.start], cs.length, text_bounds);
+			size_t best_height = glm::max(static_cast<float>(font_height), text_bounds.height());
+
+			cs.height = font_height + best_height;
+			font_cache.push_back(cs);
+			origin_offset.x = LABEL_LEFT_MARGIN;
+			origin_offset.y += font_height + best_height;
+			content_bounds.size.height += font_height + best_height;
+		}
+	} // create_cache_entry
 } // namespace gui

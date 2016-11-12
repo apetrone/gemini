@@ -57,6 +57,8 @@ namespace gui
 		// to recalculate the content rect.
 		void update_text_cache();
 
+		void create_cache_entry(size_t& index, size_t& last_start, Point& origin_offset);
+
 		struct font_cache_entry
 		{
 			glm::vec2 origin;

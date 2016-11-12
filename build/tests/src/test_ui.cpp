@@ -624,9 +624,21 @@ public:
 			label->set_background_color(gemini::Color::from_rgba(32, 32, 32, 255));
 			label->set_foreground_color(gemini::Color::from_rgba(255, 0, 0, 255));
 			label->set_font(dev_font, dev_font_size);
-			label->set_text("i can click things");
+			label->set_text("Lorem ipsum dolor sit amet, ligula erat sagittis vehicula vitae ligula praesent, aliquet odio tortor integer mattis volutpat eros, commodo fusce tempor tristique, nullam pellentesque ut consectetuer. Id condimentum porttitor leo mollis, mus pede ac mi. Curabitur lorem ante netus nulla, ligula egestas, massa ante. Dictum mollis enim turpis, nam id, aliquam malesuada vel imperdiet pede nonummy nonummy, viverra urna ut velit tempus excepturi. Nonummy laoreet eros quisque, pretium in nec maecenas torquent, velit iaculis enim vitae quisque massa tristique, magnam metus fusce incidunt purus. Ullamcorper varius vitae elit, ipsum turpis nesciunt porttitor elit venenatis, gravida nec interdum nec, praesent quam mi amet. Donec praesent elementum, cum nunc enim morbi in volutpat ante, blandit fringilla condimentum est at, mattis hac. Et odio imperdiet egestas rhoncus nulla.");
 			label->set_name("test3_label");
-			tab->add_tab(1, "test3", label);
+			tab->add_tab(2, "test3", label);
+		}
+
+		{
+			label = new gui::Label(tab);
+			label->set_origin(0, 0);
+			label->set_size(110, 40);
+			label->set_background_color(gemini::Color::from_rgba(32, 32, 32, 255));
+			label->set_foreground_color(gemini::Color::from_rgba(255, 0, 0, 255));
+			label->set_font(dev_font, dev_font_size);
+			label->set_text("");
+			label->set_name("memory_label");
+			tab->add_tab(3, "memory", label);
 		}
 #endif
 		// test buttons
