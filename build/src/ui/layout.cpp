@@ -366,7 +366,7 @@ namespace gui
 	void HorizontalLayout::update_children(Point& child_origin, Size size)
 	{
 		size_t fixed_size_children = 0;
-		size_t visible_children;
+		size_t visible_children = 0;
 		recursive_update(size, fixed_size_children, visible_children);
 		float item_width = (size.width - fixed_size.width) / (visible_children - fixed_size_children);
 		for (size_t index = 0; index < items.size(); ++index)
@@ -407,7 +407,7 @@ namespace gui
 	void VerticalLayout::update_children(Point& child_origin, Size size)
 	{
 		size_t fixed_size_children = 0;
-		size_t visible_children;
+		size_t visible_children = 0;
 		recursive_update(size, fixed_size_children, visible_children);
 		float item_height = (size.height - fixed_size.height) / (visible_children - fixed_size_children);
 		for (size_t index = 0; index < items.size(); ++index)
