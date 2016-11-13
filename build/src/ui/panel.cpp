@@ -191,7 +191,7 @@ namespace gui
 
 	void Panel::handle_event(EventArgs& args)
 	{
-		if (args.type == Event_CursorDrag && get_parent())
+		if (args.type == Event_CursorDrag && get_parent() && args.capture == this)
 		{
 			origin.x += args.delta.x;
 			origin.y += args.delta.y;

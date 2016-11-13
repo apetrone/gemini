@@ -114,7 +114,7 @@ namespace gui
 			args.handled = true;
 		}
 
-		Panel::handle_event(args);
+		//Panel::handle_event(args);
 	}
 
 	void Scrollbar::set_button_size(float width, float height)
