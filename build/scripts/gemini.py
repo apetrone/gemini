@@ -466,7 +466,7 @@ def get_libcore(arguments, target_platform):
 	if target_platform.matches("linux"):
 		found_alsa_version = target_platform.find_include_path("alsa/version.h")
 		found_alsa_soundlib = target_platform.find_include_path("alsa/asoundlib.h")
-		assert_dependency(found_alsa_version, "alsa/version.h not found"))
+		assert_dependency(found_alsa_version, "alsa/version.h not found")
 		assert_dependency(found_alsa_soundlib, "alsa/asoundlib.h not found")
 		linux.links.append("asound")
 
