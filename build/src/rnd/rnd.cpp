@@ -1600,6 +1600,56 @@ platform::Result test_alsa()
 }
 #endif // defined(PLATFORM_WINDOWS)
 
+// #include <core/logging.h>
+#include <core/array.h>
+
+
+struct DialogueNode
+{
+	enum Flags
+	{
+		Flag_None,
+		Flag_FirstPass,
+		Flag_SecondPass
+	};
+
+	DialogueNode();
+	DialogueNode* child_at(size_t index);
+	void add_child(DialogueNode* node);
+
+	uint32_t flags;
+	Array<DialogueNode*> children;
+
+	String question;
+	String responses[4];
+};
+
+DialogueNode::DialogueNode()
+	: flags(0)
+{
+}
+
+DialogueNode* DialogueNode::child_at(size_t index)
+{
+	assert(index < children.size() - 1);
+	return children[index];
+}
+
+void DialogueNode::add_child(DialogueNode* child)
+{
+	children.push_back(child);
+}
+
+
+void present_dialogue(DialogueNode* node)
+{
+	LOGV("---------- present ----------\n");
+	LOGV("--> %s\n", node->question.c_str());
+	for (size_t index = 0; index < 4; ++index)
+	{
+		LOGV("%i: %s\n", (index + 1), node->responses[index].c_str());
+	}
+}
 
 
 int main(int, char**)
@@ -1622,12 +1672,59 @@ int main(int, char**)
 
 	// test_bno055();
 
-#if defined(PLATFORM_LINUX)
+#if defined(PLATFORM_LINUX) && 0
 	platform::Result test_alsa();
 	platform::Result test = test_alsa();
 	assert(test.succeeded());
 #endif
 
+	DialogueNode root;
+	root.question = "Hello, how can I help you?";
+	root.responses[0] = "What items do you have for sale?";
+	root.responses[1] = "Do you know of a man named Crane?";
+	root.responses[2] = "Where might I buy a room for the night?";
+	root.responses[3] = "I would like to buy a drink";
+	// root.responses[4] = "What items do you have for sale?";
+
+
+	DialogueNode items;
+	items.question = "What are you looking for?";
+	items.responses[0] = "A Sword.";
+	items.responses[1] = "A Shield.";
+	items.responses[2] = "Body Armor.";
+	items.responses[3] = "None of the above.";
+	items.add_child(nullptr);
+	items.add_child(nullptr);
+	items.add_child(nullptr);
+	items.add_child(&root);
+	root.add_child(&items);
+
+	DialogueNode opt2;
+	opt2.question = "Crane? The name sounds familiar. I don't remember...";
+	opt2.responses[0] = "Would 20 credits entice you?";
+	opt2.responses[1] = "Would 50 credits jog your memory?";
+	opt2.responses[2] = "I must find him.";
+	opt2.responses[3] = "None of the above.";
+	root.add_child(&opt2);
+
+	DialogueNode* current = &root;
+	while (true && current)
+	{
+		present_dialogue(current);
+
+		int choice = -1;
+		scanf("%i", &choice);
+
+		choice -= 1;
+		if (choice >= 0 && choice < current->children.size())
+		{
+			current = current->children[choice];
+		}
+		else
+		{
+			current = nullptr;
+		}
+	}
 
 	gemini::runtime_shutdown();
 
