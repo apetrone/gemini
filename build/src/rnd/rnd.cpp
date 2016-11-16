@@ -1705,10 +1705,14 @@ int main(int, char**)
 	opt2.responses[1] = "Would 50 credits jog your memory?";
 	opt2.responses[2] = "I must find him.";
 	opt2.responses[3] = "None of the above.";
+	opt2.add_child(&root);
+	opt2.add_child(&root);
+	opt2.add_child(&root);
+	opt2.add_child(&root);
 	root.add_child(&opt2);
 
 	DialogueNode* current = &root;
-	while (true && current)
+	while (current)
 	{
 		present_dialogue(current);
 
