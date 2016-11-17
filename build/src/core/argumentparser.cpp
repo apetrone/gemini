@@ -550,7 +550,8 @@ namespace core
 			// to separate elements.
 			std::regex replacement("([\\[\\]\\(\\)\\|]|\\.\\.\\.)");
 			std::string str;
-			std::regex_replace(std::back_inserter(str), formal_usage.begin(), formal_usage.end(), replacement, " $1 ");
+			std::string token(" $1 ");
+			std::regex_replace(std::back_inserter(str), formal_usage.begin(), formal_usage.end(), replacement, token);
 
 			TokenList usage;
 
@@ -713,11 +714,12 @@ namespace core
 				// to separate elements.
 				std::string replaced_string;
 				std::regex replacement("([\\[\\]\\(\\)\\|]|\\.\\.\\.)");
+				std::string token(" $1 ");
 				std::regex_replace(std::back_inserter(replaced_string),
 					formal_usage.begin(),
 					formal_usage.end(),
 					replacement,
-					" $1 ");
+					token);
 
 				// this needs to remove the commas from the usage pattern
 				// otherwise it may incorrectly pickup bogus options: "-,"
