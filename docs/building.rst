@@ -50,6 +50,12 @@ must be performed before attempting to generate projects.
 
 Debian/Ubuntu/SteamOS
 
+	Known issues with distributions:
+		- Xubuntu 12.04: Does not build. Incompatibility with C++ regex_replace.
+
+	Successfully tested distributions:
+		- Kubuntu (version?)
+
 	.. code-block:: bash
 
 		sudo apt-get install sox libasound2-dev libudev-dev
