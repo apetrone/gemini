@@ -50,11 +50,14 @@ must be performed before attempting to generate projects.
 
 Debian/Ubuntu/SteamOS
 
+	GCC 4.9.0+ is required. (A dependency based on C++ regex.)
+
 	Known issues with distributions:
-		- Xubuntu 12.04: Does not build. Incompatibility with C++ regex_replace.
+		- Xubuntu 12.04 (LTS): Does not build. Incompatibility with C++ regex_replace.
 
 	Successfully tested distributions:
 		- Kubuntu (version?)
+		- Xubuntu 14.04.5 (LTS)
 
 	.. code-block:: bash
 
