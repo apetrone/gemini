@@ -109,16 +109,16 @@ namespace gemini
 
 						// TODO: write bytes read to file
 
-
-						state->content_length += bytes_read;
+						state->content_bytes_read += bytes_read;
 
 						if (bytes_read == 0)
 						{
-							LOGV("file completed download of %i bytes.\n", state->content_length);
+							LOGV("file completed download of %i/%i bytes.\n", state->content_bytes_read, state->content_length);
 							state->flags &= ~HTTP_FLAG_ACTIVE;
 							net_socket_close(state->socket);
 							state->socket = 0;
 							state->content_length = 0;
+							state->content_bytes_read = 0;
 						}
 					}
 					else if (state->flags & HTTP_FLAG_READ_HEADERS)
@@ -132,26 +132,49 @@ namespace gemini
 							net_socket_close(state->socket);
 							state->socket = 0;
 							state->content_length = 0;
+							state->content_bytes_read = 0;
 							continue;
 						}
 
 						state->bytes_read += bytes_read;
 
-						// find the character position of the content start...
-						const char* content_start = core::str::strstr(buffer, "\r\n\r\n");
-						assert(content_start);
-						content_start += 4;
+						size_t read_pointer = 0;
+						size_t bytes_read_into_header = 0;
 
-						// Now start reading content...
-						state->flags &= ~HTTP_FLAG_READ_HEADERS;
-						state->flags |= HTTP_FLAG_READ_CONTENT;
+						for (size_t index = 0; index < bytes_read; ++index)
+						{
+							state->header_data[state->header_length++] = buffer[read_pointer++];
+							bytes_read_into_header++;
 
-						// compute the header data size
-						uint32_t header_size = (content_start - buffer);
+							// If you hit this, we're reading really large headers.
+							assert(state->header_length < 2048);
 
-						// process headers
-						http_request request;
-						http_process_headers(state, buffer, header_size, &request);
+							// Keep reading data until we reach the content start
+							// marked by '\r\n\r\n'
+							const char* content_start = core::str::strstr(state->header_data, "\r\n\r\n");
+							if (content_start)
+							{
+								content_start += 4;
+
+								// Left over data from the buffer that we need to read.
+								const size_t content_to_copy = (bytes_read - bytes_read_into_header);
+								for (size_t ptr = bytes_read_into_header; ptr < bytes_read; ++ptr)
+								{
+									// copy data to content
+									state->content_length++;
+									state->content_bytes_read++;
+								}
+
+								// Now start reading content...
+								state->flags &= ~HTTP_FLAG_READ_HEADERS;
+								state->flags |= HTTP_FLAG_READ_CONTENT;
+
+								// process headers
+								http_request request;
+								http_process_headers(state, state->header_data, state->header_length, &request);
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -194,6 +217,11 @@ namespace gemini
 			return nullptr;
 		}
 
+		state->bytes_read = 0;
+		state->bytes_sent = 0;
+		state->header_length = 0;
+		state->content_bytes_read = 0;
+
 		// decompose the entered URL into hostname, port, service type, and filename.
 		runtime_decompose_url(url, filename, hostname, service, &port);
 
@@ -233,7 +261,7 @@ namespace gemini
 		);
 
 		int32_t bytes_sent = net_socket_send(state->socket, get_request, core::str::len(get_request));
-		LOGV("sent %i bytes\n", bytes_sent);
+		//LOGV("sent %i bytes\n", bytes_sent);
 		if (bytes_sent < 0)
 		{
 			LOGV("Error sending data to server.\n");
@@ -246,6 +274,7 @@ namespace gemini
 		state->bytes_sent = bytes_sent;
 
 		// now reading headers...
+		memset(state->header_data, 0, 2048);
 		state->flags |= HTTP_FLAG_READ_HEADERS;
 
 		// make directories
@@ -288,7 +317,7 @@ namespace gemini
 						if (core::str::case_insensitive_compare(line_start, "content-length", 14) == 0)
 						{
 							state->content_length = atoi(line_start + 15);
-							LOGV("content length is %i bytes\n", state->content_length);
+							//LOGV("content length is %i bytes\n", state->content_length);
 							assert(state->content_length > 0);
 						}
 					}

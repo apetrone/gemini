@@ -58,6 +58,7 @@ namespace gemini
 	{
 		//
 		size_t content_length;
+		size_t content_bytes_read;
 
 		// total bytes read from remote
 		uint32_t bytes_read;
@@ -65,12 +66,13 @@ namespace gemini
 		// total bytes sent to remote
 		uint32_t bytes_sent;
 
-		size_t completed;
-		size_t total_bytes_in;
+		uint32_t header_length;
 
 		uint16_t flags;
 
 		platform::net_socket socket;
+
+		char header_data[2048];
 
 		void* userdata;
 	};
