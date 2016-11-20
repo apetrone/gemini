@@ -85,7 +85,7 @@ namespace gemini
 			}
 		}
 
-		const size_t HTTP_BUFFER_SIZE = 65535;
+		const size_t HTTP_BUFFER_SIZE = 32768;
 		char buffer[HTTP_BUFFER_SIZE] = { 0 };
 
 		int32_t socks_ready = select(last_socket, &read_set, 0, 0, &select_timeout);
@@ -147,7 +147,7 @@ namespace gemini
 							bytes_read_into_header++;
 
 							// If you hit this, we're reading really large headers.
-							assert(state->header_length < 2048);
+							assert(state->header_length < HTTP_HEADER_MAX_SIZE);
 
 							// Keep reading data until we reach the content start
 							// marked by '\r\n\r\n'
@@ -198,17 +198,15 @@ namespace gemini
 
 	http_download_state* http_request_file(const char* url, const char* temp_path, const char* user_agent)
 	{
-		char service[32] = { 0 };
-		char filename[256] = { 0 };
-		char hostname[1024] = { 0 };
-		char host[1024] = { 0 };
-		char get_request[1024] = { 0 };
+		char service[32] 		= { 0 };
+		char filename[256] 		= { 0 };
+		char hostname[1024] 	= { 0 };
+		char host[1024] 		= { 0 };
+		char get_request[1024] 	= { 0 };
 
 		// ipv4
-		char ip_address[16] = { 0 };
-
-		uint16_t port = 0;
-
+		char ip_address[16] 	= { 0 };
+		uint16_t port 			= 0;
 
 		// try to get a state for a new request...
 		http_download_state* state = find_unused_state();
@@ -249,7 +247,6 @@ namespace gemini
 		state->flags |= HTTP_FLAG_ACTIVE;
 
 		// send a GET request to the server...
-
 		core::str::sprintf(get_request,
 			1024,
 			"GET %s HTTP/1.1\r\nUser-Agent: %s\r\nAccept: */*\r\nHost: %s\r\nConnection: close\r\n\r\n",
@@ -259,7 +256,6 @@ namespace gemini
 		);
 
 		int32_t bytes_sent = net_socket_send(state->socket, get_request, core::str::len(get_request));
-		//LOGV("sent %i bytes\n", bytes_sent);
 		if (bytes_sent < 0)
 		{
 			LOGV("Error sending data to server.\n");
@@ -272,7 +268,7 @@ namespace gemini
 		state->bytes_sent = bytes_sent;
 
 		// now reading headers...
-		memset(state->header_data, 0, 2048);
+		memset(state->header_data, 0, HTTP_HEADER_MAX_SIZE);
 		state->flags |= HTTP_FLAG_READ_HEADERS;
 
 		// make directories
@@ -304,18 +300,9 @@ namespace gemini
 					}
 					else
 					{
-						//if (core::str::case_insensitive_compare(line_start, "connection", 10) == 0)
-						//{
-						//	LOGV("connection header...\n");
-						//}
-						//else if (core::str::case_insensitive_compare(line_start, "content-type", 12) == 0)
-						//{
-						//	LOGV("connection header...\n");
-						//}
 						if (core::str::case_insensitive_compare(line_start, "content-length", 14) == 0)
 						{
 							state->content_length = atoi(line_start + 15);
-							//LOGV("content length is %i bytes\n", state->content_length);
 							assert(state->content_length > 0);
 						}
 					}
@@ -333,9 +320,6 @@ namespace gemini
 					if (request->status != HTTP_STATUS_OK)
 					{
 						// The data we read was not file contents.
-						//state->content_length = 0;
-						//state->flags |= HTTP_FLAG_ERROR;
-
 						LOGV("http status: %i\n", request->status);
 						if (request->status == HTTP_STATUS_NOT_FOUND)
 						{

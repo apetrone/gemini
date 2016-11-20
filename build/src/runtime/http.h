@@ -25,10 +25,7 @@
 #pragma once
 
 #include <core/typedefs.h>
-// #include <core/util.h> // for std::function
- #include <platform/platform.h>
-
-
+#include <platform/platform.h>
 
 namespace gemini
 {
@@ -36,6 +33,8 @@ namespace gemini
 	const size_t HTTP_STATUS_FORBIDDEN = 403;
 	const size_t HTTP_STATUS_NOT_FOUND = 404;
 	const size_t HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
+
+	const size_t HTTP_HEADER_MAX_SIZE = 512;
 
 
 	enum HttpFlag
@@ -56,7 +55,6 @@ namespace gemini
 
 	struct http_download_state
 	{
-		//
 		size_t content_length;
 		size_t content_bytes_read;
 
@@ -72,7 +70,7 @@ namespace gemini
 
 		platform::net_socket socket;
 
-		char header_data[2048];
+		char header_data[HTTP_HEADER_MAX_SIZE];
 
 		void* userdata;
 	};
