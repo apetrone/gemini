@@ -1004,6 +1004,7 @@ def products(arguments, **kwargs):
 		# Is this a RaspberryPi?
 		bcm_host_h = target_platform.find_include_path("bcm_host.h")
 		if bcm_host_h:
+			logging.info('Detected bcm_host.h; identifying machine as RaspberryPi...')
 			arguments.raspberrypi = True
 
 		# Only prefer X11 if not on RaspberryPi.
@@ -1012,6 +1013,7 @@ def products(arguments, **kwargs):
 			found_xlib = target_platform.find_include_path("X11/Xlib.h")
 			if found_xlib:
 				arguments.with_x11 = True
+				logging.info('Detected Xlib.h; building with X11...')
 
 	if arguments.raspberrypi:
 		if not arguments.gles:

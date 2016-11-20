@@ -33,6 +33,8 @@
 #include <runtime/filesystem.h>
 #include <runtime/jobqueue.h>
 
+#include <runtime/http.h>
+
 #include <assert.h>
 
 #include <core/mathlib.h>
@@ -154,6 +156,27 @@ UNITTEST(filesystem)
 	//	platform::PathString absolute_path;
 	//	TEST_ASSERT(fs->get_absolute_path_for_content(absolute_path, "conf/shaders.conf") == false, get_absolute_path_for_content_missing);
 }
+
+// ---------------------------------------------------------------------
+// http
+// ---------------------------------------------------------------------
+UNITTEST(http)
+{
+	platform::net_startup();
+
+	gemini::http_startup();
+
+	//gemini::http_request_file("https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png", "./downloads/download.jpg", "httplib");
+	//while (gemini::http_active_download_count() > 0)
+	//{
+	//	gemini::http_update();
+	//}
+
+	gemini::http_shutdown();
+
+	platform::net_shutdown();
+}
+
 
 // ---------------------------------------------------------------------
 // logging
