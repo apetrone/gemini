@@ -181,13 +181,16 @@ namespace gemini
 #endif
 	} // runtime_load_arguments
 
-
 	short runtime_standard_port_for_service(const char * service)
 	{
-		if (stricmp(service, "http") == 0)
+		if (core::str::case_insensitive_compare(service, "http", 4) == 0)
+		{
 			return 80;
-		else if (stricmp(service, "https") == 0)
+		}
+		else if (core::str::case_insensitive_compare(service, "https", 5) == 0)
+		{
 			return 443;
+		}
 
 		return 0;
 	} // net_standard_port_for_service
