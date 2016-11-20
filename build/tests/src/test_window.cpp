@@ -41,8 +41,26 @@
 #include <core/stackstring.h>
 #include <core/fixedarray.h>
 
+#define VK_USE_PLATFORM_WIN32_KHR 1
+
+#include <vulkan/vulkan.h>
+
 using namespace platform;
 using namespace renderer;
+
+static VKAPI_ATTR VkBool32 VKAPI_CALL vulkan_debug_callback(
+	VkDebugReportFlagsEXT flags,
+	VkDebugReportObjectTypeEXT object_type,
+	uint64_t obj,
+	size_t location,
+	int32_t code,
+	const char* layer_prefix,
+	const char* message,
+	void* user_data)
+{
+	LOGV("validation layer: %s\n", message);
+	return VK_FALSE;
+}
 
 class TestWindow : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -202,6 +220,162 @@ Options:
 
 		gemini::runtime_startup("arcfusion.net/test_window", custom_path_setup);
 
+		VkApplicationInfo app;
+		app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		app.pApplicationName = nullptr;
+		app.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+		app.pEngineName = "No Engine";
+		app.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+		app.apiVersion = VK_API_VERSION_1_0;
+
+
+		const char* win32_extensions[] = { "VK_KHR_surface", "VK_KHR_win32_surface", VK_EXT_DEBUG_REPORT_EXTENSION_NAME };
+
+		VkInstanceCreateInfo info;
+		memset(&info, 0, sizeof(VkInstanceCreateInfo));
+		info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+		info.pApplicationInfo = &app;
+		info.enabledExtensionCount = 3;
+		info.ppEnabledExtensionNames = win32_extensions;
+
+		// Query available extensions
+		uint32_t total_extensions = 0;
+		vkEnumerateInstanceExtensionProperties(nullptr, &total_extensions, nullptr);
+		LOGV("total extensions: %i\n", total_extensions);
+
+		Array<VkExtensionProperties> props;
+		props.resize(total_extensions);
+
+		const char* validation_layers[] = { "VK_LAYER_LUNARG_standard_validation" };
+		uint32_t total_layers = 0;
+		vkEnumerateInstanceLayerProperties(&total_layers, nullptr);
+		Array<VkLayerProperties> layers;
+		layers.resize(total_layers);
+		vkEnumerateInstanceLayerProperties(&total_layers, &layers[0]);
+		LOGV("Listing Vulkan Layers (%i)...\n", total_layers);
+		for (const VkLayerProperties& prop : layers)
+		{
+			LOGV("-> %s, %s\n", prop.layerName, prop.description);
+		}
+		info.enabledLayerCount = 1;
+		info.ppEnabledLayerNames = validation_layers;
+
+		vkEnumerateInstanceExtensionProperties(nullptr, &total_extensions, &props[0]);
+
+		LOGV("Listing Vulkan Extensions (%i)...\n", total_extensions);
+		for (const VkExtensionProperties& prop : props)
+		{
+			LOGV("-> %s\n", prop.extensionName);
+		}
+
+
+		//VkAllocationCallbacks callbacks;
+		//memset(&callbacks, 0, sizeof(VkAllocationCallbacks));
+		VkInstance instance;
+		VkResult result = vkCreateInstance(&info, nullptr, &instance);
+
+		VkDebugReportCallbackEXT callback;
+		VkDebugReportCallbackCreateInfoEXT callback_info;
+		callback_info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+		callback_info.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT;
+		callback_info.pfnCallback = vulkan_debug_callback;
+
+		PFN_vkCreateDebugReportCallbackEXT create_report_callback = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
+		assert(create_report_callback);
+
+
+		VkResult report_result = create_report_callback(instance, &callback_info, nullptr, &callback);
+		assert(report_result == VK_SUCCESS);
+
+
+
+		uint32_t total_devices = 0;
+		vkEnumeratePhysicalDevices(instance, &total_devices, nullptr);
+
+		Array<VkPhysicalDevice> devices;
+		devices.resize(total_devices);
+		vkEnumeratePhysicalDevices(instance, &total_devices, &devices[0]);
+
+
+		VkPhysicalDeviceFeatures device_features;
+		vkGetPhysicalDeviceFeatures(devices[0], &device_features);
+
+		VkPhysicalDeviceProperties device_properties;
+		vkGetPhysicalDeviceProperties(devices[0], &device_properties);
+
+
+		// Only suitable with discrete GPUs.
+		LOGV("Found device %s\n", device_properties.deviceName);
+		assert(device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU);
+
+		uint32_t queue_family_count = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(devices[0], &queue_family_count, nullptr);
+
+		Array<VkQueueFamilyProperties> queue_families;
+		queue_families.resize(queue_family_count);
+		vkGetPhysicalDeviceQueueFamilyProperties(devices[0], &queue_family_count, &queue_families[0]);
+
+
+		// Determine if a device is suitable based on our application's
+		// requirements.
+		size_t queue_graphics_index = 0;
+		for (size_t index = 0; index < queue_families.size(); ++index)
+		{
+			VkQueueFamilyProperties& qfamily = queue_families[index];
+			if (qfamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+			{
+				queue_graphics_index = index;
+			}
+		}
+
+		VkDeviceQueueCreateInfo queue_create_info;
+		queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queue_create_info.queueFamilyIndex = queue_graphics_index;
+		queue_create_info.queueCount = 1;
+
+		float queue_priority = 1.0f;
+		queue_create_info.pQueuePriorities = &queue_priority;
+
+
+
+		VkPhysicalDeviceFeatures requested_features;
+		VkDeviceCreateInfo device_create_info;
+		device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		device_create_info.pQueueCreateInfos = &queue_create_info;
+		device_create_info.queueCreateInfoCount = 1;
+		device_create_info.pEnabledFeatures = &requested_features;
+		device_create_info.enabledLayerCount = 1;
+		device_create_info.ppEnabledLayerNames = validation_layers;
+
+
+
+		VkDevice dev;
+		if (vkCreateDevice(devices[0], &device_create_info, nullptr, &dev) != VK_SUCCESS)
+		{
+			LOGV("Unable to create new device\n");
+		}
+
+
+		VkQueue graphics_queue;
+		vkGetDeviceQueue(dev, queue_graphics_index, 0, &graphics_queue);
+		assert(graphics_queue != VK_NULL_HANDLE);
+
+		// https://vulkan-tutorial.com/Drawing_a_triangle/Presentation/Window_surface
+
+		{
+			VkWin32SurfaceCreateInfoKHR surface_info;
+			surface_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+			surface_info.hwnd = nullptr;
+			surface_info.hinstance = GetModuleHandleA(nullptr);
+		}
+
+
+
+		PFN_vkDestroyDebugReportCallbackEXT destroy_report_callback = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT");
+		assert(destroy_report_callback);
+		destroy_report_callback(instance, callback, nullptr);
+
+		vkDestroyInstance(instance, nullptr);
 
 		// create a platform window
 		{

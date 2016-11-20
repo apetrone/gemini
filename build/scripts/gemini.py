@@ -28,6 +28,7 @@ def get_library_type(target_platform):
 libglm = Dependency(file="glm.py")
 librecastnavigation = Dependency(file="recastnavigation.py")
 libfreetype = Dependency(file="freetype.py")
+libvulkan = Dependency(file="vulkan.py")
 #rapidjson = Dependency(file="rapidjson.py")
 
 def assert_dependency(found, message):
@@ -869,7 +870,7 @@ def get_unit_tests(arguments, libcore, librenderer, libruntime, libglm, **kwargs
 		create_unit_test(target_platform, arguments, "test_runtime", [libruntime, librenderer, libfreetype, libcore, libglm], "tests/src/test_runtime.cpp"),
 		create_unit_test(target_platform, arguments, "test_render", [libruntime, librenderer, libfreetype, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
 		create_unit_test(target_platform, arguments, "test_ui", [librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_window", [librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
+		create_unit_test(target_platform, arguments, "test_window", [librenderer, libfreetype, libruntime, libcore, libglm, libvulkan], "tests/src/test_window.cpp", ProductType.Application)
 	]
 
 def get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs):
