@@ -170,16 +170,11 @@ UNITTEST(http)
 
 	gemini::http_startup();
 
-	gemini::http_request_file("http://apetrone-win7:8000/essential_cyberpunk.jpg", "e:\\download.jpg", "Test");
+	gemini::http_request_file("http://apetrone-win7:8000/essential_cyberpunk.jpg", "./downloads/download.jpg", "Test");
 
 	while (gemini::http_active_download_count() > 0)
 	{
 		gemini::http_update();
-
-		if (gemini::http_active_download_count() == 0)
-		{
-			gemini::http_request_file("http://apetrone-win7:8000/essential_cyberpunk.jpg", "e:\\download.jpg", "Test");
-		}
 	}
 
 	gemini::http_shutdown();

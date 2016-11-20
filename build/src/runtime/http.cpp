@@ -107,8 +107,7 @@ namespace gemini
 						// reading file content...
 						int32_t bytes_read = net_socket_recv(state->socket, buffer, HTTP_BUFFER_SIZE);
 
-						// TODO: write bytes read to file
-
+						fs_write(state->handle, buffer, 1, bytes_read);
 						state->content_bytes_read += bytes_read;
 
 						if (bytes_read == 0)
@@ -119,6 +118,7 @@ namespace gemini
 							state->socket = 0;
 							state->content_length = 0;
 							state->content_bytes_read = 0;
+							fs_close(state->handle);
 						}
 					}
 					else if (state->flags & HTTP_FLAG_READ_HEADERS)
@@ -133,6 +133,7 @@ namespace gemini
 							state->socket = 0;
 							state->content_length = 0;
 							state->content_bytes_read = 0;
+							fs_close(state->handle);
 							continue;
 						}
 
@@ -158,12 +159,9 @@ namespace gemini
 
 								// Left over data from the buffer that we need to read.
 								const size_t content_to_copy = (bytes_read - bytes_read_into_header);
-								for (size_t ptr = bytes_read_into_header; ptr < bytes_read; ++ptr)
-								{
-									// copy data to content
-									state->content_length++;
-									state->content_bytes_read++;
-								}
+								fs_write(state->handle, &buffer[bytes_read_into_header], 1, content_to_copy);
+								state->content_length += content_to_copy;
+								state->content_bytes_read += content_to_copy;
 
 								// Now start reading content...
 								state->flags &= ~HTTP_FLAG_READ_HEADERS;
@@ -239,7 +237,7 @@ namespace gemini
 
 		if (net_socket_connect(state->socket, target_address) < 0)
 		{
-			LOGV("Failed to connect to server '%s:%i'\n",
+			LOGW("Failed to connect to server '%s:%i'\n",
 				ip_address, port);
 			return nullptr;
 		}
@@ -258,7 +256,7 @@ namespace gemini
 		int32_t bytes_sent = net_socket_send(state->socket, get_request, core::str::len(get_request));
 		if (bytes_sent < 0)
 		{
-			LOGV("Error sending data to server.\n");
+			LOGW("Error sending data to server.\n");
 			state->flags &= ~HTTP_FLAG_ACTIVE;
 			net_socket_close(state->socket);
 			state->socket = 0;
@@ -272,7 +270,10 @@ namespace gemini
 		state->flags |= HTTP_FLAG_READ_HEADERS;
 
 		// make directories
+		path::make_directories(temp_path);
+
 		// make temp file
+		state->handle = fs_open(temp_path, FileMode::FileMode_Write);
 
 		return state;
 	} // http_request_file
@@ -338,6 +339,7 @@ namespace gemini
 						net_socket_close(state->socket);
 						state->socket = 0;
 						state->content_length = 0;
+						fs_close(state->handle);
 					}
 				}
 

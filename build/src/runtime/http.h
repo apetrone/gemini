@@ -69,6 +69,7 @@ namespace gemini
 		uint16_t flags;
 
 		platform::net_socket socket;
+		platform::File handle;
 
 		char header_data[HTTP_HEADER_MAX_SIZE];
 
