@@ -228,8 +228,6 @@ namespace gemini
 		// convert hostname to an ipv4 address.
 		net_ipv4_by_hostname(hostname, "http", ip_address);
 
-
-
 		// create a socket
 		state->socket = net_socket_open(net_socket_type::TCP);
 		if (!state->socket)
