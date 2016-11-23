@@ -191,7 +191,7 @@ namespace gui
 
 	void Panel::handle_event(EventArgs& args)
 	{
-		if (args.type == Event_CursorDrag && get_parent() && args.capture == this)
+		if (args.type == Event_CursorDrag && get_parent() && args.capture == this && (flags & Flag_CanMove))
 		{
 			origin.x += args.delta.x;
 			origin.y += args.delta.y;
@@ -381,19 +381,25 @@ namespace gui
 		minimum_size.height = 30;
 
 		index++;
-	}
+	} // measure
 
 	void Panel::resize(const Size& requested_size)
 	{
 		size = requested_size;
 		flags |= Flag_TransformIsDirty;
-	}
+	} // resize
 
 	void Panel::set_maximum_size(const Size& max_size)
 	{
 		assert(parent != nullptr);
 		maximum_size = max_size;
-	}
+	} // set_maximum_size
+
+	void Panel::set_minimum_size(const Size& max_size)
+	{
+		assert(parent != nullptr);
+		minimum_size = max_size;
+	} // set_minimum_size
 
 	void Panel::bring_to_front()
 	{

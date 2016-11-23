@@ -116,6 +116,8 @@ namespace gui
 
 		void set_maximum_size(const Size& max_size);
 
+		void set_minimum_size(const Size& min_size);
+
 		// bring this panel forward in its parent's rendering order.
 		void bring_to_front();
 
@@ -188,6 +190,8 @@ namespace gui
 		// 0 == no maximum. Can be a combination (0, 400) to limit in only
 		// the vertical direction.
 		Size maximum_size;
+
+		Size minimum_size;
 
 		friend class Compositor;
 

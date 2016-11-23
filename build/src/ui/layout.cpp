@@ -333,7 +333,7 @@ namespace gui
 	void BoxLayout::update(Panel* parent, PanelVector& children)
 	{
 		Size dimensions = parent->get_size();
-		Point child_origin(0, 32);
+		Point child_origin(0, 0);
 		dimensions.width -= child_origin.x;
 		dimensions.height -= child_origin.y;
 

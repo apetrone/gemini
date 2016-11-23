@@ -533,13 +533,16 @@ namespace gui
 
 			set_hot(panel);
 
-			if (panel && panel->point_in_capture_rect(panel->compositor_to_local(last_cursor)) && panel->has_flags(Flag_CanMove))
+			if (!get_capture())
 			{
-				set_capture(panel, button);
-			}
-			else
-			{
-				set_capture(nullptr, button);
+				if (panel && panel->point_in_capture_rect(panel->compositor_to_local(last_cursor)) && panel->has_flags(Flag_CanMove))
+				{
+					set_capture(panel, button);
+				}
+				else
+				{
+					set_capture(nullptr, button);
+				}
 			}
 
 			// TODO: the event dispatch should re-order the panel!

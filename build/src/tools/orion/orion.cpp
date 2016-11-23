@@ -302,8 +302,10 @@ namespace gui
 		TimelineScrubber(Panel* parent)
 			: Panel(parent)
 		{
-			flags &= ~Flag_CursorEnabled;
+			flags |= Flag_CursorEnabled;
 			set_name("TimelineScrubber");
+
+			flags |= Flag_CanMove;
 		}
 
 		virtual void render(gui::Compositor* /*compositor*/, gui::Renderer* /*renderer*/, gui::render::CommandList& render_commands) override
@@ -320,6 +322,11 @@ namespace gui
 			render_commands.add_line(geometry[1], geometry[2], scrubber_outline);
 			render_commands.add_line(geometry[2], geometry[3], scrubber_outline);
 			render_commands.add_line(geometry[3], geometry[0], scrubber_outline);
+		}
+
+		bool point_in_capture_rect(const Point& local) const override
+		{
+			return hit_test_local(local);
 		}
 	};
 
@@ -346,6 +353,10 @@ namespace gui
 			last_position = args.local;
 			if (args.type == Event_CursorDrag || args.type == Event_CursorButtonPressed)
 			{
+				if (args.type == Event_CursorButtonPressed)
+				{
+					args.compositor->set_capture(scrubber, args.cursor_button);
+				}
 				// snap to the closest point
 				size_t last_frame = current_frame;
 
@@ -371,9 +382,9 @@ namespace gui
 				{
 					on_scrubber_changed(current_frame);
 				}
-			}
 
-			args.handled = true;
+				args.handled = true;
+			}
 		} // handle_event
 
 		virtual void update(gui::Compositor* compositor, float delta_seconds) override
@@ -446,6 +457,8 @@ namespace gui
 		{
 			current_frame = frame;
 		}
+
+		virtual bool point_in_capture_rect(const Point&) const override { return true; }
 
 	private:
 		size_t left_margin;
@@ -609,6 +622,7 @@ private:
 	gui::Compositor* compositor;
 	gui::Label* log_window;
 	GUIRenderer* gui_renderer;
+	gui::Panel* main_panel;
 	::renderer::StandaloneResourceCache resource_cache;
 	render2::RenderTarget* render_target;
 	render2::Texture* texture;
@@ -718,6 +732,8 @@ public:
 
 			assert(compositor);
 			compositor->resize(event.window_width, event.window_height);
+
+			main_panel->set_size(event.window_width, event.window_height-24);
 		}
 		else if (event.subtype == kernel::WindowClosed)
 		{
@@ -1159,46 +1175,28 @@ Options:
 			compositor = new gui::Compositor(window_frame.width, window_frame.height, &resource_cache, gui_renderer);
 			compositor->set_name("compositor");
 
+			main_panel = new gui::Panel(compositor);
+			main_panel->set_name("main_panel");
+			main_panel->set_origin(0, 30);
+			main_panel->set_size(window_frame.width, window_frame.height);
 
-#if 0
-			gui::Timeline* timeline = new gui::Timeline(compositor);
-			timeline->set_bounds(0, 550, 800, 50);
-			timeline->set_frame_range(0, 30);
-			timeline->on_scrubber_changed.bind<EditorKernel, &EditorKernel::timeline_scrubber_changed>(this);
-			timeline->set_frame(0);
-#endif
-
-#if 0
-			// try and use a docking container for fun.
-			container = new gui::DockingContainer(compositor);
-			container->set_name("docking_container");
-			container->set_dimensions(0.6f, 0.6f);
+			gui::HorizontalLayout* horizontal_layout = new gui::HorizontalLayout();
 
 
+			gui::VerticalLayout* center_layout = new gui::VerticalLayout();
 
-	#if 1
-			gui::Panel* tp = new gui::Panel(compositor);
-			tp->set_dimensions(0.1f, 0.1f);
-			tp->set_origin(700, 0.0f);
-			tp->set_background_color(gemini::Color(1.0f, 0.5f, 0.0f));
-			tp->set_flags(tp->get_flags() | gui::Panel::Flag_CanMove);
-			tp->set_name("draggable_test_panel");
+			main_panel->set_layout(horizontal_layout);
 
-			tp = new gui::Panel(compositor);
-			tp->set_dimensions(0.1f, 0.1f);
-			tp->set_origin(700, 200);
-			tp->set_background_color(gemini::Color(0.5f, 0.5f, 0.7f));
-			tp->set_flags(tp->get_flags() | gui::Panel::Flag_CanMove);
-			tp->set_name("draggable_test_panel");
-	#endif
-#endif
+			horizontal_layout->add_layout(center_layout);
+
+
 
 #if 1
 			asset_processor = new AssetProcessingPanel(compositor);
 			asset_processor->set_origin(0.0f, 25.0f);
 			asset_processor->set_size(400, 100);
 			asset_processor->set_background_color(gemini::Color(0.25f, 0.25f, 0.25f));
-			//asset_processor->set_visible(false);
+			asset_processor->set_visible(false);
 #endif
 
 // add a menu
@@ -1228,9 +1226,8 @@ Options:
 			}
 #endif
 
-#if 0
-			gui::RenderableSurface* surface = new gui::RenderableSurface(compositor);
-			surface->set_bounds(0, 0, 512, 512);
+#if 1
+			gui::RenderableSurface* surface = new gui::RenderableSurface(main_panel);
 			surface->on_render_content.bind<EditorKernel, &EditorKernel::render_main_content>(this);
 
 			image::Image checker_pattern;
@@ -1244,14 +1241,24 @@ Options:
 			render_target = device->create_render_target(texture);
 			surface->set_render_target(render_target);
 			surface->set_texture_handle(handle);
-#endif
 
+			center_layout->add_panel(surface);
+#endif
+#if 1
+			gui::Timeline* timeline = new gui::Timeline(main_panel);
+			timeline->set_frame_range(0, 30);
+			timeline->on_scrubber_changed.bind<EditorKernel, &EditorKernel::timeline_scrubber_changed>(this);
+			timeline->set_frame(0);
+			timeline->set_maximum_size(gui::Size(0, 100));
+
+			center_layout->add_panel(timeline);
+#endif
 #if 0
 			// TODO: This needs more work as it can still get swamped and
 			// latency increases dramatically.
 			log_window = new gui::Label(compositor);
 			log_window->set_origin(0.0f, 450);
-			log_window->set_dimensions(1.0f, 0.25f);
+			log_window->set_size(500, 250);
 			log_window->set_font("fonts/debug.ttf", 16);
 			log_window->set_name("log_window");
 			log_window->set_foreground_color(gemini::Color(0.85f, 0.85f, 0.85f));
@@ -1435,8 +1442,8 @@ Options:
 
 		modelview_matrix = camera.get_modelview();
 		projection_matrix = camera.get_projection();
-		//pipeline->constants().set("modelview_matrix", &modelview_matrix);
-		//pipeline->constants().set("projection_matrix", &projection_matrix);
+		pipeline->constants().set("modelview_matrix", &modelview_matrix);
+		pipeline->constants().set("projection_matrix", &projection_matrix);
 
 		value = 0.35f;
 
