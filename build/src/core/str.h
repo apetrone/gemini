@@ -27,6 +27,8 @@
 #include "typedefs.h"
 #include "mem.h"
 
+#include <core/array.h>
+
 #include <string>
 #include <vector>
 
@@ -36,7 +38,59 @@ typedef std::string String;
 	::core::str::hash_string32< ::core::str::const_length(string_value) >(string_value)
 
 namespace core
-{
+{	
+	class StaticString
+	{
+	public:
+		// constexpr StaticString(const char* value);
+
+		const char* c_str() const { return data; }
+		constexpr size_t length() const { return data_length; }
+		// constexpr size_t hash32() const { return 0; }
+
+	private:
+		const char* data;
+		size_t data_length;
+	}; // class StaticString
+
+
+	enum MemoryCategory
+	{
+		MC_GLOBAL = 0,
+		MC_RENDERER,
+		MC_DEBUGDRAW,
+		MC_ASSETS
+	};
+
+
+
+	class MutableString
+	{
+	public:
+		MutableString(const char* value = "");
+
+		~MutableString();
+
+		const char* c_str() const;
+		size_t length() const;
+
+		void concatentate(const MutableString& value);
+
+		void trim_left(const char* chars);
+		Array<MutableString> split(const MutableString& substring) const;
+		void make_absolute_path();
+
+		MutableString slice(uint32_t start, uint32_t count);
+
+		MutableString operator=(const MutableString& other);
+
+	private:
+		void resize(size_t length);
+
+		char* data;
+		size_t data_length;
+	}; // MutableString
+
 	namespace str
 	{
 		// ANSI string utils

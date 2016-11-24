@@ -30,11 +30,120 @@
 // TODO: replace this with a non-C-runtime function.
 #include <platform/platform.h>
 
+#include <core/logging.h>
+
 #include <string.h>
 #include <stdarg.h>
 
 namespace core
 {
+	MutableString::MutableString(const char* value)
+	{
+		data = nullptr;
+		data_length = str::len(value) + 1;
+		if (data_length > 0)
+		{
+			resize(data_length);
+			str::copy(data, value, data_length);
+		}
+	} // MutableString
+
+	MutableString::~MutableString()
+	{
+		if (data)
+		{
+			delete [] data;
+			data_length = 0;
+		}
+	} // ~MutableString
+
+	const char* MutableString::c_str() const
+	{
+		return data;
+	} // c_str
+
+	size_t MutableString::length() const
+	{
+		return data_length;
+	} // length
+
+	void MutableString::concatentate(const MutableString& value)
+	{
+		const size_t value_length = str::len(value.data);
+		resize(data_length + value_length);
+		str::cat(data, value.data);
+	} // concatenate
+
+	void MutableString::trim_left(const char* ignore_chars = "\t")
+	{
+		// iterate over entire string and look for the first character
+		// that isn't in the list of ignore characters.
+
+		int32_t found_index = -1;
+		size_t total_chars = str::len(ignore_chars);
+		for (size_t index = 0; index < data_length; ++index)
+		{
+			bool found_char = false;
+			for (size_t char_index = 0; char_index < total_chars; ++char_index)
+			{
+				if (data[index] == ignore_chars[char_index])
+				{
+					found_char = true;
+					break;
+				}
+			}
+
+			if (!found_char)
+			{
+				// slice string from (index, to -1)
+				*this = slice(index, -1);
+				return;
+			}
+		}	
+	} // trim_left
+
+	Array<MutableString> MutableString::split(const MutableString& substring) const
+	{
+		Array<MutableString> s;
+
+		return s;
+	} // split
+
+	void MutableString::make_absolute_path()
+	{
+
+	} // make_absolute_path
+
+	MutableString MutableString::slice(uint32_t start, uint32_t count)
+	{
+		const bool end_of_string = ((int32_t)count) == -1;
+		if (end_of_string)
+		{
+			LOGV("match end of string\n");
+		}
+		for (size_t index = 0; index < data_length; ++index)
+		{
+
+		}
+		return MutableString();
+	} // slice
+
+	MutableString MutableString::operator=(const MutableString& other)
+	{
+		
+	} // operator=
+
+	void MutableString::resize(size_t new_length)
+	{
+		if (data)
+		{
+			delete [] data;
+		}
+
+		data = new char[data_length + 1];
+		data_length = new_length;
+	} // resize
+
 	namespace str
 	{
 		static const int STRING_MAX_BUFFERS = 2;

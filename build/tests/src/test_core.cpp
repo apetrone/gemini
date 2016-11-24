@@ -502,6 +502,127 @@ UNITTEST(memory)
 	TEST_ASSERT(1, sanity);
 }
 
+struct Dictionary
+{
+
+};
+
+
+enum StringTableLanguage
+{
+	STL_ENGLISH = 0
+};
+
+#if 0
+struct StringTableIndex
+{
+	int16_t valid;
+	uint16_t index;
+};
+
+struct StringTable
+{
+	size_t total_entries;
+	StringTableLanguage language;
+	Dictionary<String, String> entries;
+};
+
+StringTable* string_table_create(const char* filename)
+{
+	return nullptr;
+}
+
+size_t string_table_size(StringTable* table)
+{
+	return table->total_entries;
+}
+
+StringTableIndex string_table_lookup(const StringBase& key)
+{
+	return 0;
+}
+
+MutableString string_table_item(StringTableIndex index, Dictionary* arguments = nullptr)
+{
+	return MutableString();
+}
+#endif
+
+
+
+class StringTable
+{
+	struct Index
+	{
+		int16_t valid;
+		uint16_t index;
+	};
+
+	static StringTable* load_from_file(const char* filename);
+	size_t size() const;
+	Index find_key(const MutableString& key) const;
+	MutableString item_at_index(Index index, Dictionary* arguments = nullptr) const;
+};
+
+
+
+#if 0
+struct MyTest
+{
+};
+
+// I. Allocating class instances out of a certain allocator.
+	// 1. Create single instances.
+	MEMORY_NEW(MyTest, allocator)
+
+	// 2. Create an array of instances.
+	MEMORY_NEW_ARRAY(MyTest, 32, allocator)
+
+// II. Allocating memory used by classes out of a certain allocator.
+	// 1. Create a single instance and pass it a target allocator it can use.
+	MEMORY_NEW(MyTest, allocator)(target_allocator);
+
+	// 2. Assign an allocator to a specific type at compile time.
+	REGISTER_ALLOCATOR(MyTest, MC_RENDERER);
+
+// Will the allocator vary between classes? Or only the category?
+
+#endif
+
+
+
+#if 0
+// ---------------------------------------------------------------------
+// StaticString
+// ---------------------------------------------------------------------
+UNITTEST(staticstring)
+{
+	StaticString test("why hello there");
+
+	TEST_ASSERT(test.c_str(), c_str);
+	LOGV("staticstring is '%s'\n", test.c_str());
+
+	TEST_ASSERT(test.length() == 15, length);
+	LOGV("testing staticstring\n");
+
+	StringTable* table = string_table_create("lang/en.strings");
+	size_t entries = string_table_size(table);
+}
+#endif
+
+// ---------------------------------------------------------------------
+// MutableString
+// ---------------------------------------------------------------------
+UNITTEST(mutablestring)
+{
+	MutableString a("some string");
+
+	LOGV("test string = '%s'\n", a.c_str());
+	LOGV("string length = %i\n", a.length());
+
+	MutableString result = a.slice(0, -1);
+	LOGV("result str = '%s'\n", result.c_str());
+}
 
 // ---------------------------------------------------------------------
 // StackString
