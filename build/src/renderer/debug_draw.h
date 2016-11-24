@@ -48,6 +48,7 @@ namespace debugdraw
 
 	void update(float deltamsec);
 	void render(const glm::mat4& modelview, const glm::mat4& projection, int viewport_width, int viewport_height);
+	void reset();
 
 	void axes(const glm::mat4& transform, float axis_length, float duration = 0.0f);
 	void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration = 0.0f);

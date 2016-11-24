@@ -738,6 +738,11 @@ public:
 			LOGV("Window was closed!\n");
 			set_active(false);
 		}
+		else if (event.subtype == kernel::WindowGainFocus)
+		{
+			// Focus has returned.
+			debugdraw::reset();
+		}
 	}
 
 	virtual void event(kernel::MouseEvent& event)
@@ -1424,66 +1429,67 @@ Options:
 		}
 		//debugdraw::axes(glm::mat4(1.0f), 1.0f);
 
-		debugdraw::update(kernel::parameters().framedelta_seconds);
-
-		if (compositor)
-		{
-			compositor->tick(static_cast<float>(kernel::parameters().step_interval_seconds));
-		}
-
 		platform::window::Frame window_frame = platform::window::get_frame(main_window);
 
-		modelview_matrix = glm::mat4(1.0f);
-		projection_matrix = glm::ortho(0.0f, window_frame.width, window_frame.height, 0.0f, -1.0f, 1.0f);
-		//const glm::vec3& p = camera.get_position();
-		//LOGV("p: %2.2f, %2.2f, %2.2f\n", p.x, p.y, p.z);
-
-		modelview_matrix = camera.get_modelview();
-		projection_matrix = camera.get_projection();
-		pipeline->constants().set("modelview_matrix", &modelview_matrix);
-		pipeline->constants().set("projection_matrix", &projection_matrix);
-
-		value = 0.35f;
-
-		render2::Pass render_pass;
-		render_pass.target = device->default_render_target();
-		render_pass.color(value, value, value, 1.0f);
-		render_pass.clear_color = true;
-		render_pass.clear_depth = true;
-		render_pass.depth_test = false;
-
-		render2::CommandQueue* queue = device->create_queue(render_pass);
-		render2::CommandSerializer* serializer = device->create_serializer(queue);
-
-		serializer->pipeline(pipeline);
-		//serializer->vertex_buffer(vertex_buffer);
-		//serializer->draw(0, 3);
-		device->queue_buffers(queue, 1);
-		device->destroy_serializer(serializer);
-
-		platform::window::activate_context(main_window);
-
-		if (compositor)
+		if (window_frame.width > 0)
 		{
-			compositor->draw();
-		}
+			debugdraw::update(kernel::parameters().framedelta_seconds);
 
-		debugdraw::render(modelview_matrix, projection_matrix, window_frame.width, window_frame.height);
+			if (compositor)
+			{
+				compositor->tick(static_cast<float>(kernel::parameters().step_interval_seconds));
+			}
 
-		device->submit();
+			modelview_matrix = glm::mat4(1.0f);
+			projection_matrix = glm::ortho(0.0f, window_frame.width, window_frame.height, 0.0f, -1.0f, 1.0f);
+			//const glm::vec3& p = camera.get_position();
+			//LOGV("p: %2.2f, %2.2f, %2.2f\n", p.x, p.y, p.z);
 
-		platform::window::swap_buffers(main_window);
+			modelview_matrix = camera.get_modelview();
+			projection_matrix = camera.get_projection();
+			pipeline->constants().set("modelview_matrix", &modelview_matrix);
+			pipeline->constants().set("projection_matrix", &projection_matrix);
+
+			value = 0.35f;
+
+			render2::Pass render_pass;
+			render_pass.target = device->default_render_target();
+			render_pass.color(value, value, value, 1.0f);
+			render_pass.clear_color = true;
+			render_pass.clear_depth = true;
+			render_pass.depth_test = false;
+
+			render2::CommandQueue* queue = device->create_queue(render_pass);
+			render2::CommandSerializer* serializer = device->create_serializer(queue);
+
+			serializer->pipeline(pipeline);
+			//serializer->vertex_buffer(vertex_buffer);
+			//serializer->draw(0, 3);
+			device->queue_buffers(queue, 1);
+			device->destroy_serializer(serializer);
+
+			platform::window::activate_context(main_window);
+
+			if (compositor)
+			{
+				compositor->draw();
+			}
+
+			debugdraw::render(modelview_matrix, projection_matrix, window_frame.width, window_frame.height);
+
+			device->submit();
+
+			platform::window::swap_buffers(main_window);
 
 #if defined(GEMINI_ENABLE_PROFILER)
-		gemini::profiler::report();
-		gemini::profiler::reset();
+			gemini::profiler::report();
+			gemini::profiler::reset();
 #endif
 
-//		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
-
+			//		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
+		}
 		kernel::Parameters& params = kernel::parameters();
 		params.current_frame++;
-
 
 		// calculate delta ticks in milliseconds
 		params.framedelta_milliseconds = (current_time - last_time) * SecondsPerMillisecond;
