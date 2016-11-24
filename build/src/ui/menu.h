@@ -88,19 +88,23 @@ namespace gui
 	{
 		TYPESPEC_DECLARE_CLASS(MenuBar, Panel);
 
-		float next_origin;
-
-		// is the menu bar currently showing an open menu?
-		bool is_displaying_menu;
-
 	public:
 		MenuBar(Panel* parent);
 
 		void add_menu(Menu* menu);
+
+		Menu* find_menu_at_location(const Point& local_point);
 		virtual void handle_event(EventArgs& args) override;
 		virtual bool hit_test_local(const Point& local_point) const override;
 		virtual bool point_in_capture_rect(const Point&) const override { return true; }
+		virtual void update(Compositor* compositor, float delta_seconds) override;
 
-		Menu* find_menu_at_location(const Point& local_point);
+	private:
+		void update_size();
+
+		float next_origin;
+
+		// is the menu bar currently showing an open menu?
+		bool is_displaying_menu;
 	}; // class MenuBar
 } // namespace gui

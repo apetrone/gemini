@@ -261,12 +261,11 @@ namespace gui
 		flags |= Flag_CursorEnabled | Flag_AlwaysOnTop;
 		set_name("MenuBar");
 
-		const float parent_width = parent->get_size().get_width();
 		set_origin(0, 0);
-		set_size(gui::Size(parent_width, 24));
-		set_maximum_size(gui::Size(parent_width, 24));
+		update_size();
 		set_background_color(gemini::Color(0.15f, 0.15f, 0.15f, 1.0f));
 	}
+
 
 	void MenuBar::add_menu(Menu* menu)
 	{
@@ -290,6 +289,24 @@ namespace gui
 
 		next_origin += menu->get_size().width;
 	} // add_menu
+
+
+	Menu* MenuBar::find_menu_at_location(const Point& local_point)
+	{
+		// Test other menu items...
+		for (size_t index = 0; index < total_children(); ++index)
+		{
+			Menu* child = static_cast<Menu*>(child_at(index));
+			Point test_point = local_point - child->get_origin();
+			if (child->hit_test_local(test_point))
+			{
+				return child;
+			}
+		}
+
+		return nullptr;
+	} // find_menu_at_location
+
 
 	void MenuBar::handle_event(EventArgs& args)
 	{
@@ -357,22 +374,6 @@ namespace gui
 		Panel::handle_event(args);
 	} // handle_event
 
-	Menu* MenuBar::find_menu_at_location(const Point& local_point)
-	{
-		// Test other menu items...
-		for (size_t index = 0; index < total_children(); ++index)
-		{
-			Menu* child = static_cast<Menu*>(child_at(index));
-			Point test_point = local_point - child->get_origin();
-			if (child->hit_test_local(test_point))
-			{
-				return child;
-			}
-		}
-
-		return nullptr;
-	} // find_menu_at_location
-
 	bool MenuBar::hit_test_local(const Point& local_point) const
 	{
 		bool hit_panel = Panel::hit_test_local(local_point);
@@ -393,4 +394,17 @@ namespace gui
 		return hit_panel;
 	} // hit_test_local
 
+	void MenuBar::update(Compositor* compositor, float delta_seconds)
+	{
+		update_size();
+
+		Panel::update(compositor, delta_seconds);
+	} // update
+
+	void MenuBar::update_size()
+	{
+		const float parent_width = parent->get_size().get_width();
+		set_size(gui::Size(parent_width, 24));
+		set_maximum_size(gui::Size(parent_width, 24));
+	} // update_size
 } // namespace gui
