@@ -652,6 +652,7 @@ private:
 
 	bool is_recording_frames;
 	bool is_playing_frames;
+	bool app_in_focus;
 
 	net_socket data_socket;
 	platform::Thread* sensor_thread_handle;
@@ -667,6 +668,7 @@ public:
 		, container(nullptr)
 		, is_recording_frames(false)
 		, is_playing_frames(false)
+		, app_in_focus(true)
 	{
 		yaw = 0.0f;
 		pitch = 0.0f;
@@ -738,10 +740,17 @@ public:
 			LOGV("Window was closed!\n");
 			set_active(false);
 		}
-		else if (event.subtype == kernel::WindowGainFocus)
+
+		if (event.window == main_window)
 		{
-			// Focus has returned.
-			debugdraw::reset();
+			if (event.subtype == kernel::WindowRestored || event.subtype == kernel::WindowGainFocus)
+			{
+				app_in_focus = true;
+			}
+			else if (event.subtype == kernel::WindowMinimized || event.subtype == kernel::WindowLostFocus)
+			{
+				app_in_focus = false;
+			}
 		}
 	}
 
@@ -1326,6 +1335,11 @@ Options:
 		uint64_t current_time = platform::microseconds();
 		platform::update(kernel::parameters().framedelta_milliseconds);
 
+		if (!app_in_focus)
+		{
+			return;
+		}
+
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
 
@@ -1430,64 +1444,61 @@ Options:
 		//debugdraw::axes(glm::mat4(1.0f), 1.0f);
 
 		platform::window::Frame window_frame = platform::window::get_frame(main_window);
+		debugdraw::update(kernel::parameters().framedelta_seconds);
 
-		if (window_frame.width > 0)
+		if (compositor)
 		{
-			debugdraw::update(kernel::parameters().framedelta_seconds);
+			compositor->tick(static_cast<float>(kernel::parameters().step_interval_seconds));
+		}
 
-			if (compositor)
-			{
-				compositor->tick(static_cast<float>(kernel::parameters().step_interval_seconds));
-			}
+		modelview_matrix = glm::mat4(1.0f);
+		projection_matrix = glm::ortho(0.0f, window_frame.width, window_frame.height, 0.0f, -1.0f, 1.0f);
+		//const glm::vec3& p = camera.get_position();
+		//LOGV("p: %2.2f, %2.2f, %2.2f\n", p.x, p.y, p.z);
 
-			modelview_matrix = glm::mat4(1.0f);
-			projection_matrix = glm::ortho(0.0f, window_frame.width, window_frame.height, 0.0f, -1.0f, 1.0f);
-			//const glm::vec3& p = camera.get_position();
-			//LOGV("p: %2.2f, %2.2f, %2.2f\n", p.x, p.y, p.z);
+		modelview_matrix = camera.get_modelview();
+		projection_matrix = camera.get_projection();
+		pipeline->constants().set("modelview_matrix", &modelview_matrix);
+		pipeline->constants().set("projection_matrix", &projection_matrix);
 
-			modelview_matrix = camera.get_modelview();
-			projection_matrix = camera.get_projection();
-			pipeline->constants().set("modelview_matrix", &modelview_matrix);
-			pipeline->constants().set("projection_matrix", &projection_matrix);
+		value = 0.35f;
 
-			value = 0.35f;
+		render2::Pass render_pass;
+		render_pass.target = device->default_render_target();
+		render_pass.color(value, value, value, 1.0f);
+		render_pass.clear_color = true;
+		render_pass.clear_depth = true;
+		render_pass.depth_test = false;
 
-			render2::Pass render_pass;
-			render_pass.target = device->default_render_target();
-			render_pass.color(value, value, value, 1.0f);
-			render_pass.clear_color = true;
-			render_pass.clear_depth = true;
-			render_pass.depth_test = false;
+		render2::CommandQueue* queue = device->create_queue(render_pass);
+		render2::CommandSerializer* serializer = device->create_serializer(queue);
 
-			render2::CommandQueue* queue = device->create_queue(render_pass);
-			render2::CommandSerializer* serializer = device->create_serializer(queue);
+		serializer->pipeline(pipeline);
+		//serializer->vertex_buffer(vertex_buffer);
+		//serializer->draw(0, 3);
+		device->queue_buffers(queue, 1);
+		device->destroy_serializer(serializer);
 
-			serializer->pipeline(pipeline);
-			//serializer->vertex_buffer(vertex_buffer);
-			//serializer->draw(0, 3);
-			device->queue_buffers(queue, 1);
-			device->destroy_serializer(serializer);
+		platform::window::activate_context(main_window);
 
-			platform::window::activate_context(main_window);
+		if (compositor)
+		{
+			compositor->draw();
+		}
 
-			if (compositor)
-			{
-				compositor->draw();
-			}
+		debugdraw::render(modelview_matrix, projection_matrix, window_frame.width, window_frame.height);
 
-			debugdraw::render(modelview_matrix, projection_matrix, window_frame.width, window_frame.height);
+		device->submit();
 
-			device->submit();
-
-			platform::window::swap_buffers(main_window);
+		platform::window::swap_buffers(main_window);
 
 #if defined(GEMINI_ENABLE_PROFILER)
-			gemini::profiler::report();
-			gemini::profiler::reset();
+		gemini::profiler::report();
+		gemini::profiler::reset();
 #endif
 
-			//		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
-		}
+		//		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
+
 		kernel::Parameters& params = kernel::parameters();
 		params.current_frame++;
 

@@ -84,6 +84,12 @@ namespace kernel
 		// A window was resized by the user.
 		WindowResized,
 
+		// A window was minimized (i.e. is no longer on screen)
+		WindowMinimized,
+
+		// A window has been restored (i.e. window is back on screen)
+		WindowRestored,
+
 		// A window was closed by the user.
 		WindowClosed,
 

@@ -33,6 +33,15 @@ namespace platform
 	{
 		namespace win32
 		{
+			bool Window::minimized() const
+			{
+				return is_minimized;
+			} // minimized
+
+			void Window::minimized(bool value)
+			{
+				is_minimized = value;
+			} // minimized
 		} // namespace win32
 	} // namespace window
 } // namespace platform

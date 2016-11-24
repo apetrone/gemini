@@ -38,9 +38,10 @@ namespace platform
 			class Window : public NativeWindow
 			{
 			public:
-				Window(const Parameters&) :
-					NativeWindow(),
-					handle(NULL)
+				Window(const Parameters&)
+					: NativeWindow()
+					, handle(NULL)
+					, is_minimized(false)
 				{
 				}
 
@@ -49,8 +50,12 @@ namespace platform
 					return handle;
 				}
 
+				bool minimized() const;
+				void minimized(bool value);
+
 				void set_handle(HWND window_handle) { handle = window_handle; }
 			private:
+				bool is_minimized;
 				HANDLE handle;
 			}; // class Window
 		} // namespace win32

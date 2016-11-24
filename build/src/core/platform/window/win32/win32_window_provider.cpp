@@ -538,28 +538,39 @@ namespace platform
 					{
 						kernel::SystemEvent sysevent;
 						sysevent.subtype = kernel::WindowResized;
-
 						sysevent.render_width = sysevent.window_width = static_cast<int16_t>(LOWORD(lparam));
 						sysevent.render_height = sysevent.window_height = static_cast<int16_t>(HIWORD(lparam));
 						sysevent.window = window;
-						kernel::event_dispatch(sysevent);
-						return 0;
 
-#if 0
 						WPARAM resize_type = wparam;
 						if (resize_type == SIZE_MAXIMIZED)
 						{
 							// The window has been maximized.
+							kernel::event_dispatch(sysevent);
+							return 0;
 						}
 						else if (resize_type == SIZE_MINIMIZED)
 						{
+							window->minimized(true);
+
 							// The window has been minimized.
+							sysevent.subtype = kernel::WindowMinimized;
+							kernel::event_dispatch(sysevent);
+							return 0;
 						}
 						else if (resize_type == SIZE_RESTORED)
 						{
+							if (window->minimized())
+							{
+								window->minimized(false);
+								sysevent.subtype = kernel::WindowRestored;
+								kernel::event_dispatch(sysevent);
+							}
 							// Resized window, but neither Maximized nor Minimized applies.
-					}
-#endif
+							sysevent.subtype = kernel::WindowResized;
+							kernel::event_dispatch(sysevent);
+							return 0;
+						}
 
 						break;
 					}

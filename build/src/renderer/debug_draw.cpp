@@ -974,18 +974,18 @@ namespace debugdraw
 	}
 
 
-	void reset()
-	{
-		// reset all render data.
-		line_vertex_cache.clear(false);
-		line_list->reset();
+	//void reset()
+	//{
+	//	// reset all render data.
+	//	line_vertex_cache.clear(false);
+	//	line_list->reset();
 
-		tris_vertex_cache.clear(false);
-		tris_list->reset();
+	//	tris_vertex_cache.clear(false);
+	//	tris_list->reset();
 
-		text_vertex_cache.clear(false);
-		text_list->reset();
-	}
+	//	text_vertex_cache.clear(false);
+	//	text_list->reset();
+	//}
 
 
 	void axes(const glm::mat4& transform, float axis_length, float duration)
