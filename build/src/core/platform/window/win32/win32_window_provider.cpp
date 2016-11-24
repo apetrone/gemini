@@ -536,15 +536,17 @@ namespace platform
 
 					case WM_SIZE:
 					{
-						WPARAM resize_type = wparam;
-
 						kernel::SystemEvent sysevent;
 						sysevent.subtype = kernel::WindowResized;
 
 						sysevent.render_width = sysevent.window_width = static_cast<int16_t>(LOWORD(lparam));
 						sysevent.render_height = sysevent.window_height = static_cast<int16_t>(HIWORD(lparam));
+						sysevent.window = window;
+						kernel::event_dispatch(sysevent);
+						return 0;
 
 #if 0
+						WPARAM resize_type = wparam;
 						if (resize_type == SIZE_MAXIMIZED)
 						{
 							// The window has been maximized.
@@ -556,18 +558,8 @@ namespace platform
 						else if (resize_type == SIZE_RESTORED)
 						{
 							// Resized window, but neither Maximized nor Minimized applies.
-
-							// Due to windows sending is a resize event and then
-							// having parameters be set to zero, assert here when
-							// it happens for further diagnosis.
-						}
+					}
 #endif
-
-						assert(sysevent.render_width > 0 && sysevent.window_width > 0);
-						assert(sysevent.render_height > 0 && sysevent.window_height > 0);
-						sysevent.window = window;
-						kernel::event_dispatch(sysevent);
-						return 0;
 
 						break;
 					}
