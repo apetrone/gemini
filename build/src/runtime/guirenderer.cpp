@@ -202,7 +202,10 @@ gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, 
 	glm::vec2 bounds_min, bounds_max;
 	font::get_string_metrics(font::Handle(handle), string, string_length, bounds_min, bounds_max);
 
-	bounds.set(bounds_min.x, bounds_min.y, bounds_max.x, bounds_max.y);
+	bounds.set(static_cast<gui::ScreenInt>(bounds_min.x),
+		static_cast<gui::ScreenInt>(bounds_min.y),
+		static_cast<gui::ScreenInt>(bounds_max.x),
+		static_cast<gui::ScreenInt>(bounds_max.y));
 	return gui::FontResult_Success;
 }
 

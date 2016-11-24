@@ -83,7 +83,7 @@ namespace gui
 		Panel(Panel* parent);
 		virtual ~Panel();
 
-		virtual void set_bounds(const ScreenInt x, const ScreenInt y, const DimensionType width, const DimensionType height);
+		virtual void set_bounds(const ScreenInt x, const ScreenInt y, const ScreenInt width, const ScreenInt height);
 		virtual void set_bounds(const Rect& bounds);
 
 		// compute content bounds (may exceed compositor bounds)

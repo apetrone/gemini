@@ -143,7 +143,7 @@ namespace gui
 				{
 					// Try to find a tab the cursor is located in.
 					Point local = compositor_to_local(args.cursor);
-					local.x = glm::clamp(local.x, 0.0f, size.width);
+					local.x = glm::clamp(local.x, 0.0f, static_cast<float>(size.width));
 					for (size_t index = 0; index < tabs.size(); ++index)
 					{
 						TabButton* tab = tabs[index];

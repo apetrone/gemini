@@ -35,18 +35,18 @@ namespace gui
 	// ---------------------------------------------------------------------
 	// Size
 	// ---------------------------------------------------------------------
-	Size::Size(DimensionType _width, DimensionType _height)
+	Size::Size(ScreenInt _width, ScreenInt _height)
 	{
 		width = _width;
 		height = _height;
 	}
 
-	void Size::set_width(DimensionType in_width)
+	void Size::set_width(ScreenInt in_width)
 	{
 		width = in_width;
 	}
 
-	DimensionType Size::get_width() const
+	ScreenInt Size::get_width() const
 	{
 		return width;
 	}
@@ -67,7 +67,7 @@ namespace gui
 		size = _size;
 	}
 
-	Rect::Rect(DimensionType left, DimensionType top, DimensionType width, DimensionType height)
+	Rect::Rect(ScreenInt left, ScreenInt top, ScreenInt width, ScreenInt height)
 	{
 		this->set(left, top, width, height);
 	}
@@ -82,7 +82,7 @@ namespace gui
 		return this->origin;
 	}
 
-	void Rect::set(DimensionType x, DimensionType y, DimensionType width, DimensionType height)
+	void Rect::set(ScreenInt x, ScreenInt y, ScreenInt width, ScreenInt height)
 	{
 		origin.x = x;
 		origin.y = y;
@@ -91,12 +91,12 @@ namespace gui
 		size.height = height;
 	}
 
-	DimensionType Rect::width() const
+	uint32_t Rect::width() const
 	{
 		return size.width;
 	}
 
-	DimensionType Rect::height() const
+	uint32_t Rect::height() const
 	{
 		return size.height;
 	}

@@ -48,9 +48,8 @@ namespace gui
 
 	#define DECLARE_PANEL( panelClass ) virtual const char* GetClassname() const { return #panelClass; }
 
-	typedef float DimensionType;
 // -------------------------------------------------------------------------------------------------------------
-	typedef int16_t ScreenInt;
+	typedef int32_t ScreenInt;
 
 	template <class EventArgsType, class ReturnVal = void>
 	class EventHandler
@@ -96,11 +95,11 @@ namespace gui
 	// Size
 	struct Size
 	{
-		DimensionType width, height;
+		ScreenInt width, height;
 
-		Size(DimensionType _width = 0, DimensionType _height = 0);
-		void set_width(DimensionType in_width);
-		DimensionType get_width() const;
+		Size(ScreenInt _width = 0, ScreenInt _height = 0);
+		void set_width(ScreenInt in_width);
+		ScreenInt get_width() const;
 
 		Size operator += (const Size& other);
 	}; // Size
@@ -116,9 +115,9 @@ namespace gui
 //
 //		bool is_near_point( const Point & other, ScreenInt radius );
 //
-//		DimensionType get_x();
+//		int32_t get_x();
 //		void set_x( ScreenInt value );
-//		DimensionType get_y();
+//		int32_t get_y();
 //		void set_y( ScreenInt value );
 //
 //
@@ -139,14 +138,14 @@ namespace gui
 		Size size;
 
 		Rect(const Point& _origin, const Size& _size);
-		Rect(DimensionType left = 0, DimensionType top = 0, DimensionType width = 0, DimensionType height = 0);
+		Rect(ScreenInt left = 0, ScreenInt top = 0, ScreenInt width = 0, ScreenInt height = 0);
 
 		Size& get_size();
 		Point& get_origin();
 
-		void set(DimensionType x, DimensionType y, DimensionType width, DimensionType height);
-		DimensionType width() const;
-		DimensionType height() const;
+		void set(ScreenInt x, ScreenInt y, ScreenInt width, ScreenInt height);
+		uint32_t width() const;
+		uint32_t height() const;
 
 		bool fits_inside(const Rect& other) const;
 		bool is_point_inside( const glm::vec2& pt) const;

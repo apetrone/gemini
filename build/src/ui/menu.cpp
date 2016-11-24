@@ -157,7 +157,7 @@ namespace gui
 				gui::Rect string_bounds;
 				compositor->get_renderer()->font_measure_string(font_handle, menu->text.c_str(), core::str::len(menu->text.c_str()), string_bounds);
 				menu->size.height = string_bounds.height() + 16; // add some padding to the height (+16)
-				max_menu_size.width = glm::max(max_menu_size.width, string_bounds.width() + 16);
+				max_menu_size.width = glm::max(static_cast<uint32_t>(max_menu_size.width), string_bounds.width() + 16);
 				max_menu_size.height += menu->size.height;
 			}
 			else if (menu->item_type == MenuItem_Separator)
@@ -180,7 +180,7 @@ namespace gui
 
 			// left-aligned
 			text_origin.x = 6; // glm::floor((size.width / 2.0f) - (font_dims.width() / 2.0f));
-			text_origin.y = glm::floor((size.height / 2.0f) - (font_dims.height() / 2.0f) + glm::max((float)font_height, font_dims.height()));
+			text_origin.y = glm::floor((size.height / 2.0f) - (font_dims.height() / 2.0f) + glm::max(static_cast<uint32_t>(font_height), font_dims.height()));
 		}
 
 		// Second pass, resize the items.

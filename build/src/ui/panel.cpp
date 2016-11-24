@@ -91,7 +91,7 @@ namespace gui
 		}
 	} // ~Panel
 
-	void Panel::set_bounds(const ScreenInt x, const ScreenInt y, const DimensionType width, const DimensionType height)
+	void Panel::set_bounds(const ScreenInt x, const ScreenInt y, const ScreenInt width, const ScreenInt height)
 	{
 		origin.x = x;
 		origin.y = y;

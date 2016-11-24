@@ -72,7 +72,7 @@ namespace gui
 		// 0: top, 1: bottom
 		Point range_text_origin[2];
 
-		float font_height;
+		uint32_t font_height;
 
 		enum ChannelType
 		{

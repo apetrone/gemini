@@ -151,7 +151,7 @@ namespace gui
 			glm::vec2 origin_offset = glm::vec2(LABEL_LEFT_MARGIN, LABEL_TOP_MARGIN);
 			origin_offset.y += font_height;
 			content_bounds.size.width = size.width;
-			content_bounds.size.height = static_cast<DimensionType>(-font_height);
+			content_bounds.size.height = -font_height;
 
 			const bool enable_word_wrap = true;
 
@@ -209,7 +209,7 @@ namespace gui
 
 			Rect text_bounds;
 			renderer->font_measure_string(font_handle, &text[cs.start], cs.length, text_bounds);
-			size_t best_height = glm::max(static_cast<float>(font_height), text_bounds.height());
+			size_t best_height = glm::max(font_height, text_bounds.height());
 
 			cs.height = font_height + best_height;
 			font_cache.push_back(cs);

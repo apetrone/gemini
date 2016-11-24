@@ -125,7 +125,7 @@ namespace gui
 
 		// centered
 		text_origin.x = glm::floor((size.width / 2.0f) - (font_dims.width()/2.0f));
-		text_origin.y = glm::floor((size.height / 2.0f) - (font_dims.height()/2.0f) + glm::max((float)font_height, font_dims.height()));
+		text_origin.y = glm::floor((size.height / 2.0f) - (font_dims.height()/2.0f) + glm::max((float)font_height, (float)font_dims.height()));
 
 		// top
 		//text_origin = Point(0, glm::floor(glm::max((float)font_height, font_dims.height())));

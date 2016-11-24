@@ -328,7 +328,7 @@ namespace gui
 		{
 			return hit_test_local(local);
 		}
-	};
+	}; // TimelineScrubber
 
 	class Timeline : public Panel
 	{
@@ -390,11 +390,9 @@ namespace gui
 		virtual void update(gui::Compositor* compositor, float delta_seconds) override
 		{
 			// assuming a horizontal timeline
-			if (frame_width_pixels == 0)
-			{
-				// recompute the distance here
-				frame_width_pixels = (size.width / (float)total_frames);
-			}
+
+			// recompute the distance here
+			frame_width_pixels = (size.width / (float)total_frames);
 
 			// should be updated before rendering
 			assert(frame_width_pixels > 0);

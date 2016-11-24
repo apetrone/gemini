@@ -372,12 +372,12 @@ namespace gui
 
 		size_t used_width = 0;
 		size_t dynamically_sized_children = 0;
-		float item_width = (size.width - fixed_size.width) / (visible_children - fixed_size_children);
+		ScreenInt item_width = (size.width - fixed_size.width) / (visible_children - fixed_size_children);
 
 		// 1. Check min/max sizes on panels.
 		for (size_t index = 0; index < items.size(); ++index)
 		{
-			float prev_origin_y = child_origin.y;
+			ScreenInt prev_origin_y = child_origin.y;
 			LayoutRecord& record = items[index];
 			if (record.type == LayoutItem_Panel)
 			{
@@ -417,7 +417,7 @@ namespace gui
 		// 2. assign the rest.
 		for (size_t index = 0; index < items.size(); ++index)
 		{
-			float prev_origin_y = child_origin.y;
+			ScreenInt prev_origin_y = child_origin.y;
 			LayoutRecord& record = items[index];
 			if (record.type == LayoutItem_Panel)
 			{
@@ -467,12 +467,12 @@ namespace gui
 
 		size_t used_height = 0;
 		size_t dynamically_sized_children = 0;
-		float item_height = (size.height - fixed_size.height) / (visible_children - fixed_size_children);
+		ScreenInt item_height = (size.height - fixed_size.height) / (visible_children - fixed_size_children);
 
 		// 1. Check min/max sizes on panels.
 		for (size_t index = 0; index < items.size(); ++index)
 		{
-			float prev_origin_y = child_origin.y;
+			ScreenInt prev_origin_y = child_origin.y;
 			LayoutRecord& record = items[index];
 			if (record.type == LayoutItem_Panel)
 			{
@@ -512,7 +512,7 @@ namespace gui
 		// 2. assign the rest.
 		for (size_t index = 0; index < items.size(); ++index)
 		{
-			float prev_origin_x = child_origin.x;
+			ScreenInt prev_origin_x = child_origin.x;
 			LayoutRecord& record = items[index];
 			if (record.type == LayoutItem_Panel)
 			{
@@ -532,7 +532,7 @@ namespace gui
 				}
 				else
 				{
-					float maximum_height = glm::max(item_height, glm::min(0.0f, panel->get_maximum_size().height));
+					ScreenInt maximum_height = glm::max(item_height, glm::min(ScreenInt(0), panel->get_maximum_size().height));
 					panel->set_size(size.width, maximum_height);
 					size.height -= maximum_height;
 					child_origin.y += maximum_height;
