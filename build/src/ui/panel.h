@@ -115,8 +115,10 @@ namespace gui
 		virtual void resize(const Size& requested_size);
 
 		void set_maximum_size(const Size& max_size);
+		const Size& get_maximum_size() const;
 
 		void set_minimum_size(const Size& min_size);
+		const Size& get_minimum_size() const;
 
 		// bring this panel forward in its parent's rendering order.
 		void bring_to_front();

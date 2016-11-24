@@ -72,6 +72,7 @@ namespace gui
 
 		// default: no maximum size
 		maximum_size = Size(0, 0);
+		minimum_size = Size(0, 0);
 
 		if (parent_panel)
 		{
@@ -395,11 +396,21 @@ namespace gui
 		maximum_size = max_size;
 	} // set_maximum_size
 
+	const Size& Panel::get_maximum_size() const
+	{
+		return maximum_size;
+	}
+
 	void Panel::set_minimum_size(const Size& max_size)
 	{
 		assert(parent != nullptr);
 		minimum_size = max_size;
 	} // set_minimum_size
+
+	const Size& Panel::get_minimum_size() const
+	{
+		return minimum_size;
+	}
 
 	void Panel::bring_to_front()
 	{

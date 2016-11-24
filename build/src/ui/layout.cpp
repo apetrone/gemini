@@ -369,7 +369,52 @@ namespace gui
 		size_t fixed_size_children = 0;
 		size_t visible_children = 0;
 		recursive_update(size, fixed_size_children, visible_children);
+
+		size_t used_width = 0;
+		size_t dynamically_sized_children = 0;
 		float item_width = (size.width - fixed_size.width) / (visible_children - fixed_size_children);
+
+		// 1. Check min/max sizes on panels.
+		for (size_t index = 0; index < items.size(); ++index)
+		{
+			float prev_origin_y = child_origin.y;
+			LayoutRecord& record = items[index];
+			if (record.type == LayoutItem_Panel)
+			{
+				Panel* panel = static_cast<Panel*>(record.object);
+				if (!panel->has_flags(Panel::Flag_IsVisible))
+				{
+					continue;
+				}
+
+				const Size& panel_size = panel->get_size();
+				const Size& max_size = panel->get_maximum_size();
+				const Size& min_size = panel->get_minimum_size();
+				if (max_size.width > 0 && max_size.width < item_width)
+				{
+					record.item_size = Size(max_size.width, size.height);
+					used_width += max_size.width;
+				}
+				else if (min_size.width > 0 && min_size.width < item_width)
+				{
+					record.item_size = Size(min_size.width, size.height);
+					used_width += min_size.width;
+				}
+				else
+				{
+					dynamically_sized_children++;
+				}
+			}
+			else if (record.type == LayoutItem_Layout)
+			{
+				dynamically_sized_children++;
+			}
+		}
+
+		assert(dynamically_sized_children > 0);
+		item_width = (size.width - fixed_size.width - used_width) / dynamically_sized_children;
+
+		// 2. assign the rest.
 		for (size_t index = 0; index < items.size(); ++index)
 		{
 			float prev_origin_y = child_origin.y;
@@ -383,9 +428,18 @@ namespace gui
 				}
 
 				panel->set_origin(child_origin.x, child_origin.y);
-				panel->set_size(item_width, size.height);
-				size.width -= item_width;
-				child_origin.x += item_width;
+				if (record.item_size.width != 0)
+				{
+					panel->set_size(record.item_size.width, size.height);
+					size.width -= record.item_size.width;
+					child_origin.x += record.item_size.width;
+				}
+				else
+				{
+					panel->set_size(item_width, size.height);
+					size.width -= item_width;
+					child_origin.x += item_width;
+				}
 			}
 			else if (record.type == LayoutItem_Spacer)
 			{
@@ -410,7 +464,52 @@ namespace gui
 		size_t fixed_size_children = 0;
 		size_t visible_children = 0;
 		recursive_update(size, fixed_size_children, visible_children);
+
+		size_t used_height = 0;
+		size_t dynamically_sized_children = 0;
 		float item_height = (size.height - fixed_size.height) / (visible_children - fixed_size_children);
+
+		// 1. Check min/max sizes on panels.
+		for (size_t index = 0; index < items.size(); ++index)
+		{
+			float prev_origin_y = child_origin.y;
+			LayoutRecord& record = items[index];
+			if (record.type == LayoutItem_Panel)
+			{
+				Panel* panel = static_cast<Panel*>(record.object);
+				if (!panel->has_flags(Panel::Flag_IsVisible))
+				{
+					continue;
+				}
+
+				const Size& panel_size = panel->get_size();
+				const Size& max_size = panel->get_maximum_size();
+				const Size& min_size = panel->get_minimum_size();
+				if (max_size.height > 0 && max_size.height < item_height)
+				{
+					record.item_size = Size(size.width, max_size.height);
+					used_height += max_size.height;
+				}
+				else if (min_size.height > 0 && min_size.height < item_height)
+				{
+					record.item_size = Size(size.width, min_size.height);
+					used_height += min_size.height;
+				}
+				else
+				{
+					dynamically_sized_children++;
+				}
+			}
+			else if (record.type == LayoutItem_Layout)
+			{
+				dynamically_sized_children++;
+			}
+		}
+
+		assert(dynamically_sized_children > 0);
+		item_height = (size.height - fixed_size.height - used_height) / dynamically_sized_children;
+
+		// 2. assign the rest.
 		for (size_t index = 0; index < items.size(); ++index)
 		{
 			float prev_origin_x = child_origin.x;
@@ -424,9 +523,20 @@ namespace gui
 				}
 
 				panel->set_origin(child_origin.x, child_origin.y);
-				panel->set_size(size.width, item_height);
-				size.height -= item_height;
-				child_origin.y += item_height;
+
+				if (record.item_size.height != 0)
+				{
+					panel->set_size(size.width, record.item_size.height);
+					size.height -= record.item_size.height;
+					child_origin.x += record.item_size.height;
+				}
+				else
+				{
+					float maximum_height = glm::max(item_height, glm::min(0.0f, panel->get_maximum_size().height));
+					panel->set_size(size.width, maximum_height);
+					size.height -= maximum_height;
+					child_origin.y += maximum_height;
+				}
 			}
 			else if (record.type == LayoutItem_Spacer)
 			{

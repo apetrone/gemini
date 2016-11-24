@@ -1177,8 +1177,8 @@ Options:
 
 			main_panel = new gui::Panel(compositor);
 			main_panel->set_name("main_panel");
-			main_panel->set_origin(0, 30);
-			main_panel->set_size(window_frame.width, window_frame.height);
+			main_panel->set_origin(0, 24);
+			main_panel->set_size(window_frame.width, window_frame.height-24);
 
 			gui::HorizontalLayout* horizontal_layout = new gui::HorizontalLayout();
 
@@ -1249,7 +1249,7 @@ Options:
 			timeline->set_frame_range(0, 30);
 			timeline->on_scrubber_changed.bind<EditorKernel, &EditorKernel::timeline_scrubber_changed>(this);
 			timeline->set_frame(0);
-			timeline->set_maximum_size(gui::Size(0, 100));
+			timeline->set_maximum_size(gui::Size(0, 60));
 
 			center_layout->add_panel(timeline);
 #endif

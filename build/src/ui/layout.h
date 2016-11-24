@@ -68,6 +68,8 @@ namespace gui
 	{
 		LayoutItem type;
 		void* object;
+
+		Size item_size;
 	};
 
 	//class TestLayout : public Layout
