@@ -138,6 +138,7 @@ namespace gui
 
 	void Panel::get_content_bounds(Rect& content_bounds) const
 	{
+		assert(size.width > 0 && size.height > 0);
 		content_bounds.origin = origin;
 		content_bounds.size = size;
 	} // get_content_bounds

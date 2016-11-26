@@ -49,9 +49,8 @@ namespace gui
 
 	void Label::update(Compositor* compositor, float delta_seconds)
 	{
-
-		ScrollablePanel::update(compositor, delta_seconds);
 		update_text_cache();
+		ScrollablePanel::update(compositor, delta_seconds);
 	}
 
 	void Label::render(Compositor* compositor,
