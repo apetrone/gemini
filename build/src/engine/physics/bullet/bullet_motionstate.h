@@ -45,6 +45,8 @@ namespace gemini
 				btRigidBody* body;
 				btGhostObject* ghost;
 
+				btTransform center_mass_offset;
+
 			public:
 				CustomMotionState(const glm::vec3& origin, const glm::quat& basis);
 
@@ -57,6 +59,9 @@ namespace gemini
 
 				// world_transform will be the interpolated value
 				virtual void setWorldTransform(const btTransform &world_transform);
+
+				void set_center_mass_offset(const btVector3& mass_offset);
+				const btVector3& get_center_mass_offset() const;
 			};
 		} // namespace bullet
 	} // namespace physics

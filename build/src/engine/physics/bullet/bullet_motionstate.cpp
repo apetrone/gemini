@@ -38,6 +38,7 @@ namespace gemini
 				body(0),
 				ghost(0)
 			{
+				center_mass_offset.setIdentity();
 			}
 
 			void CustomMotionState::set_body_and_ghost(btRigidBody* body, btGhostObject* ghost)
@@ -56,23 +57,36 @@ namespace gemini
 			btTransform CustomMotionState::compose_transform() const
 			{
 				return bullet::position_and_orientation_to_transform(position, orientation);
-			}
+			} // compose_transform
 
 			void CustomMotionState::getWorldTransform(btTransform &world_transform) const
 			{
-				world_transform = compose_transform();
-			}
+				world_transform = center_mass_offset.inverse() * compose_transform();
+			} // getWorldTransform
 
 			void CustomMotionState::setWorldTransform(const btTransform &world_transform)
 			{
-				position_and_orientation_from_transform(position, orientation, world_transform);
+				btTransform trans_matrix = center_mass_offset * world_transform;
+				position_and_orientation_from_transform(position, orientation, trans_matrix);
 
 				// sync up the ghost object when this rigid body moves
 				if (ghost)
 				{
 					ghost->setWorldTransform(world_transform);
 				}
-			}
+			} // setWorldTransform
+
+			void CustomMotionState::set_center_mass_offset(const btVector3& mass_offset)
+			{
+				center_mass_offset.setIdentity();
+				center_mass_offset.setOrigin(mass_offset);
+			} // set_center_mass_offset
+
+			const btVector3& CustomMotionState::get_center_mass_offset() const
+			{
+				return center_mass_offset.getOrigin();
+			} // get_center_mass_offset
+
 		} // namespace bullet
 	} // namespace physics
 } // namespace gemini

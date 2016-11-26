@@ -233,7 +233,7 @@ void Entity::collision_ended(const EntityCollisionData& /*collision_data*/)
 {
 }
 
-void Entity::use(Entity* /*user*/)
+void Entity::use(Entity* /*user*/, const glm::vec3& /*in_vector*/)
 {
 }
 
@@ -242,7 +242,9 @@ void Entity::set_physics_from_current_transform()
 	for (size_t index = 0; index < colliders.size(); ++index)
 	{
 		physics::ICollisionObject* collider = colliders[index];
-		collider->set_world_transform(position+collider_offsets[index], orientation);
+		//  + (-collider_offsets[index])
+		collider->set_world_transform(position, orientation);
+		collider->set_offset(collider_offsets[index]);
 	}
 }
 
@@ -256,6 +258,7 @@ void Entity::set_current_transform_from_physics(size_t collider_index)
 		glm::vec3 pos;
 		collider->get_world_transform(pos, orientation);
 		position = pos-collider_offsets[collider_index];
+		pivot_point = collider->get_offset();
 	}
 }
 
@@ -283,6 +286,7 @@ void Entity::add_collider(physics::ICollisionObject* collider, const glm::vec3& 
 
 	collider->set_user_data(this);
 	collider->set_collision_callback(entity_collision_callback);
+	collider->set_offset(offset);
 
 	colliders.push_back(collider);
 	collider_offsets.push_back(offset);

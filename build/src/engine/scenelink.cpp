@@ -167,15 +167,19 @@ namespace gemini
 								glm::mat4 transform;
 								glm::vec3 position;
 								glm::quat orientation;
+								glm::vec3 pivot_point;
 
 								glm::vec3 physics_position;
 
 								e->get_world_transform(physics_position, orientation);
 								e->get_render_position(position);
+								e->get_pivot_point(pivot_point);
 
 								glm::mat4 rotation = glm::toMat4(orientation);
 								glm::mat4 translation = glm::translate(transform, position);
-								transform = translation*rotation;
+								glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
+								glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
+								transform = translation * from_pivot * rotation * to_pivot;
 
 								model_instance->set_local_transform(transform);
 

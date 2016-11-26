@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 
 #include "bullet_collisionobject.h"
+#include "bullet_motionstate.h"
 
 #include "bullet_common.h"
 
@@ -241,12 +242,31 @@ namespace gemini
 	//			this->mass_center_offset = mass_center_offset;
 	//		}
 
-			void BulletCollisionObject::set_motion_state(btMotionState *motionstate)
+			void BulletCollisionObject::set_motion_state(CustomMotionState *motionstate)
 			{
 				motion_state = motionstate;
 			}
 
 			btMotionState* BulletCollisionObject::get_motion_state() const  { return motion_state; }
+
+			void BulletCollisionObject::set_offset(const glm::vec3& offset)
+			{
+				if (motion_state)
+				{
+					motion_state->set_center_mass_offset(btVector3(offset.x, offset.y, offset.z));
+				}
+			} // set_offset
+
+			const glm::vec3& BulletCollisionObject::get_offset() const
+			{
+				if (motion_state)
+				{
+					btVector3 offset = motion_state->get_center_mass_offset();
+					return glm::vec3(offset.x(), offset.y(), offset.z());
+				}
+
+				return glm::vec3(0.0f, 0.0f, 0.0f);
+			}
 		} // namespace bullet
 	} // namespace physics
 } // namespace gemini

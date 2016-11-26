@@ -124,6 +124,9 @@ namespace gemini
 //			virtual void set_mass(float mass) {};
 //
 //			virtual void set_parent(ICollisionObject* first, ICollisionObject* second) {};
+
+			virtual void set_offset(const glm::vec3& offset) = 0;
+			virtual const glm::vec3& get_offset() const = 0;
 		};
 	} // namespace physics
 } // namespace gemini

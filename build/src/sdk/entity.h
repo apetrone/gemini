@@ -107,6 +107,7 @@ public:
 	glm::vec3 position;
 	glm::quat orientation;
 	glm::vec3 velocity;
+	glm::vec3 pivot_point;
 
 	float local_time;
 
@@ -121,6 +122,7 @@ public:
 
 	virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) const;
 	virtual void get_render_position(glm::vec3& out_position) const { out_position = position; }
+	virtual void get_pivot_point(glm::vec3& out_pivot) const override { out_pivot = pivot_point; }
 
 	// called after the constructor
 	virtual void spawn() {}
@@ -141,7 +143,7 @@ public:
 	virtual void collision_ended(const EntityCollisionData& collision_data);
 
 	// Use is called on this entity
-	virtual void use(Entity* user);
+	virtual void use(Entity* user, const glm::vec3& in_vector);
 
 	virtual bool is_player() const { return false; }
 	virtual bool is_door() const { return false; }

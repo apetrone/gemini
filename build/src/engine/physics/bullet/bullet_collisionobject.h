@@ -39,6 +39,7 @@ namespace gemini
 	{
 		namespace bullet
 		{
+			class CustomMotionState;
 			class BulletCollisionShape : public ICollisionShape
 			{
 			protected:
@@ -78,7 +79,7 @@ namespace gemini
 				// ghost object to sense collisions with other objects
 				btGhostObject* ghost;
 
-				btMotionState* motion_state;
+				CustomMotionState* motion_state;
 
 				void* user_data;
 
@@ -119,8 +120,11 @@ namespace gemini
 				btGhostObject* get_collision_ghost() const;
 	//			virtual void set_mass_center_offset(const glm::vec3 &mass_center_offset);
 
-				void set_motion_state(btMotionState* motionstate);
+				void set_motion_state(CustomMotionState* motionstate);
 				btMotionState* get_motion_state() const;
+
+				virtual void set_offset(const glm::vec3& offset) override;
+				virtual const glm::vec3& get_offset() const override;
 			};
 
 		} // namespace bullet
