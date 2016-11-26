@@ -521,6 +521,8 @@ namespace render2
 	//
 	// ---------------------------------------------------------------------
 
+
+
 	/// @brief Create a render device with the given parameters
 	Device* create_device(const RenderParameters& parameters);
 

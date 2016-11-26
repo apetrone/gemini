@@ -94,7 +94,7 @@ namespace gemini
 	// paths in a custom fashion.
 	platform::Result runtime_startup(
 		const char* application_data_path,
-		std::function<void(const char*)> custom_path_setup = nullptr
+		std::function<void(const char*)> custom_path_setup = nullptr,
 		uint32_t startup_flags = 0
 	);
 	void runtime_shutdown();

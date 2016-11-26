@@ -35,6 +35,7 @@
 #include <core/argumentparser.h>
 
 #include <platform/platform.h>
+#include <platform/window.h>
 
 #include <renderer/renderer.h>
 
