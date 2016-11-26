@@ -37,6 +37,9 @@
 #include <sdk/iengineentity.h>
 #include <sdk/model_api.h>
 
+// for MAX_BONES
+#include <shared/shared_constants.h>
+
 namespace gemini
 {
 	SceneLink::SceneLink()
@@ -217,12 +220,12 @@ namespace gemini
 										const glm::mat4 world_pose = transform * model_poses[transform_index];
 										glm::vec3 origin = glm::vec3(glm::column(world_pose, 3));
 
-										debugdraw::instance()->line(last_origin, origin, Color::from_rgba(255, 128, 0, 255));
+										debugdraw::line(last_origin, origin, Color::from_rgba(255, 128, 0, 255));
 										last_origin = origin;
 										origins[index] = origin;
 
 										// this only displays local transforms
-										debugdraw::instance()->axes(world_pose, 0.05f, 0.0f);
+										debugdraw::axes(world_pose, 0.05f, 0.0f);
 									}
 								}
 #endif
