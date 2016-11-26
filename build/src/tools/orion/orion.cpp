@@ -918,17 +918,7 @@ Options:
 
 			// set opengl specific options
 			params["rendering_backend"] = "opengl";
-//			params["opengl.major"] = "3";
-//			params["opengl.minor"] = "2";
-//			params["opengl.profile"] = "core";
-//			params["opengl.share_context"] = "true";
 
-//			for (RenderParameters::Iterator it = params.begin(); it != params.end(); ++it)
-//			{
-//				const param_string& key = it.key();
-//				const param_string& value = it.value();
-//				LOGV("'%s' -> '%s'\n", key(), value());
-//			}
 
 			device = create_device(params);
 

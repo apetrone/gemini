@@ -32,6 +32,8 @@
 #include <core/mathlib.h>
 #include <core/interpolation.h>
 
+#include <renderer/renderer.h>
+
 #include <string>
 #include <vector>
 
@@ -50,12 +52,51 @@ namespace core
 
 namespace gemini
 {
+	struct Settings
+	{
+		uint32_t physics_tick_rate;
+		uint32_t enable_asset_reloading : 1;
+
+		uint32_t window_width;
+		uint32_t window_height;
+		core::StackString<128> window_title;
+		platform::PathString application_directory;
+
+		::renderer::RenderSettings render_settings;
+
+		Settings()
+		{
+			// setup sane defaults
+			physics_tick_rate = 60;
+			enable_asset_reloading = 0;
+			window_width = 1280;
+			window_height = 720;
+		}
+	};
+
+	enum RuntimeFlags
+	{
+		// core functionality
+		RF_CORE					= 1,
+
+		// save logged files to disk
+		RF_SAVE_LOGS_TO_DISK	= 4,
+
+		// Initialize the window sub-system
+		RF_WINDOW_SYSTEM		= 8,
+
+	};
+
 	// runtime startup sequence
 	// Optionally pass a lambda to setup the filesystem paths
 	// This is called after the filesystem instance is created, but before
 	// any other operations. It allows the caller to setup the filesystem
 	// paths in a custom fashion.
-	platform::Result runtime_startup(const char* application_data_path, std::function<void(const char*)> custom_path_setup = nullptr);
+	platform::Result runtime_startup(
+		const char* application_data_path,
+		std::function<void(const char*)> custom_path_setup = nullptr
+		uint32_t startup_flags = 0
+	);
 	void runtime_shutdown();
 
 
@@ -63,6 +104,7 @@ namespace gemini
 
 	int32_t runtime_decompose_url(const char* url, char* filename, char* hostname, char* service_type, uint16_t* port);
 
+	bool runtime_load_application_config(Settings& config);
 
 
 	template <class T>

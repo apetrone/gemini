@@ -35,7 +35,7 @@
 #include <core/profiler.h>
 
 #include <runtime/filesystem.h>
-#include <runtime/configloader.h>
+
 #include <runtime/runtime.h>
 #include <runtime/standaloneresourcecache.h>
 
@@ -80,98 +80,6 @@
 using namespace platform;
 using namespace core;
 using namespace gemini; // for renderer
-
-struct Settings
-{
-	uint32_t physics_tick_rate;
-	uint32_t enable_asset_reloading : 1;
-
-	uint32_t window_width;
-	uint32_t window_height;
-	core::StackString<128> window_title;
-	platform::PathString application_directory;
-
-	::renderer::RenderSettings render_settings;
-
-	Settings()
-	{
-		// setup sane defaults
-		physics_tick_rate = 60;
-		enable_asset_reloading = 0;
-		window_width = 1280;
-		window_height = 720;
-	}
-};
-
-static util::ConfigLoadStatus load_render_config(const Json::Value& root, void* data)
-{
-	::renderer::RenderSettings* settings = static_cast<::renderer::RenderSettings*>(data);
-
-	// TODO: there should be a better way to do this?
-	if (!root["gamma_correct"].isNull())
-	{
-		settings->gamma_correct = root["gamma_correct"].asBool();
-	}
-
-	return util::ConfigLoad_Success;
-}
-
-static util::ConfigLoadStatus settings_conf_loader( const Json::Value & root, void * data )
-{
-	util::ConfigLoadStatus result = util::ConfigLoad_Success;
-
-	Settings* cfg = (Settings*)data;
-	if ( !cfg )
-	{
-		return util::ConfigLoad_Failure;
-	}
-
-	const Json::Value& physics_tick_rate = root["physics_tick_rate"];
-	if (!physics_tick_rate.isNull())
-	{
-		cfg->physics_tick_rate = physics_tick_rate.asUInt();
-	}
-
-	const Json::Value& enable_asset_reloading = root["enable_asset_reloading"];
-	if (!enable_asset_reloading.isNull())
-	{
-		cfg->enable_asset_reloading = enable_asset_reloading.asBool();
-	}
-
-	const Json::Value& window_width = root["window_width"];
-	if (!window_width.isNull())
-	{
-		cfg->window_width = window_width.asInt();
-	}
-
-	const Json::Value& window_height = root["window_height"];
-	if (!window_height.isNull())
-	{
-		cfg->window_height = window_height.asInt();
-	}
-
-	const Json::Value& window_title = root["window_title"];
-	if (!window_title.isNull())
-	{
-		cfg->window_title = window_title.asString().c_str();
-	}
-
-	const Json::Value& application_directory = root["application_directory"];
-	if (!application_directory.isNull())
-	{
-		cfg->application_directory = application_directory.asString().c_str();
-	}
-
-	const Json::Value& renderer = root["renderer"];
-	if (!renderer.isNull())
-	{
-		// load renderer settings
-		result = load_render_config(renderer, &cfg->render_settings);
-	}
-
-	return result;
-}
-
 
 #include <ui/ui.h>
 #include <ui/compositor.h>
@@ -958,20 +866,6 @@ extern "C"
 }
 #endif
 
-bool load_config(Settings& config)
-{
-	bool success = util::json_load_with_callback("conf/settings.conf", settings_conf_loader, &config, true);
-	if (!success)
-	{
-		LOGW("Unable to load settings.conf! Let's hope wise defaults were chosen...\n");
-
-		// This is hit when the game content path is invalid.
-		assert(0);
-	}
-
-	return success;
-} // load_config
-
 class EngineKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -1336,14 +1230,15 @@ Options:
 			filesystem->content_directory(content_path);
 
 			// load engine settings (from content path)
-			load_config(config);
+			runtime_load_application_config(config);
 
 			// the application path can be specified in the config (per-game basis)
 			const platform::PathString application_path = platform::get_user_application_directory(config.application_directory.c_str());
 			filesystem->user_application_directory(application_path);
 		};
 
-		gemini::runtime_startup(nullptr, custom_path_setup);
+		const uint32_t runtime_flags = RF_CORE | RF_WINDOW_SYSTEM;
+		gemini::runtime_startup(nullptr, custom_path_setup, runtime_flags);
 
 		LOGV("Logging system initialized.\n");
 
@@ -1355,7 +1250,7 @@ Options:
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 
 		// initialize window subsystem
-		platform::window::startup(platform::window::RenderingBackend_Default);
+		//platform::window::startup(platform::window::RenderingBackend_Default);
 
 		platform::window::Parameters window_params;
 

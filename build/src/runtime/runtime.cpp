@@ -24,7 +24,10 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include "filesystem.h"
-#include "runtime.h"
+
+#include <runtime/configloader.h>
+#include <runtime/runtime.h>
+
 
 #include <core/logging.h>
 #include <core/str.h>
@@ -94,7 +97,9 @@ namespace gemini
 
 	// initialize handlers
 
-	platform::Result runtime_startup(const char* application_data_path, std::function<void(const char*)> custom_path_setup)
+	platform::Result runtime_startup(const char* application_data_path,
+		std::function<void(const char*)> custom_path_setup,
+		uint32_t runtime_flags)
 	{
 		platform::PathString root_path = platform::get_program_directory();
 		LOGV("root_path: %s\n", root_path());
@@ -122,41 +127,51 @@ namespace gemini
 			core::filesystem::instance()->user_application_directory(application_path);
 		}
 
-#if 0 && defined(PLATFORM_FILESYSTEM_SUPPORT)
-		// install disk logging handler
-		const char GEMINI_LOG_PATH[] = "logs";
-		const unsigned int GEMINI_DATETIME_STRING_MAX = 128;
+#if defined(PLATFORM_FILESYSTEM_SUPPORT)
+		if (runtime_flags & RF_SAVE_LOGS_TO_DISK)
+		{
 
-		platform::DateTime dt;
-		platform::datetime(dt);
+			// install disk logging handler
+			const char GEMINI_LOG_PATH[] = "logs";
+			const unsigned int GEMINI_DATETIME_STRING_MAX = 128;
+
+			platform::DateTime dt;
+			platform::datetime(dt);
 
 
-		core::filesystem::IFileSystem* fs = core::filesystem::instance();
+			core::filesystem::IFileSystem* fs = core::filesystem::instance();
 
-		char datetime_string[ GEMINI_DATETIME_STRING_MAX ];
-		core::str::sprintf(datetime_string, GEMINI_DATETIME_STRING_MAX, "%02d-%02d-%04d-%02d-%02d-%02d.log",
-					 dt.month, dt.day, dt.year, dt.hour, dt.minute, dt.second);
+			char datetime_string[GEMINI_DATETIME_STRING_MAX];
+			core::str::sprintf(datetime_string, GEMINI_DATETIME_STRING_MAX, "%02d-%02d-%04d-%02d-%02d-%02d.log",
+				dt.month, dt.day, dt.year, dt.hour, dt.minute, dt.second);
 
-		platform::PathString log_directory;
-		log_directory = fs->user_application_directory();
-		log_directory.append(PATH_SEPARATOR_STRING).append(GEMINI_LOG_PATH).append(PATH_SEPARATOR_STRING);
-		log_directory.normalize(PATH_SEPARATOR);
+			platform::PathString log_directory;
+			log_directory = fs->user_application_directory();
+			log_directory.append(PATH_SEPARATOR_STRING).append(GEMINI_LOG_PATH).append(PATH_SEPARATOR_STRING);
+			log_directory.normalize(PATH_SEPARATOR);
 
-		// make sure target folder is created
-		platform::path::make_directories(log_directory());
+			// make sure target folder is created
+			platform::path::make_directories(log_directory());
 
-		log_directory.append(datetime_string);
+			log_directory.append(datetime_string);
 
-		core::logging::Handler filelogger;
-		filelogger.open = detail::file_logger_open;
-		filelogger.close = detail::file_logger_close;
-		filelogger.message = detail::file_logger_message;
-		filelogger.userdata = (void*)log_directory();
-		core::logging::instance()->add_handler(&filelogger);
+			core::logging::Handler filelogger;
+			filelogger.open = detail::file_logger_open;
+			filelogger.close = detail::file_logger_close;
+			filelogger.message = detail::file_logger_message;
+			filelogger.userdata = (void*)log_directory();
+			core::logging::instance()->add_handler(&filelogger);
+		}
 #endif
 
 		// install the resource provider to the renderer?
 		render2::set_resource_provider(&detail::resource_provider);
+
+		if (runtime_flags & RF_WINDOW_SYSTEM)
+		{
+			// initialize window subsystem
+			platform::window::startup(platform::window::RenderingBackend_Default);
+		}
 
 		return platform::Result::success();
 	}
@@ -273,5 +288,90 @@ namespace gemini
 
 
 		return 0;
-	} // net_decompose_url
+	} // runtime_decompose_url
+
+
+
+	static util::ConfigLoadStatus load_render_config(const Json::Value& root, void* data)
+	{
+		::renderer::RenderSettings* settings = static_cast<::renderer::RenderSettings*>(data);
+
+		// TODO: there should be a better way to do this?
+		if (!root["gamma_correct"].isNull())
+		{
+			settings->gamma_correct = root["gamma_correct"].asBool();
+		}
+
+		return util::ConfigLoad_Success;
+	} // load_render_config
+
+	static util::ConfigLoadStatus settings_conf_loader(const Json::Value & root, void * data)
+	{
+		util::ConfigLoadStatus result = util::ConfigLoad_Success;
+
+		Settings* cfg = (Settings*)data;
+		if (!cfg)
+		{
+			return util::ConfigLoad_Failure;
+		}
+
+		const Json::Value& physics_tick_rate = root["physics_tick_rate"];
+		if (!physics_tick_rate.isNull())
+		{
+			cfg->physics_tick_rate = physics_tick_rate.asUInt();
+		}
+
+		const Json::Value& enable_asset_reloading = root["enable_asset_reloading"];
+		if (!enable_asset_reloading.isNull())
+		{
+			cfg->enable_asset_reloading = enable_asset_reloading.asBool();
+		}
+
+		const Json::Value& window_width = root["window_width"];
+		if (!window_width.isNull())
+		{
+			cfg->window_width = window_width.asInt();
+		}
+
+		const Json::Value& window_height = root["window_height"];
+		if (!window_height.isNull())
+		{
+			cfg->window_height = window_height.asInt();
+		}
+
+		const Json::Value& window_title = root["window_title"];
+		if (!window_title.isNull())
+		{
+			cfg->window_title = window_title.asString().c_str();
+		}
+
+		const Json::Value& application_directory = root["application_directory"];
+		if (!application_directory.isNull())
+		{
+			cfg->application_directory = application_directory.asString().c_str();
+		}
+
+		const Json::Value& renderer = root["renderer"];
+		if (!renderer.isNull())
+		{
+			// load renderer settings
+			result = load_render_config(renderer, &cfg->render_settings);
+		}
+
+		return result;
+	} // settings_conf_loader
+
+	bool runtime_load_application_config(Settings& config)
+	{
+		bool success = util::json_load_with_callback("conf/settings.conf", settings_conf_loader, &config, true);
+		if (!success)
+		{
+			LOGW("Unable to load settings.conf! Let's hope wise defaults were chosen...\n");
+
+			// This is hit when the game content path is invalid.
+			assert(0);
+		}
+
+		return success;
+	} // runtime_load_application_config
 } // namespace gemini
