@@ -66,232 +66,8 @@ using namespace platform;
 using namespace renderer;
 using namespace gemini;
 
-bool net_listen_thread = true;
-const size_t TOTAL_SENSORS = 3;
 
-glm::quat sensors[TOTAL_SENSORS];
-
-struct bno055_packet_t
-{
-	uint8_t header;
-	uint8_t data[8 * TOTAL_SENSORS];
-	uint8_t footer;
-
-	bno055_packet_t()
-	{
-		header = 0xba;
-		footer = 0xff;
-	}
-
-	bool is_valid() const
-	{
-		return (header == 0xba) && (footer == 0xff);
-	}
-
-	uint8_t get_header() const
-	{
-		return header;
-	}
-
-	uint8_t get_footer() const
-	{
-		return footer;
-	}
-
-	glm::quat get_orientation(uint32_t sensor_index = 0) const
-	{
-		int16_t x = 0;
-		int16_t y = 0;
-		int16_t z = 0;
-		int16_t w = 0;
-
-		const uint8_t* buffer = (data + (sensor_index * 8));
-
-		// they are 16-bit LSB
-		x = (((uint16_t)buffer[3]) << 8) | ((uint16_t)buffer[2]);
-		y = (((uint16_t)buffer[5]) << 8) | ((uint16_t)buffer[4]);
-		z = (((uint16_t)buffer[7]) << 8) | ((uint16_t)buffer[6]);
-		w = (((uint16_t)buffer[1]) << 8) | ((uint16_t)buffer[0]);
-
-		const double QUANTIZE = (1.0 / 16384.0);
-
-		return glm::quat(w * QUANTIZE, x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
-	}
-}; // bno055_packet_t
-
-// Returns true if timeout_msec has passed since target_msec.
-// If true, sets target_msec to millis().
-bool msec_passed(uint64_t& target_msec, uint32_t timeout_msec)
-{
-	uint64_t current_milliseconds = platform::microseconds() * MillisecondsPerMicrosecond;
-	assert(current_milliseconds >= target_msec);
-	if ((current_milliseconds - target_msec) > timeout_msec)
-	{
-		//LOGV("msec_passed: %d ms\n", (current_milliseconds - target_msec));
-		target_msec = current_milliseconds;
-		return true;
-	}
-
-	return false;
-} // msec_passed
-
-void sensor_thread(platform::Thread* thread)
-{
-	net_socket* sock = static_cast<net_socket*>(thread->user_data);
-	LOGV("launched network listen thread.\n");
-
-	const size_t PACKET_SIZE = sizeof(bno055_packet_t);
-	LOGV("packet size is %i bytes\n", PACKET_SIZE);
-
-	const size_t MAX_PACKET_DATA = 4 * PACKET_SIZE;
-	char buffer[MAX_PACKET_DATA];
-	size_t current_index = 0;
-
-	// Waiting for a client to connect. Reply to broadcasts.
-	const uint8_t STATE_WAITING = 1;
-
-	// Waiting for the client to accept handshake.
-	const uint8_t STATE_HANDSHAKE = 2;
-
-	// Streaming with a client.
-	const uint8_t STATE_STREAMING = 3;
-
-	const uint32_t HANDSHAKE_VALUE = 1985;
-
-	uint8_t current_state = STATE_WAITING;
-
-	uint64_t last_client_ping_msec = 0;
-
-	// Time to wait until sending a 'ping' back to the client to force
-	// a keep-alive.
-	const uint64_t CLIENT_PING_DELAY_MSEC = 1000;
-	net_address client_address;
-
-	const uint64_t CLIENT_TIMEOUT_MSEC = 3000;
-	uint64_t last_client_contact_msec = 0;
-
-	const uint32_t DISCONNECT_VALUE = 2005;
-
-
-	while (net_listen_thread)
-	{
-		net_address source;
-
-		uint64_t current_milliseconds = platform::microseconds() * MillisecondsPerMicrosecond;
-
-		if (current_state == STATE_STREAMING)
-		{
-			if (msec_passed(last_client_contact_msec, CLIENT_TIMEOUT_MSEC))
-			{
-				LOGV("No communication from client in %i msec\n", CLIENT_TIMEOUT_MSEC);
-				LOGV("Assuming the client is dead. Waiting for connections...\n");
-				// Assume the client is dead.
-				current_state = STATE_WAITING;
-				continue;
-			}
-
-			if (msec_passed(last_client_ping_msec, CLIENT_PING_DELAY_MSEC))
-			{
-				uint32_t ping_value = 2000;
-				net_socket_sendto(*sock, &client_address, (const char*)&ping_value, sizeof(uint32_t));
-			}
-		}
-
-		timeval zero_timeval;
-		zero_timeval.tv_sec = 0;
-		zero_timeval.tv_usec = 1;
-
-		fd_set receive;
-		FD_ZERO(&receive);
-		FD_SET(*sock, &receive);
-
-		fd_set transmit;
-		FD_ZERO(&transmit);
-		FD_SET(*sock, &transmit);
-
-		int select_result = select((*sock) + 1, &receive, &transmit, nullptr, &zero_timeval);
-		assert(select_result >= 0);
-
-		if (FD_ISSET(*sock, &receive))
-		{
-			int32_t bytes_available = net_socket_recvfrom(*sock, &source, buffer, PACKET_SIZE);
-			if (bytes_available > 0)
-			{
-				LOGV("-> received %i bytes...\n", bytes_available);
-				last_client_contact_msec = current_milliseconds;
-				if (current_state == STATE_STREAMING)
-				{
-					bno055_packet_t* packet = reinterpret_cast<bno055_packet_t*>(buffer);
-					if (packet->is_valid())
-					{
-						for (size_t index = 0; index < TOTAL_SENSORS; ++index)
-						{
-							glm::quat q = packet->get_orientation(index);
-							//LOGV("q[%i]: %2.2f, %2.2f, %2.2f, %2.2f\n", index, q.x, q.y, q.z, q.w);
-							sensors[index] = q;
-						}
-					}
-					else
-					{
-						LOGV("Received invalid packet! (header = %x, footer = %x)\n", packet->get_header(), packet->get_footer());
-					}
-				}
-				else if (current_state == STATE_WAITING)
-				{
-					uint32_t request = (*reinterpret_cast<uint32_t*>(buffer));
-					if (request == 1983)
-					{
-						char ip[22] = { 0 };
-						net_address_host(&source, ip, 22);
-						uint16_t port = net_address_port(&source);
-						LOGV("Mocap client at %s:%i; initiating handshake (%i)...\n", ip, port, HANDSHAKE_VALUE);
-						net_socket_sendto(*sock, &source, (const char*)&HANDSHAKE_VALUE, sizeof(uint32_t));
-						current_state = STATE_HANDSHAKE;
-					}
-					else
-					{
-						LOGW("Request value is invalid.\n");
-					}
-				}
-				else if (current_state == STATE_HANDSHAKE)
-				{
-					LOGV("received data while handshaking: %i\n", bytes_available);
-					uint32_t request = (*reinterpret_cast<uint32_t*>(buffer));
-					if (request == HANDSHAKE_VALUE)
-					{
-						char ip[22] = { 0 };
-						net_address_host(&source, ip, 22);
-						uint16_t port = net_address_port(&source);
-						LOGV("Connected with mocap client at %s:%i.\n", ip, port);
-						uint32_t response = 65535;
-						net_socket_sendto(*sock, &source, (const char*)&response, sizeof(uint32_t));
-
-						net_address_set(&client_address, ip, port);
-						last_client_contact_msec = platform::microseconds() * MillisecondsPerMicrosecond;
-
-						current_state = STATE_STREAMING;
-					}
-					else
-					{
-						LOGV("handshake did not match! (received: %i, expected: %i)\n", request, HANDSHAKE_VALUE);
-						current_state = STATE_WAITING;
-					}
-				}
-			}
-		}
-	}
-
-
-
-	if (current_state == STATE_STREAMING)
-	{
-		// send disconnect
-		int32_t value = DISCONNECT_VALUE;
-		net_socket_sendto(*sock, &client_address, (const char*)&value, sizeof(uint32_t));
-		thread_sleep(500);
-	}
-}
-
+#include <runtime/imocap.h>
 
 
 namespace gui
@@ -404,20 +180,7 @@ public:
 
 
 
-glm::quat transform_sensor_rotation(const glm::quat& q)
-{
-	// this bit of code converts the coordinate system of the BNO055
-	// to that of gemini.
-	glm::quat flipped(q.w, q.x, -q.z, -q.y);
-	glm::quat y = glm::quat(glm::vec3(0, mathlib::degrees_to_radians(180), 0));
-	return glm::inverse(y * flipped);
-}
 
-struct mocap_frame_t
-{
-	uint32_t frame_index;
-	glm::quat poses[TOTAL_SENSORS];
-};
 
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -436,8 +199,8 @@ private:
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
 
-	glm::mat4 joint_offets[TOTAL_SENSORS];
-	glm::quat zeroed_orientations[TOTAL_SENSORS];
+	glm::mat4 joint_offets[imocap::TOTAL_SENSORS];
+
 //	GLsync fence;
 
 	gui::Compositor* compositor;
@@ -450,7 +213,7 @@ private:
 	AssetProcessingPanel* asset_processor;
 
 
-	Array<mocap_frame_t> mocap_frames;
+	Array<imocap::mocap_frame_t> mocap_frames;
 	size_t current_mocap_frame;
 	PathString current_mocap_filename;
 
@@ -476,8 +239,10 @@ private:
 	bool is_playing_frames;
 	bool app_in_focus;
 
-	net_socket data_socket;
-	platform::Thread* sensor_thread_handle;
+	glm::vec3 position_test;
+	glm::vec3 velocity_test;
+
+	imocap::MocapDevice* mocap_device;
 
 public:
 	EditorKernel()
@@ -490,6 +255,7 @@ public:
 		, is_recording_frames(false)
 		, is_playing_frames(false)
 		, app_in_focus(true)
+		, mocap_device(nullptr)
 	{
 		yaw = 0.0f;
 		pitch = 0.0f;
@@ -499,8 +265,6 @@ public:
 		last_time = 0;
 
 		should_move_view = false;
-		sensor_thread_handle = nullptr;
-		data_socket = -1;
 
 		asset_processor = nullptr;
 	}
@@ -536,10 +300,10 @@ public:
 		if (event.key == BUTTON_SPACE)
 		{
 			LOGV("freezing rotations\n");
-			for (size_t index = 0; index < TOTAL_SENSORS; ++index)
-			{
-				zeroed_orientations[index] = transform_sensor_rotation(sensors[index]);
-			}
+			imocap::zero_rotations(mocap_device);
+
+			position_test = velocity_test = glm::vec3(0.0f, 0.0f, 0.0f);
+
 		}
 	}
 
@@ -691,7 +455,7 @@ public:
 			if (handle.is_open())
 			{
 				// 1. Total Sensors (poses)
-				platform::fs_write(handle, &TOTAL_SENSORS, sizeof(TOTAL_SENSORS), 1);
+				platform::fs_write(handle, &imocap::TOTAL_SENSORS, sizeof(imocap::TOTAL_SENSORS), 1);
 
 				// 2. Total frames.
 				const size_t total_frames = mocap_frames.size();
@@ -700,9 +464,9 @@ public:
 				// 3. All frames.
 				for (size_t index = 0; index < total_frames; ++index)
 				{
-					mocap_frame_t& frame = mocap_frames[index];
+					imocap::mocap_frame_t& frame = mocap_frames[index];
 
-					for (size_t pose = 0; pose < TOTAL_SENSORS; ++pose)
+					for (size_t pose = 0; pose < imocap::TOTAL_SENSORS; ++pose)
 					{
 						const glm::quat& rotation = frame.poses[pose];
 						platform::fs_write(handle, (const void*)&rotation, sizeof(glm::quat), 1);
@@ -735,7 +499,7 @@ public:
 
 				// If you hit this, the file loaded differs in the number of sensors
 				// it contains vs the number of sensors this now supports.
-				assert(total_sensors == TOTAL_SENSORS);
+				assert(total_sensors == imocap::TOTAL_SENSORS);
 
 				// 2. Read Total Frames
 				size_t total_frames = 0;
@@ -747,7 +511,7 @@ public:
 				// 3. All frames.
 				for (size_t index = 0; index < total_frames; ++index)
 				{
-					mocap_frame_t& frame = mocap_frames[index];
+					imocap::mocap_frame_t& frame = mocap_frames[index];
 					frame.frame_index = index;
 					for (size_t pose = 0; pose < total_sensors; ++pose)
 					{
@@ -1103,38 +867,13 @@ Options:
 		}
 #endif
 
-		// inertial motion capture
-		// imc library.
-		// header (on connect)
-		// version
-		// # sensors
-
-		// each packet contains data for N sensors
-		// plus a 4-byte sequence id.
-
-		// 1. visualization 3d scene
-		// 2. record sensor data
-		// 3. play back sensor data
-
-
 
 
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 		int32_t startup_result = net_startup();
 		assert(startup_result == 0);
 
-		data_socket = net_socket_open(net_socket_type::UDP);
-		assert(net_socket_is_valid(data_socket));
-
-		net_address addr;
-		net_address_init(&addr);
-		net_address_set(&addr, "0.0.0.0", 27015);
-
-		int32_t bind_result = net_socket_bind(data_socket, &addr);
-		assert(bind_result == 0);
-
-		net_listen_thread = true;
-		sensor_thread_handle = platform::thread_create(sensor_thread, &data_socket);
+		mocap_device = imocap::device_create();
 
 		return kernel::NoError;
 	}
@@ -1182,12 +921,20 @@ Options:
 		debugdraw::text(20, yoffset+16, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
 		debugdraw::text(20, yoffset+32, "Space: Calibrate / Freeze Rotations", gemini::Color(1.0f, 1.0f, 1.0f));
 
-		glm::quat local_rotations[TOTAL_SENSORS];
+		glm::quat local_rotations[imocap::TOTAL_SENSORS];
 
 		// We need to adjust the coordinate frame from the sensor to the engine.
-		local_rotations[0] = glm::inverse(zeroed_orientations[0]) * transform_sensor_rotation(sensors[0]);
-		local_rotations[1] = glm::inverse(local_rotations[0]) * glm::inverse(zeroed_orientations[1]) * transform_sensor_rotation(sensors[1]);
-		local_rotations[2] = glm::inverse(local_rotations[1]) * glm::inverse(zeroed_orientations[2]) * transform_sensor_rotation(sensors[2]);
+
+
+
+
+		//local_rotations[0] = glm::inverse(zeroed_orientations[0]) * imocap::device_sensor_orientation(mocap_device, 0);
+		//local_rotations[1] = glm::inverse(local_rotations[0]) * glm::inverse(zeroed_orientations[1]) * imocap::device_sensor_orientation(mocap_device, 1);
+		//local_rotations[2] = glm::inverse(local_rotations[1]) * glm::inverse(zeroed_orientations[2]) * imocap::device_sensor_orientation(mocap_device, 2);
+
+		local_rotations[0] = imocap::device_sensor_local_orientation(mocap_device, 0);
+		local_rotations[1] = glm::inverse(local_rotations[0]) * imocap::device_sensor_local_orientation(mocap_device, 1);
+		local_rotations[2] = glm::inverse(local_rotations[1]) * imocap::device_sensor_local_orientation(mocap_device, 2);
 
 		//local_rotations[1] = sensors[1] * glm::inverse(sensors[0]);
 
@@ -1197,16 +944,16 @@ Options:
 		joint_offets[2] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.254f));
 
 
-		glm::mat4 world_poses[TOTAL_SENSORS];
+		glm::mat4 world_poses[imocap::TOTAL_SENSORS];
 		glm::vec3 last_origin;
 
 		glm::mat4 parent_pose;
 
-		mocap_frame_t mocap_frame;
+		imocap::mocap_frame_t mocap_frame;
 
 		if (is_playing_frames)
 		{
-			memcpy(local_rotations, mocap_frames[current_mocap_frame].poses, sizeof(glm::quat) * TOTAL_SENSORS);
+			memcpy(local_rotations, mocap_frames[current_mocap_frame].poses, sizeof(glm::quat) * imocap::TOTAL_SENSORS);
 			current_mocap_frame++;
 
 			if (current_mocap_frame > (mocap_frames.size() - 1))
@@ -1217,7 +964,7 @@ Options:
 		}
 
 
-		for (size_t index = 0; index < TOTAL_SENSORS; ++index)
+		for (size_t index = 0; index < imocap::TOTAL_SENSORS; ++index)
 		{
 			glm::mat4 m = glm::toMat4(local_rotations[index]);
 			glm::mat4 local_pose = (joint_offets[index] * m);
@@ -1241,12 +988,24 @@ Options:
 
 			debugdraw::sphere(origin, Color::from_rgba(255, 0, 0, 255), 0.025f);
 			//mocap_frame.poses[index] = local_rotations[index];
+
+			const glm::vec3 acceleration = imocap::device_sensor_linear_acceleration(mocap_device, index);
+			const glm::vec3 gravity = imocap::device_sensor_gravity(mocap_device, index);
+
+			if (index == 2)
+			{
+				velocity_test += (acceleration /*+ gravity*/);
+				position_test += velocity_test;
+			}
+
+			debugdraw::basis(origin, acceleration, 1.0f, 0.025f);
 		}
 
+		debugdraw::box(glm::vec3(-0.5f, -0.5f, -0.5f) + position_test, glm::vec3(0.5f, 0.5f, 0.5f) + position_test, gemini::Color(0.0f, 1.0f, 1.0f));
 
 		if (is_recording_frames)
 		{
-			memcpy(mocap_frame.poses, local_rotations, sizeof(glm::quat) * TOTAL_SENSORS);
+			memcpy(mocap_frame.poses, local_rotations, sizeof(glm::quat) * imocap::TOTAL_SENSORS);
 			mocap_frame.frame_index = current_mocap_frame;
 			current_mocap_frame++;
 
@@ -1324,10 +1083,8 @@ Options:
 
 	virtual void shutdown()
 	{
-		net_listen_thread = false;
-
-		platform::thread_join(sensor_thread_handle, 1000);
-		platform::thread_destroy(sensor_thread_handle);
+		imocap::device_destroy(mocap_device);
+		mocap_device = nullptr;
 
 		net_shutdown();
 		debugdraw::shutdown();
