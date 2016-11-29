@@ -70,6 +70,8 @@ using namespace gemini;
 #include <runtime/imocap.h>
 
 
+#define ENABLE_UI 1
+
 namespace gui
 {
 
@@ -179,7 +181,7 @@ public:
 
 
 
-
+size_t total_bytes = sizeof(MyVertex) * 4;
 
 
 class EditorKernel : public kernel::IKernel,
@@ -195,11 +197,16 @@ private:
 	render2::Buffer* vertex_buffer;
 
 	render2::Pipeline* pipeline;
-
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
 
+	render2::Pipeline* surface_pipeline;
+	glm::mat4 surface_modelview;
+	glm::mat4 surface_projection;
+
 	glm::mat4 joint_offets[imocap::TOTAL_SENSORS];
+
+	MyVertex vertex_data[4];
 
 //	GLsync fence;
 
@@ -561,7 +568,7 @@ public:
 		render2::CommandQueue* queue = device->create_queue(render_pass);
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 
-		serializer->pipeline(pipeline);
+		serializer->pipeline(surface_pipeline);
 
 		const bool test_triangle = 1;
 		if (test_triangle)
@@ -698,10 +705,24 @@ Options:
 			desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
 			pipeline = device->create_pipeline(desc);
 
-			size_t total_bytes = sizeof(MyVertex) * 6;
+			{
+				render2::PipelineDescriptor desc;
+				desc.shader = device->create_shader("vertexcolor");
+				render2::VertexDescriptor& vertex_format = desc.vertex_description;
+				vertex_format.add("in_position", render2::VD_FLOAT, 3);
+				vertex_format.add("in_color", render2::VD_FLOAT, 4);
+				desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
+				surface_pipeline = device->create_pipeline(desc);
+				surface_pipeline->constants().set("modelview_matrix", &surface_modelview);
+				surface_pipeline->constants().set("projection_matrix", &surface_projection);
+			}
+
 			vertex_buffer = device->create_vertex_buffer(total_bytes);
 
-#if 1
+
+			// Buffer Lock and Buffer Unlock are perhaps future features.
+			// This does not work as of yet.
+#if 0
 			MyVertex* vertex = reinterpret_cast<MyVertex*>(device->buffer_lock(vertex_buffer));
 
 //			MyVertex vertex[4];
@@ -719,6 +740,21 @@ Options:
 			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
 
 			device->buffer_unlock(vertex_buffer);
+#else
+			MyVertex* vertex = vertex_data;
+			vertex[0].set_position(0, window_frame.height, 0);
+			vertex[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
+
+			vertex[1].set_position(window_frame.width, window_frame.height, 0);
+			vertex[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
+
+			vertex[2].set_position(window_frame.width / 2.0f, 0, 0);
+			vertex[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
+
+			vertex[3].set_position(0, 0, 0);
+			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
+
+			device->buffer_upload(vertex_buffer, vertex, total_bytes);
 #endif
 		}
 
@@ -762,19 +798,18 @@ Options:
 			compositor = new gui::Compositor(window_frame.width, window_frame.height, &resource_cache, gui_renderer);
 			compositor->set_name("compositor");
 
+#if ENABLE_UI
 			main_panel = new gui::Panel(compositor);
 			main_panel->set_name("main_panel");
 			main_panel->set_origin(0, 24);
 			main_panel->set_size(window_frame.width, window_frame.height-24);
 
+
 			gui::HorizontalLayout* horizontal_layout = new gui::HorizontalLayout();
-
-
 			gui::VerticalLayout* center_layout = new gui::VerticalLayout();
-
 			main_panel->set_layout(horizontal_layout);
-
 			horizontal_layout->add_layout(center_layout);
+#endif
 
 
 
@@ -813,7 +848,7 @@ Options:
 			}
 #endif
 
-#if 1
+#if ENABLE_UI
 			gui::RenderableSurface* surface = new gui::RenderableSurface(main_panel);
 			surface->on_render_content.bind<EditorKernel, &EditorKernel::render_main_content>(this);
 
@@ -831,7 +866,8 @@ Options:
 
 			center_layout->add_panel(surface);
 #endif
-#if 1
+
+#if ENABLE_UI
 			gui::Timeline* timeline = new gui::Timeline(main_panel);
 			timeline->set_frame_range(0, 30);
 			timeline->on_scrubber_changed.bind<EditorKernel, &EditorKernel::timeline_scrubber_changed>(this);
@@ -840,6 +876,7 @@ Options:
 
 			center_layout->add_panel(timeline);
 #endif
+
 #if 0
 			// TODO: This needs more work as it can still get swamped and
 			// latency increases dramatically.
@@ -924,19 +961,9 @@ Options:
 		glm::quat local_rotations[imocap::TOTAL_SENSORS];
 
 		// We need to adjust the coordinate frame from the sensor to the engine.
-
-
-
-
-		//local_rotations[0] = glm::inverse(zeroed_orientations[0]) * imocap::device_sensor_orientation(mocap_device, 0);
-		//local_rotations[1] = glm::inverse(local_rotations[0]) * glm::inverse(zeroed_orientations[1]) * imocap::device_sensor_orientation(mocap_device, 1);
-		//local_rotations[2] = glm::inverse(local_rotations[1]) * glm::inverse(zeroed_orientations[2]) * imocap::device_sensor_orientation(mocap_device, 2);
-
 		local_rotations[0] = imocap::device_sensor_local_orientation(mocap_device, 0);
 		local_rotations[1] = glm::inverse(local_rotations[0]) * imocap::device_sensor_local_orientation(mocap_device, 1);
 		local_rotations[2] = glm::inverse(local_rotations[1]) * imocap::device_sensor_local_orientation(mocap_device, 2);
-
-		//local_rotations[1] = sensors[1] * glm::inverse(sensors[0]);
 
 		// temp: setup joint offsets
 		joint_offets[0] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
@@ -1021,18 +1048,19 @@ Options:
 			compositor->tick(static_cast<float>(kernel::parameters().step_interval_seconds));
 		}
 
-		modelview_matrix = glm::mat4(1.0f);
-		projection_matrix = glm::ortho(0.0f, window_frame.width, window_frame.height, 0.0f, -1.0f, 1.0f);
+		surface_modelview = glm::mat4(1.0f);
+		surface_projection = glm::ortho(0.0f, window_frame.width, window_frame.height, 0.0f, -1.0f, 1.0f);
 		//const glm::vec3& p = camera.get_position();
 		//LOGV("p: %2.2f, %2.2f, %2.2f\n", p.x, p.y, p.z);
 
 		modelview_matrix = camera.get_modelview();
 		projection_matrix = camera.get_projection();
+
 		pipeline->constants().set("modelview_matrix", &modelview_matrix);
 		pipeline->constants().set("projection_matrix", &projection_matrix);
 
+#if 0
 		value = 0.35f;
-
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
 		render_pass.color(value, value, value, 1.0f);
@@ -1044,11 +1072,11 @@ Options:
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 
 		serializer->pipeline(pipeline);
-		//serializer->vertex_buffer(vertex_buffer);
-		//serializer->draw(0, 3);
+		serializer->vertex_buffer(vertex_buffer);
+		serializer->draw(0, 3);
 		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
-
+#endif
 		platform::window::activate_context(main_window);
 
 		if (compositor)
@@ -1111,6 +1139,7 @@ Options:
 		device->destroy_buffer(vertex_buffer);
 
 		device->destroy_pipeline(pipeline);
+		device->destroy_pipeline(surface_pipeline);
 
 		destroy_device(device);
 
