@@ -94,10 +94,10 @@ namespace gui
 		get_content_bounds(content_rect);
 
 		// get the vertical ratio
-		const float vertical_content_overflow = (content_rect.height() - size.height);
+		int32_t vertical_content_overflow = (content_rect.height() - size.height);
 		if (vertical_content_overflow > 0)
 		{
-			float vheight = size.height * (size.height / content_rect.height());
+			ScreenInt vheight = static_cast<ScreenInt>(size.height * (size.height / static_cast<float>(content_rect.height())));
 			vertical_bar->set_origin(size.width-SCROLL_BAR_WIDTH, 0);
 			vertical_bar->set_size(gui::Size(SCROLL_BAR_WIDTH, size.height-SCROLL_BAR_WIDTH));
 			vertical_bar->set_button_size(vertical_bar->get_size().width, vheight);

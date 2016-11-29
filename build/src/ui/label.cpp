@@ -40,6 +40,7 @@ namespace gui
 		, cache_is_dirty(1)
 		, font_height(0)
 	{
+		content_bounds.set(0, 0, 0, 0);
 	}
 
 	void Label::get_content_bounds(Rect& out_bounds) const
@@ -49,8 +50,8 @@ namespace gui
 
 	void Label::update(Compositor* compositor, float delta_seconds)
 	{
-		update_text_cache();
 		ScrollablePanel::update(compositor, delta_seconds);
+		update_text_cache();
 	}
 
 	void Label::render(Compositor* compositor,
