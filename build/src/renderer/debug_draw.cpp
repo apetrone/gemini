@@ -947,12 +947,16 @@ namespace debugdraw
 		text_list->reset();
 	} // draw_text
 
-	void render(const glm::mat4& modelview, const glm::mat4& projection, int viewport_width, int viewport_height)
+	void render(const glm::mat4& modelview, const glm::mat4& projection, int viewport_width, int viewport_height, render2::RenderTarget* render_target)
 	{
 		render2::Pass pass;
 		pass.depth_test = false;
 		pass.cull_mode = render2::CullMode::None;
-		pass.target = device->default_render_target();
+		if (render_target == nullptr)
+		{
+			render_target = device->default_render_target();
+		}
+		pass.target = render_target;
 
 		modelview_matrix = modelview;
 		projection_matrix = projection;

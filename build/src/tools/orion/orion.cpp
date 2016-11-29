@@ -578,6 +578,8 @@ public:
 			device->queue_buffers(queue, 1);
 		}
 		device->destroy_serializer(serializer);
+
+		debugdraw::render(camera.get_modelview(), camera.get_projection(), render_target->width, render_target->height, render_target);
 	}
 
 	virtual kernel::Error startup()
@@ -704,6 +706,8 @@ Options:
 			vertex_format.add("in_color", render2::VD_FLOAT, 4);
 			desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
 			pipeline = device->create_pipeline(desc);
+			pipeline->constants().set("modelview_matrix", &modelview_matrix);
+			pipeline->constants().set("projection_matrix", &projection_matrix);
 
 			{
 				render2::PipelineDescriptor desc;
@@ -1056,8 +1060,7 @@ Options:
 		modelview_matrix = camera.get_modelview();
 		projection_matrix = camera.get_projection();
 
-		pipeline->constants().set("modelview_matrix", &modelview_matrix);
-		pipeline->constants().set("projection_matrix", &projection_matrix);
+
 
 #if 0
 		value = 0.35f;
@@ -1084,7 +1087,7 @@ Options:
 			compositor->draw();
 		}
 
-		debugdraw::render(modelview_matrix, projection_matrix, window_frame.width, window_frame.height);
+		/*debugdraw::render(modelview_matrix, projection_matrix, window_frame.width, window_frame.height);*/
 
 		device->submit();
 

@@ -33,7 +33,7 @@
 namespace render2
 {
 	class Device;
-
+	struct RenderTarget;
 } // namespace render2
 
 namespace font
@@ -47,7 +47,7 @@ namespace debugdraw
 	void shutdown();
 
 	void update(float deltamsec);
-	void render(const glm::mat4& modelview, const glm::mat4& projection, int viewport_width, int viewport_height);
+	void render(const glm::mat4& modelview, const glm::mat4& projection, int viewport_width, int viewport_height, render2::RenderTarget* render_target = nullptr);
 	//void reset();
 
 	void axes(const glm::mat4& transform, float axis_length, float duration = 0.0f);
