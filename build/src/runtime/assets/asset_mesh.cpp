@@ -259,6 +259,7 @@ namespace gemini
 					// allocate enough bones
 					geo->bind_poses.allocate(bind_data.size());
 					geo->inverse_bind_poses.allocate(bind_data.size());
+					state.mesh->hitboxes.allocate(bind_data.size());
 
 					Json::ValueIterator it = bind_data.begin();
 					for (; it != bind_data.end(); ++it)
@@ -271,7 +272,7 @@ namespace gemini
 						assert(joint != 0);
 
 						size_t bone_index = joint->index;
-//						LOGV("reading bind_pose for '%s' -> %i\n", bone_name.c_str(), bone_index);
+						//						LOGV("reading bind_pose for '%s' -> %i\n", bone_name.c_str(), bone_index);
 						const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
 						assert(!inverse_bind_pose.isNull());
 						geo->inverse_bind_poses[bone_index] = assets::json_to_mat4(inverse_bind_pose);
@@ -280,6 +281,7 @@ namespace gemini
 						assert(!bind_pose.isNull());
 						geo->bind_poses[bone_index] = assets::json_to_mat4(bind_pose);
 					}
+
 
 					state.mesh->has_skeletal_animation = true;
 
@@ -322,6 +324,66 @@ namespace gemini
 //						LOGV("[%i] indices: %g %g %g %g\n", weight_id, geo->blend_indices[weight_id].x, geo->blend_indices[weight_id].y, geo->blend_indices[weight_id].z, geo->blend_indices[weight_id].w);
 						geo->blend_weights[weight_id] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
 //						LOGV("weights: %2.2f %2.2f %2.2f %2.f\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
+					}
+
+					// give each hitbox a small cube to start.
+					// https://hewjunwei.wordpress.com/2013/01/26/obb-generation-via-principal-component-analysis/
+					// http://jamesgregson.blogspot.com/2011/03/latex-test.html
+
+					mathlib::Hitbox hb;
+					hb.positive_extents = glm::vec3(0.25f, 0.25f, 0.25f);
+
+					float values[] = {
+						-2.0f, 3.0f,
+						-2.0f, 1.0f,
+						2.0f, 3.0f,
+						2.0f, 1.0f
+					};
+
+					glm::mat2 mx;
+
+					mx[0][0] = mathlib::covariance(0, 0, values, 4, sizeof(float) * 2);
+					mx[0][1] = mathlib::covariance(0, 1, values, 4, sizeof(float) * 2);
+					mx[1][0] = mathlib::covariance(1, 0, values, 4, sizeof(float) * 2);
+					mx[1][1] = mathlib::covariance(1, 1, values, 4, sizeof(float) * 2);
+
+					glm::vec2 u = glm::normalize(glm::column(mx, 0));
+					glm::vec2 v = glm::normalize(glm::column(mx, 1));
+
+					// loop through all coordinates and transform; keeping
+					// min and maxs
+					glm::vec2 mins(999.0f, 999.0f), maxs(-999.0f, -999.0f);
+
+					for (size_t index = 0; index < 4; ++index)
+					{
+						glm::vec2 pt(values[index * 2], values[index * 2 + 1]);
+						float xval = glm::dot(pt, u);
+						float yval = glm::dot(pt, v);
+
+						if (xval < mins.x)
+							mins.x = xval;
+
+						if (xval > maxs.x)
+							maxs.x = xval;
+
+						if (yval < mins.y)
+							mins.y = yval;
+
+						if (yval > maxs.y)
+							maxs.y = yval;
+
+					}
+
+					glm::vec2 half_extents = (maxs - mins) * 0.5f;
+					glm::vec2 center = (maxs + mins) * 0.5f;
+
+					for (size_t index = 0; index < state.mesh->skeleton.size(); ++index)
+					{
+						const Joint& joint = state.mesh->skeleton[index];
+						mathlib::Hitbox& hitbox = state.mesh->hitboxes[joint.index];
+						//hitbox.positive_extents = glm::vec3(0.25f, 0.25f, 0.25f);
+						//hitbox.rotation = glm::toMat3(glm::angleAxis(glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+						hitbox = hb;
 					}
 				}
 

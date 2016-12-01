@@ -212,6 +212,41 @@ namespace mathlib
 		front_corners[2] = (far_point + (up * far_height * 0.5f) + (right * far_width * 0.5f));
 		front_corners[3] = (far_point + (up * far_height * 0.5f) - (right * far_width * 0.5f));
 	} // compute_frustum_corners
+
+	glm::vec3 transform_point(const glm::mat4& matrix, const glm::vec3& point)
+	{
+		return glm::vec3(matrix * glm::vec4(point, 1.0f));
+	} // transform_point
+
+	float covariance(size_t row, size_t column, float* values, size_t total_values, size_t stride)
+	{
+		// covariance(i, j) = 1/n * (sum[xi*xj] - (E[xi] * E[xj])
+
+		float denom = 1.0f / static_cast<float>(total_values);
+
+		float sum = 0.0f;
+		uint8_t* row_pointer = reinterpret_cast<uint8_t*>(values + row);
+		uint8_t* column_pointer = reinterpret_cast<uint8_t*>(values + column);
+		float xi_sum = 0.0f;
+		float xj_sum = 0.0f;
+		for (size_t index = 0; index < total_values; ++index)
+		{
+			float* row_value = reinterpret_cast<float*>(row_pointer);
+			float* column_value = reinterpret_cast<float*>(column_pointer);
+			sum += (*row_value * *column_value);
+
+			xi_sum += *row_value;
+			xj_sum += *column_value;
+
+			row_pointer += stride;
+			column_pointer += stride;
+		}
+
+		xi_sum *= denom;
+		xj_sum *= denom;
+
+		return (sum * denom) - (xi_sum * xj_sum);
+	} // covariance
 }
 
 

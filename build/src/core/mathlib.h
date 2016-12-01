@@ -144,6 +144,11 @@ namespace mathlib
 		const glm::vec3& view,
 		const glm::vec3& up,
 		const glm::vec3& right);
+
+	glm::vec3 transform_point(const glm::mat4& matrix, const glm::vec3& point);
+
+	// compute covariance for a set of values
+	float covariance(size_t row, size_t column, float* values, size_t total_values, size_t stride);
 }
 
 #if 0
@@ -261,5 +266,22 @@ namespace mathlib
 
 		bool overlaps( const AABB2 & other ) const;
 	}; // AABB2
+
+	struct OrientedBoundingBox
+	{
+		glm::vec3 center;
+		glm::mat3 rotation;
+		glm::vec3 positive_extents;
+	}; // OrientedBoundingBox
+
+
+	// A hitbox is SIMILAR to an OBB, but
+	// the center and orientation are derived
+	// from the target bone.
+	struct Hitbox
+	{
+		glm::mat3 rotation;
+		glm::vec3 positive_extents;
+	};
 
 } // namespace mathlib

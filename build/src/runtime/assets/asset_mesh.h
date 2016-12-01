@@ -121,6 +121,7 @@ namespace gemini
 
 			// bind pose skeleton
 			FixedArray<Joint> skeleton;
+			FixedArray<mathlib::Hitbox> hitboxes;
 		}; // Mesh
 
 		AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );

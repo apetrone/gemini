@@ -250,7 +250,17 @@ class ModelInterface : public gemini::IModelInterface
 			{
 				return nullptr;
 			}
-			return &model_bone_transforms[mesh->skeleton.size()*geometry_index];
+			return &model_bone_transforms[mesh->skeleton.size() * geometry_index];
+		}
+
+		virtual const mathlib::Hitbox* get_hitboxes() const
+		{
+			if (!model_bone_transforms)
+			{
+				return nullptr;
+			}
+
+			return &mesh->hitboxes[0];
 		}
 
 		virtual glm::mat4* get_inverse_bind_transforms(uint32_t geometry_index) const
@@ -259,7 +269,7 @@ class ModelInterface : public gemini::IModelInterface
 			{
 				return nullptr;
 			}
-			return &inverse_bind_transforms[mesh->skeleton.size()*geometry_index];
+			return &inverse_bind_transforms[mesh->skeleton.size() * geometry_index];
 		}
 
 		virtual uint32_t get_total_transforms() const
@@ -332,6 +342,8 @@ class ModelInterface : public gemini::IModelInterface
 			// model. Congrats.
 			assert(mesh->skeleton.size() < MAX_BONES);
 
+			mathlib::Hitbox* hitboxes = &mesh->hitboxes[0];
+
 			size_t geometry_index = 0;
 			// we must update the transforms for each geometry instance
 			for (const assets::Geometry& geo : mesh->geometry)
@@ -370,6 +382,14 @@ class ModelInterface : public gemini::IModelInterface
 
 					// set the inverse_bind_pose
 					inverse_bind_pose = geo.inverse_bind_poses[index];
+
+					glm::mat4 local_bbox_xf = glm::toMat4(glm::angleAxis(glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+					mathlib::Hitbox* hitbox = (hitboxes + index);
+					//glm::vec3 pos(0.0f, 0.0f, 0.0f);
+					//glm::vec3 dims(0.5f, 0.5f, 0.5f);
+					//pos = mathlib::transform_point(local_bone_pose, pos);
+					//debugdraw::box(-dims + pos, dims + pos, gemini::Color(0.0f, 1.0f, 1.0f));
+					debugdraw::axes(glm::mat4(hitbox->rotation) * model_pose, 1.0f, 0.0f);
 				}
 
 				++geometry_index;

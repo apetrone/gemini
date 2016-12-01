@@ -43,6 +43,8 @@ namespace gemini
 		virtual glm::mat4* get_inverse_bind_transforms(uint32_t geometry_index) const = 0;
 		virtual uint32_t get_total_transforms() const = 0;
 
+		virtual const mathlib::Hitbox* get_hitboxes() const = 0;
+
 		virtual void set_animation_enabled(int32_t index, bool enabled) = 0;
 
 		// get an animations pose

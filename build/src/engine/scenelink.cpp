@@ -200,6 +200,7 @@ namespace gemini
 								glm::vec3 last_origin;
 								glm::vec3 origins[MAX_BONES];
 								const glm::mat4* model_poses = model_instance->get_model_bone_transforms(geometry_index);
+								const glm::vec3* hitboxes = model_instance->get_hitboxes();
 								if (model_instance->get_total_transforms())
 								{
 									// draw individual links for each bone to represent the skeleton
@@ -225,7 +226,11 @@ namespace gemini
 										origins[index] = origin;
 
 										// this only displays local transforms
-										debugdraw::axes(world_pose, 0.05f, 0.0f);
+										debugdraw::axes(world_pose, 0.15f, 0.0f);
+
+										glm::vec3 box_center = origin;
+										const glm::vec3& positive_extents = hitboxes[index];
+										debugdraw::box(box_center - positive_extents, box_center + positive_extents, gemini::Color(0.0f, 0.5f, 0.5f));
 									}
 								}
 #endif
