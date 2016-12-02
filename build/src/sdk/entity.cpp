@@ -88,7 +88,7 @@ void entity_post_script_load()
 {
 }
 
-void entity_deferred_delete( bool only_deferred )
+void entity_deferred_delete(bool only_deferred)
 {
 	// trim entities flagged for removal
 	EntityListType::Collection::iterator it = entity_list().objects.begin();
@@ -156,14 +156,14 @@ Entity::Entity() :
 
 	entity_list().add( this );
 	engine::instance()->entities()->add(this);
-	LOGV( "Entity() - %p, %ld\n", this, (unsigned long)this->id );
+	LOGV("Entity() - %p, %ld\n", this, (unsigned long)this->id);
 
 	render_flags = RENDER_NONE;
 } // Entity
 
 Entity::~Entity()
 {
-	LOGV( "~Entity() - %p, %ld\n", this, (unsigned long)this->id );
+	LOGV("~Entity() - %p, %ld\n", this, (unsigned long)this->id);
 	entity_list().remove( this );
 	engine::instance()->entities()->remove(this);
 
