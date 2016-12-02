@@ -28,6 +28,7 @@
 
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
+#include <runtime/geometry.h>
 #include <runtime/guirenderer.h>
 #include <runtime/standaloneresourcecache.h>
 
@@ -1046,8 +1047,21 @@ Options:
 
 		platform::window::Frame window_frame = platform::window::get_frame(main_window);
 
+		glm::vec3 vertices[] = {
+			glm::vec3(-2.0f, 3.0f, 1.0f),
+			glm::vec3(-2.5f, 1.25f, 1.0f),
+			glm::vec3(2.0f, 3.0f, -1.0f),
+			glm::vec3(2.0f, 1.0f, -1.0f)
+		};
+
+		OrientedBoundingBox box;
+		compute_oriented_bounding_box_by_points(box, vertices, 4);
+
 		//glm::mat3 tr = glm::toMat3(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 		//debugdraw::oriented_box(tr, glm::vec3(-2.0f, 0.0f, 0.0f), glm::vec3(2.0f, 1.0f, 1.0f), gemini::Color(1.0f, 0.0f, 0.0f));
+
+		debugdraw::oriented_box(box.rotation, box.center, box.positive_extents, gemini::Color(1.0f, 0.0f, 0.0f));
+		debugdraw::axes(glm::mat4(box.rotation), 1.0f, 0.0f);
 
 		debugdraw::update(kernel::parameters().framedelta_seconds);
 

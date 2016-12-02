@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #include <runtime/geometry.h>
 
+//#include <core/logging.h>
+
 namespace gemini
 {
 	bool AABB2::overlaps(const AABB2& other) const
@@ -64,6 +66,7 @@ namespace gemini
 		{
 			float* row_value = reinterpret_cast<float*>(row_pointer);
 			float* column_value = reinterpret_cast<float*>(column_pointer);
+			//LOGV("%2.2f, %2.2f\n", *row_value, *column_value);
 			sum += (*row_value * *column_value);
 
 			xi_sum += *row_value;
@@ -83,6 +86,77 @@ namespace gemini
 	{
 		// https://hewjunwei.wordpress.com/2013/01/26/obb-generation-via-principal-component-analysis/
 		// http://jamesgregson.blogspot.com/2011/03/latex-test.html
+
+		glm::mat3 covariance_matrix;
+		const size_t STRIDE = sizeof(float) * 3;
+		float* vertex_pointer = reinterpret_cast<float*>(vertices);
+		covariance_matrix[0][0] = covariance(0, 0, vertex_pointer, total_vertices, STRIDE);
+		covariance_matrix[0][1] = covariance(0, 1, vertex_pointer, total_vertices, STRIDE);
+		covariance_matrix[0][2] = covariance(0, 2, vertex_pointer, total_vertices, STRIDE);
+
+		covariance_matrix[1][0] = covariance(1, 0, vertex_pointer, total_vertices, STRIDE);
+		covariance_matrix[1][1] = covariance(1, 1, vertex_pointer, total_vertices, STRIDE);
+		covariance_matrix[1][2] = covariance(1, 2, vertex_pointer, total_vertices, STRIDE);
+
+		covariance_matrix[2][0] = covariance(2, 0, vertex_pointer, total_vertices, STRIDE);
+		covariance_matrix[2][1] = covariance(2, 1, vertex_pointer, total_vertices, STRIDE);
+		covariance_matrix[2][2] = covariance(2, 2, vertex_pointer, total_vertices, STRIDE);
+
+
+		glm::vec3 basis[3];
+		// TODO@apetrone: Compute the eigenvectors!
+		// https://en.wikipedia.org/wiki/QR_algorithm
+		basis[0] = glm::normalize(glm::column(covariance_matrix, 0));
+		basis[1] = glm::normalize(glm::column(covariance_matrix, 1));
+		basis[2] = glm::normalize(glm::column(covariance_matrix, 2));
+
+		// loop through all coordinates and transform; keeping
+		// min and maxs
+		glm::vec3 mins(999.0f, 999.0f, 999.0f);
+		glm::vec3 maxs(-999.0f, -999.0f, -999.0f);
+
+		box.rotation = glm::column(box.rotation, 0, basis[0]);
+		box.rotation = glm::column(box.rotation, 1, basis[1]);
+		box.rotation = glm::column(box.rotation, 2, basis[2]);
+
+		for (size_t index = 0; index < total_vertices; ++index)
+		{
+			glm::vec3 pt(vertex_pointer[index * 3], vertex_pointer[index * 3 + 1], vertex_pointer[index * 3 + 2]);
+			float xval = glm::dot(pt, basis[0]);
+			float yval = glm::dot(pt, basis[1]);
+			float zval = glm::dot(pt, basis[2]);
+
+			if (xval < mins.x)
+			{
+				mins.x = xval;
+			}
+			if (xval > maxs.x)
+			{
+				maxs.x = xval;
+			}
+
+			if (yval < mins.y)
+			{
+				mins.y = yval;
+			}
+			if (yval > maxs.y)
+			{
+				maxs.y = yval;
+			}
+
+			if (zval < mins.z)
+			{
+				mins.z = zval;
+			}
+			if (zval > maxs.z)
+			{
+				maxs.z = zval;
+			}
+		}
+
+		// compute center and half extents
+		box.positive_extents = (maxs - mins) * 0.5f;
+		box.center = ((maxs + mins) * 0.5f);
 
 #if 0
 		glm::mat2 mx;
