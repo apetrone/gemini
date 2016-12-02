@@ -1093,6 +1093,8 @@ Options:
 
 		platform::window::swap_buffers(main_window);
 
+		// debugdraw::oriented_box(glm::mat3(1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), gemini::Color(1.0f, 0.0f, 0.0f));
+
 #if defined(GEMINI_ENABLE_PROFILER)
 		gemini::profiler::report();
 		gemini::profiler::reset();

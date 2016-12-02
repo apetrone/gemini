@@ -59,4 +59,5 @@ namespace debugdraw
 	void text(int x, int y, const char* string, const gemini::Color& color, float duration = 0.0f);
 	void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const gemini::Color& color, float duration = 0.0f);
 	void camera(const glm::vec3& origin, const glm::vec3& view, float duration = 0.0f);
+	void oriented_box(const glm::mat3& orientation, const glm::vec3& origin, const glm::vec3& extents, const gemini::Color& color, float duration = 0.0f);
 } // namespace debugdraw

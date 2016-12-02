@@ -40,6 +40,7 @@ namespace debugdraw
 		TYPE_LINE,
 		TYPE_AXES,
 		TYPE_SPHERE,
+		TYPE_OBB,
 		TYPE_CAMERA,
 
 		TYPE_TEXT,
@@ -448,6 +449,56 @@ namespace debugdraw
 		}
 	} // buffer_sphere
 
+	void buffer_obb(DebugPrimitive* primitive, detail::VertexAccessor<DebugDrawVertex>& access)
+	{
+		const size_t vertex_count = 24;
+		DebugDrawVertex* vertices = access.request(vertex_count);
+
+		glm::vec3 mins = primitive->start + -primitive->end;
+		glm::vec3 maxs = primitive->start + primitive->end;
+
+		for(size_t index = 0; index < vertex_count; ++index)
+		{
+			vertices[index].color = primitive->color;
+		}
+
+		// -Z face
+		vertices[0].position = mins;
+		vertices[1].position = glm::vec3( maxs[0], mins[1], mins[2] );
+		vertices[2].position = glm::vec3( maxs[0], mins[1], mins[2] );
+		vertices[3].position = glm::vec3( maxs[0], maxs[1], mins[2] );
+		vertices[4].position = glm::vec3( maxs[0], maxs[1], mins[2] );
+		vertices[5].position = glm::vec3( mins[0], maxs[1], mins[2] );
+		vertices[6].position = glm::vec3( mins[0], maxs[1], mins[2] );
+		vertices[7].position = mins;
+
+		// +Z face
+		vertices[8].position = glm::vec3( mins[0], mins[1], maxs[2] );
+		vertices[9].position = glm::vec3( maxs[0], mins[1], maxs[2] );
+		vertices[10].position = glm::vec3( maxs[0], mins[1], maxs[2] );
+		vertices[11].position = glm::vec3( maxs[0], maxs[1], maxs[2] );
+		vertices[12].position = glm::vec3( maxs[0], maxs[1], maxs[2] );
+		vertices[13].position = glm::vec3( mins[0], maxs[1], maxs[2] );
+		vertices[14].position = glm::vec3( mins[0], maxs[1], maxs[2] );
+		vertices[15].position = glm::vec3( mins[0], mins[1], maxs[2] );
+
+		// lower left
+		vertices[16].position = mins;
+		vertices[17].position = glm::vec3( mins[0], mins[1], maxs[2] );
+
+		// lower right
+		vertices[18].position = glm::vec3( maxs[0], mins[1], mins[2] );
+		vertices[19].position = glm::vec3( maxs[0], mins[1], maxs[2] );
+
+		// upper right
+		vertices[20].position = glm::vec3( maxs[0], maxs[1], mins[2] );
+		vertices[21].position = glm::vec3( maxs[0], maxs[1], maxs[2] );
+
+		// upper left
+		vertices[22].position = glm::vec3( mins[0], maxs[1], mins[2] );
+		vertices[23].position = glm::vec3( mins[0], maxs[1], maxs[2] );
+	} // buffer_obb
+
 	void buffer_camera(DebugPrimitive* primitive, detail::VertexAccessor<DebugDrawVertex>& access)
 	{
 		const size_t vertex_count = 16;
@@ -683,6 +734,7 @@ namespace debugdraw
 			buffer_line,
 			buffer_axes,
 			buffer_sphere,
+			buffer_obb,
 			buffer_camera
 		};
 
@@ -1115,4 +1167,17 @@ namespace debugdraw
 			primitive->radius = 1.0f;
 		}
 	}
+
+	void oriented_box(const glm::mat3& orientation, const glm::vec3& origin, const glm::vec3& extents, const gemini::Color& color, float duration)
+	{
+		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		if (primitive)
+		{
+			primitive->type = TYPE_OBB;
+			primitive->start = origin;
+			primitive->end = extents;
+			primitive->transform = glm::mat4(orientation);
+			primitive->timeleft = duration;
+		}
+	} // oriented box
 } // namespace debugdraw
