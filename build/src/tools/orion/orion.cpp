@@ -1045,6 +1045,10 @@ Options:
 		//debugdraw::axes(glm::mat4(1.0f), 1.0f);
 
 		platform::window::Frame window_frame = platform::window::get_frame(main_window);
+
+		//glm::mat3 tr = glm::toMat3(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+		//debugdraw::oriented_box(tr, glm::vec3(-2.0f, 0.0f, 0.0f), glm::vec3(2.0f, 1.0f, 1.0f), gemini::Color(1.0f, 0.0f, 0.0f));
+
 		debugdraw::update(kernel::parameters().framedelta_seconds);
 
 		if (compositor)
@@ -1092,8 +1096,6 @@ Options:
 		device->submit();
 
 		platform::window::swap_buffers(main_window);
-
-		// debugdraw::oriented_box(glm::mat3(1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), gemini::Color(1.0f, 0.0f, 0.0f));
 
 #if defined(GEMINI_ENABLE_PROFILER)
 		gemini::profiler::report();

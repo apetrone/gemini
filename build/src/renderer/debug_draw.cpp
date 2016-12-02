@@ -462,41 +462,43 @@ namespace debugdraw
 			vertices[index].color = primitive->color;
 		}
 
+		glm::mat3 transform = glm::mat3(primitive->transform);
+
 		// -Z face
-		vertices[0].position = mins;
-		vertices[1].position = glm::vec3( maxs[0], mins[1], mins[2] );
-		vertices[2].position = glm::vec3( maxs[0], mins[1], mins[2] );
-		vertices[3].position = glm::vec3( maxs[0], maxs[1], mins[2] );
-		vertices[4].position = glm::vec3( maxs[0], maxs[1], mins[2] );
-		vertices[5].position = glm::vec3( mins[0], maxs[1], mins[2] );
-		vertices[6].position = glm::vec3( mins[0], maxs[1], mins[2] );
-		vertices[7].position = mins;
+		vertices[0].position = transform * mins;
+		vertices[1].position = transform * glm::vec3( maxs[0], mins[1], mins[2] );
+		vertices[2].position = transform * glm::vec3( maxs[0], mins[1], mins[2] );
+		vertices[3].position = transform * glm::vec3( maxs[0], maxs[1], mins[2] );
+		vertices[4].position = transform * glm::vec3( maxs[0], maxs[1], mins[2] );
+		vertices[5].position = transform * glm::vec3( mins[0], maxs[1], mins[2] );
+		vertices[6].position = transform * glm::vec3( mins[0], maxs[1], mins[2] );
+		vertices[7].position = transform * mins;
 
 		// +Z face
-		vertices[8].position = glm::vec3( mins[0], mins[1], maxs[2] );
-		vertices[9].position = glm::vec3( maxs[0], mins[1], maxs[2] );
-		vertices[10].position = glm::vec3( maxs[0], mins[1], maxs[2] );
-		vertices[11].position = glm::vec3( maxs[0], maxs[1], maxs[2] );
-		vertices[12].position = glm::vec3( maxs[0], maxs[1], maxs[2] );
-		vertices[13].position = glm::vec3( mins[0], maxs[1], maxs[2] );
-		vertices[14].position = glm::vec3( mins[0], maxs[1], maxs[2] );
-		vertices[15].position = glm::vec3( mins[0], mins[1], maxs[2] );
+		vertices[8].position = transform * glm::vec3( mins[0], mins[1], maxs[2] );
+		vertices[9].position = transform * glm::vec3( maxs[0], mins[1], maxs[2] );
+		vertices[10].position = transform * glm::vec3( maxs[0], mins[1], maxs[2] );
+		vertices[11].position = transform * glm::vec3( maxs[0], maxs[1], maxs[2] );
+		vertices[12].position = transform * glm::vec3( maxs[0], maxs[1], maxs[2] );
+		vertices[13].position = transform * glm::vec3( mins[0], maxs[1], maxs[2] );
+		vertices[14].position = transform * glm::vec3( mins[0], maxs[1], maxs[2] );
+		vertices[15].position = transform * glm::vec3( mins[0], mins[1], maxs[2] );
 
 		// lower left
-		vertices[16].position = mins;
-		vertices[17].position = glm::vec3( mins[0], mins[1], maxs[2] );
+		vertices[16].position = transform * mins;
+		vertices[17].position = transform * glm::vec3( mins[0], mins[1], maxs[2] );
 
 		// lower right
-		vertices[18].position = glm::vec3( maxs[0], mins[1], mins[2] );
-		vertices[19].position = glm::vec3( maxs[0], mins[1], maxs[2] );
+		vertices[18].position = transform * glm::vec3( maxs[0], mins[1], mins[2] );
+		vertices[19].position = transform * glm::vec3( maxs[0], mins[1], maxs[2] );
 
 		// upper right
-		vertices[20].position = glm::vec3( maxs[0], maxs[1], mins[2] );
-		vertices[21].position = glm::vec3( maxs[0], maxs[1], maxs[2] );
+		vertices[20].position = transform * glm::vec3( maxs[0], maxs[1], mins[2] );
+		vertices[21].position = transform * glm::vec3( maxs[0], maxs[1], maxs[2] );
 
 		// upper left
-		vertices[22].position = glm::vec3( mins[0], maxs[1], mins[2] );
-		vertices[23].position = glm::vec3( mins[0], maxs[1], maxs[2] );
+		vertices[22].position = transform * glm::vec3( mins[0], maxs[1], mins[2] );
+		vertices[23].position = transform * glm::vec3( mins[0], maxs[1], maxs[2] );
 	} // buffer_obb
 
 	void buffer_camera(DebugPrimitive* primitive, detail::VertexAccessor<DebugDrawVertex>& access)
@@ -741,12 +743,17 @@ namespace debugdraw
 		size_t primitive_sizes[] =
 		{
 			0,
-			24,
-			2,
-			6,
-			(TOTAL_CIRCLE_VERTICES * 3),
+			24, // box
+			2, // line
+			6, // axes
+			(TOTAL_CIRCLE_VERTICES * 3), // sphere
+			24, // obb
 			16, // camera
 		};
+
+		// If you hit this assert, you have a mismatch between the above
+		// tables.
+		assert(sizeof(buffer_primitive_table) == sizeof(primitive_sizes));
 
 		// step 1: tally up the total vertex cache size we'll need
 		size_t total_vertices_required = 0;
