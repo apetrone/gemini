@@ -29,6 +29,8 @@
 #include <core/mem.h>
 #include <core/stackstring.h>
 
+#include <runtime/geometry.h>
+
 #include "assets.h"
 #include "renderer/renderer.h"
 
@@ -121,7 +123,7 @@ namespace gemini
 
 			// bind pose skeleton
 			FixedArray<Joint> skeleton;
-			FixedArray<mathlib::Hitbox> hitboxes;
+			FixedArray<Hitbox> hitboxes;
 		}; // Mesh
 
 		AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );

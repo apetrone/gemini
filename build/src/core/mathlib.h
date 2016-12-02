@@ -88,6 +88,7 @@ typedef float real;
 	#v,\
 	v.x, v.y);
 
+
 namespace mathlib
 {
 	const real PI = (float)3.14159265358979323846f;
@@ -95,6 +96,69 @@ namespace mathlib
 	const real D2R_PI180 = (PI / 180.0f);
 	const real R2D_180PI = (180.0f / PI);
 	const real EPSILON = FLT_EPSILON;
+
+	// this class assumes an origin in the upper left hand corner and assumes bottom > top, right > left
+	template <class _Type>
+	struct Rect
+	{
+		_Type left, top, right, bottom;
+
+		Rect() : left(_Type(0)),
+			top(_Type(0)),
+			right(_Type(0)),
+			bottom(_Type(0))
+		{
+		}
+
+		Rect(_Type _left, _Type _top, _Type _right, _Type _bottom) :
+			left(_left),
+			top(_top),
+			right(_right),
+			bottom(_bottom)
+		{
+		}
+
+		_Type width() const
+		{
+			return (right - left);
+		}
+
+		_Type height() const
+		{
+			return (bottom - top);
+		}
+
+		Rect<_Type> operator- (const Rect<_Type> & other) const
+		{
+			return Rect<_Type>(left - other.left, top - other.top, right - other.top, bottom - other.bottom);
+		}
+
+		Rect<_Type> operator- (const Rect<_Type> & other)
+		{
+			return Rect<_Type>(left - other.left, top - other.top, right - other.top, bottom - other.bottom);
+		}
+
+		Rect<_Type> operator+ (const Rect<_Type> & other) const
+		{
+			return Rect<_Type>(left + other.left, top + other.top, right + other.top, bottom + other.bottom);
+		}
+
+		bool fits_inside(const Rect<_Type> & other) const
+		{
+			if (width() <= other.width() && height() <= other.height())
+				return true;
+
+			return false;
+		}
+
+		bool is_null() const
+		{
+			return (width() == 0 && height() == 0);
+		}
+	}; // Rect
+
+	typedef Rect<float> Rectf;
+	typedef Rect<int> Recti;
 
 	inline real degrees_to_radians(real degrees)
 	{
@@ -146,10 +210,7 @@ namespace mathlib
 		const glm::vec3& right);
 
 	glm::vec3 transform_point(const glm::mat4& matrix, const glm::vec3& point);
-
-	// compute covariance for a set of values
-	float covariance(size_t row, size_t column, float* values, size_t total_values, size_t stride);
-}
+} // namespace mathlib
 
 #if 0
 struct Segment
@@ -191,97 +252,3 @@ aengine::real Segment_Slope( const aengine::Segment & segment );
 int Segment_Intersection( const aengine::Segment & line1, const aengine::Segment & line2, aengine::vec3 & pt );
 #endif
 
-namespace mathlib
-{
-	// this class assumes an origin in the upper left hand corner and assumes bottom > top, right > left
-	template <class _Type>
-	struct Rect
-	{
-		_Type left, top, right, bottom;
-
-		Rect() : left( _Type(0) ),
-				top( _Type(0) ),
-				right( _Type(0) ),
-				bottom( _Type(0) )
-		{
-		}
-
-		Rect( _Type _left, _Type _top, _Type _right, _Type _bottom ) :
-				left(_left),
-				top(_top),
-				right(_right),
-				bottom(_bottom)
-		{
-		}
-
-		_Type width() const
-		{
-			return ( right - left );
-		}
-
-		_Type height() const
-		{
-			return ( bottom - top );
-		}
-
-		Rect<_Type> operator- ( const Rect<_Type> & other ) const
-		{
-			return Rect<_Type> (left-other.left, top-other.top, right-other.top, bottom-other.bottom );
-		}
-
-		Rect<_Type> operator- ( const Rect<_Type> & other )
-		{
-			return Rect<_Type> (left-other.left, top-other.top, right-other.top, bottom-other.bottom );
-		}
-
-		Rect<_Type> operator+ ( const Rect<_Type> & other ) const
-		{
-			return Rect<_Type> (left+other.left, top+other.top, right+other.top, bottom+other.bottom );
-		}
-
-		bool fits_inside( const Rect<_Type> & other ) const
-		{
-			if ( width() <= other.width() && height() <= other.height() )
-				return true;
-
-			return false;
-		}
-
-		bool is_null() const
-		{
-			return (width() == 0 && height() == 0);
-		}
-	}; // Rect
-
-	typedef Rect<float> Rectf;
-	typedef Rect<int> Recti;
-
-
-	struct AABB2
-	{
-		float left;
-		float right;
-		float top;
-		float bottom;
-
-		bool overlaps( const AABB2 & other ) const;
-	}; // AABB2
-
-	struct OrientedBoundingBox
-	{
-		glm::vec3 center;
-		glm::mat3 rotation;
-		glm::vec3 positive_extents;
-	}; // OrientedBoundingBox
-
-
-	// A hitbox is SIMILAR to an OBB, but
-	// the center and orientation are derived
-	// from the target bone.
-	struct Hitbox
-	{
-		glm::mat3 rotation;
-		glm::vec3 positive_extents;
-	};
-
-} // namespace mathlib

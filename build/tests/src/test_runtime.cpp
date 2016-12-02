@@ -32,6 +32,7 @@
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
 #include <runtime/jobqueue.h>
+#include <runtime/geometry.h>
 
 #include <runtime/http.h>
 
@@ -46,6 +47,20 @@
 void print_string(const char* data)
 {
 	LOGV("thread: 0x%x, string: %s\n", (size_t)platform::thread_id(), data);
+}
+
+UNITTEST(Geometry)
+{
+	using namespace gemini;
+	glm::vec3 vertices[] = {
+		glm::vec3(-2.0f, 3.0f, 0.0f),
+		glm::vec3(-2.0f, 1.0f, 0.0f),
+		glm::vec3(2.0f, 3.0f, 0.0f),
+		glm::vec3(2.0f, 1.0f, 0.0f)
+	};
+
+	OrientedBoundingBox box;
+	compute_oriented_bounding_box_by_points(box, vertices, 4);
 }
 
 UNITTEST(jobqueue)
