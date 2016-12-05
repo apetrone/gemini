@@ -24,6 +24,42 @@
 // -------------------------------------------------------------
 #include "mathlib.h"
 
+
+// Let A = N x N matrix
+// Let M = eigenvalue (lambda)
+// Let I = N x N identity matrix
+// The characteristic equation is: determinant(A - MI) = 0;
+
+
+// Nonsingular matrix: a matrix without an inverse. A square matrix is
+// nonsingular if and only if it's determinant is nonzero.
+
+// off-diagonal element: an element of a matrix where row and column differ.
+
+// Diagonal matrix: a (usually square) matrix with elements in the off-
+// diagonal elements are all zero.
+// [ 1 0 0 ]
+// [ 0 4 0 ]
+// [ 0 0 -2 ]
+
+
+// Symmetric matrix: a square matrix that is equal to its transpose.
+// [ 1, 7, 3 ]
+// [ 7, 4, -5 ]
+// [ 3, -5, 6 ]
+
+// QR Iteration
+// 1. Compute QR factorization.
+// RQ = Qt (QR) Q = Qt AQ
+
+
+
+// Singular Value Decomposition (SVD)
+// U = M x M orthogonal Matrix (rotation)
+// E = M x N diagonal Matrix (stretch)
+// Vt = N x N orthogonal Matrix (rotation)
+
+
 // Links
 // http://forums.tigsource.com/index.php?topic=14154.0
 
