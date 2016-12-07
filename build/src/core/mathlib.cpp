@@ -24,7 +24,6 @@
 // -------------------------------------------------------------
 #include "mathlib.h"
 
-
 // Let A = N x N matrix
 // Let M = eigenvalue (lambda)
 // Let I = N x N identity matrix
@@ -42,6 +41,7 @@
 // [ 0 4 0 ]
 // [ 0 0 -2 ]
 
+// https://en.wikipedia.org/wiki/Givens_rotation
 
 // Symmetric matrix: a square matrix that is equal to its transpose.
 // [ 1, 7, 3 ]
@@ -52,12 +52,32 @@
 // 1. Compute QR factorization.
 // RQ = Qt (QR) Q = Qt AQ
 
+// Jacobi iteration
 
 
 // Singular Value Decomposition (SVD)
 // U = M x M orthogonal Matrix (rotation)
 // E = M x N diagonal Matrix (stretch)
 // Vt = N x N orthogonal Matrix (rotation)
+
+// Elimination: pivots of matrix can be added to compute determinant.
+// Pivots cannot be zero. Elimination exchanges for a non-zero pivot.
+// Yields U; upper triangular matrix.
+
+// Back-substitution: augmented matrix - a new column is tacked on.
+// Solving equations in reverse order due to the system being triangular.
+
+// Upper Triangular (U): All elements below the diagonal are zero.
+// Lower Triangular (L): All elements above the diagonal are zero.
+
+// multiplication
+// matrix * column = column (linear combination of columns)
+// row * matrix = row (linear combination of rows)
+
+// associative law
+
+// permutation: exchange rows
+
 
 
 // Links
