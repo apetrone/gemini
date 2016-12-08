@@ -48,8 +48,6 @@ namespace gui
 		render_commands.add_font(font_handle, string_value, string_length, draw_bounds, color);
 	}
 
-
-
 	Graph::Graph(Panel* parent) : Panel(parent)
 	{
 		values = 0;
@@ -345,8 +343,8 @@ namespace gui
 		render_commands.add_lines(total_samples * total_channels, vertices, vertex_colors);
 
 		// draw range text
-		draw_float(renderer, range_max, range_text_origin[0], foreground_color, render_commands);
-		draw_float(renderer, range_min, range_text_origin[1], foreground_color, render_commands);
+		draw_float(renderer, range_max, range_text_origin[0] + gui::Point(0.0f, 2.0f), foreground_color, render_commands);
+		draw_float(renderer, range_min, range_text_origin[1] + gui::Point(0.0f, -4.0f), foreground_color, render_commands);
 	}
 
 } // namespace gui
