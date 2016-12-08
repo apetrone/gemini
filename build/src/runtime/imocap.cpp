@@ -255,8 +255,8 @@ namespace imocap
 							net_address_host(&source, ip, 22);
 							uint16_t port = net_address_port(&source);
 							LOGV("Mocap client at %s:%i; initiating handshake (%i)...\n", ip, port, HANDSHAKE_VALUE);
-							net_socket_sendto(*sock, &source, (const char*)&HANDSHAKE_VALUE, sizeof(uint32_t));
 							current_state = STATE_HANDSHAKE;
+							net_socket_sendto(*sock, &source, (const char*)&HANDSHAKE_VALUE, sizeof(uint32_t));
 						}
 						else
 						{
@@ -287,17 +287,20 @@ namespace imocap
 							current_state = STATE_WAITING;
 						}
 					}
+
+					// This isn't received by the Feather on shutdown.
+					//else if (current_state == STATE_SHUTDOWN)
+					//{
+					//	// send disconnect
+					//	int32_t value = DISCONNECT_VALUE;
+					//	net_socket_sendto(*sock, &client_address, (const char*)&value, sizeof(uint32_t));
+					//	thread_sleep(500);
+					//}
 				}
 			}
 		}
 
-		if (current_state == STATE_STREAMING)
-		{
-			// send disconnect
-			int32_t value = DISCONNECT_VALUE;
-			net_socket_sendto(*sock, &client_address, (const char*)&value, sizeof(uint32_t));
-			thread_sleep(500);
-		}
+
 	} // sensor_thread
 
 	glm::quat transform_sensor_rotation(const glm::quat& q)
@@ -360,6 +363,7 @@ namespace imocap
 
 	void device_destroy(MocapDevice* device)
 	{
+
 		delete device;
 		net_listen_thread = false;
 		platform::thread_join(sensor_thread_handle, 1000);
