@@ -72,6 +72,7 @@ using namespace gemini;
 
 
 #define ENABLE_UI 1
+#define DRAW_SENSOR_GRAPHS 0
 
 namespace gui
 {
@@ -220,6 +221,7 @@ private:
 	render2::Texture* texture;
 	AssetProcessingPanel* asset_processor;
 
+	gui::Graph* graphs[imocap::TOTAL_SENSORS];
 
 	Array<imocap::mocap_frame_t> mocap_frames;
 	size_t current_mocap_frame;
@@ -817,6 +819,32 @@ Options:
 #endif
 
 
+#if DRAW_SENSOR_GRAPHS
+			// Create a graph for each sensor
+			const char dev_font[] = "fonts/debug.ttf";
+			const size_t dev_font_size = 16;
+
+			uint32_t origin = 24;
+
+			for (size_t index = 0; index < imocap::TOTAL_SENSORS; ++index)
+			{
+				gui::Graph* graph = new gui::Graph(compositor);
+				graph->set_origin(window_frame.width - 250, origin);
+				graph->set_size(250, 100);
+				origin += 108;
+				graph->set_maximum_size(gui::Size(250, 100));
+				graph->set_font(dev_font, dev_font_size);
+				graph->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
+				graph->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
+				graph->create_samples(100, 1);
+				graph->configure_channel(0, gemini::Color::from_rgba(255, 0, 0, 255));
+				graph->set_range(-0.5f, 0.5f);
+				graph->enable_baseline(true, 0.0f, gemini::Color::from_rgba(64, 64, 64, 255));
+
+				graphs[index] = graph;
+			}
+#endif
+
 
 #if 1
 			asset_processor = new AssetProcessingPanel(compositor);
@@ -1023,6 +1051,11 @@ Options:
 
 			const glm::vec3 acceleration = imocap::device_sensor_linear_acceleration(mocap_device, index);
 			const glm::vec3 gravity = imocap::device_sensor_gravity(mocap_device, index);
+
+
+#if DRAW_SENSOR_GRAPHS
+			graphs[index]->record_value(acceleration.x, 0);
+#endif
 
 			if (index == 2)
 			{
