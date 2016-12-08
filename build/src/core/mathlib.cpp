@@ -60,7 +60,7 @@
 // E = M x N diagonal Matrix (stretch)
 // Vt = N x N orthogonal Matrix (rotation)
 
-// Elimination: pivots of matrix can be added to compute determinant.
+// Elimination: pivots of matrix can be added to compute determinant [shouldn't this be determinant = product of pivots?].
 // Pivots cannot be zero. Elimination exchanges for a non-zero pivot.
 // Yields U; upper triangular matrix.
 
@@ -78,6 +78,13 @@
 
 // permutation: exchange rows
 
+// Inverses:
+// For square matrices:
+// Ainv * A == I == A * Ainv
+
+// A square matrix won't have an inverse when: Ax = 0
+
+// Gauss-Jordan: Solve two equations at once.
 
 
 // Links
