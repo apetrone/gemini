@@ -22,56 +22,30 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
+#ifndef IMOCAP_PACKET_H
+#define IMOCAP_PACKET_H
 
-#include <core/typedefs.h>
-#include <core/mathlib.h>
-#include <platform/platform.h>
+#include <stdint.h>
 
-#include "imocap_packet.h"
-
-namespace imocap
+enum
 {
-	// inertial motion capture
-	// imc library.
-	// header (on connect)
-	// version
-	// # sensors
+	IMOCAP_TOTAL_SENSORS = 3,
 
-	// each packet contains data for N sensors
-	// plus a 4-byte sequence id.
+	// 8 /* quaternion */ +
+	// 6 /* linear accel */ +
+	// 6 /* gravity */
+	IMOCAP_DATA_SIZE = 20
+};
 
-	// 1. visualization 3d scene
-	// 2. record sensor data
-	// 3. play back sensor data
+typedef struct
+{
+	uint8_t header;
+	uint8_t data[IMOCAP_DATA_SIZE * IMOCAP_TOTAL_SENSORS];
+	uint8_t footer;
+} imocap_packet_t;
 
+void imocap_packet_init(imocap_packet_t* packet);
+uint32_t imocap_packet_is_valid(imocap_packet_t* packet);
+uint8_t* imocap_packet_sensor_data_at(imocap_packet_t* packet, uint8_t index);
 
-	struct MocapDevice
-	{
-		glm::quat zeroed_orientations[IMOCAP_TOTAL_SENSORS];
-	};
-
-	struct mocap_frame_t
-	{
-		uint32_t frame_index;
-		glm::quat poses[IMOCAP_TOTAL_SENSORS];
-	};
-
-	// Returns true if timeout_msec has passed since target_msec.
-	// If true, sets target_msec to millis().
-	bool msec_passed(uint64_t& target_msec, uint32_t timeout_msec);
-
-	void sensor_thread(platform::Thread* thread);
-
-	glm::quat transform_sensor_rotation(const glm::quat& q);
-
-	void zero_rotations(MocapDevice* device);
-
-	glm::quat device_sensor_orientation(MocapDevice* device, size_t sensor_index);
-	glm::quat device_sensor_local_orientation(MocapDevice* device, size_t sensor_index);
-	glm::vec3 device_sensor_linear_acceleration(MocapDevice* device, size_t sensor_index);
-	glm::vec3 device_sensor_gravity(MocapDevice* device, size_t sensor_index);
-
-	MocapDevice* device_create();
-	void device_destroy(MocapDevice* device);
-} // namespace imocap
+#endif

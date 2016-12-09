@@ -56,34 +56,12 @@ namespace imocap
 	bool net_listen_thread = true;
 
 
-	glm::quat sensors[TOTAL_SENSORS];
-	glm::vec3 linear_acceleration[TOTAL_SENSORS];
-	glm::vec3 gravity[TOTAL_SENSORS];
+	glm::quat sensors[IMOCAP_TOTAL_SENSORS];
+	glm::vec3 linear_acceleration[IMOCAP_TOTAL_SENSORS];
+	glm::vec3 gravity[IMOCAP_TOTAL_SENSORS];
 
 	net_socket data_socket;
 	platform::Thread* sensor_thread_handle;
-
-
-	bno055_packet_t::bno055_packet_t()
-	{
-		header = 0xba;
-		footer = 0xff;
-	}
-
-	bool bno055_packet_t::is_valid() const
-	{
-		return (header == 0xba) && (footer == 0xff);
-	}
-
-	uint8_t bno055_packet_t::get_header() const
-	{
-		return header;
-	}
-
-	uint8_t bno055_packet_t::get_footer() const
-	{
-		return footer;
-	}
 
 	// Returns true if timeout_msec has passed since target_msec.
 	// If true, sets target_msec to millis().
@@ -93,7 +71,6 @@ namespace imocap
 		assert(current_milliseconds >= target_msec);
 		if ((current_milliseconds - target_msec) > timeout_msec)
 		{
-			//LOGV("msec_passed: %d ms\n", (current_milliseconds - target_msec));
 			target_msec = current_milliseconds;
 			return true;
 		}
@@ -106,7 +83,7 @@ namespace imocap
 		net_socket* sock = static_cast<net_socket*>(thread->user_data);
 		LOGV("launched network listen thread.\n");
 
-		const size_t PACKET_SIZE = sizeof(bno055_packet_t);
+		const size_t PACKET_SIZE = sizeof(imocap_packet_t);
 		LOGV("packet size is %i bytes\n", PACKET_SIZE);
 
 		const size_t MAX_PACKET_DATA = 4 * PACKET_SIZE;
@@ -187,14 +164,14 @@ namespace imocap
 					last_client_contact_msec = current_milliseconds;
 					if (current_state == STATE_STREAMING)
 					{
-						bno055_packet_t* packet = reinterpret_cast<bno055_packet_t*>(buffer);
-						if (packet->is_valid())
+						imocap_packet_t* packet = reinterpret_cast<imocap_packet_t*>(buffer);
+						if (imocap_packet_is_valid(packet))
 						{
-							for (size_t index = 0; index < TOTAL_SENSORS; ++index)
+							for (size_t index = 0; index < IMOCAP_TOTAL_SENSORS; ++index)
 							{
 								// Copy data from packet
 								const double QUANTIZE = (1.0 / 16384.0);
-								const uint8_t* buffer = (packet->data + (index * BNO055_PACKET_SIZE));
+								const uint8_t* buffer = imocap_packet_sensor_data_at(packet, index);
 
 								// Construct Quaternion
 								{
@@ -243,7 +220,7 @@ namespace imocap
 						}
 						else
 						{
-							LOGV("Received invalid packet! (header = %x, footer = %x)\n", packet->get_header(), packet->get_footer());
+							LOGV("Received invalid packet! (header = %x, footer = %x)\n", packet->header, packet->footer);
 						}
 					}
 					else if (current_state == STATE_WAITING)
@@ -314,7 +291,7 @@ namespace imocap
 
 	void zero_rotations(MocapDevice* device)
 	{
-		for (size_t index = 0; index < TOTAL_SENSORS; ++index)
+		for (size_t index = 0; index < IMOCAP_TOTAL_SENSORS; ++index)
 		{
 			device->zeroed_orientations[index] = transform_sensor_rotation(sensors[index]);
 		}

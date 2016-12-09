@@ -206,7 +206,7 @@ private:
 	glm::mat4 surface_modelview;
 	glm::mat4 surface_projection;
 
-	glm::mat4 joint_offets[imocap::TOTAL_SENSORS];
+	glm::mat4 joint_offets[IMOCAP_TOTAL_SENSORS];
 
 	MyVertex vertex_data[4];
 
@@ -221,7 +221,7 @@ private:
 	render2::Texture* texture;
 	AssetProcessingPanel* asset_processor;
 
-	gui::Graph* graphs[imocap::TOTAL_SENSORS];
+	gui::Graph* graphs[IMOCAP_TOTAL_SENSORS];
 
 	Array<imocap::mocap_frame_t> mocap_frames;
 	size_t current_mocap_frame;
@@ -465,7 +465,8 @@ public:
 			if (handle.is_open())
 			{
 				// 1. Total Sensors (poses)
-				platform::fs_write(handle, &imocap::TOTAL_SENSORS, sizeof(imocap::TOTAL_SENSORS), 1);
+				uint32_t total_sensors = IMOCAP_TOTAL_SENSORS;
+				platform::fs_write(handle, &total_sensors, sizeof(uint32_t), 1);
 
 				// 2. Total frames.
 				const size_t total_frames = mocap_frames.size();
@@ -476,7 +477,7 @@ public:
 				{
 					imocap::mocap_frame_t& frame = mocap_frames[index];
 
-					for (size_t pose = 0; pose < imocap::TOTAL_SENSORS; ++pose)
+					for (size_t pose = 0; pose < IMOCAP_TOTAL_SENSORS; ++pose)
 					{
 						const glm::quat& rotation = frame.poses[pose];
 						platform::fs_write(handle, (const void*)&rotation, sizeof(glm::quat), 1);
@@ -509,7 +510,7 @@ public:
 
 				// If you hit this, the file loaded differs in the number of sensors
 				// it contains vs the number of sensors this now supports.
-				assert(total_sensors == imocap::TOTAL_SENSORS);
+				assert(total_sensors == IMOCAP_TOTAL_SENSORS);
 
 				// 2. Read Total Frames
 				size_t total_frames = 0;
@@ -826,7 +827,7 @@ Options:
 
 			uint32_t origin = 24;
 
-			for (size_t index = 0; index < imocap::TOTAL_SENSORS; ++index)
+			for (size_t index = 0; index < IMOCAP_TOTAL_SENSORS; ++index)
 			{
 				gui::Graph* graph = new gui::Graph(compositor);
 				graph->set_origin(window_frame.width - 250, origin);
@@ -991,7 +992,7 @@ Options:
 		debugdraw::text(20, yoffset+16, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
 		debugdraw::text(20, yoffset+32, "Space: Calibrate / Freeze Rotations", gemini::Color(1.0f, 1.0f, 1.0f));
 
-		glm::quat local_rotations[imocap::TOTAL_SENSORS];
+		glm::quat local_rotations[IMOCAP_TOTAL_SENSORS];
 
 		// We need to adjust the coordinate frame from the sensor to the engine.
 		local_rotations[0] = imocap::device_sensor_local_orientation(mocap_device, 0);
@@ -1004,7 +1005,11 @@ Options:
 		joint_offets[2] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.254f));
 
 
-		glm::mat4 world_poses[imocap::TOTAL_SENSORS];
+		glm::mat4 world_poses[IMOCAP_TOTAL_SENSORS];
+
+		glm::mat4 to_bind_pose[IMOCAP_TOTAL_SENSORS];
+		glm::mat4 inverse_bind_pose[IMOCAP_TOTAL_SENSORS];
+
 		glm::vec3 last_origin;
 
 		glm::mat4 parent_pose;
@@ -1013,7 +1018,7 @@ Options:
 
 		if (is_playing_frames)
 		{
-			memcpy(local_rotations, mocap_frames[current_mocap_frame].poses, sizeof(glm::quat) * imocap::TOTAL_SENSORS);
+			memcpy(local_rotations, mocap_frames[current_mocap_frame].poses, sizeof(glm::quat) * IMOCAP_TOTAL_SENSORS);
 			current_mocap_frame++;
 
 			if (current_mocap_frame > (mocap_frames.size() - 1))
@@ -1024,7 +1029,7 @@ Options:
 		}
 
 
-		for (size_t index = 0; index < imocap::TOTAL_SENSORS; ++index)
+		for (size_t index = 0; index < IMOCAP_TOTAL_SENSORS; ++index)
 		{
 			glm::mat4 m = glm::toMat4(local_rotations[index]);
 			glm::mat4 local_pose = (joint_offets[index] * m);
@@ -1035,7 +1040,15 @@ Options:
 			}
 
 			glm::mat4& world_pose = world_poses[index];
-			world_pose = parent_pose * local_pose;
+
+			// convert to
+			local_pose = to_bind_pose[index] * local_pose;
+
+			glm::mat4 model_pose = parent_pose * local_pose;
+
+
+			glm::mat4 final_pose = inverse_bind_pose[index] * model_pose;
+
 
 			debugdraw::axes(world_pose, 0.1f);
 
@@ -1070,7 +1083,7 @@ Options:
 
 		if (is_recording_frames)
 		{
-			memcpy(mocap_frame.poses, local_rotations, sizeof(glm::quat) * imocap::TOTAL_SENSORS);
+			memcpy(mocap_frame.poses, local_rotations, sizeof(glm::quat) * IMOCAP_TOTAL_SENSORS);
 			mocap_frame.frame_index = current_mocap_frame;
 			current_mocap_frame++;
 
