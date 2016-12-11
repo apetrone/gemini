@@ -60,6 +60,8 @@
 
 #include <renderer/debug_draw.h>
 
+#include <rapid/rapid.h>
+
 
 #include "project.h"
 
@@ -73,6 +75,8 @@ using namespace gemini;
 
 #define ENABLE_UI 1
 #define DRAW_SENSOR_GRAPHS 0
+
+const size_t TOTAL_LINES = 256;
 
 namespace gui
 {
@@ -206,7 +210,7 @@ private:
 	glm::mat4 surface_modelview;
 	glm::mat4 surface_projection;
 
-	glm::mat4 joint_offets[IMOCAP_TOTAL_SENSORS];
+	glm::mat4 joint_offsets[IMOCAP_TOTAL_SENSORS];
 
 	MyVertex vertex_data[4];
 
@@ -222,6 +226,7 @@ private:
 	AssetProcessingPanel* asset_processor;
 
 	gui::Graph* graphs[IMOCAP_TOTAL_SENSORS];
+	gui::Label* status;
 
 	Array<imocap::mocap_frame_t> mocap_frames;
 	size_t current_mocap_frame;
@@ -254,6 +259,14 @@ private:
 
 	imocap::MocapDevice* mocap_device;
 
+	// development interface
+	RapidInterface rapid;
+	platform::DynamicLibrary* rapid_library;
+
+
+	glm::vec3* lines;
+	size_t current_line_index;
+
 public:
 	EditorKernel()
 		: active(true)
@@ -266,6 +279,9 @@ public:
 		, is_playing_frames(false)
 		, app_in_focus(true)
 		, mocap_device(nullptr)
+		, rapid_library(nullptr)
+		, lines(nullptr)
+		, current_line_index(0)
 	{
 		yaw = 0.0f;
 		pitch = 0.0f;
@@ -313,7 +329,18 @@ public:
 			imocap::zero_rotations(mocap_device);
 
 			position_test = velocity_test = glm::vec3(0.0f, 0.0f, 0.0f);
+		}
 
+		if (event.key == BUTTON_F2)
+		{
+			unload_rapid_interface();
+
+			LOGV("unloaded rapid interface\n");
+		}
+		else if (event.key == BUTTON_F3)
+		{
+			load_rapid_interface();
+			LOGV("loading rapid interface\n");
 		}
 	}
 
@@ -660,7 +687,10 @@ Options:
 
 			// set perspective on camera
 			camera.perspective(60.0f, (int)params.frame.width, (int)params.frame.height, 0.01f, 1024.0f);
-			camera.set_position(glm::vec3(0.0f, 5.0f, 10.0f));
+			//camera.set_position(glm::vec3(0.0f, 5.0f, 10.0f));
+			camera.set_position(glm::vec3(0.69f, 0.55f, 0.45f));
+			camera.set_yaw(-78.15f);
+			camera.set_pitch(31.65f);
 			camera.set_type(Camera::FIRST_PERSON);
 			camera.update_view();
 		}
@@ -820,10 +850,11 @@ Options:
 #endif
 
 
-#if DRAW_SENSOR_GRAPHS
-			// Create a graph for each sensor
 			const char dev_font[] = "fonts/debug.ttf";
 			const size_t dev_font_size = 16;
+#if DRAW_SENSOR_GRAPHS
+			// Create a graph for each sensor
+
 
 			uint32_t origin = 24;
 
@@ -846,6 +877,13 @@ Options:
 			}
 #endif
 
+			status = new gui::Label(compositor);
+			status->set_origin(10, 100);
+			status->set_size(150, 75);
+			status->set_font(dev_font, dev_font_size);
+			status->set_text("");
+			status->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
+			status->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.25f));
 
 #if 1
 			asset_processor = new AssetProcessingPanel(compositor);
@@ -946,10 +984,40 @@ Options:
 
 		mocap_device = imocap::device_create();
 
+		load_rapid_interface();
+
+
+		lines = new glm::vec3[TOTAL_LINES];
+
 		return kernel::NoError;
 	}
 
+	void load_rapid_interface()
+	{
+		if (rapid_library)
+		{
+			unload_rapid_interface();
+		}
+		rapid_library = platform::dylib_open("X:/gemini/build/lib/debug_x86_64/rapid.dll");
+		assert(rapid_library);
 
+		populate_interface_fn pif = static_cast<populate_interface_fn>(platform::dylib_find(rapid_library, "populate_interface"));
+		assert(pif);
+
+		pif(rapid);
+		status->set_text("PLUGIN LOADED");
+	}
+
+	void unload_rapid_interface()
+	{
+		if (rapid_library)
+		{
+			memset(&rapid, 0, sizeof(RapidInterface));
+			platform::dylib_close(rapid_library);
+			rapid_library = nullptr;
+			status->set_text("PLUGIN NOT LOADED");
+		}
+	}
 
 	virtual void tick()
 	{
@@ -996,13 +1064,19 @@ Options:
 
 		// We need to adjust the coordinate frame from the sensor to the engine.
 		local_rotations[0] = imocap::device_sensor_local_orientation(mocap_device, 0);
-		local_rotations[1] = glm::inverse(local_rotations[0]) * imocap::device_sensor_local_orientation(mocap_device, 1);
-		local_rotations[2] = glm::inverse(local_rotations[1]) * imocap::device_sensor_local_orientation(mocap_device, 2);
+		local_rotations[1] = imocap::device_sensor_local_orientation(mocap_device, 1);
+		local_rotations[2] = imocap::device_sensor_local_orientation(mocap_device, 2);
+
+		// It is incorrect to cancel out the parent rotation entirely for children.
+		// This results in the child not inheriting the parent's coordinate space.
+
+		// For child rotations, we need to cancel out the offset parent rotation
+		// from the local child rotation.
 
 		// temp: setup joint offsets
-		joint_offets[0] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-		joint_offets[1] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.254f));
-		joint_offets[2] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.254f));
+		joint_offsets[0] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+		joint_offsets[1] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.254f));
+		joint_offsets[2] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.254f));
 
 
 		glm::mat4 world_poses[IMOCAP_TOTAL_SENSORS];
@@ -1031,24 +1105,11 @@ Options:
 
 		for (size_t index = 0; index < IMOCAP_TOTAL_SENSORS; ++index)
 		{
-			glm::mat4 m = glm::toMat4(local_rotations[index]);
-			glm::mat4 local_pose = (joint_offets[index] * m);
-			glm::mat4 parent_pose;
-			if (index > 0)
-			{
-				parent_pose = world_poses[(index-1)];
-			}
-
 			glm::mat4& world_pose = world_poses[index];
-
-			// convert to
-			local_pose = to_bind_pose[index] * local_pose;
-
-			glm::mat4 model_pose = parent_pose * local_pose;
-
-
-			glm::mat4 final_pose = inverse_bind_pose[index] * model_pose;
-
+			if (rapid_library && rapid.compute_pose)
+			{
+				rapid.compute_pose(world_pose, world_poses, local_rotations, joint_offsets, index);
+			}
 
 			debugdraw::axes(world_pose, 0.1f);
 
@@ -1074,12 +1135,29 @@ Options:
 			{
 				velocity_test += (acceleration /*+ gravity*/);
 				position_test += velocity_test;
+
+				assert(current_line_index < TOTAL_LINES);
+				glm::vec3* line0 = &lines[current_line_index++];
+				*line0 = origin;
+
+				current_line_index = current_line_index % TOTAL_LINES;
 			}
 
 			debugdraw::basis(origin, acceleration, 1.0f, 0.025f);
 		}
 
-		debugdraw::box(glm::vec3(-0.5f, -0.5f, -0.5f) + position_test, glm::vec3(0.5f, 0.5f, 0.5f) + position_test, gemini::Color(0.0f, 1.0f, 1.0f));
+		// draw all lines
+		glm::vec3 last_line = lines[0];
+		for (size_t index = 0; index < TOTAL_LINES / 2; index += 2)
+		{
+			debugdraw::line(last_line, lines[index * 2 + 1], gemini::Color(1.0f, 1.0f, 1.0f));
+
+			assert((index * 2 + 1) < TOTAL_LINES);
+			last_line = lines[index * 2 + 1];
+		}
+
+
+		//debugdraw::box(glm::vec3(-0.5f, -0.5f, -0.5f) + position_test, glm::vec3(0.5f, 0.5f, 0.5f) + position_test, gemini::Color(0.0f, 1.0f, 1.0f));
 
 		if (is_recording_frames)
 		{
@@ -1093,6 +1171,7 @@ Options:
 
 		platform::window::Frame window_frame = platform::window::get_frame(main_window);
 
+#if 0 // draw obb
 		glm::vec3 vertices[] = {
 			glm::vec3(-2.0f, 3.0f, 1.0f),
 			glm::vec3(-2.5f, 1.25f, 1.0f),
@@ -1108,6 +1187,7 @@ Options:
 
 		debugdraw::oriented_box(box.rotation, box.center, box.positive_extents, gemini::Color(1.0f, 0.0f, 0.0f));
 		debugdraw::axes(glm::mat4(box.rotation), 1.0f, 0.0f);
+#endif
 
 		debugdraw::update(kernel::parameters().framedelta_seconds);
 
@@ -1178,6 +1258,10 @@ Options:
 
 	virtual void shutdown()
 	{
+		delete [] lines;
+		lines = nullptr;
+		unload_rapid_interface();
+
 		imocap::device_destroy(mocap_device);
 		mocap_device = nullptr;
 

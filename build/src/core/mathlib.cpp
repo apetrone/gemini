@@ -68,14 +68,15 @@
 // Solving equations in reverse order due to the system being triangular.
 
 // Upper Triangular (U): All elements below the diagonal are zero.
+// - Pivots are on diagonal.
 // Lower Triangular (L): All elements above the diagonal are zero.
+// - 1s are on diagonal.
 
 // multiplication
 // matrix * column = column (linear combination of columns)
 // row * matrix = row (linear combination of rows)
 
 // associative law
-
 // permutation: exchange rows
 
 // Inverses:
@@ -83,9 +84,16 @@
 // Ainv * A == I == A * Ainv
 
 // A square matrix won't have an inverse when: Ax = 0
-
 // Gauss-Jordan: Solve two equations at once.
 
+// A = L * U
+// E * A = U
+// Gaussian Elimination
+
+// Pinv == Pt (the inverse of a permutation matrix is its transpose.)
+
+// Vector spaces
+// R^2 == All real two dimensional vectors
 
 // Links
 // http://forums.tigsource.com/index.php?topic=14154.0

@@ -775,6 +775,33 @@ def get_sdk(arguments, links, **kwargs):
 
 	return sdk
 
+
+def get_rapid(arguments, links, **kwargs):
+	global_params = kwargs.get("global_params")
+	target_platform = kwargs.get("target_platform")
+
+	rapid = Product(name="rapid", output=ProductType.DynamicLibrary)
+	rapid.project_root = COMMON_PROJECT_ROOT
+	rapid.root = "../"
+	rapid.sources += [
+		# glob all rapid files
+		"src/rapid/*.cpp",
+		"src/rapid/*.h"
+	]
+
+	rapid.includes += [
+		"src/rapid/include",
+		"src/shared"
+	]
+
+	setup_driver(arguments, rapid, target_platform)
+	setup_common_tool(rapid)
+
+	rapid.dependencies.extend(links)
+
+	return rapid
+
+
 def get_rnd(arguments, links, **kwargs):
 	global_params = kwargs.get("global_params")
 	target_platform = kwargs.get("target_platform")
@@ -1041,6 +1068,7 @@ def products(arguments, **kwargs):
 	#libruntime.dependencies.append(librenderer)
 
 	libsdk = get_sdk(arguments, [libruntime, librenderer, libcore], **kwargs)
+	librapid = get_rapid(arguments, [libruntime, libcore], **kwargs)
 
 	tools = []
 	if arguments.with_tools:
@@ -1101,6 +1129,7 @@ def products(arguments, **kwargs):
 	gemini.dependencies += [
 		libruntime,
 		librenderer,
+		librapid,
 		libfreetype
 	]
 
@@ -1243,6 +1272,7 @@ def products(arguments, **kwargs):
 		libruntime,
 		libcore,
 		libsdk,
+		librapid,
 		rnd,
 		gemini] + tools + tests
 

@@ -49,6 +49,16 @@ void print_string(const char* data)
 	LOGV("thread: 0x%x, string: %s\n", (size_t)platform::thread_id(), data);
 }
 
+float mat3_determinant(const glm::mat3& xform)
+{
+	return
+		+xform[0][0] * (xform[1][1] * xform[2][2] - xform[2][1] * xform[1][2])
+		- xform[1][0] * (xform[0][1] * xform[2][2] - xform[2][1] * xform[0][2])
+		+ xform[2][0] * (xform[0][1] * xform[1][2] - xform[1][1] * xform[0][2]);
+}
+
+
+
 UNITTEST(Geometry)
 {
 	using namespace gemini;
@@ -58,6 +68,14 @@ UNITTEST(Geometry)
 		glm::vec3(2.0f, 3.0f, 0.0f),
 		glm::vec3(2.0f, 1.0f, 0.0f)
 	};
+
+	glm::mat3 xf(
+		3, 2, 4,
+		2, 0, 2,
+		4, 2, 3);
+
+	//
+	assert(mat3_determinant(xf) == glm::determinant(xf));
 
 	OrientedBoundingBox box;
 	compute_oriented_bounding_box_by_points(box, vertices, 4);
