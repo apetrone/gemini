@@ -32,23 +32,10 @@
 
 namespace imocap
 {
-	// inertial motion capture
-	// imc library.
-	// header (on connect)
-	// version
-	// # sensors
-
-	// each packet contains data for N sensors
-	// plus a 4-byte sequence id.
-
-	// 1. visualization 3d scene
-	// 2. record sensor data
-	// 3. play back sensor data
-
-
 	struct MocapDevice
 	{
 		glm::quat zeroed_orientations[IMOCAP_TOTAL_SENSORS];
+		glm::vec3 zeroed_accelerations[IMOCAP_TOTAL_SENSORS];
 	};
 
 	struct mocap_frame_t
@@ -70,6 +57,7 @@ namespace imocap
 	glm::quat device_sensor_orientation(MocapDevice* device, size_t sensor_index);
 	glm::quat device_sensor_local_orientation(MocapDevice* device, size_t sensor_index);
 	glm::vec3 device_sensor_linear_acceleration(MocapDevice* device, size_t sensor_index);
+	glm::vec3 device_sensor_local_acceleration(MocapDevice* device, size_t sensor_index);
 	glm::vec3 device_sensor_gravity(MocapDevice* device, size_t sensor_index);
 
 	MocapDevice* device_create();

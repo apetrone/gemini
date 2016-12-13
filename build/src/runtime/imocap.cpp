@@ -24,37 +24,14 @@
 // -------------------------------------------------------------
 
 #include <runtime/imocap.h>
-
 #include <core/logging.h>
-//#include <core/str.h>
-//#include <core/config.h>
-
-//#include <runtime/runtime.h>
-
 #include <platform/platform.h>
 
 using namespace platform;
 
-
-
 namespace imocap
 {
-	// inertial motion capture
-	// imc library.
-	// header (on connect)
-	// version
-	// # sensors
-
-	// each packet contains data for N sensors
-	// plus a 4-byte sequence id.
-
-	// 1. visualization 3d scene
-	// 2. record sensor data
-	// 3. play back sensor data
-
-
 	bool net_listen_thread = true;
-
 
 	glm::quat sensors[IMOCAP_TOTAL_SENSORS];
 	glm::vec3 linear_acceleration[IMOCAP_TOTAL_SENSORS];
@@ -187,28 +164,27 @@ namespace imocap
 									w = (((int16_t)buffer[1]) << 8) | ((int16_t)buffer[0]);
 
 									sensors[index] = glm::quat(w * QUANTIZE, x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
+									buffer += 8;
 								}
 
 								// seek the linear acceleration data.
 								{
-									buffer += 8;
-
 									int16_t x = (((int16_t)buffer[1]) << 8) | ((int16_t)buffer[0]);
 									int16_t y = (((int16_t)buffer[3]) << 8) | ((int16_t)buffer[2]);
 									int16_t z = (((int16_t)buffer[5]) << 8) | ((int16_t)buffer[4]);
 
 									linear_acceleration[index] = glm::vec3(x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
+									buffer += 6;
 								}
 
 								// Seek the gravity data
 								{
-									buffer += 6;
-
 									int16_t x = (((int16_t)buffer[1]) << 8) | ((int16_t)buffer[0]);
 									int16_t y = (((int16_t)buffer[3]) << 8) | ((int16_t)buffer[2]);
 									int16_t z = (((int16_t)buffer[5]) << 8) | ((int16_t)buffer[4]);
 
 									gravity[index] = glm::vec3(x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
+									buffer += 6;
 								}
 								//LOGV("q[%i]: %2.2f, %2.2f, %2.2f, %2.2f\n", index, q.x, q.y, q.z, q.w);
 
@@ -294,6 +270,8 @@ namespace imocap
 		for (size_t index = 0; index < IMOCAP_TOTAL_SENSORS; ++index)
 		{
 			device->zeroed_orientations[index] = transform_sensor_rotation(sensors[index]);
+
+			device->zeroed_accelerations[index] = device_sensor_linear_acceleration(device, index);
 		}
 	}
 
@@ -310,6 +288,11 @@ namespace imocap
 	glm::vec3 device_sensor_linear_acceleration(MocapDevice* device, size_t sensor_index)
 	{
 		return linear_acceleration[sensor_index];
+	}
+
+	glm::vec3 device_sensor_local_acceleration(MocapDevice* device, size_t sensor_index)
+	{
+		return linear_acceleration[sensor_index] - device->zeroed_accelerations[sensor_index];
 	}
 
 	glm::vec3 device_sensor_gravity(MocapDevice* device, size_t sensor_index)
