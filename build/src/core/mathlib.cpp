@@ -102,6 +102,24 @@
 // http://www.blackpawn.com/texts/pointinpoly/default.html
 
 
+// Special Solutions == # of free variables
+// echelon form (step pattern)
+// Let r = # pivot variables == rank
+// Let n = columns in the matrix
+// n - r == # of free variables
+// Ax = 0 is equal to the Combinations of special solutions
+// free variables correspond to the columns in which 0 or 1 are assigned.
+
+// (R) Reduced Row echelon form: contains zeros above and below the pivots.
+// Pivots reduced to 1.
+
+// R =	[ I F ]
+//		[ 0 0 ]
+
+// N = Null Space Matrix: Columns the special solutions.
+// RN = 0
+// N =	[ -F ]
+//		[  I ]
 
 //
 // math functions
