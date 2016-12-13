@@ -69,20 +69,16 @@ using namespace platform;
 using namespace renderer;
 using namespace gemini;
 
-
 #include <runtime/imocap.h>
-
 
 #define ENABLE_UI 1
 #define DRAW_SENSOR_GRAPHS 0
 
+#define DRAW_LINES 0
 const size_t TOTAL_LINES = 256;
 
 namespace gui
 {
-
-
-
 	// This uses a render target to present data
 	class RenderableSurface : public gui::Panel
 	{
@@ -868,8 +864,10 @@ Options:
 				graph->set_font(dev_font, dev_font_size);
 				graph->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
 				graph->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
-				graph->create_samples(100, 1);
+				graph->create_samples(100, 3);
 				graph->configure_channel(0, gemini::Color::from_rgba(255, 0, 0, 255));
+				graph->configure_channel(1, gemini::Color::from_rgba(0, 255, 0, 255));
+				graph->configure_channel(2, gemini::Color::from_rgba(0, 0, 255, 255));
 				graph->set_range(-0.5f, 0.5f);
 				graph->enable_baseline(true, 0.0f, gemini::Color::from_rgba(64, 64, 64, 255));
 
@@ -1123,17 +1121,18 @@ Options:
 			debugdraw::sphere(origin, Color::from_rgba(255, 0, 0, 255), 0.025f);
 			//mocap_frame.poses[index] = local_rotations[index];
 
-			const glm::vec3 acceleration = imocap::device_sensor_linear_acceleration(mocap_device, index);
-			const glm::vec3 gravity = imocap::device_sensor_gravity(mocap_device, index);
+			const glm::vec3 acceleration = imocap::device_sensor_local_acceleration(mocap_device, index);
 
 
 #if DRAW_SENSOR_GRAPHS
 			graphs[index]->record_value(acceleration.x, 0);
+			graphs[index]->record_value(acceleration.y, 1);
+			graphs[index]->record_value(acceleration.z, 2);
 #endif
 
 			if (index == 2)
 			{
-				velocity_test += (acceleration /*+ gravity*/);
+				velocity_test += acceleration * (float)kernel::parameters().step_interval_seconds;
 				position_test += velocity_test;
 
 				assert(current_line_index < TOTAL_LINES);
@@ -1143,9 +1142,10 @@ Options:
 				current_line_index = current_line_index % TOTAL_LINES;
 			}
 
-			debugdraw::basis(origin, acceleration, 1.0f, 0.025f);
+			//debugdraw::basis(origin, acceleration, 1.0f, 0.025f);
 		}
 
+#if DRAW_LINES
 		// draw all lines
 		glm::vec3 last_line = lines[0];
 		for (size_t index = 0; index < TOTAL_LINES / 2; index += 2)
@@ -1155,9 +1155,11 @@ Options:
 			assert((index * 2 + 1) < TOTAL_LINES);
 			last_line = lines[index * 2 + 1];
 		}
+#endif
 
-
-		//debugdraw::box(glm::vec3(-0.5f, -0.5f, -0.5f) + position_test, glm::vec3(0.5f, 0.5f, 0.5f) + position_test, gemini::Color(0.0f, 1.0f, 1.0f));
+#if DRAW_SENSOR_GRAPHS
+		debugdraw::box(glm::vec3(-0.5f, -0.5f, -0.5f) + position_test, glm::vec3(0.5f, 0.5f, 0.5f) + position_test, gemini::Color(0.0f, 1.0f, 1.0f));
+#endif
 
 		if (is_recording_frames)
 		{
