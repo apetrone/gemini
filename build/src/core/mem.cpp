@@ -30,7 +30,126 @@
 	#include <string.h>
 #endif
 
+namespace gemini
+{
+	ZoneStats* _tracking_stats = nullptr;
 
+	ZoneStats* memory_zone_tracking_stats()
+	{
+		return _tracking_stats;
+	} // memory_zone_tracking_stats
+
+	void memory_zone_install_stats(ZoneStats* other)
+	{
+		_tracking_stats = other;
+	} // memory_zone_install_stats
+
+	void memory_zone_track(MemoryZone zone, size_t bytes)
+	{
+		ZoneStats& stats = _tracking_stats[zone];
+
+		stats.active_allocations++;
+		stats.active_bytes += bytes;
+
+		stats.total_allocations++;
+		stats.total_bytes += bytes;
+	} // memory_zone_track
+
+	void memory_zone_untrack(MemoryZone zone, size_t bytes)
+	{
+		ZoneStats& stats = _tracking_stats[zone];
+		stats.active_allocations--;
+		stats.active_bytes -= bytes;
+	} // memory_zone_untrack
+
+	// ---------------------------------------------------------------------
+	// common allocation functions
+	// ---------------------------------------------------------------------
+#if defined(DEBUG_MEMORY)
+	void* memory_allocate(Allocator* allocator, size_t bytes, size_t alignment, const char* filename, int line)
+	{
+		void* memory = allocator->allocate(allocator, bytes, alignment);
+		//LOGV("[+] %p %i @ %i | '%s':%i\n", memory, bytes, alignment, filename, line);
+		return memory;
+	}
+
+	void memory_deallocate(Allocator* allocator, void* pointer, const char* filename, int line)
+	{
+		allocator->deallocate(allocator, pointer);
+		//LOGV("[-] %p | '%s':%i\n", pointer, filename, line);
+	}
+#else
+	void* memory_allocate(Allocator* allocator, size_t bytes, size_t alignment)
+	{
+		return allocator->allocate(allocator, bytes, alignment);
+	}
+
+	void memory_deallocate(Allocator* allocator, void* pointer)
+	{
+		allocator->deallocate(allocator, pointer);
+	}
+#endif
+
+
+
+
+
+	// ---------------------------------------------------------------------
+	// default allocator: Standard operating system-level heap allocator
+	// ---------------------------------------------------------------------
+	void* default_allocate(Allocator*, size_t bytes, size_t alignment)
+	{
+		return core::memory::aligned_malloc(bytes, alignment);
+	}
+
+	void default_deallocate(Allocator*, void* pointer)
+	{
+		core::memory::aligned_free(pointer);
+	}
+
+	Allocator memory_allocator_default()
+	{
+		Allocator allocator;
+		memset(&allocator, 0, sizeof(Allocator));
+		allocator.allocate = default_allocate;
+		allocator.deallocate = default_deallocate;
+		allocator.type = ALLOCATOR_SYSTEM;
+		return allocator;
+	} // memory_allocator_default
+
+	// ---------------------------------------------------------------------
+	// linear allocator: Basic linear allocator
+	// ---------------------------------------------------------------------
+	void* linear_allocate(Allocator* allocator, size_t bytes, size_t /*alignment*/)
+	{
+		if (allocator->bytes_used + bytes <= allocator->memory_size)
+		{
+			unsigned char* block = reinterpret_cast<unsigned char*>(allocator->memory) + allocator->bytes_used;
+			allocator->bytes_used += bytes;
+			return block;
+		}
+
+		return nullptr;
+	} // linear_allocate
+
+	void linear_deallocate(Allocator* /*allocator*/, void* /*pointer*/)
+	{
+		// no-op
+	}
+
+	Allocator memory_allocator_linear(void* memory, size_t memory_size)
+	{
+		Allocator allocator;
+		memset(&allocator, 0, sizeof(Allocator));
+		allocator.allocate = linear_allocate;
+		allocator.deallocate = linear_deallocate;
+		allocator.memory = memory;
+		allocator.memory_size = memory_size;
+		allocator.type = ALLOCATOR_LINEAR;
+		return allocator;
+	} // memory_allocator_linear
+
+} // namespace gemini
 
 namespace core
 {
@@ -48,11 +167,14 @@ namespace core
 		{
 			// If you hit this assert, there's a double memory startup
 			assert(_global_zone == nullptr && _global_allocator == nullptr);
-
 			_global_zone = new (global_zone_memory.memory) Zone("global");
-
 			static GlobalAllocatorType global_allocator_instance(_global_zone);
 			_global_allocator = &global_allocator_instance;
+
+			// create zone tracking stats
+			using namespace gemini;
+			gemini::Allocator allocator = gemini::memory_allocator_default();
+			ZoneStats* zone_stats = MEMORY2_NEW_ARRAY(&allocator, MEMORY_ZONE_DEFAULT, ZoneStats, MEMORY_ZONE_MAX);
 		}
 
 		void shutdown()

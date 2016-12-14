@@ -753,109 +753,7 @@ UNITTEST(util)
 }
 #endif
 
-
-// Anything that allocates memory should accept an allocator.
-// Anything that deletes memory should accept an allocator.
-// Any container should be able to accept an allocator.
-
-// Be able to toggle between debug/release versions of allocator.
-// Specify different allocation strategies
-
-enum AllocatorType
-{
-	ALLOCATOR_STATIC,
-	ALLOCATOR_TESTING,
-	ALLOCATOR_FIXED
-};
-
-struct Allocator
-{
-	void* (*allocate)(Allocator*, size_t bytes, size_t alignment);
-	void (*deallocate)(Allocator*, void* pointer);
-
-	char* memory;
-	size_t memory_size;
-	AllocatorType type;
-};
-
-void* static_allocate(Allocator* allocator, size_t bytes, size_t alignment)
-{
-	return core::memory::aligned_malloc(bytes, alignment);
-}
-
-void static_deallocate(Allocator* allocator, void* pointer)
-{
-	core::memory::aligned_free(pointer);
-}
-
-void* null_allocate(Allocator* allocator, size_t bytes, size_t alignment)
-{
-	//return core::memory::aligned_malloc(bytes, alignment);
-	return 0;
-}
-
-void null_deallocate(Allocator* allocator, void* pointer)
-{
-	core::memory::aligned_free(pointer);
-}
-
-
-Allocator static_allocator_create()
-{
-	Allocator sa;
-	sa.allocate = static_allocate;
-	sa.deallocate = static_deallocate;
-	sa.memory = 0;
-	sa.memory_size = 0;
-	sa.type = ALLOCATOR_STATIC;
-	return sa;
-}
-
-Allocator null_allocator_create()
-{
-	Allocator sa;
-	sa.allocate = null_allocate;
-	sa.deallocate = null_deallocate;
-	sa.memory = 0;
-	sa.memory_size = 0;
-	sa.type = ALLOCATOR_TESTING;
-	return sa;
-}
-
-
-
-#define DEBUG_MEMORY 1
-#if DEBUG_MEMORY
-#define ALLOCATE_MEMORY(allocator, bytes) mem_allocate(allocator, bytes, sizeof(void*), __FILE__, __LINE__)
-#define DEALLOCATE_MEMORY(allocator, pointer) mem_deallocate(allocator, pointer, __FILE__, __LINE__)
-
-void* mem_allocate(Allocator* allocator, size_t bytes, size_t alignment, const char* filename, int line)
-{
-	void* memory = allocator->allocate(allocator, bytes, alignment);
-	LOGV("[+] %p %i @ %i | '%s':%i\n", memory, bytes, alignment, filename, line);
-	return memory;
-}
-
-void mem_deallocate(Allocator* allocator, void* pointer, const char* filename, int line)
-{
-	allocator->deallocate(allocator, pointer);
-	LOGV("[-] %p | '%s':%i\n", pointer, filename, line);
-}
-#else
-#define ALLOCATE_MEMORY(allocator, bytes) mem_allocate(allocator, bytes, sizeof(void*))
-#define DEALLOCATE_MEMORY(allocator, pointer) mem_deallocate(allocator, pointer)
-
-void* mem_allocate(Allocator* allocator, size_t bytes, size_t alignment)
-{
-	return allocator->allocate(allocator, bytes, alignment);
-}
-
-void mem_deallocate(Allocator* allocator, void* pointer)
-{
-	allocator->deallocate(allocator, pointer);
-}
-#endif
-
+using namespace gemini;
 
 struct TestDevice
 {
@@ -865,18 +763,13 @@ struct TestDevice
 
 TestDevice* create_device(Allocator* allocator)
 {
-	void* mem = ALLOCATE_MEMORY(allocator, sizeof(TestDevice));
-	char* memory = reinterpret_cast<char*>(mem);
-
-	new (memory) TestDevice();
-
-	return reinterpret_cast<TestDevice*>(memory);
+	TestDevice* device = MEMORY2_NEW(allocator, MEMORY_ZONE_DEFAULT, TestDevice);
+	return device;
 }
 
 void destroy_device(Allocator* allocator, TestDevice* device)
 {
-	device->~TestDevice();
-	DEALLOCATE_MEMORY(allocator, device);
+	MEMORY2_DELETE(allocator, device);
 }
 
 
@@ -886,15 +779,30 @@ int main(int, char**)
 	gemini::core_startup();
 	//unittest::UnitTest::execute();
 
-	Allocator sa = static_allocator_create();
-	//Allocator sa = null_allocator_create();
+	//Allocator sa = memory_allocator_default();
+	//TestDevice* test = create_device(&sa);
+	//test->index = 0;
+	//destroy_device(&sa, test);
 
-	TestDevice* test = create_device(&sa);
-	test->index = 0;
+	Allocator s2 = memory_allocator_default();
+	TestDevice* items = MEMORY2_NEW_ARRAY(&s2, MEMORY_ZONE_DEFAULT, TestDevice, 64);
+	MEMORY2_DELETE_ARRAY(&s2, items);
 
-	destroy_device(&sa, test);
 
+	int* items2 = MEMORY2_NEW_ARRAY(&s2, MEMORY_ZONE_DEFAULT, int, 8);
+	for (size_t index = 0; index < 8; ++index)
+	{
+		items2[index] = (index * 2);
+	}
+	MEMORY2_DELETE_ARRAY(&s2, items2);
 
+	char mem[64];
+	Allocator ln = memory_allocator_linear(mem, 64);
+	int* ptr = MEMORY2_NEW_ARRAY(&ln, MEMORY_ZONE_DEFAULT, int, 8);
+	for (size_t index = 0; index < 8; ++index)
+	{
+		ptr[index] = (index * 2);
+	}
 
 
 	gemini::core_shutdown();

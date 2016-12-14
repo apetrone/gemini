@@ -85,6 +85,245 @@ namespace core
 } // namespace core
 #endif
 
+// TODO: replace this with ENABLE_MEMORY_TRACKING when refactor is done.
+#define DEBUG_MEMORY 1
+
+namespace gemini
+{
+	// Anything that allocates memory should accept an allocator.
+	// Anything that deletes memory should accept an allocator.
+	// Any container should be able to accept an allocator.
+
+	// * Be able to toggle between debug/release versions of allocator.
+	// * Specify different allocation strategies
+	// * Specify a tagged category for allocations
+
+	enum AllocatorType
+	{
+		// Standard system allocator; malloc/free from the operating system.
+		ALLOCATOR_SYSTEM,
+
+		ALLOCATOR_LINEAR,
+
+		ALLOCATOR_TYPE_MAX
+	}; // AllocatorType
+
+	struct Allocator
+	{
+		void* (*allocate)(Allocator* allocator, size_t bytes, size_t alignment);
+		void (*deallocate)(Allocator* allocator, void* pointer);
+
+		AllocatorType type;
+
+		size_t bytes_used;
+
+		size_t memory_size;
+		void* memory;
+	}; // Allocator
+
+	enum MemoryZone
+	{
+		// All static memory
+		MEMORY_ZONE_DEFAULT,
+
+		// Memory allocated by the platform layer
+		MEMORY_ZONE_PLATFORM,
+
+		// Memory allocated by the audio subsystem
+		MEMORY_ZONE_AUDIO,
+
+		// Memory allocated by the renderer
+		MEMORY_ZONE_RENDERER,
+
+		MEMORY_ZONE_MAX
+	}; // MemoryZone
+
+#if defined(DEBUG_MEMORY)
+#pragma pack(push, 8)
+	struct MemoryDebugHeader
+	{
+		size_t allocation_size;
+		size_t allocation_index;
+		size_t alignment;
+		const char* filename;
+		int line;
+	}; // MemoryDebugHeader
+#pragma pack(pop)
+#endif
+
+	struct ZoneStats
+	{
+		size_t total_allocations;
+		size_t total_bytes;
+
+		size_t active_allocations;
+		size_t active_bytes;
+
+		size_t high_watermark;
+		size_t smallest_allocation;
+		size_t largest_allocation;
+
+
+	}; // ZoneStats
+
+	// fetch current zone stats
+	ZoneStats* memory_zone_tracking_stats();
+
+	// share zone stats
+	void memory_zone_install_stats(ZoneStats* other);
+	void memory_zone_track(MemoryZone zone, size_t bytes);
+	void memory_zone_untrack(MemoryZone zone, size_t bytes);
+
+	// Allocator factory functions
+	Allocator memory_allocator_default();
+	Allocator memory_allocator_linear(void* memory, size_t memory_size);
+
+
+
+#if defined(DEBUG_MEMORY)
+	#define MEMORY2_ALLOC(allocator, zone, bytes) gemini::memory_allocate(allocator, bytes, alignof(void*), __FILE__, __LINE__)
+	#define MEMORY2_DEALLOC(allocator, pointer) gemini::memory_deallocate(allocator, pointer, __FILE__, __LINE__)
+
+	#define MEMORY2_NEW(allocator, zone, type) new (gemini::memory_allocate(allocator, alignof(type), alignof(void*), __FILE__, __LINE__)) type
+	#define MEMORY2_DELETE(allocator, pointer) gemini::memory_destroy(allocator, pointer, __FILE__, __LINE__), pointer = 0
+
+	#define MEMORY2_NEW_ARRAY(allocator, zone, type, size) gemini::memory_array_allocate< type >(allocator, size, __FILE__, __LINE__)
+	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate(allocator, pointer, __FILE__, __LINE__), pointer = 0
+
+	void* memory_allocate(Allocator* allocator, size_t bytes, size_t alignment, const char* filename, int line);
+	void memory_deallocate(Allocator* allocator, void* pointer, const char* filename, int line);
+
+	template <class T>
+	void memory_destroy(Allocator* allocator, T* pointer, const char* filename, int line)
+	{
+		// it is entirely legal to call delete on a null pointer,
+		// but we don't need to do anything.
+		if (pointer)
+		{
+			pointer->~T();
+			memory_deallocate(allocator, pointer, filename, line);
+		}
+	}
+#else
+
+	#define MEMORY2_ALLOC(allocator, zone, bytes) gemini::memory_allocate(allocator, bytes, alignof(void*))
+	#define MEMORY2_DEALLOC(allocator, pointer) gemini::memory_deallocate(allocator, pointer)
+
+	#define MEMORY2_NEW(allocator, zone, type) new (gemini::memory_allocate(allocator, alignof(type), alignof(void*))) type
+	#define MEMORY2_DELETE(allocator, pointer) gemini::memory_destroy(allocator, pointer), pointer = 0
+
+	#define MEMORY2_NEW_ARRAY(allocator, zone, type, size) gemini::memory_array_allocate< type >(allocator, size)
+	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate(allocator, pointer), pointer = 0
+
+	void* memory_allocate(Allocator* allocator, size_t bytes, size_t alignment);
+	void memory_deallocate(Allocator* allocator, void* pointer);
+
+	template <class T>
+	void memory_destroy(Allocator* allocator, T* pointer)
+	{
+		// it is entirely legal to call delete on a null pointer,
+		// but we don't need to do anything.
+		if (pointer)
+		{
+			pointer->~T();
+			memory_deallocate(allocator, pointer);
+		}
+	} // memory_destroy
+#endif
+
+#if defined(PLATFORM_COMPILER_MSVC)
+	// msvc doesn't think using a variable in a term with a constructor
+	// or cast is 'using' the variable, so it throws up this warning.
+	// Let's disable it for construct_array/destruct_array.
+	#pragma warning(push)
+	#pragma warning(disable: 4189) // 'p': local variable is initialized but not referenced
+#endif
+
+	template <class _Type>
+#if defined(DEBUG_MEMORY)
+	_Type* memory_array_allocate(Allocator* allocator, size_t array_size, const char* filename, int line)
+#else
+	_Type* memory_array_allocate(Allocator* allocator, size_t array_size)
+#endif
+	{
+		// As part of the allocation for arrays store the requested
+		// array_size and the size of the _Type.
+		size_t total_size = sizeof(_Type) * array_size + (sizeof(size_t) + sizeof(size_t));
+
+#if defined(DEBUG_MEMORY)
+		void* mem = memory_allocate(allocator, total_size, alignof(void*), filename, line);
+		assert(mem != nullptr);
+#else
+		void* mem = memory_allocate(allocator, total_size, alignof(void*));
+#endif
+		size_t* block = reinterpret_cast<size_t*>(mem);
+		*block = array_size;
+
+		block++;
+		*block = sizeof(_Type);
+
+		block++;
+
+		_Type* values = reinterpret_cast<_Type*>(block);
+
+		for (size_t index = 0; index < array_size; ++index)
+		{
+			new (&values[index]) _Type;
+		}
+
+		return values;
+	} // memory_array_allocate
+
+
+	template <class _Type>
+#if defined(DEBUG_MEMORY)
+	void memory_array_deallocate(Allocator* allocator, _Type* pointer, const char* filename, int line)
+#else
+	void memory_array_deallocate(Allocator* allocator, _Type* pointer)
+#endif
+	{
+		if (pointer)
+		{
+			// fetch the array_size we embedded during allocation.
+			size_t* block = reinterpret_cast<size_t*>(pointer);
+			block--;
+
+			size_t type_size = *block;
+
+			// If you hit this assert; there is a double-delete on this pointer!
+			assert(type_size > 0);
+			*block = 0;
+
+			block--;
+			size_t array_size = *block;
+
+			char* mem = reinterpret_cast<char*>(pointer);
+
+			// per the spec; we must delete the elements in reverse order
+			for (size_t index = array_size; index > 0; --index)
+			{
+				// for non-POD types, we have to make sure we offset
+				// into the array by the correct offset of the allocated type.
+				size_t offset = (index - 1)*type_size;
+				_Type* p = reinterpret_cast<_Type*>(mem + offset);
+				p->~_Type();
+			}
+
+			// deallocate the block
+#if defined(DEBUG_MEMORY)
+			memory_deallocate(allocator, block, filename, line);
+#else
+			memory_deallocate(allocator, block);
+#endif
+		}
+	} // memory_array_deallocate
+
+#if defined(PLATFORM_COMPILER_MSVC)
+	#pragma warning(pop)
+#endif
+
+} // namespace gemini
+
 namespace core
 {
 	namespace memory
@@ -101,6 +340,10 @@ namespace core
 		struct static_memory
 		{
 			unsigned char memory[sizeof(T) * count];
+			enum
+			{
+				size = sizeof(T) * count
+			};
 		};
 
 		// ---------------------------------------------------------------------
@@ -173,6 +416,8 @@ namespace core
 				allocator.deallocate(pointer);
 			}
 		}
+
+
 
 #if defined(PLATFORM_COMPILER_MSVC)
 	// msvc doesn't think using a variable in a term with a constructor
