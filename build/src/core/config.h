@@ -40,15 +40,18 @@
 	#define PLATFORM_COMPILER_VERSION CONCAT_PERIOD( STRINGIZE(__clang_major__), STRINGIZE(__clang_minor__))
 	#define PLATFORM_FANCY_FUNCTION __PRETTY_FUNCTION__
 	#define PLATFORM_THREAD_LOCAL __thread
+	#define PLATFORM_ALIGN(x) __attribute__((aligned (x)))
 #elif defined( __GNUC__ )
 	#define PLATFORM_COMPILER "gcc"
 	#define PLATFORM_COMPILER_VERSION CONCAT_PERIOD( STRINGIZE(__GNUC__), STRINGIZE(__GNUC_MINOR__) )
 	#define PLATFORM_FANCY_FUNCTION __PRETTY_FUNCTION__
 	#define PLATFORM_THREAD_LOCAL __thread
+	#define PLATFORM_ALIGN(x) __attribute__((aligned (x)))
 #elif defined( _MSC_VER )
 	#define PLATFORM_COMPILER "msvc"
 	#define PLATFORM_COMPILER_MSVC 1
 	#define PLATFORM_THREAD_LOCAL __declspec(thread)
+	#define PLATFORM_ALIGN(x) __declspec(align(x))
 	#if _MSC_VER < 1300
 		#define PLATFORM_COMPILER_VERSION STRINGIZE(12.0)
 	#elif _MSC_VER == 1300
