@@ -173,7 +173,7 @@ namespace core
 		Zone* _global_zone = nullptr;
 		GlobalAllocatorType* _global_allocator = nullptr;
 
-		static_memory<Zone> global_zone_memory;
+		gemini::StaticMemory<Zone> global_zone_memory;
 
 		void startup()
 		{

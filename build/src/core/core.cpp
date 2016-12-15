@@ -36,7 +36,7 @@ namespace gemini
 	// The logging interface is quite unique in that it needs to exist
 	// as systems startup and survive until the last bit of statics go away.
 	// For this, we'll allocate this in static memory.
-	core::memory::static_memory<core::logging::LogInterface> log_system_data;
+	StaticMemory<core::logging::LogInterface> log_system_data;
 
 	platform::Result core_startup()
 	{

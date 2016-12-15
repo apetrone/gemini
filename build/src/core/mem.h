@@ -155,6 +155,21 @@ namespace gemini
 #pragma pack(pop)
 #endif
 
+	template <class T, size_t count = 1>
+	struct StaticMemory
+	{
+		enum
+		{
+#if defined(DEBUG_MEMORY)
+			size = (sizeof(T) * count) + sizeof(MemoryDebugHeader)
+#else
+			size = (sizeof(T) * count)
+#endif
+		};
+
+		unsigned char memory[size];
+	};
+
 	struct ZoneStats
 	{
 		size_t total_allocations;
@@ -345,18 +360,6 @@ namespace core
 		const size_t Kilobyte = 1024;
 		const size_t Megabyte = (Kilobyte*1024);
 		const size_t Gigabyte = (Megabyte*1024);
-
-
-		template <class T, size_t count = 1>
-		struct static_memory
-		{
-			enum
-			{
-				size = sizeof(T) * count
-			};
-
-			unsigned char memory[size];
-		};
 
 		// ---------------------------------------------------------------------
 		// utility functions
