@@ -142,11 +142,15 @@ namespace gemini
 #pragma pack(push, 8)
 	struct MemoryDebugHeader
 	{
-		size_t allocation_size;
+		uint32_t alignment;
+		uint32_t allocation_size;
 		size_t allocation_index;
-		size_t alignment;
 		const char* filename;
 		int line;
+
+		// in-place doubly-linked list
+		struct MemoryDebugHeader* next;
+		struct MemoryDebugHeader* prev;
 	}; // MemoryDebugHeader
 #pragma pack(pop)
 #endif
@@ -163,11 +167,18 @@ namespace gemini
 		size_t smallest_allocation;
 		size_t largest_allocation;
 
-
+#if defined(DEBUG_MEMORY)
+		// list of active allocations for this zone
+		MemoryDebugHeader* tail;
+#endif
 	}; // ZoneStats
 
 	// fetch current zone stats
 	ZoneStats* memory_zone_tracking_stats();
+
+	// Ensures memory is aligned to alignment.
+	// Assumes alignment is a power of two.
+	void* memory_force_alignment(void* memory, uint32_t alignment);
 
 	// share zone stats
 	void memory_zone_install_stats(ZoneStats* other);
@@ -184,7 +195,7 @@ namespace gemini
 	#define MEMORY2_ALLOC(allocator, zone, bytes) gemini::memory_allocate(allocator, bytes, alignof(void*), __FILE__, __LINE__)
 	#define MEMORY2_DEALLOC(allocator, pointer) gemini::memory_deallocate(allocator, pointer, __FILE__, __LINE__)
 
-	#define MEMORY2_NEW(allocator, zone, type) new (gemini::memory_allocate(allocator, alignof(type), alignof(void*), __FILE__, __LINE__)) type
+	#define MEMORY2_NEW(allocator, zone, type) new (gemini::memory_allocate(allocator, sizeof(type), alignof(type), __FILE__, __LINE__)) type
 	#define MEMORY2_DELETE(allocator, pointer) gemini::memory_destroy(allocator, pointer, __FILE__, __LINE__), pointer = 0
 
 	#define MEMORY2_NEW_ARRAY(allocator, zone, type, size) gemini::memory_array_allocate< type >(allocator, size, __FILE__, __LINE__)
@@ -209,7 +220,7 @@ namespace gemini
 	#define MEMORY2_ALLOC(allocator, zone, bytes) gemini::memory_allocate(allocator, bytes, alignof(void*))
 	#define MEMORY2_DEALLOC(allocator, pointer) gemini::memory_deallocate(allocator, pointer)
 
-	#define MEMORY2_NEW(allocator, zone, type) new (gemini::memory_allocate(allocator, alignof(type), alignof(void*))) type
+	#define MEMORY2_NEW(allocator, zone, type) new (gemini::memory_allocate(allocator, sizeof(type), alignof(type))) type
 	#define MEMORY2_DELETE(allocator, pointer) gemini::memory_destroy(allocator, pointer), pointer = 0
 
 	#define MEMORY2_NEW_ARRAY(allocator, zone, type, size) gemini::memory_array_allocate< type >(allocator, size)
@@ -339,11 +350,12 @@ namespace core
 		template <class T, size_t count = 1>
 		struct static_memory
 		{
-			unsigned char memory[sizeof(T) * count];
 			enum
 			{
 				size = sizeof(T) * count
 			};
+
+			unsigned char memory[size];
 		};
 
 		// ---------------------------------------------------------------------

@@ -39,6 +39,16 @@ namespace gemini
 		return _tracking_stats;
 	} // memory_zone_tracking_stats
 
+	void* memory_force_alignment(void* mem, uint32_t alignment)
+	{
+		unsigned char* block = static_cast<unsigned char*>(mem);
+
+		// this assumes alignment is a power of two.
+		const uint32_t one_minus_alignment = (alignment - 1);
+
+		return reinterpret_cast<void*>(((size_t)(block + one_minus_alignment)) & ~one_minus_alignment);
+	} // memory_force_alignment
+
 	void memory_zone_install_stats(ZoneStats* other)
 	{
 		_tracking_stats = other;
@@ -68,6 +78,8 @@ namespace gemini
 #if defined(DEBUG_MEMORY)
 	void* memory_allocate(Allocator* allocator, size_t bytes, size_t alignment, const char* filename, int line)
 	{
+		//const size_t required_size = (bytes + sizeof(MemoryDebugHeader));
+
 		void* memory = allocator->allocate(allocator, bytes, alignment);
 		//LOGV("[+] %p %i @ %i | '%s':%i\n", memory, bytes, alignment, filename, line);
 		return memory;
