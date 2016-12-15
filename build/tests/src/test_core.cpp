@@ -50,6 +50,8 @@
 using namespace core;
 using namespace core::util;
 
+using namespace gemini;
+
 #if 0
 // ---------------------------------------------------------------------
 // ArgumentParser
@@ -494,15 +496,127 @@ UNITTEST(mathlib)
 	TEST_ASSERT(temp == 45, radians_to_degrees);
 }
 
+
+
+#endif
 // ---------------------------------------------------------------------
 // memory
 // ---------------------------------------------------------------------
-UNITTEST(memory)
+bool test_memory_is_aligned(void* mem, uint32_t alignment)
 {
-	TEST_ASSERT(1, sanity);
+	return ((unsigned int)mem & (alignment - 1)) == 0;
 }
 
 
+
+struct TestDevice
+{
+	size_t index;
+};
+
+#pragma pack(push, 16)
+PLATFORM_ALIGN(16)
+struct AlignedStructTest
+{
+	float one[4];
+	float two[4];
+	float three[3];
+}; // AlignedStructTest
+#pragma pack(pop)
+
+
+
+TestDevice* create_device(Allocator* allocator)
+{
+	TestDevice* device = MEMORY2_NEW(allocator, MEMORY_ZONE_DEFAULT, TestDevice);
+	return device;
+}
+
+void destroy_device(Allocator* allocator, TestDevice* device)
+{
+	MEMORY2_DELETE(allocator, device);
+}
+
+UNITTEST(memory_arithmetic)
+{
+	unsigned char* mem = (unsigned char*)0x800;
+
+	// start off aligned to an 8-byte boundary.
+	TEST_ASSERT_TRUE(test_memory_is_aligned(mem, 8));
+
+	// simulate allocation and pointer increment.
+	mem += 56;
+	TEST_ASSERT_TRUE(test_memory_is_aligned(mem, 8));
+	TEST_ASSERT_FALSE(test_memory_is_aligned(mem, 16));
+
+	// simulate a second allocation
+	mem += 80;
+	TEST_ASSERT_TRUE(test_memory_is_aligned(mem, 8));
+	TEST_ASSERT_FALSE(test_memory_is_aligned(mem, 16));
+
+	// align memory to 16-byte boundary.
+	mem = (unsigned char*)memory_force_alignment(mem, 16);
+	TEST_ASSERT_TRUE(test_memory_is_aligned(mem, 16));
+}
+
+UNITTEST(memory_alignment)
+{
+	const size_t size = sizeof(AlignedStructTest);
+	TEST_ASSERT_EQUALS(size, 48);
+
+	const size_t alignment = alignof(AlignedStructTest);
+	TEST_ASSERT_EQUALS(alignment, 16);
+
+	// allocate the test struct and ensure its alignment.
+	Allocator allocator = memory_allocator_default();
+	AlignedStructTest* value = MEMORY2_NEW(&allocator, MEMORY_ZONE_DEFAULT, AlignedStructTest);
+	TEST_ASSERT_TRUE(test_memory_is_aligned(value, 16));
+	memset(value, 0, sizeof(AlignedStructTest));
+	value->two[0] = 0.25f;
+	value->two[1] = 0.35f;
+	value->two[2] = 0.45f;
+	value->two[3] = 0.55f;
+	MEMORY2_DELETE(&allocator, value);
+}
+
+UNITTEST(memory)
+{
+
+
+
+
+	//Allocator sa = memory_allocator_default();
+	//TestDevice* test = create_device(&sa);
+	//test->index = 0;
+	//destroy_device(&sa, test);
+#if 0
+	Allocator s2 = memory_allocator_default();
+	TestDevice* items = MEMORY2_NEW_ARRAY(&s2, MEMORY_ZONE_DEFAULT, TestDevice, 64);
+	MEMORY2_DELETE_ARRAY(&s2, items);
+
+
+	int* items2 = MEMORY2_NEW_ARRAY(&s2, MEMORY_ZONE_DEFAULT, int, 8);
+	for (size_t index = 0; index < 8; ++index)
+	{
+		items2[index] = (index * 2);
+	}
+	MEMORY2_DELETE_ARRAY(&s2, items2);
+
+	{
+		char mem[64];
+		Allocator ln = memory_allocator_linear(mem, 64);
+		int* ptr = MEMORY2_NEW_ARRAY(&ln, MEMORY_ZONE_DEFAULT, int, 8);
+		for (size_t index = 0; index < 8; ++index)
+		{
+			ptr[index] = (index * 2);
+		}
+	}
+
+	TEST_ASSERT(1, sanity);
+#endif
+}
+
+#if 0
 // ---------------------------------------------------------------------
 // StackString
 // ---------------------------------------------------------------------
@@ -753,58 +867,11 @@ UNITTEST(util)
 }
 #endif
 
-using namespace gemini;
-
-struct TestDevice
-{
-	size_t index;
-};
-
-
-TestDevice* create_device(Allocator* allocator)
-{
-	TestDevice* device = MEMORY2_NEW(allocator, MEMORY_ZONE_DEFAULT, TestDevice);
-	return device;
-}
-
-void destroy_device(Allocator* allocator, TestDevice* device)
-{
-	MEMORY2_DELETE(allocator, device);
-}
-
-
 
 int main(int, char**)
 {
 	gemini::core_startup();
-	//unittest::UnitTest::execute();
-
-	//Allocator sa = memory_allocator_default();
-	//TestDevice* test = create_device(&sa);
-	//test->index = 0;
-	//destroy_device(&sa, test);
-
-	Allocator s2 = memory_allocator_default();
-	TestDevice* items = MEMORY2_NEW_ARRAY(&s2, MEMORY_ZONE_DEFAULT, TestDevice, 64);
-	MEMORY2_DELETE_ARRAY(&s2, items);
-
-
-	int* items2 = MEMORY2_NEW_ARRAY(&s2, MEMORY_ZONE_DEFAULT, int, 8);
-	for (size_t index = 0; index < 8; ++index)
-	{
-		items2[index] = (index * 2);
-	}
-	MEMORY2_DELETE_ARRAY(&s2, items2);
-
-	char mem[64];
-	Allocator ln = memory_allocator_linear(mem, 64);
-	int* ptr = MEMORY2_NEW_ARRAY(&ln, MEMORY_ZONE_DEFAULT, int, 8);
-	for (size_t index = 0; index < 8; ++index)
-	{
-		ptr[index] = (index * 2);
-	}
-
-
+	unittest::UnitTest::execute();
 	gemini::core_shutdown();
 	return 0;
 }

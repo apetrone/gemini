@@ -38,7 +38,28 @@
 #define TEST_ASSERT(condition, name)\
 	if (!(condition))\
 	{\
-		LOGE("'%s' FAILED (line = %i)\n", #name, __LINE__);\
+		LOGE("FAILED '%s' (line = %i)\n", #name, __LINE__);\
+		unittest::UnitTest::increment_failures();\
+	}
+
+#define TEST_ASSERT_EQUALS(param1, param2)\
+	if (!(param1 == param2))\
+	{\
+		LOGE("FAILED: " #param1 " does not equal " #param2 " (line = %i)\n", __LINE__);\
+		unittest::UnitTest::increment_failures();\
+	}
+
+#define TEST_ASSERT_TRUE(condition)\
+	if (!(condition))\
+	{\
+		LOGE("FAILED: " #condition " does not evaluate to true (line = %i)\n", __LINE__);\
+		unittest::UnitTest::increment_failures();\
+	}
+
+#define TEST_ASSERT_FALSE(condition)\
+	if ((condition))\
+	{\
+		LOGE("FAILED: " #condition " does not evaluate to false (line = %i)\n", __LINE__);\
 		unittest::UnitTest::increment_failures();\
 	}
 
