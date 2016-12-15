@@ -49,10 +49,9 @@ const double MicrosecondsPerNanosecond = 1.0e-3;
 const double NanosecondsPerSecond = 1.0e9;
 const double NanosecondsPerMicrosecond = 1.0e3;
 
-#include "mem.h"
-
 // prefer the C99 types
 #include <stdint.h>
-
 #include <assert.h>
+
+#include "mem.h"
 
