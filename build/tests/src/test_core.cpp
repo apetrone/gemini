@@ -524,8 +524,6 @@ struct AlignedStructTest
 }; // AlignedStructTest
 #pragma pack(pop)
 
-
-
 TestDevice* create_device(Allocator* allocator)
 {
 	TestDevice* device = MEMORY2_NEW(allocator, MEMORY_ZONE_DEFAULT, TestDevice);
@@ -579,12 +577,30 @@ UNITTEST(memory_alignment)
 	MEMORY2_DELETE(&allocator, value);
 }
 
+UNITTEST(memory_static)
+{
+	// reserve static memory for 1 test device.
+	StaticMemory<TestDevice, 1> device_memory;
+	Allocator linear_allocator = memory_allocator_linear(device_memory.memory, device_memory.size);
+	TestDevice* test0 = MEMORY2_NEW(&linear_allocator, MEMORY_ZONE_DEFAULT, TestDevice);
+	TEST_ASSERT_TRUE(test0 != nullptr);
+	test0->index = 72;
+	TEST_ASSERT_EQUALS(test0->index, 72);
+
+	// reserve static memory for 32 test devices.
+	StaticMemory<TestDevice, 32> array_device_memory;
+	Allocator array_linear_allocator = memory_allocator_linear(array_device_memory.memory, array_device_memory.size);
+	TestDevice* devices = MEMORY2_NEW_ARRAY(&array_linear_allocator, MEMORY_ZONE_DEFAULT, TestDevice, 32);
+	TEST_ASSERT_TRUE(devices != nullptr);
+	for (size_t index = 0; index < 32; ++index)
+	{
+		devices[index].index = 100 - index;
+	}
+	TEST_ASSERT_EQUALS(devices[31].index, 69);
+}
+
 UNITTEST(memory)
 {
-
-
-
-
 	//Allocator sa = memory_allocator_default();
 	//TestDevice* test = create_device(&sa);
 	//test->index = 0;
