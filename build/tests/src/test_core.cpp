@@ -563,7 +563,7 @@ UNITTEST(memory)
 	MEMORY2_DELETE(&sa, one);
 	MEMORY2_DELETE(&sa, three);
 
-#if 0
+#if 1
 	Allocator s2 = memory_allocator_default();
 	TestDevice* items = MEMORY2_NEW_ARRAY(&s2, MEMORY_ZONE_DEFAULT, TestDevice, 64);
 	MEMORY2_DELETE_ARRAY(&s2, items);
@@ -576,15 +576,17 @@ UNITTEST(memory)
 	}
 	MEMORY2_DELETE_ARRAY(&s2, items2);
 
+#if 0
 	{
-		char mem[64];
-		Allocator ln = memory_allocator_linear(mem, 64);
+		char mem[1024];
+		Allocator ln = memory_allocator_linear(mem, 1024);
 		int* ptr = MEMORY2_NEW_ARRAY(&ln, MEMORY_ZONE_DEFAULT, int, 8);
 		for (size_t index = 0; index < 8; ++index)
 		{
 			ptr[index] = (index * 2);
 		}
 	}
+#endif
 
 	TEST_ASSERT(1, sanity);
 #endif
