@@ -166,6 +166,32 @@ namespace core
 			return ::strstr(s1, s2);
 		} // strstr
 
+		intptr_t find_last_slash(const char* cstring)
+		{
+			// check backslash and forward slash
+			const char* pos = strrchr(cstring, '\\'); // look for backward slash
+
+			if (pos)
+				return pos - cstring;
+
+			pos = strrchr(cstring, '/'); // look for fwd slash
+
+			return pos - cstring;
+		} // find_last_slash
+
+		const char* basename(const char* cstring)
+		{
+			// return the basename of a filepath. (just the filename)
+			// this replicates the behavior in python
+			intptr_t last_index = find_last_slash(cstring);
+			if (last_index != -1)
+			{
+				return cstring + last_index + 1;
+			}
+
+			return cstring;
+		} // basename
+
 		std::vector<std::string> split(const std::string& input, const std::string& substring)
 		{
 			std::vector<std::string> elements;

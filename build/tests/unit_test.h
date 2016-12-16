@@ -35,6 +35,10 @@
 	static unittest::UnitTest _unittest_##name(#name, _unittest_##name##_execute);\
 	void _unittest_##name##_execute()
 
+#define UNITTEST_EXECUTE(name)\
+	void _unittest_##name##_execute();\
+	_unittest_##name##_execute();
+
 #define TEST_ASSERT(condition, name)\
 	if (!(condition))\
 	{\

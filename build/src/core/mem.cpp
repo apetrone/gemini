@@ -25,6 +25,7 @@
 #include "mem.h"
 
 #include <core/logging.h>
+#include <core/str.h>
 
 #ifndef memset
 	#include <string.h>
@@ -39,6 +40,55 @@ namespace gemini
 		return _tracking_stats;
 	} // memory_zone_tracking_stats
 
+	void memory_leak_report()
+	{
+		// Now we try to iterate over zone stats.
+		ZoneStats* stats = memory_zone_tracking_stats();
+		for (size_t index = 0; index < MEMORY_ZONE_MAX; ++index)
+		{
+			const ZoneStats& zone_stat = stats[index];
+			if (zone_stat.active_allocations > 0)
+			{
+				const char* zone_name = memory_zone_name(static_cast<MemoryZone>(index));
+				LOGV("[memory] LEAK REPORT zone '%s' (%i)...\n", zone_name, index);
+				LOGV("\t* total_allocations = %lu, total_bytes = %lu\n",
+					(unsigned long)zone_stat.total_allocations,
+					(unsigned long)zone_stat.total_bytes);
+
+				// could use %zu on C99, but fallback to %lu and casts for C89.
+				LOGV("\t* active allocations = %lu, active_bytes = %lu, high_watermark = %lu\n",
+					(unsigned long)zone_stat.active_allocations,
+					(unsigned long)zone_stat.active_bytes,
+					(unsigned long)zone_stat.high_watermark
+				);
+
+				LOGV("\t* smallest_allocation = %lu, largest_allocation = %lu\n",
+					(unsigned long)zone_stat.smallest_allocation,
+					(unsigned long)zone_stat.largest_allocation);
+
+#if defined(DEBUG_MEMORY)
+				MemoryDebugHeader* debug = zone_stat.tail;
+				while (debug)
+				{
+					unsigned char* block = reinterpret_cast<unsigned char*>(debug);
+					MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(block + sizeof(MemoryDebugHeader));
+					LOGV("\t%s(%i): MEMORY LEAK allocation_id = %i, requested_size = %i, actual_size = %i\n",
+						debug->filename,
+						debug->line,
+						debug->allocation_index,
+						zone_header->requested_size,
+						zone_header->allocation_size);
+					debug = debug->next;
+				}
+#endif
+			}
+
+			// if you hit this, there may be a memory leak!
+			assert(zone_stat.active_allocations == 0 && zone_stat.active_bytes == 0);
+		}
+	} // memory_leak_report
+
+
 	void* memory_force_alignment(void* mem, uint32_t alignment)
 	{
 		unsigned char* block = static_cast<unsigned char*>(mem);
@@ -49,49 +99,136 @@ namespace gemini
 		return reinterpret_cast<void*>(((size_t)(block + one_minus_alignment)) & ~one_minus_alignment);
 	} // memory_force_alignment
 
+	bool memory_is_aligned(void* mem, uint32_t alignment)
+	{
+		return ((unsigned int)mem & (alignment - 1)) == 0;
+	} // memory_is_aligned
+
 	void memory_zone_install_stats(ZoneStats* other)
 	{
 		_tracking_stats = other;
 	} // memory_zone_install_stats
 
-	void memory_zone_track(MemoryZone zone, size_t bytes)
+	void memory_zone_track(MemoryZoneHeader* header)
 	{
-		ZoneStats& stats = _tracking_stats[zone];
+		assert(_tracking_stats);
+		ZoneStats& stats = _tracking_stats[header->zone];
 
 		stats.active_allocations++;
-		stats.active_bytes += bytes;
+		stats.active_bytes += header->allocation_size;
 
 		stats.total_allocations++;
-		stats.total_bytes += bytes;
+		stats.total_bytes += header->allocation_size;
 	} // memory_zone_track
 
-	void memory_zone_untrack(MemoryZone zone, size_t bytes)
+	void memory_zone_untrack(MemoryZoneHeader* header)
 	{
-		ZoneStats& stats = _tracking_stats[zone];
+		assert(_tracking_stats);
+		ZoneStats& stats = _tracking_stats[header->zone];
+
 		stats.active_allocations--;
-		stats.active_bytes -= bytes;
+		stats.active_bytes -= header->allocation_size;
 	} // memory_zone_untrack
+
+	const char* memory_zone_name(MemoryZone zone)
+	{
+		switch (zone)
+		{
+			case MEMORY_ZONE_DEFAULT:	return "default";
+			case MEMORY_ZONE_PLATFORM:	return "platform";
+			case MEMORY_ZONE_AUDIO:		return "audio";
+			case MEMORY_ZONE_RENDERER:	return "renderer";
+			default:					return "default";
+		}
+	} // memory_zone_name
 
 	// ---------------------------------------------------------------------
 	// common allocation functions
 	// ---------------------------------------------------------------------
 #if defined(DEBUG_MEMORY)
-	void* memory_allocate(Allocator* allocator, size_t bytes, size_t alignment, const char* filename, int line)
+	void* memory_allocate(Allocator* allocator, MemoryZone zone, size_t bytes, size_t alignment, const char* filename, int line)
 	{
-		//const size_t required_size = (bytes + sizeof(MemoryDebugHeader));
+		const size_t required_size = (bytes + sizeof(MemoryZoneHeader) + sizeof(MemoryDebugHeader));
+		void* memory = allocator->allocate(allocator, required_size, alignment);
 
-		void* memory = allocator->allocate(allocator, bytes, alignment);
-		//LOGV("[+] %p %i @ %i | '%s':%i\n", memory, bytes, alignment, filename, line);
+		ZoneStats* stats = memory_zone_tracking_stats();
+		ZoneStats& target_stat = stats[zone];
+
+		unsigned char* block = reinterpret_cast<unsigned char*>(memory);
+		MemoryDebugHeader* debug = reinterpret_cast<MemoryDebugHeader*>(memory);
+		memset(debug, 0, sizeof(MemoryDebugHeader));
+		debug->alignment = alignment;
+		debug->allocation_index = stats->total_allocations;
+		debug->filename = filename;
+		debug->line = line;
+		debug->next = nullptr;
+		debug->prev = nullptr;
+
+		// insert the debug header into the list
+		if (target_stat.tail != nullptr)
+		{
+			debug->next = target_stat.tail;
+			target_stat.tail->prev = debug;
+			target_stat.tail = debug;
+		}
+		else
+		{
+			target_stat.tail = debug;
+		}
+
+		// populate debug header.
+		memory = block + sizeof(MemoryDebugHeader);
+
+		MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(memory);
+		zone_header->zone = zone;
+		zone_header->requested_size = bytes;
+		zone_header->allocation_size = required_size;
+		memory_zone_track(zone_header);
+
+		// populate zone header
+		memory = block + sizeof(MemoryDebugHeader) + sizeof(MemoryZoneHeader);
+
+		// If you hit this assert, memory is not properly aligned to 'alignment'.
+		assert(memory_is_aligned(memory, alignment));
+
 		return memory;
-	}
+	} // memory_allocate
+
 
 	void memory_deallocate(Allocator* allocator, void* pointer, const char* filename, int line)
 	{
-		allocator->deallocate(allocator, pointer);
-		//LOGV("[-] %p | '%s':%i\n", pointer, filename, line);
-	}
+		unsigned char* memory = reinterpret_cast<unsigned char*>(pointer);
+
+		memory -= sizeof(MemoryZoneHeader);
+		MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(memory);
+		memory_zone_untrack(zone_header);
+
+		memory -= sizeof(MemoryDebugHeader);
+		MemoryDebugHeader* debug = reinterpret_cast<MemoryDebugHeader*>(memory);
+
+		ZoneStats* stats = memory_zone_tracking_stats();
+		ZoneStats& target_stat = stats[zone_header->zone];
+
+		// remove debug header from the linked list.
+		MemoryDebugHeader* next = debug->next;
+		if (debug->prev)
+		{
+			debug->prev->next = next;
+		}
+		if (next)
+		{
+			next->prev = debug->prev;
+		}
+
+		if (target_stat.tail == debug)
+		{
+			target_stat.tail = next;
+		}
+
+		allocator->deallocate(allocator, memory);
+	} // memory_deallocate
 #else
-	void* memory_allocate(Allocator* allocator, size_t bytes, size_t alignment)
+	void* memory_allocate(Allocator* allocator, MemoryZone /*zone*/, size_t bytes, size_t alignment)
 	{
 		return allocator->allocate(allocator, bytes, alignment);
 	}
@@ -175,22 +312,28 @@ namespace core
 
 		gemini::StaticMemory<Zone> global_zone_memory;
 
+		gemini::StaticMemory<gemini::ZoneStats, gemini::MEMORY_ZONE_MAX> zone_stat_memory;
+
 		void startup()
 		{
+			static_assert(sizeof(gemini::MemoryZoneHeader) == 16, "MemoryZoneHeader padding is incorrect.");
+
+			// create zone tracking stats
+			gemini::ZoneStats* zone_stats = memory_static_allocate(zone_stat_memory);
+			memset(zone_stats, 0, zone_stat_memory.size);
+			gemini::memory_zone_install_stats(zone_stats);
+
 			// If you hit this assert, there's a double memory startup
 			assert(_global_zone == nullptr && _global_allocator == nullptr);
 			_global_zone = memory_static_allocate(global_zone_memory, "global");
 			static GlobalAllocatorType global_allocator_instance(_global_zone);
 			_global_allocator = &global_allocator_instance;
-
-			// create zone tracking stats
-			using namespace gemini;
-			gemini::Allocator allocator = gemini::memory_allocator_default();
-			ZoneStats* zone_stats = MEMORY2_NEW_ARRAY(&allocator, MEMORY_ZONE_DEFAULT, ZoneStats, MEMORY_ZONE_MAX);
 		}
 
 		void shutdown()
 		{
+			gemini::memory_leak_report();
+
 			// If you hit this assert, there's a double memory shutdown
 			assert(_global_zone && _global_allocator);
 

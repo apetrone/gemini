@@ -502,16 +502,11 @@ UNITTEST(mathlib)
 // ---------------------------------------------------------------------
 // memory
 // ---------------------------------------------------------------------
-bool test_memory_is_aligned(void* mem, uint32_t alignment)
-{
-	return ((unsigned int)mem & (alignment - 1)) == 0;
-}
-
-
 struct TestDevice
 {
 	size_t index;
-};
+}; // TestDevice
+
 
 struct TestStruct
 {
@@ -539,87 +534,35 @@ struct AlignedStructTest
 }; // AlignedStructTest
 #pragma pack(pop)
 
-TestDevice* create_device(Allocator* allocator)
-{
-	TestDevice* device = MEMORY2_NEW(allocator, MEMORY_ZONE_DEFAULT, TestDevice);
-	return device;
-}
-
-void destroy_device(Allocator* allocator, TestDevice* device)
-{
-	MEMORY2_DELETE(allocator, device);
-}
-
-UNITTEST(memory_arithmetic)
-{
-	unsigned char* mem = (unsigned char*)0x800;
-
-	// start off aligned to an 8-byte boundary.
-	TEST_ASSERT_TRUE(test_memory_is_aligned(mem, 8));
-
-	// simulate allocation and pointer increment.
-	mem += 56;
-	TEST_ASSERT_TRUE(test_memory_is_aligned(mem, 8));
-	TEST_ASSERT_FALSE(test_memory_is_aligned(mem, 16));
-
-	// simulate a second allocation
-	mem += 80;
-	TEST_ASSERT_TRUE(test_memory_is_aligned(mem, 8));
-	TEST_ASSERT_FALSE(test_memory_is_aligned(mem, 16));
-
-	// align memory to 16-byte boundary.
-	mem = (unsigned char*)memory_force_alignment(mem, 16);
-	TEST_ASSERT_TRUE(test_memory_is_aligned(mem, 16));
-}
-
-UNITTEST(memory_alignment)
-{
-	const size_t size = sizeof(AlignedStructTest);
-	TEST_ASSERT_EQUALS(size, 48);
-
-	const size_t alignment = alignof(AlignedStructTest);
-	TEST_ASSERT_EQUALS(alignment, 16);
-
-	// allocate the test struct and ensure its alignment.
-	Allocator allocator = memory_allocator_default();
-	AlignedStructTest* value = MEMORY2_NEW(&allocator, MEMORY_ZONE_DEFAULT, AlignedStructTest);
-	TEST_ASSERT_TRUE(test_memory_is_aligned(value, 16));
-	memset(value, 0, sizeof(AlignedStructTest));
-	value->two[0] = 0.25f;
-	value->two[1] = 0.35f;
-	value->two[2] = 0.45f;
-	value->two[3] = 0.55f;
-	MEMORY2_DELETE(&allocator, value);
-}
-
-
-UNITTEST(memory_static)
-{
-	// reserve static memory for 1 test device.
-	StaticMemory<TestDevice> device_memory;
-	TestDevice* test0 = memory_static_allocate(device_memory);
-	TEST_ASSERT_TRUE(test0 != nullptr);
-	test0->index = 72;
-	TEST_ASSERT_EQUALS(test0->index, 72);
-
-	StaticMemory<TestDevice> memA;
-	TestDevice* test_device = memory_static_allocate(memA);
-	TEST_ASSERT_TRUE(test_device != nullptr);
-
-	StaticMemory<TestStruct> memB;
-	TestStruct* test_value = memory_static_allocate(memB, 32, 16, 42);
-	TEST_ASSERT_TRUE(test_value != nullptr);
-	TEST_ASSERT_EQUALS(test_value->a, 32);
-	TEST_ASSERT_EQUALS(test_value->b, 16);
-	TEST_ASSERT_EQUALS(test_value->c, 42);
-}
 
 UNITTEST(memory)
 {
-	//Allocator sa = memory_allocator_default();
-	//TestDevice* test = create_device(&sa);
-	//test->index = 0;
-	//destroy_device(&sa, test);
+	// 1. Sequential Allocation and Deallocation
+	Allocator sa = memory_allocator_default();
+	TestDevice* test = MEMORY2_NEW(&sa, MEMORY_ZONE_DEFAULT, TestDevice);
+	TEST_ASSERT_TRUE(test != nullptr);
+
+	test->index = 42;
+	TEST_ASSERT_EQUALS(test->index, 42);
+
+	MEMORY2_DELETE(&sa, test);
+	test = nullptr;
+
+
+	// 2. Allocate three items and delete from the middle.
+	TestDevice* one = MEMORY2_NEW(&sa, MEMORY_ZONE_DEFAULT, TestDevice);
+	one->index = 1;
+
+	TestDevice* two = MEMORY2_NEW(&sa, MEMORY_ZONE_DEFAULT, TestDevice);
+	two->index = 2;
+
+	TestDevice* three = MEMORY2_NEW(&sa, MEMORY_ZONE_DEFAULT, TestDevice);
+	three->index = 3;
+
+	MEMORY2_DELETE(&sa, two);
+	MEMORY2_DELETE(&sa, one);
+	MEMORY2_DELETE(&sa, three);
+
 #if 0
 	Allocator s2 = memory_allocator_default();
 	TestDevice* items = MEMORY2_NEW_ARRAY(&s2, MEMORY_ZONE_DEFAULT, TestDevice, 64);
@@ -646,6 +589,73 @@ UNITTEST(memory)
 	TEST_ASSERT(1, sanity);
 #endif
 }
+
+
+UNITTEST(memory_alignment)
+{
+	const size_t size = sizeof(AlignedStructTest);
+	TEST_ASSERT_EQUALS(size, 48);
+
+	const size_t alignment = alignof(AlignedStructTest);
+	TEST_ASSERT_EQUALS(alignment, 16);
+
+	// allocate the test struct and ensure its alignment.
+	Allocator allocator = memory_allocator_default();
+	AlignedStructTest* value = MEMORY2_NEW(&allocator, MEMORY_ZONE_DEFAULT, AlignedStructTest);
+	TEST_ASSERT_TRUE(memory_is_aligned(value, 16));
+	memset(value, 0, sizeof(AlignedStructTest));
+	value->two[0] = 0.25f;
+	value->two[1] = 0.35f;
+	value->two[2] = 0.45f;
+	value->two[3] = 0.55f;
+	MEMORY2_DELETE(&allocator, value);
+}
+
+
+UNITTEST(memory_arithmetic)
+{
+	unsigned char* mem = (unsigned char*)0x800;
+
+	// start off aligned to an 8-byte boundary.
+	TEST_ASSERT_TRUE(memory_is_aligned(mem, 8));
+
+	// simulate allocation and pointer increment.
+	mem += 56;
+	TEST_ASSERT_TRUE(memory_is_aligned(mem, 8));
+	TEST_ASSERT_FALSE(memory_is_aligned(mem, 16));
+
+	// simulate a second allocation
+	mem += 80;
+	TEST_ASSERT_TRUE(memory_is_aligned(mem, 8));
+	TEST_ASSERT_FALSE(memory_is_aligned(mem, 16));
+
+	// align memory to 16-byte boundary.
+	mem = (unsigned char*)memory_force_alignment(mem, 16);
+	TEST_ASSERT_TRUE(memory_is_aligned(mem, 16));
+}
+
+
+UNITTEST(memory_static)
+{
+	// reserve static memory for 1 test device.
+	StaticMemory<TestDevice> device_memory;
+	TestDevice* test0 = memory_static_allocate(device_memory);
+	TEST_ASSERT_TRUE(test0 != nullptr);
+	test0->index = 72;
+	TEST_ASSERT_EQUALS(test0->index, 72);
+
+	StaticMemory<TestDevice> memA;
+	TestDevice* test_device = memory_static_allocate(memA);
+	TEST_ASSERT_TRUE(test_device != nullptr);
+
+	StaticMemory<TestStruct> memB;
+	TestStruct* test_value = memory_static_allocate(memB, 32, 16, 42);
+	TEST_ASSERT_TRUE(test_value != nullptr);
+	TEST_ASSERT_EQUALS(test_value->a, 32);
+	TEST_ASSERT_EQUALS(test_value->b, 16);
+	TEST_ASSERT_EQUALS(test_value->c, 42);
+}
+
 
 #if 0
 // ---------------------------------------------------------------------
@@ -902,7 +912,9 @@ UNITTEST(util)
 int main(int, char**)
 {
 	gemini::core_startup();
-	unittest::UnitTest::execute();
+	UNITTEST_EXECUTE(memory);
+
+	//unittest::UnitTest::execute();
 	gemini::core_shutdown();
 	return 0;
 }
