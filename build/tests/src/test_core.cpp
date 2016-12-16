@@ -52,7 +52,6 @@ using namespace core::util;
 
 using namespace gemini;
 
-#if 0
 // ---------------------------------------------------------------------
 // ArgumentParser
 // ---------------------------------------------------------------------
@@ -497,8 +496,6 @@ UNITTEST(mathlib)
 }
 
 
-
-#endif
 // ---------------------------------------------------------------------
 // memory
 // ---------------------------------------------------------------------
@@ -659,7 +656,6 @@ UNITTEST(memory_static)
 }
 
 
-#if 0
 // ---------------------------------------------------------------------
 // StackString
 // ---------------------------------------------------------------------
@@ -908,15 +904,12 @@ UNITTEST(util)
 	value = util::random_range(0.0f, 1.0f);
 	TEST_ASSERT(0.0f <= value && value <= 1.0f, random_range4);
 }
-#endif
 
 
 int main(int, char**)
 {
 	gemini::core_startup();
-	UNITTEST_EXECUTE(memory);
-
-	//unittest::UnitTest::execute();
+	unittest::UnitTest::execute();
 	gemini::core_shutdown();
 	return 0;
 }
