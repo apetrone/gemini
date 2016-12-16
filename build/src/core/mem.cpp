@@ -179,7 +179,7 @@ namespace core
 		{
 			// If you hit this assert, there's a double memory startup
 			assert(_global_zone == nullptr && _global_allocator == nullptr);
-			_global_zone = new (global_zone_memory.memory) Zone("global");
+			_global_zone = memory_static_allocate(global_zone_memory, "global");
 			static GlobalAllocatorType global_allocator_instance(_global_zone);
 			_global_allocator = &global_allocator_instance;
 

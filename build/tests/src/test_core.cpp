@@ -508,11 +508,26 @@ bool test_memory_is_aligned(void* mem, uint32_t alignment)
 }
 
 
-
 struct TestDevice
 {
 	size_t index;
 };
+
+struct TestStruct
+{
+	TestStruct(int alpha, int beta, int gamma = 0)
+	{
+		a = alpha;
+		b = beta;
+		c = gamma;
+	}
+
+	size_t index;
+	int a;
+	int b;
+	int c;
+}; // TestStruct
+
 
 #pragma pack(push, 16)
 PLATFORM_ALIGN(16)
@@ -577,26 +592,26 @@ UNITTEST(memory_alignment)
 	MEMORY2_DELETE(&allocator, value);
 }
 
+
 UNITTEST(memory_static)
 {
 	// reserve static memory for 1 test device.
-	StaticMemory<TestDevice, 1> device_memory;
-	Allocator linear_allocator = memory_allocator_linear(device_memory.memory, device_memory.size);
-	TestDevice* test0 = MEMORY2_NEW(&linear_allocator, MEMORY_ZONE_DEFAULT, TestDevice);
+	StaticMemory<TestDevice> device_memory;
+	TestDevice* test0 = memory_static_allocate(device_memory);
 	TEST_ASSERT_TRUE(test0 != nullptr);
 	test0->index = 72;
 	TEST_ASSERT_EQUALS(test0->index, 72);
 
-	// reserve static memory for 32 test devices.
-	StaticMemory<TestDevice, 32> array_device_memory;
-	Allocator array_linear_allocator = memory_allocator_linear(array_device_memory.memory, array_device_memory.size);
-	TestDevice* devices = MEMORY2_NEW_ARRAY(&array_linear_allocator, MEMORY_ZONE_DEFAULT, TestDevice, 32);
-	TEST_ASSERT_TRUE(devices != nullptr);
-	for (size_t index = 0; index < 32; ++index)
-	{
-		devices[index].index = 100 - index;
-	}
-	TEST_ASSERT_EQUALS(devices[31].index, 69);
+	StaticMemory<TestDevice> memA;
+	TestDevice* test_device = memory_static_allocate(memA);
+	TEST_ASSERT_TRUE(test_device != nullptr);
+
+	StaticMemory<TestStruct> memB;
+	TestStruct* test_value = memory_static_allocate(memB, 32, 16, 42);
+	TEST_ASSERT_TRUE(test_value != nullptr);
+	TEST_ASSERT_EQUALS(test_value->a, 32);
+	TEST_ASSERT_EQUALS(test_value->b, 16);
+	TEST_ASSERT_EQUALS(test_value->c, 42);
 }
 
 UNITTEST(memory)

@@ -41,8 +41,7 @@ namespace gemini
 	platform::Result core_startup()
 	{
 		// create an instance of the log system
-		Allocator log_allocator = memory_allocator_linear(log_system_data.memory, log_system_data.size);
-		core::logging::ILog* log_system = MEMORY2_NEW(&log_allocator, MEMORY_ZONE_DEFAULT, core::logging::LogInterface);
+		core::logging::ILog* log_system = memory_static_allocate(log_system_data);
 		core::logging::set_instance(log_system);
 
 		core::memory::startup();

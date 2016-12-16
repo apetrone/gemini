@@ -97,6 +97,8 @@ namespace gemini
 	// * Be able to toggle between debug/release versions of allocator.
 	// * Specify different allocation strategies
 	// * Specify a tagged category for allocations
+	// * Allow static memory to be "allocated" as part of an allocator?
+	// * Track allocations and detect leaks.
 
 	enum AllocatorType
 	{
@@ -155,20 +157,28 @@ namespace gemini
 #pragma pack(pop)
 #endif
 
-	template <class T, size_t count = 1>
+	// The static memory reserved by this class is not supposed to be
+	// placed into an allocator.
+
+	// Allocate memory from this with MEMORY2_STATIC_NEW.
+	template <class T>
 	struct StaticMemory
 	{
-		enum
-		{
-#if defined(DEBUG_MEMORY)
-			size = (sizeof(T) * count) + sizeof(MemoryDebugHeader)
-#else
-			size = (sizeof(T) * count)
-#endif
-		};
+		unsigned char memory[sizeof(T)];
+	}; // StaticMemory
 
-		unsigned char memory[size];
-	};
+	// Allocator functions used with StaticMemory
+	template <class T>
+	T* memory_static_allocate(StaticMemory<T>& mem)
+	{
+		return new (mem.memory) T;
+	} // memory_static_allocate
+
+	template <class T, class ... Types>
+	T* memory_static_allocate(StaticMemory<T>& mem, Types && ... tail)
+	{
+		return new (mem.memory) T(tail ...);
+	} // memory_static_allocate
 
 	struct ZoneStats
 	{
@@ -203,8 +213,6 @@ namespace gemini
 	// Allocator factory functions
 	Allocator memory_allocator_default();
 	Allocator memory_allocator_linear(void* memory, size_t memory_size);
-
-
 
 #if defined(DEBUG_MEMORY)
 	#define MEMORY2_ALLOC(allocator, zone, bytes) gemini::memory_allocate(allocator, bytes, alignof(void*), __FILE__, __LINE__)
