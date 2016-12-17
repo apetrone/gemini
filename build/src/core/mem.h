@@ -94,11 +94,12 @@ namespace gemini
 	// Anything that deletes memory should accept an allocator.
 	// Any container should be able to accept an allocator.
 
-	// * Be able to toggle between debug/release versions of allocator.
-	// * Specify different allocation strategies
-	// * Specify a tagged category for allocations
-	// * Allow static memory to be "allocated" as part of an allocator?
-	// * Track allocations and detect leaks.
+	// * Debug memory tracking should be a compile flag.
+	// * Leak detection that aids in resolution.
+	// * Different allocation strategies can be specified with the same interface.
+	// * All memory should be tracked via zones. This is helpful to monitor
+	//	 memory statistics for an application.
+	// * Only OS allocations should be debug tracked and reported as leaks.
 
 	enum AllocatorType
 	{
@@ -248,6 +249,7 @@ namespace gemini
 	void memory_zone_track(MemoryZone zone, size_t allocation_size);
 	void memory_zone_untrack(MemoryZone zone, size_t allocation_size);
 	const char* memory_zone_name(MemoryZone zone);
+	MemoryZoneHeader* memory_zone_header_from_pointer(void* pointer);
 
 	// Allocator factory functions
 	Allocator memory_allocator_default();
@@ -327,10 +329,10 @@ namespace gemini
 		size_t total_size = sizeof(_Type) * array_size + (sizeof(size_t) + sizeof(size_t));
 
 #if defined(DEBUG_MEMORY)
-		void* mem = memory_allocate(allocator, zone, total_size, alignof(void*), filename, line);
+		void* mem = memory_allocate(zone, total_size, alignof(void*), filename, line);
 		assert(mem != nullptr);
 #else
-		void* mem = memory_allocate(allocator, zone, total_size, alignof(void*));
+		void* mem = memory_allocate(zone, total_size, alignof(void*));
 #endif
 		size_t* block = reinterpret_cast<size_t*>(mem);
 		*block = array_size;
@@ -387,9 +389,9 @@ namespace gemini
 
 			// deallocate the block
 #if defined(DEBUG_MEMORY)
-			memory_deallocate(allocator, block, filename, line);
+			memory_deallocate(block, filename, line);
 #else
-			memory_deallocate(allocator, block);
+			memory_deallocate(block);
 #endif
 		}
 	} // memory_array_deallocate
