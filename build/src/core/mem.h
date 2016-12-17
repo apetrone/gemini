@@ -159,9 +159,17 @@ namespace gemini
 
 	struct PLATFORM_ALIGN(16) MemoryZoneHeader
 	{
+		// target zone to which this allocation belongs
 		MemoryZone zone;
+
+		// total allocation size in bytes
+		// (includes zone header and optional debug header)
 		uint32_t allocation_size;
+
+		// requested allocation size in bytes
 		uint32_t requested_size;
+
+		// alignment offset in bytes (preceding this zone header)
 		uint32_t alignment_offset;
 	}; // MemoryZoneHeader
 

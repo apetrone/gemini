@@ -154,7 +154,6 @@ namespace gemini
 		// across boundaries.
 		void* pointer_size = reinterpret_cast<void*>(required_size);
 		pointer_size = memory_force_alignment(pointer_size, alignment);
-
 		uint32_t alignment_offset = (size_t)pointer_size - (size_t)required_size;
 
 		void* memory = allocator->allocate(allocator, required_size, alignment);
@@ -196,9 +195,6 @@ namespace gemini
 
 		// populate zone header
 		memory = block + sizeof(MemoryDebugHeader) + alignment_offset + sizeof(MemoryZoneHeader);
-
-		// If you hit this assert, memory is not properly aligned to 'alignment'.
-		// assert(memory_is_aligned(memory, alignment));
 
 		return memory;
 	} // memory_allocate
