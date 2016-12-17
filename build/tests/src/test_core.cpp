@@ -599,7 +599,9 @@ UNITTEST(memory_alignment)
 
 	// allocate the test struct and ensure its alignment.
 	Allocator allocator = memory_allocator_default();
+	LOGV("trying to allocate to alignment of %i\n", alignof(AlignedStructTest));
 	AlignedStructTest* value = MEMORY2_NEW(&allocator, MEMORY_ZONE_DEFAULT, AlignedStructTest);
+	LOGV("value is %p\n", value);
 	TEST_ASSERT_TRUE(memory_is_aligned(value, 16));
 	memset(value, 0, sizeof(AlignedStructTest));
 	value->two[0] = 0.25f;

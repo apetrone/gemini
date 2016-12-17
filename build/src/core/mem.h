@@ -162,7 +162,7 @@ namespace gemini
 		MemoryZone zone;
 		uint32_t allocation_size;
 		uint32_t requested_size;
-		uint32_t padding;
+		uint32_t alignment_offset;
 	}; // MemoryZoneHeader
 
 	// The static memory reserved by this class is not supposed to be

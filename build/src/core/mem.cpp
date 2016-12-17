@@ -149,6 +149,14 @@ namespace gemini
 	void* memory_allocate(Allocator* allocator, MemoryZone zone, size_t bytes, size_t alignment, const char* filename, int line)
 	{
 		const size_t required_size = (bytes + sizeof(MemoryZoneHeader) + sizeof(MemoryDebugHeader));
+
+		// compute alignment offset if the required size would spill
+		// across boundaries.
+		void* pointer_size = reinterpret_cast<void*>(required_size);
+		pointer_size = memory_force_alignment(pointer_size, alignment);
+
+		uint32_t alignment_offset = (size_t)pointer_size - (size_t)required_size;
+
 		void* memory = allocator->allocate(allocator, required_size, alignment);
 
 		ZoneStats* stats = memory_zone_tracking_stats();
@@ -177,19 +185,20 @@ namespace gemini
 		}
 
 		// populate debug header.
-		memory = block + sizeof(MemoryDebugHeader);
+		memory = block + sizeof(MemoryDebugHeader) + alignment_offset;
 
 		MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(memory);
 		zone_header->zone = zone;
 		zone_header->requested_size = bytes;
 		zone_header->allocation_size = required_size;
+		zone_header->alignment_offset = alignment_offset;
 		memory_zone_track(zone_header);
 
 		// populate zone header
-		memory = block + sizeof(MemoryDebugHeader) + sizeof(MemoryZoneHeader);
+		memory = block + sizeof(MemoryDebugHeader) + alignment_offset + sizeof(MemoryZoneHeader);
 
 		// If you hit this assert, memory is not properly aligned to 'alignment'.
-		assert(memory_is_aligned(memory, alignment));
+		// assert(memory_is_aligned(memory, alignment));
 
 		return memory;
 	} // memory_allocate
@@ -202,6 +211,8 @@ namespace gemini
 		memory -= sizeof(MemoryZoneHeader);
 		MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(memory);
 		memory_zone_untrack(zone_header);
+
+		memory -= zone_header->alignment_offset;
 
 		memory -= sizeof(MemoryDebugHeader);
 		MemoryDebugHeader* debug = reinterpret_cast<MemoryDebugHeader*>(memory);
