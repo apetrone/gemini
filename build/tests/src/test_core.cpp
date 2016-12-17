@@ -559,45 +559,31 @@ UNITTEST(memory)
 	MEMORY2_DELETE(sa, one);
 	MEMORY2_DELETE(sa, three);
 
-#if 0
+	// 3. Test arrays
+	TestDevice* devices = MEMORY2_NEW_ARRAY(sa, MEMORY_ZONE_PLATFORM, TestDevice, 64);
+	TEST_ASSERT_TRUE(devices != nullptr);
+	MEMORY2_DELETE_ARRAY(sa, devices);
+}
+
+UNITTEST(memory_allocator_linear)
+{
+	// 1. Test linear allocator new.
+	char buffer[256];
+	Allocator linear = memory_allocator_linear(buffer, 256);
+	TestDevice* device = MEMORY2_NEW(linear, MEMORY_ZONE_DEFAULT, TestDevice);
+	TEST_ASSERT_TRUE(device != nullptr);
+	MEMORY2_DELETE(linear, device);
+
+	// 2. Test linear allocator with arrays
 	Allocator s2 = memory_allocator_default();
 	TestDevice* items = MEMORY2_NEW_ARRAY(s2, MEMORY_ZONE_DEFAULT, TestDevice, 64);
 	MEMORY2_DELETE_ARRAY(s2, items);
-
-
 	int* items2 = MEMORY2_NEW_ARRAY(s2, MEMORY_ZONE_DEFAULT, int, 8);
 	for (size_t index = 0; index < 8; ++index)
 	{
 		items2[index] = (index * 2);
 	}
 	MEMORY2_DELETE_ARRAY(s2, items2);
-
-#if 0
-	{
-		char mem[1024 * 3];
-		Allocator ln = memory_allocator_linear(mem, 1024*3);
-		int* ptr = MEMORY2_NEW_ARRAY(&ln, MEMORY_ZONE_DEFAULT, int, 8);
-		for (size_t index = 0; index < 8; ++index)
-		{
-			ptr[index] = (index * 2);
-		}
-	}
-#endif
-
-	TEST_ASSERT(1, sanity);
-#endif
-}
-
-UNITTEST(memory_allocator_linear)
-{
-	char buffer[256];
-
-	Allocator linear = memory_allocator_linear(buffer, 256);
-
-	TestDevice* device = MEMORY2_NEW(linear, MEMORY_ZONE_DEFAULT, TestDevice);
-	TEST_ASSERT_TRUE(device != nullptr);
-
-	MEMORY2_DELETE(linear, device);
 }
 
 

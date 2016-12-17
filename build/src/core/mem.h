@@ -86,7 +86,7 @@ namespace core
 #endif
 
 // TODO: replace this with ENABLE_MEMORY_TRACKING when refactor is done.
-//#define DEBUG_MEMORY 1
+#define DEBUG_MEMORY 1
 
 namespace gemini
 {
@@ -236,6 +236,9 @@ namespace gemini
 	// fetch current zone stats
 	ZoneStats* memory_zone_tracking_stats();
 
+	// Returns the amount of overhead in bytes per allocation.
+	size_t memory_per_allocation_overhead();
+
 	void memory_leak_report();
 
 	// Ensures memory is aligned to alignment.
@@ -283,18 +286,17 @@ namespace gemini
 	}
 #else
 
-#define MEMORY2_ALLOC(allocator, zone, size) allocator.allocate(allocator, zone, size, alignof(void*))
-#define MEMORY2_DEALLOC(allocator, pointer) allocator.deallocate(allocator, pointer)
+	#define MEMORY2_ALLOC(allocator, zone, size) allocator.allocate(allocator, zone, size, alignof(void*))
+	#define MEMORY2_DEALLOC(allocator, pointer) allocator.deallocate(allocator, pointer)
 
 	#define MEMORY2_NEW(allocator, zone, type) new (allocator.allocate(allocator, zone, sizeof(type), alignof(type))) type
 	#define MEMORY2_DELETE(allocator, pointer) allocator.deallocate(allocator, pointer)
 
-
 	#define MEMORY2_NEW_ARRAY(allocator, zone, type, size) gemini::memory_array_allocate< type >(allocator, zone, size)
 	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate(allocator, pointer), pointer = 0
 
-	void* memory_allocate(Allocator& allocator, MemoryZone zone, size_t bytes, size_t alignment);
-	void memory_deallocate(Allocator& allocator, void* pointer);
+	void* memory_allocate(MemoryZone zone, size_t bytes, size_t alignment);
+	void memory_deallocate(void* pointer);
 
 	template <class T>
 	void memory_destroy(Allocator& allocator, T* pointer)
