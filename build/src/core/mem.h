@@ -295,7 +295,7 @@ namespace gemini
 	#define MEMORY2_NEW_ARRAY(allocator, zone, type, size) gemini::memory_array_allocate< type >(allocator, zone, size)
 	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate(allocator, pointer), pointer = 0
 
-	void* memory_allocate(MemoryZone zone, size_t bytes, size_t alignment);
+	void* memory_allocate(MemoryZone zone, size_t requested_size, size_t alignment);
 	void memory_deallocate(void* pointer);
 
 	template <class T>

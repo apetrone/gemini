@@ -318,7 +318,7 @@ namespace gemini
 
 	void default_deallocate(Allocator& /*allocator*/, void* pointer, const char* filename, int line)
 	{
-		memory_destroy(pointer, filename, line);
+		memory_deallocate(pointer, filename, line);
 	}
 #else
 	void* default_allocate(Allocator& /*allocator*/, MemoryZone /*zone*/, size_t bytes, size_t alignment)
