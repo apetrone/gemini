@@ -86,7 +86,7 @@ namespace core
 #endif
 
 // TODO: replace this with ENABLE_MEMORY_TRACKING when refactor is done.
-#define DEBUG_MEMORY 1
+//#define DEBUG_MEMORY 1
 
 namespace gemini
 {
@@ -110,19 +110,6 @@ namespace gemini
 		ALLOCATOR_TYPE_MAX
 	}; // AllocatorType
 
-	struct Allocator
-	{
-		void* (*allocate)(Allocator* allocator, size_t bytes, size_t alignment);
-		void (*deallocate)(Allocator* allocator, void* pointer);
-
-		AllocatorType type;
-
-		size_t bytes_used;
-
-		size_t memory_size;
-		void* memory;
-	}; // Allocator
-
 	enum MemoryZone
 	{
 		// All static memory
@@ -139,6 +126,25 @@ namespace gemini
 
 		MEMORY_ZONE_MAX
 	}; // MemoryZone
+
+	struct Allocator
+	{
+#if defined(DEBUG_MEMORY)
+		void* (*allocate)(Allocator& allocator, MemoryZone zone, size_t requested_size, size_t alignment, const char* filename, int line);
+		void (*deallocate)(Allocator& allocator, void* pointer, const char* filename, int line);
+#else
+		void* (*allocate)(Allocator& allocator, MemoryZone zone, size_t requested_size, size_t alignment);
+		void (*deallocate)(Allocator& allocator, void* pointer);
+#endif
+
+		AllocatorType type;
+
+		size_t bytes_used;
+
+		size_t memory_size;
+		void* memory;
+	}; // Allocator
+
 
 #if defined(DEBUG_MEMORY)
 #pragma pack(push, 8)
@@ -239,54 +245,57 @@ namespace gemini
 
 	// share zone stats
 	void memory_zone_install_stats(ZoneStats* other);
-	void memory_zone_track(MemoryZoneHeader* header);
-	void memory_zone_untrack(MemoryZoneHeader* header);
+	void memory_zone_track(MemoryZone zone, size_t allocation_size);
+	void memory_zone_untrack(MemoryZone zone, size_t allocation_size);
 	const char* memory_zone_name(MemoryZone zone);
 
 	// Allocator factory functions
 	Allocator memory_allocator_default();
 	Allocator memory_allocator_linear(void* memory, size_t memory_size);
 
-#if defined(DEBUG_MEMORY)
-	#define MEMORY2_ALLOC(allocator, zone, bytes) gemini::memory_allocate(allocator, zone, bytes, alignof(void*), __FILE__, __LINE__)
-	#define MEMORY2_DEALLOC(allocator, pointer) gemini::memory_deallocate(allocator, pointer, __FILE__, __LINE__)
 
-	#define MEMORY2_NEW(allocator, zone, type) new (gemini::memory_allocate(allocator, zone, sizeof(type), alignof(type), __FILE__, __LINE__)) type
-	#define MEMORY2_DELETE(allocator, pointer) gemini::memory_destroy(allocator, pointer, __FILE__, __LINE__), pointer = 0
+
+#if defined(DEBUG_MEMORY)
+	#define MEMORY2_ALLOC(allocator, zone, size) allocator.allocate(allocator, zone, size, alignof(void*), __FILE__, __LINE__)
+	#define MEMORY2_DEALLOC(allocator, pointer) allocator.deallocate(allocator, pointer, __FILE__, __LINE__)
+
+	#define MEMORY2_NEW(allocator, zone, type) new (allocator.allocate(allocator, zone, sizeof(type), alignof(type), __FILE__, __LINE__)) type
+	#define MEMORY2_DELETE(allocator, pointer) allocator.deallocate(allocator, pointer, __FILE__, __LINE__)
 
 	#define MEMORY2_NEW_ARRAY(allocator, zone, type, size) gemini::memory_array_allocate< type >(allocator, zone, size, __FILE__, __LINE__)
 	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate(allocator, pointer, __FILE__, __LINE__), pointer = 0
 
-	void* memory_allocate(Allocator* allocator, MemoryZone zone, size_t bytes, size_t alignment, const char* filename, int line);
-	void memory_deallocate(Allocator* allocator, void* pointer, const char* filename, int line);
+	void* memory_allocate(MemoryZone zone, size_t requested_size, size_t alignment, const char* filename, int line);
+	void memory_deallocate(void* pointer, const char* filename, int line);
 
 	template <class T>
-	void memory_destroy(Allocator* allocator, T* pointer, const char* filename, int line)
+	void memory_destroy(T* pointer, const char* filename, int line)
 	{
 		// it is entirely legal to call delete on a null pointer,
 		// but we don't need to do anything.
 		if (pointer)
 		{
 			pointer->~T();
-			memory_deallocate(allocator, pointer, filename, line);
+			memory_deallocate(pointer, filename, line);
 		}
 	}
 #else
 
-	#define MEMORY2_ALLOC(allocator, zone, bytes) gemini::memory_allocate(allocator, zone, bytes, alignof(void*))
-	#define MEMORY2_DEALLOC(allocator, pointer) gemini::memory_deallocate(allocator, pointer)
+#define MEMORY2_ALLOC(allocator, zone, size) allocator.allocate(allocator, zone, size, alignof(void*))
+#define MEMORY2_DEALLOC(allocator, pointer) allocator.deallocate(allocator, pointer)
 
-	#define MEMORY2_NEW(allocator, zone, type) new (gemini::memory_allocate(allocator, zone, sizeof(type), alignof(type))) type
-	#define MEMORY2_DELETE(allocator, pointer) gemini::memory_destroy(allocator, pointer), pointer = 0
+	#define MEMORY2_NEW(allocator, zone, type) new (allocator.allocate(allocator, zone, sizeof(type), alignof(type))) type
+	#define MEMORY2_DELETE(allocator, pointer) allocator.deallocate(allocator, pointer)
+
 
 	#define MEMORY2_NEW_ARRAY(allocator, zone, type, size) gemini::memory_array_allocate< type >(allocator, zone, size)
 	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate(allocator, pointer), pointer = 0
 
-	void* memory_allocate(Allocator* allocator, MemoryZone zone, size_t bytes, size_t alignment);
-	void memory_deallocate(Allocator* allocator, void* pointer);
+	void* memory_allocate(Allocator& allocator, MemoryZone zone, size_t bytes, size_t alignment);
+	void memory_deallocate(Allocator& allocator, void* pointer);
 
 	template <class T>
-	void memory_destroy(Allocator* allocator, T* pointer)
+	void memory_destroy(Allocator& allocator, T* pointer)
 	{
 		// it is entirely legal to call delete on a null pointer,
 		// but we don't need to do anything.
@@ -308,9 +317,9 @@ namespace gemini
 
 	template <class _Type>
 #if defined(DEBUG_MEMORY)
-	_Type* memory_array_allocate(Allocator* allocator, MemoryZone zone, size_t array_size, const char* filename, int line)
+	_Type* memory_array_allocate(Allocator& allocator, MemoryZone zone, size_t array_size, const char* filename, int line)
 #else
-	_Type* memory_array_allocate(Allocator* allocator, MemoryZone zone, size_t array_size)
+	_Type* memory_array_allocate(Allocator& allocator, MemoryZone zone, size_t array_size)
 #endif
 	{
 		// As part of the allocation for arrays store the requested
@@ -344,9 +353,9 @@ namespace gemini
 
 	template <class _Type>
 #if defined(DEBUG_MEMORY)
-	void memory_array_deallocate(Allocator* allocator, _Type* pointer, const char* filename, int line)
+	void memory_array_deallocate(Allocator& allocator, _Type* pointer, const char* filename, int line)
 #else
-	void memory_array_deallocate(Allocator* allocator, _Type* pointer)
+	void memory_array_deallocate(Allocator& allocator, _Type* pointer)
 #endif
 	{
 		if (pointer)

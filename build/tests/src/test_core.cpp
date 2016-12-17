@@ -535,31 +535,31 @@ UNITTEST(memory)
 {
 	// 1. Sequential Allocation and Deallocation
 	Allocator sa = memory_allocator_default();
-	TestDevice* test = MEMORY2_NEW(&sa, MEMORY_ZONE_DEFAULT, TestDevice);
+	TestDevice* test = MEMORY2_NEW(sa, MEMORY_ZONE_DEFAULT, TestDevice);
 	TEST_ASSERT_TRUE(test != nullptr);
 
 	test->index = 42;
 	TEST_ASSERT_EQUALS(test->index, 42);
 
-	MEMORY2_DELETE(&sa, test);
+	MEMORY2_DELETE(sa, test);
 	test = nullptr;
 
 
 	// 2. Allocate three items and delete from the middle.
-	TestDevice* one = MEMORY2_NEW(&sa, MEMORY_ZONE_DEFAULT, TestDevice);
+	TestDevice* one = MEMORY2_NEW(sa, MEMORY_ZONE_DEFAULT, TestDevice);
 	one->index = 1;
 
-	TestDevice* two = MEMORY2_NEW(&sa, MEMORY_ZONE_DEFAULT, TestDevice);
+	TestDevice* two = MEMORY2_NEW(sa, MEMORY_ZONE_DEFAULT, TestDevice);
 	two->index = 2;
 
-	TestDevice* three = MEMORY2_NEW(&sa, MEMORY_ZONE_DEFAULT, TestDevice);
+	TestDevice* three = MEMORY2_NEW(sa, MEMORY_ZONE_DEFAULT, TestDevice);
 	three->index = 3;
 
-	MEMORY2_DELETE(&sa, two);
-	MEMORY2_DELETE(&sa, one);
-	MEMORY2_DELETE(&sa, three);
+	MEMORY2_DELETE(sa, two);
+	MEMORY2_DELETE(sa, one);
+	MEMORY2_DELETE(sa, three);
 
-#if 1
+#if 0
 	Allocator s2 = memory_allocator_default();
 	TestDevice* items = MEMORY2_NEW_ARRAY(&s2, MEMORY_ZONE_DEFAULT, TestDevice, 64);
 	MEMORY2_DELETE_ARRAY(&s2, items);
@@ -600,7 +600,7 @@ UNITTEST(memory_alignment)
 	// allocate the test struct and ensure its alignment.
 	Allocator allocator = memory_allocator_default();
 	LOGV("trying to allocate to alignment of %i\n", alignof(AlignedStructTest));
-	AlignedStructTest* value = MEMORY2_NEW(&allocator, MEMORY_ZONE_DEFAULT, AlignedStructTest);
+	AlignedStructTest* value = MEMORY2_NEW(allocator, MEMORY_ZONE_DEFAULT, AlignedStructTest);
 	LOGV("value is %p\n", value);
 	TEST_ASSERT_TRUE(memory_is_aligned(value, 16));
 	memset(value, 0, sizeof(AlignedStructTest));
@@ -608,7 +608,7 @@ UNITTEST(memory_alignment)
 	value->two[1] = 0.35f;
 	value->two[2] = 0.45f;
 	value->two[3] = 0.55f;
-	MEMORY2_DELETE(&allocator, value);
+	MEMORY2_DELETE(allocator, value);
 }
 
 

@@ -109,25 +109,25 @@ namespace gemini
 		_tracking_stats = other;
 	} // memory_zone_install_stats
 
-	void memory_zone_track(MemoryZoneHeader* header)
+	void memory_zone_track(MemoryZone zone, size_t allocation_size)
 	{
 		assert(_tracking_stats);
-		ZoneStats& stats = _tracking_stats[header->zone];
+		ZoneStats& stats = _tracking_stats[zone];
 
 		stats.active_allocations++;
-		stats.active_bytes += header->allocation_size;
+		stats.active_bytes += allocation_size;
 
 		stats.total_allocations++;
-		stats.total_bytes += header->allocation_size;
+		stats.total_bytes += allocation_size;
 	} // memory_zone_track
 
-	void memory_zone_untrack(MemoryZoneHeader* header)
+	void memory_zone_untrack(MemoryZone zone, size_t allocation_size)
 	{
 		assert(_tracking_stats);
-		ZoneStats& stats = _tracking_stats[header->zone];
+		ZoneStats& stats = _tracking_stats[zone];
 
 		stats.active_allocations--;
-		stats.active_bytes -= header->allocation_size;
+		stats.active_bytes -= allocation_size;
 	} // memory_zone_untrack
 
 	const char* memory_zone_name(MemoryZone zone)
@@ -146,17 +146,19 @@ namespace gemini
 	// common allocation functions
 	// ---------------------------------------------------------------------
 #if defined(DEBUG_MEMORY)
-	void* memory_allocate(Allocator* allocator, MemoryZone zone, size_t bytes, size_t alignment, const char* filename, int line)
+	void* memory_allocate(MemoryZone zone, size_t requested_size, size_t alignment, const char* filename, int line)
 	{
-		const size_t required_size = (bytes + sizeof(MemoryZoneHeader) + sizeof(MemoryDebugHeader));
+		// Add header sizes onto the requested size.
+		const size_t allocation_size = (requested_size + sizeof(MemoryZoneHeader) + sizeof(MemoryDebugHeader));
 
-		// compute alignment offset if the required size would spill
+		// compute alignment offset if the allocation_size would spill
 		// across boundaries.
-		void* pointer_size = reinterpret_cast<void*>(required_size);
+		void* pointer_size = reinterpret_cast<void*>(allocation_size);
 		pointer_size = memory_force_alignment(pointer_size, alignment);
-		uint32_t alignment_offset = (size_t)pointer_size - (size_t)required_size;
+		uint32_t alignment_offset = (size_t)pointer_size - (size_t)allocation_size;
 
-		void* memory = allocator->allocate(allocator, required_size, alignment);
+		// request the memory from the OS
+		void* memory = core::memory::aligned_malloc(allocation_size, alignment);
 
 		ZoneStats* stats = memory_zone_tracking_stats();
 		ZoneStats& target_stat = stats[zone];
@@ -188,10 +190,10 @@ namespace gemini
 
 		MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(memory);
 		zone_header->zone = zone;
-		zone_header->requested_size = bytes;
-		zone_header->allocation_size = required_size;
+		zone_header->requested_size = requested_size;
+		zone_header->allocation_size = allocation_size;
 		zone_header->alignment_offset = alignment_offset;
-		memory_zone_track(zone_header);
+		memory_zone_track(zone, allocation_size);
 
 		// populate zone header
 		memory = block + sizeof(MemoryDebugHeader) + alignment_offset + sizeof(MemoryZoneHeader);
@@ -200,13 +202,13 @@ namespace gemini
 	} // memory_allocate
 
 
-	void memory_deallocate(Allocator* allocator, void* pointer, const char* filename, int line)
+	void memory_deallocate(void* pointer, const char* filename, int line)
 	{
 		unsigned char* memory = reinterpret_cast<unsigned char*>(pointer);
 
 		memory -= sizeof(MemoryZoneHeader);
 		MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(memory);
-		memory_zone_untrack(zone_header);
+		memory_zone_untrack(zone_header->zone, zone_header->allocation_size);
 
 		memory -= zone_header->alignment_offset;
 
@@ -232,17 +234,17 @@ namespace gemini
 			target_stat.tail = next;
 		}
 
-		allocator->deallocate(allocator, memory);
+		core::memory::aligned_free(memory);
 	} // memory_deallocate
 #else
-	void* memory_allocate(Allocator* allocator, MemoryZone /*zone*/, size_t bytes, size_t alignment)
+	void* memory_allocate(Allocator& allocator, MemoryZone zone, size_t bytes, size_t alignment)
 	{
-		return allocator->allocate(allocator, bytes, alignment);
+		return allocator.allocate(allocator, zone, bytes, alignment);
 	}
 
-	void memory_deallocate(Allocator* allocator, void* pointer)
+	void memory_deallocate(Allocator& allocator, void* pointer)
 	{
-		allocator->deallocate(allocator, pointer);
+		allocator.deallocate(allocator, pointer);
 	}
 #endif
 
@@ -253,15 +255,27 @@ namespace gemini
 	// ---------------------------------------------------------------------
 	// default allocator: Standard operating system-level heap allocator
 	// ---------------------------------------------------------------------
-	void* default_allocate(Allocator*, size_t bytes, size_t alignment)
+#if defined(DEBUG_MEMORY)
+	void* default_allocate(Allocator& /*allocator*/, MemoryZone zone, size_t requested_size, size_t alignment, const char* filename, int line)
+	{
+		return memory_allocate(zone, requested_size, alignment, filename, line);
+	}
+
+	void default_deallocate(Allocator& /*allocator*/, void* pointer, const char* filename, int line)
+	{
+		memory_destroy(pointer, filename, line);
+	}
+#else
+	void* default_allocate(Allocator& /*allocator*/, MemoryZone zone, size_t bytes, size_t alignment)
 	{
 		return core::memory::aligned_malloc(bytes, alignment);
 	}
 
-	void default_deallocate(Allocator*, void* pointer)
+	void default_deallocate(Allocator& /*allocator*/, void* pointer)
 	{
 		core::memory::aligned_free(pointer);
 	}
+#endif
 
 	Allocator memory_allocator_default()
 	{
@@ -276,23 +290,43 @@ namespace gemini
 	// ---------------------------------------------------------------------
 	// linear allocator: Basic linear allocator
 	// ---------------------------------------------------------------------
-	void* linear_allocate(Allocator* allocator, size_t bytes, size_t /*alignment*/)
+#if defined(DEBUG_MEMORY)
+	void* linear_allocate(Allocator& allocator, MemoryZone zone, size_t bytes, size_t /*alignment*/, const char* /*filename*/, int /*line*/)
 	{
-		if (allocator->bytes_used + bytes <= allocator->memory_size)
+		if (allocator.bytes_used + bytes <= allocator.memory_size)
 		{
-			unsigned char* block = reinterpret_cast<unsigned char*>(allocator->memory) + allocator->bytes_used;
-			allocator->bytes_used += bytes;
+			unsigned char* block = reinterpret_cast<unsigned char*>(allocator.memory) + allocator.bytes_used;
+			allocator.bytes_used += bytes;
+			memory_zone_track(zone, bytes);
 			return block;
 		}
 
 		return nullptr;
 	} // linear_allocate
 
-	void linear_deallocate(Allocator* /*allocator*/, void* /*pointer*/)
+	void linear_deallocate(Allocator& /*allocator*/, void* /*pointer*/, const char* /*filename*/, int /*line*/)
 	{
 		// no-op
 	}
+#else
+	void* linear_allocate(Allocator& allocator, MemoryZone zone, size_t bytes, size_t /*alignment*/)
+	{
+		if (allocator.bytes_used + bytes <= allocator.memory_size)
+		{
+			unsigned char* block = reinterpret_cast<unsigned char*>(allocator.memory) + allocator.bytes_used;
+			allocator.bytes_used += bytes;
+			memory_zone_track(zone, bytes);
+			return block;
+		}
 
+		return nullptr;
+	} // linear_allocate
+
+	void linear_deallocate(Allocator& /*allocator*/, void* /*pointer*/)
+	{
+		// no-op
+	}
+#endif
 	Allocator memory_allocator_linear(void* memory, size_t memory_size)
 	{
 		Allocator allocator;
