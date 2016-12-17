@@ -156,8 +156,8 @@ namespace gemini
 #pragma pack(pop)
 #endif
 
-	PLATFORM_ALIGN(16)
-	struct MemoryZoneHeader
+
+	struct PLATFORM_ALIGN(16) MemoryZoneHeader
 	{
 		MemoryZone zone;
 		uint32_t allocation_size;
@@ -174,7 +174,6 @@ namespace gemini
 	{
 		enum
 		{
-			count = count,
 			size = sizeof(T) * count
 		};
 		unsigned char memory[size];

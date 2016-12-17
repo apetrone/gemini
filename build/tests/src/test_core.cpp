@@ -522,8 +522,7 @@ struct TestStruct
 
 
 #pragma pack(push, 16)
-PLATFORM_ALIGN(16)
-struct AlignedStructTest
+struct PLATFORM_ALIGN(16) AlignedStructTest
 {
 	float one[4];
 	float two[4];
@@ -575,8 +574,8 @@ UNITTEST(memory)
 
 #if 0
 	{
-		char mem[1024];
-		Allocator ln = memory_allocator_linear(mem, 1024);
+		char mem[1024 * 3];
+		Allocator ln = memory_allocator_linear(mem, 1024*3);
 		int* ptr = MEMORY2_NEW_ARRAY(&ln, MEMORY_ZONE_DEFAULT, int, 8);
 		for (size_t index = 0; index < 8; ++index)
 		{
