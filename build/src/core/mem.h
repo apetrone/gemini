@@ -331,11 +331,13 @@ namespace gemini
 		size_t total_size = sizeof(_Type) * array_size + (sizeof(size_t) + sizeof(size_t));
 
 #if defined(DEBUG_MEMORY)
-		void* mem = memory_allocate(zone, total_size, alignof(void*), filename, line);
+		void* mem = allocator.allocate(allocator, zone, total_size, alignof(_Type), filename, line);
 		assert(mem != nullptr);
 #else
-		void* mem = memory_allocate(zone, total_size, alignof(void*));
+		void* mem = allocator.allocate(allocator, zone, total_size, alignof(_Type));
 #endif
+		//allocator.bytes_used += total_size;
+
 		size_t* block = reinterpret_cast<size_t*>(mem);
 		*block = array_size;
 
@@ -391,9 +393,9 @@ namespace gemini
 
 			// deallocate the block
 #if defined(DEBUG_MEMORY)
-			memory_deallocate(block, filename, line);
+			allocator.deallocate(allocator, block, filename, line);
 #else
-			memory_deallocate(block);
+			allocator.deallocate(allocator, block);
 #endif
 		}
 	} // memory_array_deallocate
