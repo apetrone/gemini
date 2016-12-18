@@ -118,7 +118,7 @@ namespace gemini
 
 	bool memory_is_aligned(void* mem, uint32_t alignment)
 	{
-		return ((unsigned int)mem & (alignment - 1)) == 0;
+		return (reinterpret_cast<uintptr_t>(mem) & (alignment - 1)) == 0;
 	} // memory_is_aligned
 
 	void memory_zone_install_stats(ZoneStats* other)
@@ -555,7 +555,15 @@ namespace core
 		void* aligned_malloc(size_t bytes, size_t alignment)
 		{
 #if defined(PLATFORM_POSIX)
-			void* mem;
+			void* mem = nullptr;
+
+			// alignment must be a multiple of sizeof(void*)
+			if (alignment < sizeof(void*))
+			{
+				alignment = sizeof(void*);
+			}
+			assert(alignment / sizeof(void*) > 0);
+
 			if (0 == posix_memalign(&mem, alignment, bytes))
 			{
 				return mem;
