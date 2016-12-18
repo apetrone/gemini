@@ -980,6 +980,9 @@ Options:
 		int32_t startup_result = net_startup();
 		assert(startup_result == 0);
 
+		Allocator allocator = memory_allocator_default();
+		imocap::startup(allocator);
+
 		mocap_device = imocap::device_create();
 
 		load_rapid_interface();
@@ -1266,6 +1269,7 @@ Options:
 
 		imocap::device_destroy(mocap_device);
 		mocap_device = nullptr;
+		imocap::shutdown();
 
 		net_shutdown();
 		debugdraw::shutdown();

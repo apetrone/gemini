@@ -25,6 +25,7 @@
 
 #include <runtime/imocap.h>
 #include <core/logging.h>
+#include <core/mem.h>
 #include <platform/platform.h>
 
 using namespace platform;
@@ -33,12 +34,19 @@ namespace imocap
 {
 	bool net_listen_thread = true;
 
-	glm::quat sensors[IMOCAP_TOTAL_SENSORS];
-	glm::vec3 linear_acceleration[IMOCAP_TOTAL_SENSORS];
-	glm::vec3 gravity[IMOCAP_TOTAL_SENSORS];
-
 	net_socket data_socket;
 	platform::Thread* sensor_thread_handle;
+	MocapDevice* _current_device = nullptr;
+	gemini::Allocator _allocator;
+
+	void startup(gemini::Allocator allocator)
+	{
+		_allocator = allocator;
+	}
+
+	void shutdown()
+	{
+	}
 
 	// Returns true if timeout_msec has passed since target_msec.
 	// If true, sets target_msec to millis().
@@ -142,7 +150,7 @@ namespace imocap
 					if (current_state == STATE_STREAMING)
 					{
 						imocap_packet_t* packet = reinterpret_cast<imocap_packet_t*>(buffer);
-						if (imocap_packet_is_valid(packet))
+						if (imocap_packet_is_valid(packet) && _current_device)
 						{
 							for (size_t index = 0; index < IMOCAP_TOTAL_SENSORS; ++index)
 							{
@@ -163,7 +171,7 @@ namespace imocap
 									z = (((int16_t)buffer[7]) << 8) | ((int16_t)buffer[6]);
 									w = (((int16_t)buffer[1]) << 8) | ((int16_t)buffer[0]);
 
-									sensors[index] = glm::quat(w * QUANTIZE, x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
+									_current_device->sensors[index] = glm::quat(w * QUANTIZE, x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
 									buffer += 8;
 								}
 
@@ -173,7 +181,7 @@ namespace imocap
 									int16_t y = (((int16_t)buffer[3]) << 8) | ((int16_t)buffer[2]);
 									int16_t z = (((int16_t)buffer[5]) << 8) | ((int16_t)buffer[4]);
 
-									linear_acceleration[index] = glm::vec3(x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
+									_current_device->linear_acceleration[index] = glm::vec3(x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
 									buffer += 6;
 								}
 
@@ -183,7 +191,7 @@ namespace imocap
 									int16_t y = (((int16_t)buffer[3]) << 8) | ((int16_t)buffer[2]);
 									int16_t z = (((int16_t)buffer[5]) << 8) | ((int16_t)buffer[4]);
 
-									gravity[index] = glm::vec3(x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
+									_current_device->gravity[index] = glm::vec3(x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
 									buffer += 6;
 								}
 								//LOGV("q[%i]: %2.2f, %2.2f, %2.2f, %2.2f\n", index, q.x, q.y, q.z, q.w);
@@ -269,7 +277,7 @@ namespace imocap
 	{
 		for (size_t index = 0; index < IMOCAP_TOTAL_SENSORS; ++index)
 		{
-			device->zeroed_orientations[index] = transform_sensor_rotation(sensors[index]);
+			device->zeroed_orientations[index] = transform_sensor_rotation(device->sensors[index]);
 
 			device->zeroed_accelerations[index] = device_sensor_linear_acceleration(device, index);
 		}
@@ -277,27 +285,27 @@ namespace imocap
 
 	glm::quat device_sensor_orientation(MocapDevice* device, size_t sensor_index)
 	{
-		return transform_sensor_rotation(sensors[sensor_index]);
+		return transform_sensor_rotation(device->sensors[sensor_index]);
 	}
 
 	glm::quat device_sensor_local_orientation(MocapDevice* device, size_t sensor_index)
 	{
-		return glm::inverse(device->zeroed_orientations[sensor_index]) * transform_sensor_rotation(sensors[sensor_index]);
+		return glm::inverse(device->zeroed_orientations[sensor_index]) * transform_sensor_rotation(device->sensors[sensor_index]);
 	}
 
 	glm::vec3 device_sensor_linear_acceleration(MocapDevice* device, size_t sensor_index)
 	{
-		return linear_acceleration[sensor_index];
+		return device->linear_acceleration[sensor_index];
 	}
 
 	glm::vec3 device_sensor_local_acceleration(MocapDevice* device, size_t sensor_index)
 	{
-		return linear_acceleration[sensor_index] - device->zeroed_accelerations[sensor_index];
+		return device->linear_acceleration[sensor_index] - device->zeroed_accelerations[sensor_index];
 	}
 
 	glm::vec3 device_sensor_gravity(MocapDevice* device, size_t sensor_index)
 	{
-		return gravity[sensor_index];
+		return device->gravity[sensor_index];
 	}
 
 	MocapDevice* device_create()
@@ -318,13 +326,18 @@ namespace imocap
 		net_listen_thread = true;
 		sensor_thread_handle = platform::thread_create(sensor_thread, &data_socket);
 
-		return new MocapDevice();
+		assert(_current_device == nullptr);
+
+		MocapDevice* device = MEMORY2_NEW(_allocator, gemini::MEMORY_ZONE_PLATFORM, MocapDevice);
+		_current_device = device;
+
+		return device;
 	} // device_create
 
 	void device_destroy(MocapDevice* device)
 	{
-
-		delete device;
+		MEMORY2_DELETE(_allocator, device);
+		_current_device = nullptr;
 		net_listen_thread = false;
 		platform::thread_join(sensor_thread_handle, 1000);
 		platform::thread_destroy(sensor_thread_handle);

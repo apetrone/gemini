@@ -26,9 +26,12 @@
 
 #include <core/typedefs.h>
 #include <core/mathlib.h>
+#include <core/mem.h>
+
 #include <platform/platform.h>
 
 #include "imocap_packet.h"
+
 
 namespace imocap
 {
@@ -36,6 +39,10 @@ namespace imocap
 	{
 		glm::quat zeroed_orientations[IMOCAP_TOTAL_SENSORS];
 		glm::vec3 zeroed_accelerations[IMOCAP_TOTAL_SENSORS];
+
+		glm::quat sensors[IMOCAP_TOTAL_SENSORS];
+		glm::vec3 linear_acceleration[IMOCAP_TOTAL_SENSORS];
+		glm::vec3 gravity[IMOCAP_TOTAL_SENSORS];
 	};
 
 	struct mocap_frame_t
@@ -43,6 +50,10 @@ namespace imocap
 		uint32_t frame_index;
 		glm::quat poses[IMOCAP_TOTAL_SENSORS];
 	};
+
+
+	void startup(gemini::Allocator allocator);
+	void shutdown();
 
 	// Returns true if timeout_msec has passed since target_msec.
 	// If true, sets target_msec to millis().

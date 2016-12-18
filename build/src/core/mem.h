@@ -141,7 +141,6 @@ namespace gemini
 		AllocatorType type;
 
 		size_t bytes_used;
-
 		size_t memory_size;
 		void* memory;
 	}; // Allocator
@@ -336,8 +335,6 @@ namespace gemini
 #else
 		void* mem = allocator.allocate(allocator, zone, total_size, alignof(_Type));
 #endif
-		//allocator.bytes_used += total_size;
-
 		size_t* block = reinterpret_cast<size_t*>(mem);
 		*block = array_size;
 
