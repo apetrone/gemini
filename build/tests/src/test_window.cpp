@@ -24,22 +24,22 @@
 // -------------------------------------------------------------
 
 #include <renderer/debug_draw.h>
-#include <renderer/renderer.h>
 #include <renderer/font.h>
-#include <runtime/runtime.h>
+#include <renderer/renderer.h>
 
-#include <core/logging.h>
+#include <runtime/filesystem.h>
+#include <runtime/runtime.h>
 
 #include <platform/platform.h>
 #include <platform/window.h>
 #include <platform/kernel.h>
 #include <platform/input.h>
 
+#include <core/argumentparser.h>
+#include <core/logging.h>
 #include <core/hashset.h>
 #include <core/stackstring.h>
 #include <core/fixedarray.h>
-
-#include <runtime/filesystem.h>
 
 using namespace platform;
 using namespace renderer;
@@ -62,6 +62,9 @@ private:
 	glm::mat4 projection_matrix;
 
 	font::Handle font;
+
+	gemini::Allocator render_allocator;
+	gemini::Allocator font_allocator;
 
 	struct MyVertex
 	{
@@ -149,7 +152,55 @@ public:
 
 	virtual kernel::Error startup()
 	{
-		gemini::runtime_startup("arcfusion.net/test_window");
+		// parse command line values
+		std::vector<std::string> arguments;
+		core::argparse::ArgumentParser parser;
+		core::StackString<MAX_PATH_SIZE> content_path;
+
+		gemini::runtime_load_arguments(arguments, parser);
+
+		core::argparse::VariableMap vm;
+		const char* docstring = R"(
+Usage:
+	--assets=<content_path>
+
+Options:
+	-h, --help  Show this help screen
+	--version  Display the version number
+	--assets=<content_path>  The path to load content from
+	)";
+		if (parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
+		{
+			std::string path = vm["--assets"];
+			content_path = platform::make_absolute_path(path.c_str());
+		}
+		else
+		{
+			return kernel::CoreFailed;
+		}
+		std::function<void(const char*)> custom_path_setup = [&](const char* application_data_path)
+		{
+			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
+			platform::PathString root_path = platform::get_program_directory();
+
+			// the root path is the current binary path
+			filesystem->root_directory(root_path);
+
+			// the content directory is where we'll find our assets
+			filesystem->content_directory(content_path);
+
+			// load engine settings (from content path)
+			//load_config(config);
+
+			// the application path can be specified in the config (per-game basis)
+			//const platform::PathString application_path = platform::get_user_application_directory(config.application_directory.c_str());
+			filesystem->user_application_directory(application_data_path);
+		};
+
+
+
+
+		gemini::runtime_startup("arcfusion.net/test_window", custom_path_setup);
 
 
 		// create a platform window
@@ -201,7 +252,8 @@ public:
 		// initialize the renderer
 		{
 			using namespace render2;
-			RenderParameters params;
+			render_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_RENDERER);
+			RenderParameters params(render_allocator);
 
 			// set some options
 			params["vsync"] = "true";
@@ -236,7 +288,7 @@ public:
 			LOGV("vertexcolor - create_input_layout\n");
 			desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
 			LOGV("vertexcolor - create_pipeline\n");
-			pipeline = device->create_pipeline(desc);
+			pipeline = device->create_pipeline(render_allocator, desc);
 			LOGV("vertexcolor shader loaded OK\n");
 
 			size_t total_bytes = sizeof(MyVertex) * 6;
@@ -285,7 +337,8 @@ public:
 		}
 
 		LOGV("font startup...\n");
-		font::startup(device);
+		font_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+		font::startup(font_allocator, device);
 
 		Array<unsigned char> data;
 		LOGV("load fonts/debug.ttf\n");

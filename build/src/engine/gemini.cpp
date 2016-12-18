@@ -928,6 +928,8 @@ private:
 
 	//::renderer::VertexStream alt_vs;
 
+	gemini::Allocator renderer_allocator;
+
 	::renderer::StandaloneResourceCache* resource_cache;
 
 	// used by debug draw
@@ -935,6 +937,10 @@ private:
 
 	assets::Sound* test_sound;
 	audio::SoundHandle_t background_music;
+
+
+	gemini::Allocator animation_allocator;
+	gemini::Allocator gui_allocator;
 
 	void open_gamelibrary()
 	{
@@ -1134,13 +1140,15 @@ public:
 	}
 
 
-	void setup_gui(render2::Device* device, uint32_t width, uint32_t height)
+	void setup_gui(render2::Device* device, gemini::Allocator& renderer_allocator, uint32_t width, uint32_t height)
 	{
+		gui_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
 
-		resource_cache = MEMORY_NEW(::renderer::StandaloneResourceCache, core::memory::global_allocator());
+		resource_cache = MEMORY_NEW(::renderer::StandaloneResourceCache, core::memory::global_allocator())(renderer_allocator);
 
-		gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(*resource_cache);
+		gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(gui_allocator, *resource_cache);
 		gui_renderer->set_device(device);
 
 		compositor = new gui::Compositor(width, height, resource_cache, gui_renderer);
@@ -1293,6 +1301,7 @@ Options:
 		main_window = platform::window::create(window_params);
 		platform::window::focus(main_window);
 
+		renderer_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
 
 		// initialize rendering subsystems
 		{
@@ -1344,9 +1353,10 @@ Options:
 		assets::Sound* canond = gemini::assets::sounds()->load_from_path("sounds/canond");
 		//background_music = audio::play_sound(canond, 0);
 
+		animation_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 
 		gemini::physics::startup();
-		animation::startup();
+		animation::startup(animation_allocator);
 
 		if (config.enable_asset_reloading)
 		{
@@ -1366,7 +1376,7 @@ Options:
 		gemini::engine::set_instance(engine_interface);
 
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
-		setup_gui(device, frame.width, frame.height);
+		setup_gui(device, renderer_allocator, frame.width, frame.height);
 
 		open_gamelibrary();
 

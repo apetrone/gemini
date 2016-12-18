@@ -408,33 +408,32 @@ UNITTEST(FixedSizeQueue)
 // ---------------------------------------------------------------------
 UNITTEST(HashSet)
 {
-	HashSet<std::string, int> dict;
+	Allocator default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+	HashSet<std::string, int> dict(default_allocator);
 	dict["first"] = 1;
-	TEST_ASSERT(dict.size() == 1, operator_insert);
+	TEST_ASSERT_EQUALS(dict.size(), 1);
 	dict["second"] = 2;
 	dict["third"] = 3;
 	dict["fourth"] = 4;
 
-	TEST_ASSERT(dict.size() == 4, size);
+	TEST_ASSERT_EQUALS(dict.size(), 4);
 
-	TEST_ASSERT(dict.has_key("third"), has_key);
+	TEST_ASSERT_TRUE(dict.has_key("third"));
 
 	dict.insert(std::pair<std::string, int>("fifth", 5));
-	TEST_ASSERT(dict.size() == 5, insert);
+	TEST_ASSERT_EQUALS(dict.size(), 5);
 
 	dict.clear();
-	TEST_ASSERT(dict.size() == 0, clear);
+	TEST_ASSERT_EQUALS(dict.size(), 0);
 
-
-	HashSet<std::string, void*> custom_capacity(4096);
-	TEST_ASSERT(custom_capacity.capacity() == 4096, capacity);
+	HashSet<std::string, void*> custom_capacity(default_allocator, 4096);
+	TEST_ASSERT_EQUALS(custom_capacity.capacity(), 4096);
 
 	int second = dict.get("second");
-	TEST_ASSERT(second == 2, get);
-
+	TEST_ASSERT_EQUALS(2, second);
 
 	bool has_two = false;
-	HashSet<int, int> repop_test(5);
+	HashSet<int, int> repop_test(default_allocator, 5);
 	repop_test[0] = 0;
 	repop_test[1] = 1;
 	repop_test[2] = 2;
@@ -444,14 +443,10 @@ UNITTEST(HashSet)
 	repop_test[4] = 4;
 	has_two = repop_test.has_key(2);
 
-
-	// test using another allocator
-	HashSet<int, int, core::util::hash<int>, core::memory::GlobalAllocatorType> test(32, 2, core::memory::global_allocator());
-
+	HashSet<int, int, core::util::hash<int>> test(default_allocator, 32, 2);
 	test.insert(HashSet<int, int>::value_type(30, 72));
-
 	int z = test[30];
-	TEST_ASSERT(z == 72, hash_with_global_allocator);
+	TEST_ASSERT_EQUALS(z, 72);
 }
 
 
@@ -534,8 +529,8 @@ struct PLATFORM_ALIGN(16) AlignedStructTest
 UNITTEST(memory)
 {
 	// 1. Sequential Allocation and Deallocation
-	Allocator sa = memory_allocator_default();
-	TestDevice* test = MEMORY2_NEW(sa, MEMORY_ZONE_DEFAULT, TestDevice);
+	Allocator sa = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+	TestDevice* test = MEMORY2_NEW(sa, TestDevice);
 	TEST_ASSERT_TRUE(test != nullptr);
 
 	test->index = 42;
@@ -546,13 +541,13 @@ UNITTEST(memory)
 
 
 	// 2. Allocate three items and delete from the middle.
-	TestDevice* one = MEMORY2_NEW(sa, MEMORY_ZONE_DEFAULT, TestDevice);
+	TestDevice* one = MEMORY2_NEW(sa, TestDevice);
 	one->index = 1;
 
-	TestDevice* two = MEMORY2_NEW(sa, MEMORY_ZONE_DEFAULT, TestDevice);
+	TestDevice* two = MEMORY2_NEW(sa, TestDevice);
 	two->index = 2;
 
-	TestDevice* three = MEMORY2_NEW(sa, MEMORY_ZONE_DEFAULT, TestDevice);
+	TestDevice* three = MEMORY2_NEW(sa, TestDevice);
 	three->index = 3;
 
 	MEMORY2_DELETE(sa, two);
@@ -560,7 +555,7 @@ UNITTEST(memory)
 	MEMORY2_DELETE(sa, three);
 
 	// 3. Test arrays
-	TestDevice* devices = MEMORY2_NEW_ARRAY(sa, MEMORY_ZONE_PLATFORM, TestDevice, 64);
+	TestDevice* devices = MEMORY2_NEW_ARRAY(sa, TestDevice, 64);
 	TEST_ASSERT_TRUE(devices != nullptr);
 	MEMORY2_DELETE_ARRAY(sa, devices);
 }
@@ -569,16 +564,16 @@ UNITTEST(memory_allocator_linear)
 {
 	// 1. Test linear allocator new.
 	char buffer[256];
-	Allocator linear = memory_allocator_linear(buffer, 256);
-	TestDevice* device = MEMORY2_NEW(linear, MEMORY_ZONE_DEFAULT, TestDevice);
+	Allocator linear = memory_allocator_linear(MEMORY_ZONE_DEFAULT, buffer, 256);
+	TestDevice* device = MEMORY2_NEW(linear, TestDevice);
 	TEST_ASSERT_TRUE(device != nullptr);
 	MEMORY2_DELETE(linear, device);
 
 	// 2. Test linear allocator with arrays
-	Allocator s2 = memory_allocator_default();
-	TestDevice* items = MEMORY2_NEW_ARRAY(s2, MEMORY_ZONE_DEFAULT, TestDevice, 64);
+	Allocator s2 = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+	TestDevice* items = MEMORY2_NEW_ARRAY(s2, TestDevice, 64);
 	MEMORY2_DELETE_ARRAY(s2, items);
-	int* items2 = MEMORY2_NEW_ARRAY(s2, MEMORY_ZONE_DEFAULT, int, 8);
+	int* items2 = MEMORY2_NEW_ARRAY(s2, int, 8);
 	for (size_t index = 0; index < 8; ++index)
 	{
 		items2[index] = (index * 2);
@@ -596,9 +591,9 @@ UNITTEST(memory_alignment)
 	TEST_ASSERT_EQUALS(alignment, 16);
 
 	// allocate the test struct and ensure its alignment.
-	Allocator allocator = memory_allocator_default();
+	Allocator allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 	LOGV("trying to allocate to alignment of %i\n", alignof(AlignedStructTest));
-	AlignedStructTest* value = MEMORY2_NEW(allocator, MEMORY_ZONE_DEFAULT, AlignedStructTest);
+	AlignedStructTest* value = MEMORY2_NEW(allocator, AlignedStructTest);
 	LOGV("value is %p\n", value);
 	TEST_ASSERT_TRUE(memory_is_aligned(value, 16));
 	memset(value, 0, sizeof(AlignedStructTest));

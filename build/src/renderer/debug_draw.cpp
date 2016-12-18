@@ -22,6 +22,8 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#include <core/mem.h>
+
 #include <renderer/debug_draw.h>
 #include <renderer/renderer.h>
 #include <renderer/vertexstream.h>
@@ -160,8 +162,10 @@ namespace debugdraw
 		class PrimitiveCache
 		{
 		public:
-			PrimitiveCache()
+			PrimitiveCache(gemini::Allocator& allocator)
 				: next_primitive(0)
+				//, per_frame_primitives(allocator)
+				//, persistent_primitives(allocator)
 			{
 				persistent_primitives.resize(
 					DEBUGDRAW_PERSISTENT_PRIMITIVE_MAX);
@@ -239,6 +243,8 @@ namespace debugdraw
 
 	const size_t MAX_CIRCLE_SIDES = 12;
 	const size_t TOTAL_CIRCLE_VERTICES = 2 * MAX_CIRCLE_SIDES;
+
+	gemini::Allocator* _allocator = nullptr;
 
 	detail::PrimitiveCache* line_list = nullptr;
 	detail::PrimitiveCache* tris_list = nullptr;
@@ -604,11 +610,12 @@ namespace debugdraw
 		vertices[2].color = primitive->color;
 	} // buffer_triangle
 
-	void startup(render2::Device* render_device)
+	void startup(gemini::Allocator& allocator, render2::Device* render_device)
 	{
-		line_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator());
-		tris_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator());
-		text_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator());
+		_allocator = &allocator;
+		line_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator())(allocator);
+		tris_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator())(allocator);
+		text_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator())(allocator);
 
 		device = render_device;
 
@@ -634,7 +641,7 @@ namespace debugdraw
 			descriptor.blend_source = render2::BlendOp::SourceAlpha;
 			descriptor.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 			descriptor.primitive_type = render2::PrimitiveType::Lines;
-			line_pipeline = device->create_pipeline(descriptor);
+			line_pipeline = device->create_pipeline(allocator, descriptor);
 		}
 
 		// triangle pipeline
@@ -649,7 +656,7 @@ namespace debugdraw
 			descriptor.blend_source = render2::BlendOp::SourceAlpha;
 			descriptor.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 			descriptor.primitive_type = render2::PrimitiveType::Triangles;
-			tris_pipeline = device->create_pipeline(descriptor);
+			tris_pipeline = device->create_pipeline(allocator, descriptor);
 
 			render2::Image white_image;
 			white_image.create(4, 4, 3);
@@ -671,7 +678,7 @@ namespace debugdraw
 			descriptor.blend_source = render2::BlendOp::SourceAlpha;
 			descriptor.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 			descriptor.primitive_type = render2::PrimitiveType::Triangles;
-			text_pipeline = device->create_pipeline(descriptor);
+			text_pipeline = device->create_pipeline(allocator, descriptor);
 		}
 	}
 
@@ -718,6 +725,8 @@ namespace debugdraw
 		MEMORY_DELETE(line_list, core::memory::global_allocator());
 		MEMORY_DELETE(tris_list, core::memory::global_allocator());
 		MEMORY_DELETE(text_list, core::memory::global_allocator());
+
+		_allocator = nullptr;
 	}
 
 	void update(float delta_msec)
@@ -1185,6 +1194,7 @@ namespace debugdraw
 			primitive->end = extents;
 			primitive->transform = glm::mat4(orientation);
 			primitive->timeleft = duration;
+			primitive->color = color;
 		}
 	} // oriented box
 } // namespace debugdraw

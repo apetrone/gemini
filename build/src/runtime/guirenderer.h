@@ -81,8 +81,9 @@ namespace render2
 class GUIRenderer : public gui::Renderer
 {
 public:
-	GUIRenderer(CommonResourceCache& cache)
-		: device(nullptr)
+	GUIRenderer(gemini::Allocator& guiallocator, CommonResourceCache& cache)
+		: allocator(guiallocator)
+		, device(nullptr)
 		, vertex_buffer(nullptr)
 		, gui_pipeline(nullptr)
 		, font_pipeline(nullptr)
@@ -119,6 +120,7 @@ private:
 	gui::Compositor* compositor;
 	float current_depth;
 
+	gemini::Allocator& allocator;
 	render2::Device* device;
 	render2::Buffer* vertex_buffer;
 	render2::Pipeline* gui_pipeline;

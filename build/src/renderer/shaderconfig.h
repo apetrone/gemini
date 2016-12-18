@@ -26,13 +26,18 @@
 
 #include "shaderprogram.h"
 
+namespace gemini
+{
+	struct Allocator;
+} // namespace gemini
+
 namespace renderer
 {
 //	struct ShaderProgram;
 
 	namespace shader_config
 	{
-		void startup();
+		void startup(gemini::Allocator& allocator);
 		void shutdown();
 
 		void load_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program);

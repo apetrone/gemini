@@ -125,20 +125,26 @@ namespace gemini
 		// Memory allocated by the renderer
 		MEMORY_ZONE_RENDERER,
 
+		// gui subsystem
+		MEMORY_ZONE_GUI,
+
 		MEMORY_ZONE_MAX
 	}; // MemoryZone
 
 	struct Allocator
 	{
 #if defined(DEBUG_MEMORY)
-		void* (*allocate)(Allocator& allocator, MemoryZone zone, size_t requested_size, size_t alignment, const char* filename, int line);
+		void* (*allocate)(Allocator& allocator, size_t requested_size, size_t alignment, const char* filename, int line);
 		void (*deallocate)(Allocator& allocator, void* pointer, const char* filename, int line);
 #else
-		void* (*allocate)(Allocator& allocator, MemoryZone zone, size_t requested_size, size_t alignment);
+		void* (*allocate)(Allocator& allocator, size_t requested_size, size_t alignment);
 		void (*deallocate)(Allocator& allocator, void* pointer);
 #endif
-
+		// internal allocator type
 		AllocatorType type;
+
+		// zone from which any allocations from this allocator will be tagged
+		MemoryZone zone;
 
 		size_t bytes_used;
 		size_t memory_size;
@@ -254,45 +260,45 @@ namespace gemini
 	MemoryZoneHeader* memory_zone_header_from_pointer(void* pointer);
 
 	// Allocator factory functions
-	Allocator memory_allocator_default();
-	Allocator memory_allocator_linear(void* memory, size_t memory_size);
+	Allocator memory_allocator_default(MemoryZone zone);
+	Allocator memory_allocator_linear(MemoryZone zone, void* memory, size_t memory_size);
 
 
 
 #if defined(DEBUG_MEMORY)
-	#define MEMORY2_ALLOC(allocator, zone, size) allocator.allocate(allocator, zone, size, alignof(void*), __FILE__, __LINE__)
-	#define MEMORY2_DEALLOC(allocator, pointer) allocator.deallocate(allocator, pointer, __FILE__, __LINE__)
+	#define MEMORY2_ALLOC(allocator, size) (allocator).allocate((allocator), size, alignof(void*), __FILE__, __LINE__)
+	#define MEMORY2_DEALLOC(allocator, pointer) (allocator).deallocate((allocator), pointer, __FILE__, __LINE__)
 
-	#define MEMORY2_NEW(allocator, zone, type) new (allocator.allocate(allocator, zone, sizeof(type), alignof(type), __FILE__, __LINE__)) type
-	#define MEMORY2_DELETE(allocator, pointer) allocator.deallocate(allocator, pointer, __FILE__, __LINE__)
+	#define MEMORY2_NEW(allocator, type) new ((allocator).allocate((allocator), sizeof(type), alignof(type), __FILE__, __LINE__)) type
+	#define MEMORY2_DELETE(allocator, pointer) memory_destroy((allocator), pointer, __FILE__, __LINE__)
 
-	#define MEMORY2_NEW_ARRAY(allocator, zone, type, size) gemini::memory_array_allocate< type >(allocator, zone, size, __FILE__, __LINE__)
-	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate(allocator, pointer, __FILE__, __LINE__), pointer = 0
+	#define MEMORY2_NEW_ARRAY(allocator, type, size) gemini::memory_array_allocate< type >((allocator), size, __FILE__, __LINE__)
+	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate((allocator), pointer, __FILE__, __LINE__), pointer = 0
 
 	void* memory_allocate(MemoryZone zone, size_t requested_size, size_t alignment, const char* filename, int line);
 	void memory_deallocate(void* pointer, const char* filename, int line);
 
 	template <class T>
-	void memory_destroy(T* pointer, const char* filename, int line)
+	void memory_destroy(Allocator& allocator, T* pointer, const char* filename, int line)
 	{
 		// it is entirely legal to call delete on a null pointer,
 		// but we don't need to do anything.
 		if (pointer)
 		{
 			pointer->~T();
-			memory_deallocate(pointer, filename, line);
+			allocator.deallocate(allocator, pointer, filename, line);
 		}
 	}
 #else
 
-	#define MEMORY2_ALLOC(allocator, zone, size) allocator.allocate(allocator, zone, size, alignof(void*))
-	#define MEMORY2_DEALLOC(allocator, pointer) allocator.deallocate(allocator, pointer)
+	#define MEMORY2_ALLOC(allocator, size) (allocator).allocate((allocator), size, alignof(void*))
+	#define MEMORY2_DEALLOC(allocator, pointer) (allocator).deallocate((allocator), pointer)
 
-	#define MEMORY2_NEW(allocator, zone, type) new (allocator.allocate(allocator, zone, sizeof(type), alignof(type))) type
-	#define MEMORY2_DELETE(allocator, pointer) allocator.deallocate(allocator, pointer)
+	#define MEMORY2_NEW(allocator, type) new ((allocator).allocate((allocator), sizeof(type), alignof(type))) type
+	#define MEMORY2_DELETE(allocator, pointer) (allocator).deallocate((allocator), pointer)
 
-	#define MEMORY2_NEW_ARRAY(allocator, zone, type, size) gemini::memory_array_allocate< type >(allocator, zone, size)
-	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate(allocator, pointer), pointer = 0
+	#define MEMORY2_NEW_ARRAY(allocator, type, size) gemini::memory_array_allocate< type >((allocator), size)
+	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate((allocator), pointer), pointer = 0
 
 	void* memory_allocate(MemoryZone zone, size_t requested_size, size_t alignment);
 	void memory_deallocate(void* pointer);
@@ -305,7 +311,7 @@ namespace gemini
 		if (pointer)
 		{
 			pointer->~T();
-			memory_deallocate(allocator, pointer);
+			allocator.deallocate(allocator, pointer);
 		}
 	} // memory_destroy
 #endif
@@ -320,9 +326,9 @@ namespace gemini
 
 	template <class _Type>
 #if defined(DEBUG_MEMORY)
-	_Type* memory_array_allocate(Allocator& allocator, MemoryZone zone, size_t array_size, const char* filename, int line)
+	_Type* memory_array_allocate(Allocator& allocator, size_t array_size, const char* filename, int line)
 #else
-	_Type* memory_array_allocate(Allocator& allocator, MemoryZone zone, size_t array_size)
+	_Type* memory_array_allocate(Allocator& allocator, size_t array_size)
 #endif
 	{
 		// As part of the allocation for arrays store the requested
@@ -330,10 +336,10 @@ namespace gemini
 		size_t total_size = sizeof(_Type) * array_size + (sizeof(size_t) + sizeof(size_t));
 
 #if defined(DEBUG_MEMORY)
-		void* mem = allocator.allocate(allocator, zone, total_size, alignof(_Type), filename, line);
+		void* mem = allocator.allocate(allocator, total_size, alignof(_Type), filename, line);
 		assert(mem != nullptr);
 #else
-		void* mem = allocator.allocate(allocator, zone, total_size, alignof(_Type));
+		void* mem = allocator.allocate(allocator, total_size, alignof(_Type));
 #endif
 		size_t* block = reinterpret_cast<size_t*>(mem);
 		*block = array_size;

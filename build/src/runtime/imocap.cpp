@@ -37,15 +37,16 @@ namespace imocap
 	net_socket data_socket;
 	platform::Thread* sensor_thread_handle;
 	MocapDevice* _current_device = nullptr;
-	gemini::Allocator _allocator;
+	gemini::Allocator* _allocator = nullptr;
 
-	void startup(gemini::Allocator allocator)
+	void startup(gemini::Allocator& allocator)
 	{
-		_allocator = allocator;
+		_allocator = &allocator;
 	}
 
 	void shutdown()
 	{
+		_allocator = nullptr;
 	}
 
 	// Returns true if timeout_msec has passed since target_msec.
@@ -328,7 +329,7 @@ namespace imocap
 
 		assert(_current_device == nullptr);
 
-		MocapDevice* device = MEMORY2_NEW(_allocator, gemini::MEMORY_ZONE_PLATFORM, MocapDevice);
+		MocapDevice* device = MEMORY2_NEW((*_allocator), MocapDevice);
 		_current_device = device;
 
 		return device;
@@ -336,7 +337,7 @@ namespace imocap
 
 	void device_destroy(MocapDevice* device)
 	{
-		MEMORY2_DELETE(_allocator, device);
+		MEMORY2_DELETE((*_allocator), device);
 		_current_device = nullptr;
 		net_listen_thread = false;
 		platform::thread_join(sensor_thread_handle, 1000);

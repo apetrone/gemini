@@ -155,7 +155,8 @@ namespace gemini
 			case MEMORY_ZONE_PLATFORM:	return "platform";
 			case MEMORY_ZONE_AUDIO:		return "audio";
 			case MEMORY_ZONE_RENDERER:	return "renderer";
-			default:					return "default";
+			case MEMORY_ZONE_GUI:		return "gui";
+			default:					return "unknown";
 		}
 	} // memory_zone_name
 
@@ -192,7 +193,7 @@ namespace gemini
 		MemoryDebugHeader* debug = reinterpret_cast<MemoryDebugHeader*>(memory);
 		memset(debug, 0, sizeof(MemoryDebugHeader));
 		debug->alignment = alignment;
-		debug->allocation_index = stats->total_allocations;
+		debug->allocation_index = target_stat.total_allocations;
 		debug->filename = filename;
 		debug->line = line;
 		debug->next = nullptr;
@@ -265,7 +266,7 @@ namespace gemini
 	void* memory_allocate(MemoryZone zone, size_t requested_size, size_t alignment)
 	{
 		// Add header sizes onto the requested size.
-		const size_t allocation_size = requested_size + memory_per_allocation_overhead();
+		size_t allocation_size = requested_size + memory_per_allocation_overhead();
 
 		// compute alignment offset if the allocation_size would spill
 		// across boundaries.
@@ -311,9 +312,9 @@ namespace gemini
 	// default allocator: Standard operating system-level heap allocator
 	// ---------------------------------------------------------------------
 #if defined(DEBUG_MEMORY)
-	void* default_allocate(Allocator& /*allocator*/, MemoryZone zone, size_t requested_size, size_t alignment, const char* filename, int line)
+	void* default_allocate(Allocator& allocator, size_t requested_size, size_t alignment, const char* filename, int line)
 	{
-		return memory_allocate(zone, requested_size, alignment, filename, line);
+		return memory_allocate(allocator.zone, requested_size, alignment, filename, line);
 	}
 
 	void default_deallocate(Allocator& /*allocator*/, void* pointer, const char* filename, int line)
@@ -321,7 +322,7 @@ namespace gemini
 		memory_deallocate(pointer, filename, line);
 	}
 #else
-	void* default_allocate(Allocator& /*allocator*/, MemoryZone /*zone*/, size_t bytes, size_t alignment)
+	void* default_allocate(Allocator& /*allocator*/, size_t bytes, size_t alignment)
 	{
 		return core::memory::aligned_malloc(bytes, alignment);
 	}
@@ -332,10 +333,11 @@ namespace gemini
 	}
 #endif
 
-	Allocator memory_allocator_default()
+	Allocator memory_allocator_default(MemoryZone zone)
 	{
 		Allocator allocator;
 		memset(&allocator, 0, sizeof(Allocator));
+		allocator.zone = zone;
 		allocator.allocate = default_allocate;
 		allocator.deallocate = default_deallocate;
 		allocator.type = ALLOCATOR_SYSTEM;
@@ -384,9 +386,9 @@ namespace gemini
 	} // linear_deallocate_common
 
 #if defined(DEBUG_MEMORY)
-	void* linear_allocate(Allocator& allocator, MemoryZone zone, size_t requested_size, size_t alignment, const char* /*filename*/, int /*line*/)
+	void* linear_allocate(Allocator& allocator, size_t requested_size, size_t alignment, const char* /*filename*/, int /*line*/)
 	{
-		return linear_allocate_common(allocator, zone, requested_size, alignment);
+		return linear_allocate_common(allocator, allocator.zone, requested_size, alignment);
 	} // linear_allocate
 
 	void linear_deallocate(Allocator& /*allocator*/, void* pointer, const char* /*filename*/, int /*line*/)
@@ -395,9 +397,9 @@ namespace gemini
 	} // linear_deallocate
 
 #else
-	void* linear_allocate(Allocator& allocator, MemoryZone zone, size_t requested_size, size_t alignment)
+	void* linear_allocate(Allocator& allocator, size_t requested_size, size_t alignment)
 	{
-		return linear_allocate_common(allocator, zone, requested_size, alignment);
+		return linear_allocate_common(allocator, allocator.zone, requested_size, alignment);
 	} // linear_allocate
 
 	void linear_deallocate(Allocator& /*allocator*/, void* pointer)
@@ -406,10 +408,11 @@ namespace gemini
 	} // linear_deallocate
 #endif
 
-	Allocator memory_allocator_linear(void* memory, size_t memory_size)
+	Allocator memory_allocator_linear(MemoryZone zone, void* memory, size_t memory_size)
 	{
 		Allocator allocator;
 		memset(&allocator, 0, sizeof(Allocator));
+		allocator.zone = zone;
 		allocator.allocate = linear_allocate;
 		allocator.deallocate = linear_deallocate;
 		allocator.memory = memory;

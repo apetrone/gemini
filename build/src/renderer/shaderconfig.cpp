@@ -53,20 +53,25 @@ namespace renderer
 			Array<core::StackString<64>> preprocessor_defines;
 			HashSet<core::StackString<32>, ShaderDescriptionBlock> shaders;
 
-			void add_shader(const ShaderDescriptionBlock& shader)
+			ShaderConfiguration(gemini::Allocator& allocator)
+				: shaders(allocator)
 			{
-				shaders[shader.name] = shader;
 			}
 		};
 
 		ShaderConfiguration* _shader_config = nullptr;
 		typedef std::vector<std::string> StringVector;
 
-		void startup()
+		void add_shader(ShaderConfiguration* configuration, const ShaderDescriptionBlock& shader)
+		{
+			configuration->shaders[shader.name] = shader;
+		}
+
+		void startup(gemini::Allocator& allocator)
 		{
 			// This data is hard-coded here until this renderer is removed
 			// as it's not worth spending much time on throw-away code.
-			_shader_config = MEMORY_NEW(ShaderConfiguration, core::memory::global_allocator());
+			_shader_config = MEMORY_NEW(ShaderConfiguration, core::memory::global_allocator())(allocator);
 
 			ShaderDescriptionBlock objects("objects");
 			objects.stages.push_back("vert");
@@ -83,7 +88,7 @@ namespace renderer
 			objects.uniforms.push_back("viewer_direction");
 			objects.uniforms.push_back("viewer_position");
 			objects.uniforms.push_back("light_position");
-			_shader_config->add_shader(objects);
+			add_shader(_shader_config, objects);
 
 			ShaderDescriptionBlock animation("animation");
 			animation.stages.push_back("vert");
@@ -99,7 +104,7 @@ namespace renderer
 			animation.uniforms.push_back("node_transforms");
 			animation.uniforms.push_back("inverse_bind_transforms");
 			animation.uniforms.push_back("diffusemap");
-			_shader_config->add_shader(animation);
+			add_shader(_shader_config, animation);
 
 			_shader_config->preprocessor_defines.push_back("#extension GL_ARB_explicit_attrib_location: require");
 		} // startup

@@ -27,12 +27,11 @@
 #include <core/util.h>
 #include <core/mem.h>
 
-template <class K, class T, class H = typename core::util::hash<K>, class Allocator = core::memory::SystemAllocatorType>
+template <class K, class T, class H = typename core::util::hash<K>>
 class HashSet
 {
 private:
 	typedef H hash_type;
-	typedef Allocator allocator_type;
 
 	const float MAX_LOAD_FACTOR = 0.7f;
 	typedef uint32_t HashType;
@@ -53,7 +52,7 @@ private:
 	uint32_t table_size;
 	uint32_t used_items;
 	uint32_t growth_factor;
-	allocator_type& allocator;
+	gemini::Allocator& allocator;
 
 	int32_t find_bucket(HashType hash, int32_t& bucket_index, bool inserting = false) const
 	{
@@ -168,23 +167,23 @@ private:
 
 	Bucket* allocate(uint32_t elements)
 	{
-		return MEMORY_NEW_ARRAY(Bucket, elements, allocator);
+		return MEMORY2_NEW_ARRAY(allocator, Bucket, elements);
 	} // allocate
 
 	void deallocate(Bucket* pointer)
 	{
-		MEMORY_DELETE_ARRAY(pointer, allocator);
+		MEMORY2_DELETE_ARRAY(allocator, pointer);
 	} // deallocate
 
 public:
 	typedef std::pair<K, T> value_type;
 
-	HashSet(uint32_t initial_size = 16, uint32_t growth_factor = 2, Allocator& allocator_instance = core::memory::system_allocator()) :
-		table(nullptr),
-		table_size(initial_size),
-		used_items(0),
-		growth_factor(growth_factor),
-		allocator(allocator_instance)
+	HashSet(gemini::Allocator& memory_allocator, uint32_t initial_size = 16, uint32_t growth_factor = 2)
+		: allocator(memory_allocator)
+		, table(nullptr)
+		, table_size(initial_size)
+		, used_items(0)
+		, growth_factor(growth_factor)
 	{
 		table = allocate(table_size);
 	} // HashSet
@@ -194,7 +193,7 @@ public:
 		deallocate(table);
 	} // ~HashSet
 
-	HashSet<K, T, H, Allocator>& operator=(const HashSet<K, T, H, Allocator>& /*other*/)
+	HashSet<K, T, H>& operator=(const HashSet<K, T, H>& /*other*/)
 	{
 		return *this;
 	}
@@ -272,7 +271,7 @@ public:
 
 	class Iterator
 	{
-		typedef HashSet<K, T, H, Allocator> container_type;
+		typedef HashSet<K, T, H> container_type;
 
 	private:
 		typename container_type::Bucket* table;

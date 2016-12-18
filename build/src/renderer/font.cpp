@@ -59,6 +59,8 @@ namespace font
 	const size_t FONT_INITIAL_RECT_TOTAL = 256;
 	const size_t FONT_ATLAS_RESOLUTION = 256;
 
+	gemini::Allocator* _font_allocator = nullptr;
+
 	struct GlyphData
 	{
 		int advancex;
@@ -156,7 +158,7 @@ namespace font
 
 		HashSet<int, GlyphData*> glyphdata_cache;
 
-		FontData() :
+		FontData(gemini::Allocator& allocator) :
 			type(FONT_TYPE_INVALID),
 			pixel_size(0),
 			face(nullptr),
@@ -166,7 +168,8 @@ namespace font
 			has_kerning(0),
 			is_fixed_width(0),
 			line_height(0),
-			border(0)
+			border(0),
+			glyphdata_cache(allocator)
 		{
 		}
 
@@ -248,8 +251,10 @@ namespace font
 	// implementation
 	// ---------------------------------------------------------------------
 
-	void startup(render2::Device* device)
+	void startup(gemini::Allocator& allocator, render2::Device* device)
 	{
+		_font_allocator = &allocator;
+
 		FT_Error error = FT_Init_FreeType(&detail::_ftlibrary);
 		if (error)
 		{
@@ -405,7 +410,7 @@ namespace font
 		Handle handle;
 		FT_Error error = FT_Err_Ok;
 
-		FontData* font = MEMORY_NEW(FontData, core::memory::global_allocator());
+		FontData* font = MEMORY_NEW(FontData, core::memory::global_allocator())(*_font_allocator);
 
 		// font needs a copy of the data so long as FT_Face is loaded.
 		// so make a local copy and store it.

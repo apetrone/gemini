@@ -292,10 +292,11 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// GLPipeline
 	// ---------------------------------------------------------------------
-	GLPipeline::GLPipeline(const PipelineDescriptor& descriptor) :
-		enable_blending(false),
-		blend_source(GL_ONE),
-		blend_destination(GL_ZERO)
+	GLPipeline::GLPipeline(gemini::Allocator& allocator, const PipelineDescriptor& descriptor)
+		: Pipeline(allocator)
+		, enable_blending(false)
+		, blend_source(GL_ONE)
+		, blend_destination(GL_ZERO)
 	{
 		program = (GLShader*)descriptor.shader;
 

@@ -54,13 +54,13 @@ namespace renderer
 		shader_config::load_shaderprogram_from_file(path, program);
 	}
 
-	int startup(DriverType /*driver_type*/, const RenderSettings& settings)
+	int startup(gemini::Allocator& allocator, DriverType /*driver_type*/, const RenderSettings& settings)
 	{
 		// setup vertex descriptor
 		VertexDescriptor::startup();
 
 		// load the shader config data
-		shader_config::startup();
+		shader_config::startup(allocator);
 
 		gemgl_config config;
 

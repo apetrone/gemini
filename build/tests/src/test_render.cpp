@@ -24,14 +24,16 @@
 // -------------------------------------------------------------
 #include "unit_test.h"
 
+#include <core/argumentparser.h>
 #include <core/logging.h>
+
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
 
+#include <platform/input.h>
+#include <platform/kernel.h>
 #include <platform/platform.h>
 #include <platform/window.h>
-#include <platform/kernel.h>
-#include <platform/input.h>
 
 #include <renderer/renderer.h>
 #include <renderer/vertexbuffer.h>
@@ -251,11 +253,59 @@ public:
 
 	virtual kernel::Error startup()
 	{
-		unittest::UnitTest::execute();
+		// parse command line values
+		std::vector<std::string> arguments;
+		core::argparse::ArgumentParser parser;
+		core::StackString<MAX_PATH_SIZE> content_path;
 
-		gemini::runtime_startup("arcfusion.net/gemini/test_render");
+		runtime_load_arguments(arguments, parser);
+
+		core::argparse::VariableMap vm;
+		const char* docstring = R"(
+Usage:
+	--assets=<content_path>
+
+Options:
+	-h, --help  Show this help screen
+	--version  Display the version number
+	--assets=<content_path>  The path to load content from
+	)";
+		if (parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
+		{
+			std::string path = vm["--assets"];
+			content_path = platform::make_absolute_path(path.c_str());
+		}
+		else
+		{
+			return kernel::CoreFailed;
+		}
+
+
+
+		std::function<void(const char*)> custom_path_setup = [&](const char* application_data_path)
+		{
+			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
+			platform::PathString root_path = platform::get_program_directory();
+
+			// the root path is the current binary path
+			filesystem->root_directory(root_path);
+
+			// the content directory is where we'll find our assets
+			filesystem->content_directory(content_path);
+
+			// load engine settings (from content path)
+			//load_config(config);
+
+			// the application path can be specified in the config (per-game basis)
+			//const platform::PathString application_path = platform::get_user_application_directory(config.application_directory.c_str());
+			filesystem->user_application_directory(application_data_path);
+		};
+
+		gemini::runtime_startup("arcfusion.net/gemini/test_render", custom_path_setup);
 //		platform::PathString temp_path = platform::get_user_temp_directory(); // adding this line breaks Android. Yes, you read that correctly.
 //		LOGV("temp_path: %s\n", temp_path());
+
+		unittest::UnitTest::execute();
 
 		platform::window::startup(platform::window::RenderingBackend_Default);
 
@@ -307,8 +357,10 @@ public:
 		}
 
 #if TEST_RENDER_GRAPHICS
+		render_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
+
 		// initialize render device
-		render2::RenderParameters render_parameters;
+		render2::RenderParameters render_parameters(render_allocator);
 		render_parameters["rendering_backend"] = "default";
 		render_parameters["gamma_correct"] = "true";
 
@@ -324,7 +376,7 @@ public:
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = state.device->create_input_layout(desc.vertex_description, desc.shader);
 		desc.primitive_type = render2::PrimitiveType::Triangles;
-		state.pipeline = state.device->create_pipeline(desc);
+		state.pipeline = state.device->create_pipeline(render_allocator, desc);
 
 		// create a vertex buffer and populate it with data
 		float width = (float)window_frame.width;
@@ -350,7 +402,7 @@ public:
 		td.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		td.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
 		td.input_layout = state.device->create_input_layout(td.vertex_description, td.shader);
-		state.texture_pipeline = state.device->create_pipeline(td);
+		state.texture_pipeline = state.device->create_pipeline(render_allocator, td);
 
 		// setup font pipeline
 		render2::PipelineDescriptor fd;
@@ -359,7 +411,7 @@ public:
 		fd.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		fd.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
 		fd.input_layout = state.device->create_input_layout(td.vertex_description, fd.shader);
-		state.font_pipeline = state.device->create_pipeline(fd);
+		state.font_pipeline = state.device->create_pipeline(render_allocator, fd);
 
 		// setup line pipeline
 		render2::PipelineDescriptor ld;
@@ -368,7 +420,7 @@ public:
 		ld.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		ld.input_layout = state.device->create_input_layout(ld.vertex_description, ld.shader);
 		ld.primitive_type = render2::PrimitiveType::Lines;
-		state.line_pipeline = state.device->create_pipeline(ld);
+		state.line_pipeline = state.device->create_pipeline(render_allocator, ld);
 
 		// setup texture vertex buffer
 		const size_t TOTAL_TEXTURED_VERTICES = 15;
@@ -447,7 +499,8 @@ public:
 		// ---------------------------------------------------------------------
 		// font
 		// ---------------------------------------------------------------------
-		font::startup(state.device);
+		font_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+		font::startup(font_allocator, state.device);
 
 		Array<unsigned char> fontdata;
 		core::filesystem::instance()->virtual_load_file(fontdata, "fonts/debug.ttf");
@@ -713,6 +766,9 @@ private:
 	size_t test_state;
 	float countdown;
 	glm::vec2 center;
+
+	gemini::Allocator render_allocator;
+	gemini::Allocator font_allocator;
 
 	Array<test_state_callback> render_callbacks;
 	TestRenderState state;

@@ -259,6 +259,7 @@ private:
 	RapidInterface rapid;
 	platform::DynamicLibrary* rapid_library;
 
+	gemini::Allocator sensor_allocator;
 
 	glm::vec3* lines;
 	size_t current_line_index;
@@ -980,8 +981,8 @@ Options:
 		int32_t startup_result = net_startup();
 		assert(startup_result == 0);
 
-		Allocator allocator = memory_allocator_default();
-		imocap::startup(allocator);
+		sensor_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+		imocap::startup(sensor_allocator);
 
 		mocap_device = imocap::device_create();
 

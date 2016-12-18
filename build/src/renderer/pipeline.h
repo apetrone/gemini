@@ -24,9 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-//#include "shaderprogram.h"
 #include "constantbuffer.h"
-//#include "rendertarget.h"
+
 
 namespace render2
 {
@@ -40,6 +39,7 @@ namespace render2
 	class Pipeline
 	{
 	public:
+		Pipeline(gemini::Allocator& allocator);
 		virtual ~Pipeline();
 
 		ConstantBuffer& constants() { return constant_buffer; }

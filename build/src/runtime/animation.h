@@ -31,6 +31,8 @@
 
 namespace gemini
 {
+	struct Allocator;
+
 	namespace assets
 	{
 		struct Mesh;
@@ -137,7 +139,7 @@ namespace gemini
 		//
 		// animation system
 		//
-		void startup();
+		void startup(gemini::Allocator& allocator);
 		void shutdown();
 		void update(float delta_seconds);
 

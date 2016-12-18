@@ -27,6 +27,12 @@
 
 namespace render2
 {
+	Pipeline::Pipeline(gemini::Allocator& allocator)
+		: constant_buffer(allocator)
+	{
+	}
+
+
 	Pipeline::~Pipeline()
 	{
 

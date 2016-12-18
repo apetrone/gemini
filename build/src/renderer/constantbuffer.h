@@ -29,11 +29,14 @@
 #include <core/stackstring.h>
 #include <core/util.h>
 
+
 namespace render2
 {
 	class ConstantBuffer
 	{
 	public:
+		ConstantBuffer(gemini::Allocator& allocator);
+
 		void set(const char* name, const void* data);
 		const void* get(const char* name);
 

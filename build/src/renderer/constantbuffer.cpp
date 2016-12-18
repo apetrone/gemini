@@ -33,6 +33,11 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// ConstantBuffer
 	// ---------------------------------------------------------------------
+	ConstantBuffer::ConstantBuffer(gemini::Allocator& allocator)
+		: constant_map(allocator)
+	{
+	}
+
 	void ConstantBuffer::set(const char* name, const void* data)
 	{
 		constant_map[name] = data;

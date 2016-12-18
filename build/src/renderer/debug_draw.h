@@ -43,7 +43,7 @@ namespace font
 
 namespace debugdraw
 {
-	void startup(render2::Device* render_device);
+	void startup(gemini::Allocator& allocator, render2::Device* render_device);
 	void shutdown();
 
 	void update(float deltamsec);

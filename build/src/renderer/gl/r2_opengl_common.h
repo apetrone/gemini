@@ -129,7 +129,7 @@ namespace render2
 		GLenum blend_destination;
 		GLenum draw_type;
 
-		GLPipeline(const PipelineDescriptor& descriptor);
+		GLPipeline(gemini::Allocator& allocator, const PipelineDescriptor& descriptor);
 		virtual ~GLPipeline();
 	}; // GLPipeline
 

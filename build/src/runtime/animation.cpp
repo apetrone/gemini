@@ -266,6 +266,8 @@ namespace gemini
 		//
 		typedef HashSet<std::string, Sequence*> SequenceHash;
 		SequenceHash* _sequences_by_name;
+		gemini::Allocator* _allocator = nullptr;
+
 		namespace detail
 		{
 
@@ -513,9 +515,10 @@ namespace gemini
 		}
 
 
-		void startup()
+		void startup(gemini::Allocator& allocator)
 		{
-			_sequences_by_name = MEMORY_NEW(SequenceHash, core::memory::global_allocator());
+			_allocator = &allocator;
+			_sequences_by_name = MEMORY_NEW(SequenceHash, core::memory::global_allocator())(allocator);
 		}
 
 		void shutdown()

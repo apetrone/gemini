@@ -30,6 +30,11 @@
 #include <core/typedefs.h>
 #include <core/array.h>
 
+namespace gemini
+{
+	struct Allocator;
+}
+
 namespace render2
 {
 	class Device;
@@ -88,7 +93,7 @@ namespace font
 
 
 	// setup resources the font library might need
-	void startup(render2::Device* device);
+	void startup(gemini::Allocator& allocator, render2::Device* device);
 
 	// cleanup any used resources
 	void shutdown();

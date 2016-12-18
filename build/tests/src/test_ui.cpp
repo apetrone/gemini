@@ -250,13 +250,16 @@ class TestUi : public kernel::IKernel,
 	gui::Label* slider_label;
 	gui::TabControl* tab_control;
 
-	GUIRenderer renderer;
-	StandaloneResourceCache resource_cache;
+	GUIRenderer* renderer;
+	StandaloneResourceCache* resource_cache;
 
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
 
 	TestEventFilter test_filter;
+
+	gemini::Allocator gui_allocator;
+	gemini::Allocator render_allocator;
 
 	float countdown;
 
@@ -335,9 +338,9 @@ public:
 
 public:
 
-	TestUi() :
-		renderer(resource_cache)
+	TestUi()
 	{
+		renderer = nullptr;
 		native_window = nullptr;
 		active = true;
 		graph = nullptr;
@@ -392,10 +395,15 @@ public:
 		graph = nullptr;
 		label = nullptr;
 		slider = nullptr;
-		renderer.set_device(device);
+
+		gui_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_GUI);
+
+		resource_cache = MEMORY2_NEW(gui_allocator, StandaloneResourceCache)(gui_allocator);
+		renderer = MEMORY2_NEW(gui_allocator, GUIRenderer)(gui_allocator, *resource_cache);
+		renderer->set_device(device);
 
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
-		compositor = new gui::Compositor(width, height, &resource_cache, &renderer);
+		compositor = new gui::Compositor(width, height, resource_cache, renderer);
 		compositor->set_name("main_compositor");
 
 		//compositor->install_event_filter(&test_filter);
@@ -798,9 +806,10 @@ Options:
 		gemini::audio::startup();
 #endif
 
+		render_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_RENDERER);
 
 		// initialize render device
-		render2::RenderParameters render_parameters;
+		render2::RenderParameters render_parameters(render_allocator);
 		render_parameters["rendering_backend"] = "default";
 		render_parameters["gamma_correct"] = "true";
 
@@ -817,7 +826,7 @@ Options:
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
-		pipeline = device->create_pipeline(desc);
+		pipeline = device->create_pipeline(render_allocator, desc);
 
 		// create a vertex buffer and populate it with data
 		float width = (float)window_frame.width;
@@ -855,7 +864,7 @@ Options:
 
 
 		// initialize fonts
-		font::startup(device);
+		font::startup(render_allocator, device);
 
 		// initialize gui
 		setup_gui(window_frame.width, window_frame.height);
@@ -1014,7 +1023,9 @@ Options:
 		// shutdown/destroy the gui
 		delete compositor;
 
-		resource_cache.clear();
+		resource_cache->clear();
+		MEMORY2_DELETE(gui_allocator, resource_cache);
+		MEMORY2_DELETE(gui_allocator, renderer);
 
 		// shutdown the fonts
 		font::shutdown();

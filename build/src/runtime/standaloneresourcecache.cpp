@@ -32,8 +32,10 @@
 
 namespace renderer
 {
-	StandaloneResourceCache::StandaloneResourceCache() :
-		textures(0)
+	StandaloneResourceCache::StandaloneResourceCache(gemini::Allocator& allocator)
+		: textures(0)
+		, handle_by_texture(allocator)
+		, font_handle_by_path(allocator)
 	{
 
 	}
