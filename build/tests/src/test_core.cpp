@@ -337,6 +337,7 @@ UNITTEST(Delegate)
 // ---------------------------------------------------------------------
 UNITTEST(FixedArray)
 {
+	gemini::Allocator default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 	FixedArray<int> int_array;
 	int_array.allocate(32);
 	TEST_ASSERT(int_array.size() == 32, size);
@@ -481,7 +482,6 @@ UNITTEST(mathlib)
 {
 	const float forty_five_degrees = 45.0f;
 	const float forty_five_degrees_in_radians = 0.785398185f;
-
 
 	float temp = mathlib::degrees_to_radians(45);
 	TEST_ASSERT(temp == forty_five_degrees_in_radians, degrees_to_radians);
@@ -701,7 +701,9 @@ UNITTEST(stackstring)
 // ---------------------------------------------------------------------
 UNITTEST(linearfreelist)
 {
-	LinearFreeList<int> abc;
+	Allocator default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
+	LinearFreeList<int> abc(default_allocator);
 	LinearFreeList<int>::Handle value = abc.acquire();
 	if (abc.is_valid(value))
 	{
@@ -817,8 +819,6 @@ UNITTEST(typespec)
 {
 	size_t value = STRING_HASH32("hello");
 	TEST_ASSERT(value == STRING_HASH32("hello"), string_hash32);
-
-
 
 	LOGV("type of int is: %s\n", TypeSpecName<uint32_t>::value);
 	LOGV("type of int is: %i\n", TypeSpecIdentifier<uint32_t>::value);

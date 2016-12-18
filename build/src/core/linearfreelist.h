@@ -55,7 +55,7 @@ for (size_t index = 0; index < abc.size(); ++index)
 }
 #endif
 
-template <class T, class Allocator = core::memory::SystemAllocator<core::memory::DefaultTrackingPolicy>>
+template <class T>
 class LinearFreeList
 {
 private:
@@ -70,16 +70,16 @@ private:
 		T* data;
 		size_t state;
 	};
-	Array<Record, Allocator> elements;
-	Allocator allocator;
-
+	Array<Record> elements;
 
 public:
 	typedef T value_type;
 	typedef T* value_pointer;
 	typedef size_t Handle;
+	gemini::Allocator& allocator;
 
-	LinearFreeList()
+	LinearFreeList(gemini::Allocator& allocator)
+		: allocator(allocator)
 	{
 	}
 
@@ -107,7 +107,7 @@ public:
 		// Unable to find a free slot. Allocate a new one.
 		Record item;
 		item.state = Record::Used;
-		item.data = MEMORY_NEW(T, allocator);
+		item.data = MEMORY2_NEW(allocator, T);
 		Handle reference = elements.size();
 		elements.push_back(item);
 		return reference;
@@ -146,7 +146,7 @@ public:
 	{
 		for (Record& record : elements)
 		{
-			MEMORY_DELETE(record.data, allocator);
+			MEMORY2_DELETE(allocator, record.data);
 		}
 		elements.clear();
 	} // clear

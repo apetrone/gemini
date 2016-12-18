@@ -205,6 +205,8 @@ namespace gemini
 {
 	namespace audio
 	{
+		gemini::Allocator* audio_allocator = nullptr;
+
 		SoundHandle_t play_sound(assets::Sound* sound, int32_t repeats)
 		{
 #if defined(AUDIO_USE_LOCK)
@@ -281,12 +283,14 @@ namespace gemini
 			return master_gain;
 		}
 
-		void startup()
+		void startup(gemini::Allocator& allocator)
 		{
+			audio_allocator = &allocator;
+
 #if defined(AUDIO_USE_LOCK)
 			audio_lock = platform::mutex_create();
 #endif
-			sound_list = MEMORY_NEW(LinearFreeList<SoundInstance>, core::memory::global_allocator());
+			sound_list = MEMORY2_NEW(allocator, LinearFreeList<SoundInstance>)(allocator);
 
 			platform::audio_startup();
 
@@ -324,7 +328,7 @@ namespace gemini
 #endif
 
 			// clear free lists and used lists
-			MEMORY_DELETE(sound_list, core::memory::global_allocator());
+			MEMORY2_DELETE(*audio_allocator, sound_list);
 
 #if defined(AUDIO_USE_LOCK)
 			platform::mutex_destroy(audio_lock);
