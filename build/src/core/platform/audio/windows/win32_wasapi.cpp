@@ -95,6 +95,8 @@ namespace platform
 		IMMDevice* endpoint;
 	};
 
+	gemini::Allocator* _allocator = nullptr;
+
 	// state we need for audio.
 	struct win32_wasapi_state
 	{
@@ -104,7 +106,7 @@ namespace platform
 		void* context;
 		uint64_t last_frame_count;
 		float audio_clock_frequency_denominator;
-		Array<audio_device*, PlatformAllocatorType> devices;
+		Array<audio_device*> devices;
 
 		IAudioClient* audio_client;
 		IAudioRenderClient* render_client;
@@ -114,8 +116,8 @@ namespace platform
 		HANDLE submission_thread_handle;
 		HANDLE submission_exited_thread;
 
-		win32_wasapi_state()
-			: devices(16, get_platform_allocator())
+		win32_wasapi_state(gemini::Allocator& allocator)
+			: devices(allocator, 16)
 		{
 			sample_rate_hz = 0;
 			buffer_frame_count = 0;
@@ -495,7 +497,7 @@ namespace platform
 
 					const size_t audio_device_size = sizeof(audio_device) + sizeof(win32_audio_device);
 
-					char* memory = static_cast<char*>(MEMORY_ALLOC(audio_device_size, get_platform_allocator()));
+					char* memory = static_cast<char*>(MEMORY2_ALLOC(*_allocator, audio_device_size));
 					assert(memory);
 
 					audio_device* instance = new (memory) audio_device();
@@ -529,8 +531,10 @@ namespace platform
 		safe_release(&device_enumerator);
 	} // create_device_list
 
-	platform::Result audio_startup()
+	platform::Result audio_startup(gemini::Allocator& allocator)
 	{
+		_allocator = &allocator;
+
 		//
 		// We must initialize COM first. This requires objbase.h and ole32.lib.
 		if (FAILED(CoInitializeEx(0, COINIT_MULTITHREADED)))
@@ -539,7 +543,7 @@ namespace platform
 			return platform::Result::failure("COM initialization failed");
 		}
 
-		audio_state = MEMORY_NEW(win32_wasapi_state, get_platform_allocator());
+		audio_state = MEMORY2_NEW(allocator, win32_wasapi_state)(allocator);
 
 		// this is used by IAudioClient to signal our worker thread
 		// when we can populate the buffer.
@@ -599,10 +603,10 @@ namespace platform
 		for (size_t index = 0; index < audio_state->devices.size(); ++index)
 		{
 			audio_device* device = audio_state->devices[index];
-			MEMORY_DEALLOC(device, get_platform_allocator());
+			MEMORY2_DEALLOC(*_allocator, device);
 		}
 
-		MEMORY_DELETE(audio_state, get_platform_allocator());
+		MEMORY2_DELETE(*_allocator, audio_state);
 
 		CoUninitialize();
 	} // audio_shutdown

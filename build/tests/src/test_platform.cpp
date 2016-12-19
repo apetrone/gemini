@@ -108,14 +108,15 @@ void test_callback(void* data, size_t frames_available, size_t sample_rate_hz, v
 
 UNITTEST(audio)
 {
-	audio_startup();
+	gemini::Allocator default_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	audio_startup(default_allocator);
 
 	audio_generator_data agd;
 	agd.time_period = 0;
 	agd.t_sin = 0.0f;
 	agd.wave_type = 0;
 
-	Array<audio_device*> devices;
+	Array<audio_device*> devices(default_allocator);
 	audio_enumerate_devices(devices);
 
 	LOGV("total audio devices: %i\n", devices.size());

@@ -292,9 +292,9 @@ namespace gemini
 #endif
 			sound_list = MEMORY2_NEW(allocator, LinearFreeList<SoundInstance>)(allocator);
 
-			platform::audio_startup();
+			platform::audio_startup(*audio_allocator);
 
-			Array<platform::audio_device*> devices;
+			Array<platform::audio_device*> devices(*audio_allocator);
 			audio_enumerate_devices(devices);
 
 			//LOGV("total audio devices: %i\n", devices.size());

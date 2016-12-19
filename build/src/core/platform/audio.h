@@ -57,7 +57,7 @@ namespace platform
 	void audio_close_output_device();
 
 	// lifetime control for the audio engine
-	platform::Result audio_startup();
+	platform::Result audio_startup(gemini::Allocator& allocator);
 	void audio_shutdown();
 
 	// set a sound callback for an audio device

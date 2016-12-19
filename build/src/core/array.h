@@ -30,24 +30,24 @@
 	#include <string.h> // for memcpy
 #endif
 
-template <class T, class Allocator = core::memory::SystemAllocator<core::memory::DefaultTrackingPolicy>>
+
+template <class T>
 class Array
 {
 public:
 	typedef T value_type;
 	typedef T* value_pointer;
-	typedef Allocator allocator_type;
-	const allocator_type& allocator;
+	gemini::Allocator& allocator;
 
 private:
 	value_pointer allocate(size_t count)
 	{
-		return MEMORY_NEW_ARRAY(value_type, count, const_cast<allocator_type&>(allocator));
+		return MEMORY2_NEW_ARRAY(allocator, value_type, count);
 	}
 
 	void deallocate(value_pointer pointer)
 	{
-		MEMORY_DELETE_ARRAY(pointer, const_cast<allocator_type&>(allocator));
+		MEMORY2_DELETE_ARRAY(allocator, pointer);
 	}
 
 	// grow to capacity
@@ -69,7 +69,8 @@ private:
 	}
 public:
 
-	Array(size_t capacity = 0, const allocator_type& _allocator = allocator_type()) : allocator(_allocator)
+	Array(gemini::Allocator& _allocator, size_t capacity = 0)
+		: allocator(_allocator)
 	{
 		data = nullptr;
 		if (capacity > 0)

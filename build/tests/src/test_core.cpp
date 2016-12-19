@@ -85,7 +85,8 @@ Options:
 // ---------------------------------------------------------------------
 UNITTEST(Array)
 {
-	Array<int> a;
+	Allocator default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+	Array<int> a(default_allocator);
 
 	TEST_ASSERT(a.empty(), is_empty);
 	TEST_ASSERT(a.size() == 0, size_empty);
@@ -115,7 +116,7 @@ UNITTEST(Array)
 
 
 
-	Array<int> abc(6);
+	Array<int> abc(default_allocator, 6);
 	abc.push_back(30);
 	abc.push_back(60);
 	abc.push_back(90);
@@ -162,14 +163,14 @@ UNITTEST(Array)
 		}
 	};
 
-	Array<CustomType> b(4);
+	Array<CustomType> b(default_allocator, 4);
 	TEST_ASSERT(_local_counter == 4, constructor_called_n_times);
 	b.clear();
 
 	TEST_ASSERT(_local_counter == 0, destructor_called_n_times);
 
 	// test resize with default value
-	Array<int> rd;
+	Array<int> rd(default_allocator);
 	rd.push_back(30);
 	rd.push_back(60);
 	rd.push_back(90);
@@ -180,7 +181,7 @@ UNITTEST(Array)
 
 
 	// test qsort
-	Array<int> values;
+	Array<int> values(default_allocator);
 	values.push_back(7);
 	values.push_back(2);
 	values.push_back(1);

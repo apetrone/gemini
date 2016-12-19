@@ -80,6 +80,7 @@ public:
 
 	LinearFreeList(gemini::Allocator& allocator)
 		: allocator(allocator)
+		, elements(allocator)
 	{
 	}
 
