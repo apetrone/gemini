@@ -37,6 +37,7 @@ class FixedArray
 {
 	Type *elements;
 	size_t total_elements;
+	gemini::Allocator& allocator;
 
 private:
 	void assert_valid_index(size_t index) const
@@ -66,13 +67,15 @@ public:
 		return &elements[total_elements];
 	}
 
-	FixedArray()
+	FixedArray(gemini::Allocator& array_allocator)
+		: allocator(array_allocator)
 	{
 		elements = 0;
 		total_elements = 0;
 	} // FixedArray
 
 	FixedArray(const FixedArray<Type>& other)
+		: allocator(other.allocator)
 	{
 		allocate(other.total_elements);
 		memcpy(elements, other.elements, sizeof(Type) * total_elements);
@@ -158,7 +161,8 @@ struct CircularBuffer
 	container_type container;
 	size_t index;
 
-	CircularBuffer()
+	CircularBuffer(gemini::Allocator& allocator)
+		: container(allocator)
 	{
 		container.allocate(MaxSize);
 		reset();

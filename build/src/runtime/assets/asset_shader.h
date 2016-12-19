@@ -40,7 +40,7 @@ namespace gemini
 		{
 			::renderer::ShaderProgram* program;
 
-			Shader() : program(nullptr) {}
+			Shader(gemini::Allocator& allocator) : program(nullptr) {}
 			virtual void release();
 		}; // Shader
 

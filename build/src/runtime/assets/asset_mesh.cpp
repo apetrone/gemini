@@ -146,7 +146,7 @@ namespace gemini
 				// setup materials
 				assets::Material* default_material = assets::materials()->get_default();
 
-				assets::Geometry* geo = &state.mesh->geometry[state.current_geometry++];
+				assets::Geometry* geo = state.mesh->geometry[state.current_geometry++];
 				geo->material_id = default_material->Id();
 
 				Json::Value material_id = node["material_id"];
@@ -200,7 +200,7 @@ namespace gemini
 				geo->indices.allocate(index_array.size());
 				geo->vertices.allocate(vertex_array.size());
 				geo->normals.allocate(vertex_array.size());
-				geo->uvs.allocate(uv_sets.size());
+				geo->uvs.allocate(uv_sets.size() * GEOMETRY_UV_SET_MAX);
 				geo->colors.allocate(vertex_colors.size());
 
 				if (!bind_data.empty())
@@ -236,12 +236,12 @@ namespace gemini
 				// read uv sets
 				for (Json::Value::ArrayIndex set_id = 0; set_id < uv_sets.size(); ++set_id)
 				{
-					geo->uvs[set_id].allocate(vertex_array.size());
+					//geo->uvs[set_id].allocate(vertex_array.size());
 					assert(vertex_array.size() == geo->vertices.size());
 					for (int v = 0; v < static_cast<int>(geo->vertices.size()); ++v)
 					{
 						const Json::Value& texcoord = uv_sets[set_id][v];
-						glm::vec2& uv = geo->uvs[set_id][v];
+						glm::vec2& uv = geo->uvs[(set_id * GEOMETRY_UV_SET_MAX) + v];
 						uv.x = texcoord[0].asFloat();
 						uv.y = texcoord[1].asFloat();
 //						LOGV("uv (set=%i) (vertex=%i) %g %g\n", set_id, v, uv.s, uv.t);
@@ -479,7 +479,8 @@ namespace gemini
 			extension = ".model";
 		} // mesh_construct_extension
 
-		Geometry::Geometry()
+		Geometry::Geometry(gemini::Allocator& allocator)
+			: Geometry(allocator)
 		{
 			material_id = 0;
 			vertex_count = 0;
@@ -560,7 +561,11 @@ namespace gemini
 		}
 
 
-		Mesh::Mesh()
+		Mesh::Mesh(gemini::Allocator& allocator)
+			: geometry(allocator)
+			, geometry_vn(allocator)
+			, skeleton(allocator)
+			, hitboxes(allocator)
 		{
 			is_dirty = true;
 			has_skeletal_animation = false;
@@ -568,6 +573,7 @@ namespace gemini
 
 		Mesh::~Mesh()
 		{
+
 		}
 
 		void Mesh::release()
@@ -585,8 +591,8 @@ namespace gemini
 
 			for( unsigned int geo_id = 0; geo_id < geometry.size(); ++geo_id )
 			{
-				assets::Geometry * g = &geometry[ geo_id ];
-				g->render_setup();
+				assets::Geometry* geo = geometry[ geo_id ];
+				geo->render_setup();
 			}
 
 			is_dirty = false;

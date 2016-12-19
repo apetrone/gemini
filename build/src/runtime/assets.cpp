@@ -90,6 +90,8 @@ namespace gemini
 
 	namespace assets
 	{
+		gemini::Allocator asset_allocator;
+
 		// 1. Implement asset library
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(TextureAssetLibrary, textures)
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MeshAssetLibrary, meshes)
@@ -130,14 +132,16 @@ namespace gemini
 
 		void startup()
 		{
+			asset_allocator = memory_allocator_default(MEMORY_ZONE_ASSETS);
+
 			// 2. allocate asset libraries
-			_textures = MEMORY_NEW(TextureAssetLibrary, core::memory::global_allocator()) (texture_load_callback, texture_construct_extension);
-			_meshes = MEMORY_NEW(MeshAssetLibrary, core::memory::global_allocator()) (mesh_load_callback, mesh_construct_extension);
-			_materials = MEMORY_NEW(MaterialAssetLibrary, core::memory::global_allocator()) (material_load_callback, material_construct_extension);
-			_emitters = MEMORY_NEW(EmitterConfigAssetLibrary, core::memory::global_allocator()) (emitterconfig_load_callback, emitterconfig_construct_extension);
-			_fonts = MEMORY_NEW(FontAssetLibrary, core::memory::global_allocator()) (font_load_callback, font_construct_extension);
-			_shaders = MEMORY_NEW(ShaderAssetLibrary, core::memory::global_allocator()) (shader_load_callback, shader_construct_extension);
-			_sounds = MEMORY_NEW(SoundAssetLibrary, core::memory::global_allocator()) (sound_load_callback, sound_construct_extension);
+			_textures =		MEMORY2_NEW(asset_allocator, TextureAssetLibrary)			(asset_allocator, texture_load_callback, texture_construct_extension);
+			_meshes =		MEMORY2_NEW(asset_allocator, MeshAssetLibrary)				(asset_allocator, mesh_load_callback, mesh_construct_extension);
+			_materials =	MEMORY2_NEW(asset_allocator, MaterialAssetLibrary)			(asset_allocator, material_load_callback, material_construct_extension);
+			_emitters =		MEMORY2_NEW(asset_allocator, EmitterConfigAssetLibrary)		(asset_allocator, emitterconfig_load_callback, emitterconfig_construct_extension);
+			_fonts =		MEMORY2_NEW(asset_allocator, FontAssetLibrary)				(asset_allocator, font_load_callback, font_construct_extension);
+			_shaders =		MEMORY2_NEW(asset_allocator, ShaderAssetLibrary)			(asset_allocator, shader_load_callback, shader_construct_extension);
+			_sounds =		MEMORY2_NEW(asset_allocator, SoundAssetLibrary)				(asset_allocator, sound_load_callback, sound_construct_extension);
 
 			load_default_texture_and_material();
 		} // startup
@@ -145,13 +149,13 @@ namespace gemini
 		void shutdown()
 		{
 			// 4. Delete asset library
-			MEMORY_DELETE(_textures, core::memory::global_allocator());
-			MEMORY_DELETE(_meshes, core::memory::global_allocator());
-			MEMORY_DELETE(_materials, core::memory::global_allocator());
-			MEMORY_DELETE(_emitters, core::memory::global_allocator());
-			MEMORY_DELETE(_fonts, core::memory::global_allocator());
-			MEMORY_DELETE(_shaders, core::memory::global_allocator());
-			MEMORY_DELETE(_sounds, core::memory::global_allocator());
+			MEMORY2_DELETE(asset_allocator, _textures);
+			MEMORY2_DELETE(asset_allocator, _meshes);
+			MEMORY2_DELETE(asset_allocator, _materials);
+			MEMORY2_DELETE(asset_allocator, _emitters);
+			MEMORY2_DELETE(asset_allocator, _fonts);
+			MEMORY2_DELETE(asset_allocator, _shaders);
+			MEMORY2_DELETE(asset_allocator, _sounds);
 		} // shutdown
 
 		void append_asset_extension( AssetType type, core::StackString<MAX_PATH_SIZE> & path )

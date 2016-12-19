@@ -42,6 +42,8 @@ namespace gemini
 		{
 			Shader* shader;
 
+			Material(gemini::Allocator& allocator);
+
 			virtual void release();
 		}; // Material
 

@@ -105,7 +105,7 @@ namespace image
 		// can be raw pixel data, or compressed data, etc.
 		FixedArray<uint8_t> pixels;
 
-		Image();
+		Image(gemini::Allocator& allocator);
 		Image& operator=(const Image& other);
 		void create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels);
 		void fill(const gemini::Color& color);

@@ -813,7 +813,7 @@ Options:
 		render_parameters["rendering_backend"] = "default";
 		render_parameters["gamma_correct"] = "true";
 
-		device = render2::create_device(render_parameters);
+		device = render2::create_device(render_allocator, render_parameters);
 		assert(device != nullptr);
 
 		window_frame = platform::window::get_frame(native_window);
@@ -1013,8 +1013,6 @@ Options:
 		gemini::profiler::report();
 		gemini::profiler::reset();
 #endif
-
-
 	}
 
 
@@ -1032,7 +1030,7 @@ Options:
 
 		device->destroy_buffer(vertex_buffer);
 		device->destroy_pipeline(pipeline);
-		render2::destroy_device(device);
+		render2::destroy_device(render_allocator, device);
 
 		platform::window::destroy(native_window);
 		platform::window::shutdown();

@@ -128,6 +128,8 @@ namespace gemini
 		// gui subsystem
 		MEMORY_ZONE_GUI,
 
+		MEMORY_ZONE_ASSETS,
+
 		MEMORY_ZONE_MAX
 	}; // MemoryZone
 

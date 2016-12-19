@@ -40,6 +40,6 @@ namespace renderer
 		void startup(gemini::Allocator& allocator);
 		void shutdown();
 
-		void load_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program);
+		void load_shaderprogram_from_file(gemini::Allocator& allocator, const char* path, renderer::ShaderProgram** program);
 	}
 } // namespace renderer

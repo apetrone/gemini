@@ -40,6 +40,7 @@
 namespace renderer
 {
 	typedef String ShaderString;
+	const size_t GEOMETRY_UV_SET_MAX = 2;
 
 	enum DriverType
 	{
@@ -228,6 +229,7 @@ namespace renderer
 		unsigned int destination;
 	}; // BlendParameters
 
+
 	struct Geometry
 	{
 		unsigned short attributes;
@@ -240,7 +242,7 @@ namespace renderer
 		FixedArray<glm::vec3> vertices;
 		FixedArray<glm::vec3> normals;
 		FixedArray<gemini::Color> colors;
-		FixedArray< FixedArray<glm::vec2> > uvs;
+		FixedArray<glm::vec2> uvs;
 		FixedArray<glm::vec4> blend_indices;
 		FixedArray<glm::vec4> blend_weights;
 		FixedArray<renderer::IndexType> indices;
@@ -251,7 +253,7 @@ namespace renderer
 		// return true if this object is animated
 		// i.e. requires dynamic updates in the renderer
 		bool is_animated() const { return 0; }
-		Geometry();
+		Geometry(gemini::Allocator& allocator);
 		virtual ~Geometry();
 		Geometry& operator=(const Geometry& other) = delete;
 	}; // Geometry
@@ -269,7 +271,7 @@ namespace renderer
 {
 	struct RenderStream;
 
-	void create_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program);
+	void create_shaderprogram_from_file(gemini::Allocator& allocator, const char* path, renderer::ShaderProgram** program);
 }
 
 
@@ -524,10 +526,10 @@ namespace render2
 
 
 	/// @brief Create a render device with the given parameters
-	Device* create_device(const RenderParameters& parameters);
+	Device* create_device(gemini::Allocator& allocator, const RenderParameters& parameters);
 
 	/// @brief Destroy an existing render device
-	void destroy_device(Device* device);
+	void destroy_device(gemini::Allocator& allocator, Device* device);
 
 	void set_resource_provider(ResourceProvider* provider);
 	ResourceProvider* get_resource_provider();

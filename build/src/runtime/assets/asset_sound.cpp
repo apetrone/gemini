@@ -207,7 +207,7 @@ namespace gemini
 		// -------------------------------------------------------------
 		// Sound
 
-		Sound::Sound()
+		Sound::Sound(gemini::Allocator& allocator)
 			: channels(0)
 		{
 		}

@@ -48,7 +48,7 @@ namespace gemini
 			// returns the number of frames read (0 on error)
 			size_t (*get_frame_callback)(struct Sound* sound, size_t frame, float* buffer);
 
-			Sound();
+			Sound(gemini::Allocator& allocator);
 			virtual ~Sound();
 			virtual void release();
 			size_t get_frame(size_t frame, float* destination);

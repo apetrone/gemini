@@ -38,7 +38,7 @@ namespace gemini
 {
 	namespace assets
 	{
-		Font::Font()
+		Font::Font(gemini::Allocator& allocator)
 		{
 			font_size = 0;
 			font_data = 0;

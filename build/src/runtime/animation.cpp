@@ -199,12 +199,19 @@ namespace gemini
 		} // operator()
 
 
+		// Sequence
+		Sequence::Sequence(gemini::Allocator& allocator)
+			: animation_set(allocator)
+		{
+		}
 
 		// AnimatedInstance
 
-		AnimatedInstance::AnimatedInstance() :
-			local_time_seconds(0.0),
-			enabled(false)
+		AnimatedInstance::AnimatedInstance(gemini::Allocator& allocator)
+			: local_time_seconds(0.0)
+			, enabled(false)
+			, animation_set(allocator)
+			, channel_set(allocator)
 		{
 		}
 
@@ -213,20 +220,19 @@ namespace gemini
 			sequence_index = sequence->index;
 
 			// reserve enough space
-			AnimationSet.allocate(sequence->AnimationSet.size());
-			ChannelSet.allocate(sequence->AnimationSet.size());
+			animation_set.allocate(sequence->animation_set.size() * ANIMATION_KEYFRAME_VALUES_MAX);
+			channel_set.allocate(sequence->animation_set.size() * ANIMATION_KEYFRAME_VALUES_MAX);
 
 			// associate the channels with the keyframe lists
 			size_t index = 0;
-			for (const KeyframeListArray& array : sequence->AnimationSet)
+			for (const KeyframeList& kfl : sequence->animation_set)
 			{
-				AnimationSet[index].allocate(array.size());
-				ChannelSet[index].allocate(array.size());
-				for (size_t channel_index = 0; channel_index < array.size(); ++channel_index)
+				for (size_t channel_index = 0; channel_index < ANIMATION_KEYFRAME_VALUES_MAX; ++channel_index)
 				{
-					Channel& channel = ChannelSet[index][channel_index];
-					channel.set_keyframe_list(&sequence->AnimationSet[index][channel_index]);
-					channel.set_target(&AnimationSet[index][channel_index]);
+					const size_t channel_offset = (ANIMATION_KEYFRAME_VALUES_MAX * index + channel_index);
+					Channel& channel = channel_set[channel_offset];
+					channel.set_keyframe_list(&sequence->animation_set[channel_offset]);
+					channel.set_target(&animation_set[channel_offset]);
 				 }
 
 				++index;
@@ -238,12 +244,9 @@ namespace gemini
 			Sequence* sequence = animation::get_sequence_by_index(sequence_index);
 			assert(sequence != 0);
 
-			for (FixedArray<Channel>& channelset : ChannelSet)
+			for (Channel& channel : channel_set)
 			{
-				for (Channel& channel : channelset)
-				{
-					channel.advance(delta_seconds);
-				}
+				channel.advance(delta_seconds);
 			}
 		}
 
@@ -252,12 +255,9 @@ namespace gemini
 			Sequence* sequence = animation::get_sequence_by_index(sequence_index);
 			assert(sequence != 0);
 
-			for (auto& channelset : ChannelSet)
+			for (auto& channel : channel_set)
 			{
-				for (Channel& channel : channelset)
-				{
-					channel.reset();
-				}
+				channel.reset();
 			}
 		}
 
@@ -375,7 +375,8 @@ namespace gemini
 				sequence->frame_delay_seconds = (1.0f/(float)fps_rate);
 
 				// 1. allocate enough space for each bone
-				sequence->AnimationSet.allocate(bones_array.size());
+				sequence->animation_set.allocate(bones_array.size() * ANIMATION_KEYFRAME_VALUES_MAX);
+
 
 				Json::ValueIterator node_iter = bones_array.begin();
 				size_t node_index = 0;
@@ -394,8 +395,7 @@ namespace gemini
 
 //					LOGV("reading keyframes for bone \"%s\", joint->index = %i\n", joint->name(), joint->index);
 
-					FixedArray<KeyframeList>& kfl = sequence->AnimationSet[joint->index];
-					kfl.allocate(7);
+					KeyframeList* kfl = &sequence->animation_set[joint->index * ANIMATION_KEYFRAME_VALUES_MAX];
 
 					// translation
 					{
@@ -482,7 +482,7 @@ namespace gemini
 			}
 
 
-			Sequence* load_sequence_from_file(const char* name, Mesh* mesh)
+			Sequence* load_sequence_from_file(gemini::Allocator& allocator, const char* name, Mesh* mesh)
 			{
 				if (_sequences_by_name->has_key(name))
 				{
@@ -491,8 +491,7 @@ namespace gemini
 					return data;
 				}
 
-
-				Sequence* sequence = MEMORY_NEW(Sequence, core::memory::global_allocator());
+				Sequence* sequence = MEMORY2_NEW(allocator, Sequence)(allocator);
 				core::StackString<MAX_PATH_SIZE> filepath = name;
 				filepath.append(".animation");
 				AnimationSequenceLoadData data;
@@ -507,7 +506,7 @@ namespace gemini
 				}
 				else
 				{
-					MEMORY_DELETE(sequence, core::memory::global_allocator());
+					MEMORY2_DELETE(allocator, sequence);
 				}
 
 				return sequence;
@@ -551,12 +550,12 @@ namespace gemini
 		}
 
 
-		SequenceId load_sequence(const char* name, Mesh* mesh)
+		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, Mesh* mesh)
 		{
-			Sequence* sequence = detail::load_sequence_from_file(name, mesh);
+			Sequence* sequence = detail::load_sequence_from_file(allocator, name, mesh);
 			if (sequence)
 			{
-				AnimatedInstance* instance = create_sequence_instance(sequence->index);
+				AnimatedInstance* instance = create_sequence_instance(allocator, sequence->index);
 				return instance->index;
 			}
 
@@ -581,10 +580,10 @@ namespace gemini
 			return detail::_sequences[index];
 		}
 
-		AnimatedInstance* create_sequence_instance(SequenceId index)
+		AnimatedInstance* create_sequence_instance(gemini::Allocator& allocator, SequenceId index)
 		{
 			Sequence* source = get_sequence_by_index(index);
-			AnimatedInstance* instance = MEMORY_NEW(AnimatedInstance, core::memory::global_allocator());
+			AnimatedInstance* instance = MEMORY2_NEW(allocator, AnimatedInstance)(allocator);
 			instance->initialize(source);
 
 			instance->index = detail::_instances.size();

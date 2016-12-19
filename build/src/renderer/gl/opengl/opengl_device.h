@@ -137,8 +137,11 @@ namespace render2
 		};
 
 	public:
-		OpenGLDevice()
-			: default_target(0, 0, true)
+		OpenGLDevice(gemini::Allocator& allocator)
+			: allocator(allocator)
+			, default_target(0, 0, true)
+			, queue(allocator)
+			//, queued_buffers(allocator)
 		{
 			reset();
 
@@ -152,6 +155,8 @@ namespace render2
 		}
 
 	private:
+		gemini::Allocator& allocator;
+
 		void reset()
 		{
 			locked_buffer = 0;
@@ -415,7 +420,7 @@ namespace render2
 		// ---------------------------------------------------------------------
 		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader)
 		{
-			GLInputLayout* gllayout = MEMORY_NEW(GLInputLayout, core::memory::global_allocator());
+			GLInputLayout* gllayout = MEMORY2_NEW(allocator, GLInputLayout)(allocator);
 			GLShader* glshader = static_cast<GLShader*>(shader);
 
 			setup_input_layout(gllayout, descriptor, glshader);
@@ -425,7 +430,7 @@ namespace render2
 
 		virtual void destroy_input_layout(InputLayout* layout)
 		{
-			MEMORY_DELETE(layout, core::memory::global_allocator());
+			MEMORY2_DELETE(allocator, layout);
 		}
 
 		// ---------------------------------------------------------------------
@@ -433,7 +438,7 @@ namespace render2
 		// ---------------------------------------------------------------------
 		virtual Pipeline* create_pipeline(gemini::Allocator& allocator, const PipelineDescriptor& descriptor)
 		{
-			GLPipeline* pipeline = MEMORY_NEW(GLPipeline, core::memory::global_allocator())(allocator, descriptor);
+			GLPipeline* pipeline = MEMORY2_NEW(allocator, GLPipeline)(allocator, descriptor);
 			setup_pipeline(pipeline, descriptor);
 			return pipeline;
 		}
@@ -444,7 +449,7 @@ namespace render2
 			destroy_shader(glp->program);
 			destroy_input_layout(glp->input_layout);
 
-			MEMORY_DELETE(glp, core::memory::global_allocator());
+			MEMORY2_DELETE(allocator, glp);
 		}
 
 		// ---------------------------------------------------------------------
@@ -454,7 +459,7 @@ namespace render2
 
 		virtual void destroy_shader(Shader* shader)
 		{
-			MEMORY_DELETE(shader, core::memory::global_allocator());
+			MEMORY2_DELETE(allocator, shader);
 		}
 
 		// ---------------------------------------------------------------------

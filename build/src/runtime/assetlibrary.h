@@ -54,9 +54,11 @@ namespace gemini
 			AssetList asset_list;
 			AssetClass * default_asset;
 
+			gemini::Allocator& allocator;
 		public:
 
-			AssetLibrary( AssetLoadCallback callback, AssetConstructExtension extension_callback )
+			AssetLibrary(gemini::Allocator& allocator, AssetLoadCallback callback, AssetConstructExtension extension_callback)
+				: allocator(allocator)
 			{
 				load_callback = callback;
 				assert( load_callback != 0 );
@@ -73,8 +75,8 @@ namespace gemini
 				release_and_purge();
 			}
 
-			AssetClass * allocate_asset() { return MEMORY_NEW(AssetClass, core::memory::global_allocator()); }
-			void deallocate_asset( AssetClass * asset ) { MEMORY_DELETE(asset, core::memory::global_allocator()); }
+			AssetClass* allocate_asset() { return MEMORY2_NEW(allocator, AssetClass)(allocator); }
+			void deallocate_asset(AssetClass* asset) { MEMORY2_DELETE(allocator, asset); }
 			unsigned int total_asset_count() const { return total_assets; }
 
 			void for_each( AssetIterator iterator, void * userdata )

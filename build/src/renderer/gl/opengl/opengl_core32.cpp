@@ -427,10 +427,15 @@ namespace renderer
 	{
 		GLint object;
 
-		GLCore32ShaderProgram() : object(0) {}
+		GLCore32ShaderProgram(gemini::Allocator& allocator)
+			: renderer::ShaderProgram(allocator)
+		{
+			object = 0;
+		}
 	};
 
-	GLCore32::GLCore32()
+	GLCore32::GLCore32(gemini::Allocator& allocator)
+		: allocator(allocator)
 	{
 		LOGV( "GLCore32 instanced.\n" );
 
@@ -1140,14 +1145,14 @@ namespace renderer
 				ms.write( &geometry->colors[ vertex_id ], sizeof(gemini::Color) );
 			}
 
-			if ( !geometry->uvs.empty() && !geometry->uvs[0].empty() )
+			if ( !geometry->uvs.empty() )
 			{
-				ms.write( &geometry->uvs[0][ vertex_id ], sizeof(glm::vec2) );
+				ms.write( &geometry->uvs[(vertex_id * GEOMETRY_UV_SET_MAX)], sizeof(glm::vec2) );
 			}
 
-			if ( geometry->uvs.size() > 1 && !geometry->uvs[1].empty() )
+			if ( geometry->uvs.size() > 1 )
 			{
-				ms.write( &geometry->uvs[1][ vertex_id ], sizeof(glm::vec2) );
+				ms.write( &geometry->uvs[(vertex_id * GEOMETRY_UV_SET_MAX) + 1], sizeof(glm::vec2) );
 			}
 
 			if ( !geometry->blend_indices.empty() && !geometry->blend_weights.empty() )
@@ -1262,7 +1267,7 @@ namespace renderer
 
 	renderer::ShaderProgram* GLCore32::shaderprogram_create()
 	{
-		GLCore32ShaderProgram* program = MEMORY_NEW(GLCore32ShaderProgram, core::memory::global_allocator());
+		GLCore32ShaderProgram* program = MEMORY2_NEW(allocator, GLCore32ShaderProgram)(allocator);
 		program->object = static_cast<GLint>(gl.CreateProgram());
 		gl.CheckError( "CreateProgram" );
 

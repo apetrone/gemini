@@ -72,7 +72,7 @@ namespace gemini
 			glm::vec3 mins;
 			glm::vec3 maxs;
 
-			Geometry();
+			Geometry(gemini::Allocator& allocator);
 			~Geometry();
 
 			Geometry& operator=(const Geometry& rhs) = delete;
@@ -90,8 +90,8 @@ namespace gemini
 
 		struct Mesh : public Asset
 		{
-			FixedArray<Geometry> geometry;
-			FixedArray<Geometry> geometry_vn;
+			FixedArray<Geometry*> geometry;
+			FixedArray<Geometry*> geometry_vn;
 			glm::mat4 world_matrix;
 
 			core::StackString<MAX_PATH_SIZE> path;
@@ -108,7 +108,7 @@ namespace gemini
 			glm::vec3 aabb_mins;
 			glm::vec3 aabb_maxs;
 
-			Mesh();
+			Mesh(gemini::Allocator& allocator);
 			~Mesh();
 			void reset();
 

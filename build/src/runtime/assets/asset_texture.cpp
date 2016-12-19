@@ -42,7 +42,11 @@ namespace gemini
 {
 	namespace assets
 	{
-		Texture::Texture() : texture(0) {}
+		Texture::Texture(gemini::Allocator& allocator)
+			: texture(0)
+			, image(allocator)
+		{
+		}
 		Texture::~Texture() {}
 
 		void Texture::release()

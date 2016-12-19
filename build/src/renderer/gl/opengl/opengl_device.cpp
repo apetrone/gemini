@@ -129,7 +129,7 @@ namespace render2
 	// ---------------------------------------------------------------------
 	Shader* OpenGLDevice::create_shader(const char* name, Shader* reuse_shader)
 	{
-		return common_create_shader("150",
+		return common_create_shader(allocator, "150",
 			name,
 			static_cast<GLShader*>(reuse_shader),
 			"",

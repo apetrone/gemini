@@ -62,11 +62,17 @@ namespace renderer
 
 		unsigned int object;
 
-		ShaderProgram() : frag_data_location("out_color"), object(0) {}
+		ShaderProgram(gemini::Allocator& allocator)
+			: frag_data_location("out_color")
+			, uniforms(allocator)
+			, attributes(allocator)
+			, object(0)
+		{
+		}
 		virtual ~ShaderProgram();
 		ShaderProgram& operator=(const ShaderProgram& other);
 
-		int get_uniform_location( const char * name );
+		int get_uniform_location(const char* name);
 
 		void show_uniforms();
 		void show_attributes();

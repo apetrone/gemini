@@ -93,7 +93,7 @@ void GUIRenderer::startup(gui::Compositor* target_compositor)
 	fontdesc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 	font_pipeline = device->create_pipeline(allocator, fontdesc);
 
-	render2::Image white_image;
+	render2::Image white_image(allocator);
 	white_image.create(4, 4, 3);
 	white_image.filter = image::FILTER_NONE;
 	white_image.flags = image::F_CLAMP_BORDER;

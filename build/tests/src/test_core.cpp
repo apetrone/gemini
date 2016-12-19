@@ -338,7 +338,7 @@ UNITTEST(Delegate)
 UNITTEST(FixedArray)
 {
 	gemini::Allocator default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
-	FixedArray<int> int_array;
+	FixedArray<int> int_array(default_allocator);
 	int_array.allocate(32);
 	TEST_ASSERT(int_array.size() == 32, size);
 
@@ -456,7 +456,8 @@ UNITTEST(HashSet)
 // ---------------------------------------------------------------------
 UNITTEST(CircularBuffer)
 {
-	CircularBuffer<int, 3> cb;
+	Allocator default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+	CircularBuffer<int, 3> cb(default_allocator);
 	int& a = cb.next();
 	a = 30;
 

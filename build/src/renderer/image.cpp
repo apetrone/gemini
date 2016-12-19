@@ -56,7 +56,8 @@ namespace image
 	const unsigned int ERROR_TEXTURE_WIDTH = 128;
 	const unsigned int ERROR_TEXTURE_HEIGHT = 128;
 
-	Image::Image()
+	Image::Image(gemini::Allocator& allocator)
+		: pixels(allocator)
 	{
 		type = image::TEX_2D;
 		filter = FILTER_NONE;
@@ -297,7 +298,8 @@ namespace image
 
 	Image load_from_memory(unsigned char* data, unsigned int data_size)
 	{
-		Image image;
+		gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+		Image image(allocator);
 		int width;
 		int height;
 		int channels;

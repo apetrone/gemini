@@ -33,6 +33,8 @@ namespace gemini
 {
 	struct Allocator;
 
+	const size_t ANIMATION_KEYFRAME_VALUES_MAX = 7;
+
 	namespace assets
 	{
 		struct Mesh;
@@ -102,7 +104,6 @@ namespace gemini
 		//
 
 		typedef int32_t SequenceId;
-		typedef FixedArray<KeyframeList> KeyframeListArray;
 		struct Sequence
 		{
 			// length of this sequence in seconds
@@ -112,7 +113,9 @@ namespace gemini
 			core::StackString<64> name;
 			SequenceId index;
 
-			FixedArray<KeyframeListArray> AnimationSet;
+			FixedArray<KeyframeList> animation_set;
+
+			Sequence(gemini::Allocator& allocator);
 		};
 
 
@@ -122,12 +125,12 @@ namespace gemini
 			SequenceId index;
 			float local_time_seconds;
 			SequenceId sequence_index;
-			FixedArray< FixedArray<float> > AnimationSet;
-			FixedArray< FixedArray<Channel> > ChannelSet;
+			FixedArray<float> animation_set;
+			FixedArray<Channel> channel_set;
 			bool enabled;
 
 
-			AnimatedInstance();
+			AnimatedInstance(gemini::Allocator& allocator);
 			virtual ~AnimatedInstance() {}
 
 			virtual void initialize(Sequence* sequence);
@@ -143,11 +146,11 @@ namespace gemini
 		void shutdown();
 		void update(float delta_seconds);
 
-		SequenceId load_sequence(const char* name, assets::Mesh* mesh);
+		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, assets::Mesh* mesh);
 		SequenceId find_sequence(const char* name);
 		Sequence* get_sequence_by_index(SequenceId index);
 
-		AnimatedInstance* create_sequence_instance(SequenceId index);
+		AnimatedInstance* create_sequence_instance(gemini::Allocator& allocator, SequenceId index);
 		void destroy_sequence_instance(AnimatedInstance* instance);
 		AnimatedInstance* get_instance_by_index(SequenceId index);
 	}

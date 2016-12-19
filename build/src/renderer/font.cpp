@@ -361,7 +361,7 @@ namespace font
 		assert(bitmap->palette == nullptr);
 
 		font->border = 2;
-		render2::Image img;
+		render2::Image img(*_font_allocator);
 		img.flags = image::F_ALPHA;
 		img.width = bitmap->width + (2 * font->border);
 		img.height = bitmap->rows + (2 * font->border);
@@ -455,7 +455,7 @@ namespace font
 		// initialize the rect packing context
 		stbrp_init_target(&font->rp_context, FONT_ATLAS_RESOLUTION, FONT_ATLAS_RESOLUTION, font->rp_nodes, FONT_INITIAL_RECT_TOTAL);
 
-		render2::Image image;
+		render2::Image image(*_font_allocator);
 		image.filter = image::FILTER_NONE;
 		image.flags = image::F_ALPHA | image::F_CLAMP;
 

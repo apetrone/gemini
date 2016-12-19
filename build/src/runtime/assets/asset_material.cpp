@@ -38,6 +38,10 @@ namespace gemini
 		// -------------------------------------------------------------
 		// Material
 
+		Material::Material(gemini::Allocator& allocator)
+		{
+		}
+
 		void Material::release()
 		{
 		} // release

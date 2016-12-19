@@ -51,7 +51,7 @@ namespace gemini
 			KeyframeChannel<float> alpha_channel;
 			KeyframeChannel<float> size_channel;
 
-			EmitterConfig();
+			EmitterConfig(gemini::Allocator& allocator);
 			virtual void release();
 		}; // EmitterConfig
 

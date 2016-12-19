@@ -98,11 +98,16 @@ namespace render2
 
 		size_t vertex_stride;
 		FixedArray<Description> items;
+
+		GLInputLayout(gemini::Allocator& allocator)
+			: items(allocator)
+		{
+		}
 	}; // GLInputLayout
 
 	struct GLShader : public Shader
 	{
-		GLShader();
+		GLShader(gemini::Allocator& allocator);
 		virtual ~GLShader();
 
 		bool compile_shader(GLuint shader, const char* source, const char* preprocessor_defines, const char* version);
@@ -204,7 +209,7 @@ namespace render2
 	CommandQueue* common_create_queue(const Pass& render_pass, CommandQueue* next_queue);
 	void common_pass_setup(const Pass* pass);
 
-	GLShader* common_create_shader(const char* subfolder, const char* name, GLShader* reuse_shader, const char* preprocessor, const char* version);
+	GLShader* common_create_shader(gemini::Allocator& allocator, const char* subfolder, const char* name, GLShader* reuse_shader, const char* preprocessor, const char* version);
 
 	// for use with glTexImage
 	GLenum image_to_source_format(const Image& image);

@@ -273,7 +273,7 @@ namespace renderer
 			return shader_object;
 		} // create_shader_from_file
 
-		bool setup_program_with_config(renderer::IRenderDriver* driver, renderer::ShaderProgram* program, const char* path, const StringVector& stages, std::string& preprocessor)
+		bool setup_program_with_config(gemini::Allocator& allocator, renderer::IRenderDriver* driver, renderer::ShaderProgram* program, const char* path, const StringVector& stages, std::string& preprocessor)
 		{
 			// verify all stages exist
 			bool stages_exist = verify_stages_exist_on_disk(path, stages);
@@ -284,7 +284,7 @@ namespace renderer
 			}
 
 			// attach shader objects to program
-			FixedArray<renderer::ShaderObject> shader_objects;
+			FixedArray<renderer::ShaderObject> shader_objects(allocator);
 			shader_objects.allocate(stages.size());
 			for (size_t i = 0; i < shader_objects.size(); ++i)
 			{
@@ -319,7 +319,7 @@ namespace renderer
 			return true;
 		}
 
-		void load_shaderprogram_from_file(const char* path, renderer::ShaderProgram** shader_program)
+		void load_shaderprogram_from_file(gemini::Allocator& allocator, const char* path, renderer::ShaderProgram** shader_program)
 		{
 			// find the specific shader requested in the shader config
 			// We could actually use the dirname here in case someone requests
@@ -356,7 +356,7 @@ namespace renderer
 			assert(program != 0);
 			map_attributes_and_uniforms(program, attributes, uniforms);
 
-			bool result = setup_program_with_config(driver, program, path, stages, preprocessor_defines);
+			bool result = setup_program_with_config(allocator, driver, program, path, stages, preprocessor_defines);
 			if (!result)
 			{
 				LOGE("Error while creating shader \"%s\"\n", path);

@@ -42,8 +42,10 @@ namespace renderer
 
 		renderer::RenderTarget* default_render_target;
 
+		gemini::Allocator& allocator;
+
 	public:
-		GLCore32();
+		GLCore32(gemini::Allocator& allocator);
 		~GLCore32();
 
 		virtual const char * description() { return "OpenGL Core 3.2"; }

@@ -156,6 +156,7 @@ namespace gemini
 			case MEMORY_ZONE_AUDIO:		return "audio";
 			case MEMORY_ZONE_RENDERER:	return "renderer";
 			case MEMORY_ZONE_GUI:		return "gui";
+			case MEMORY_ZONE_ASSETS:	return "assets";
 			default:					return "unknown";
 		}
 	} // memory_zone_name

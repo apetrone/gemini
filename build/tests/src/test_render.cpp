@@ -364,7 +364,7 @@ Options:
 		render_parameters["rendering_backend"] = "default";
 		render_parameters["gamma_correct"] = "true";
 
-		state.device = render2::create_device(render_parameters);
+		state.device = render2::create_device(render_allocator, render_parameters);
 		assert(state.device != nullptr);
 
 		window_frame = platform::window::get_frame(state.native_window);
@@ -467,7 +467,7 @@ Options:
 		// ---------------------------------------------------------------------
 		LOGV("generating textures...\n");
 		// generate a texture
-		image::Image checker_pattern;
+		image::Image checker_pattern(render_allocator);
 		checker_pattern.width = 32;
 		checker_pattern.height = 32;
 		checker_pattern.channels = 3;
@@ -654,7 +654,7 @@ Options:
 		state.device->destroy_buffer(state.font_buffer);
 		state.device->destroy_buffer(state.line_buffer);
 
-		render2::destroy_device(state.device);
+		render2::destroy_device(render_allocator, state.device);
 #endif
 
 		render_callbacks.clear();

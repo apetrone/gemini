@@ -41,7 +41,9 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// GLShader
 	// ---------------------------------------------------------------------
-	GLShader::GLShader()
+	GLShader::GLShader(gemini::Allocator& allocator)
+		: uniforms(allocator)
+		, attributes(allocator)
 	{
 		id = gl.CreateProgram();
 		gl.CheckError("CreateProgram");
@@ -788,7 +790,7 @@ namespace render2
 		}
 	}
 
-	GLShader* common_create_shader(const char* subfolder, const char* name, GLShader* reuse_shader, const char* preprocessor, const char* version)
+	GLShader* common_create_shader(gemini::Allocator& allocator, const char* subfolder, const char* name, GLShader* reuse_shader, const char* preprocessor, const char* version)
 	{
 		// I haven't re-implemented hot loading of shaders; do that if you
 		// hit this assert :)
@@ -829,7 +831,7 @@ namespace render2
 		vertex_shader_source.push_back('\0');
 		fragment_shader_source.push_back('\0');
 
-		GLShader* shader = MEMORY_NEW(GLShader, core::memory::global_allocator());
+		GLShader* shader = MEMORY2_NEW(allocator, GLShader)(allocator);
 		shader->build_from_source(
 		  (char*)&vertex_shader_source[0],
 		  (char*)&fragment_shader_source[0],

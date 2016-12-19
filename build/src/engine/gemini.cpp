@@ -186,17 +186,19 @@ class ModelInterface : public gemini::IModelInterface
 
 		std::vector<animation::SequenceId> animations;
 
+		gemini::Allocator& allocator;
 	public:
 
-		ModelInstanceData() :
-			mesh_asset_index(0),
-			mesh(0),
-			local_bone_transforms(0),
-			model_bone_transforms(0),
-			inverse_bind_transforms(0),
-			scale_channel(scale),
-			rotation_channel(rotation),
-			translation_channel(translation)
+		ModelInstanceData(gemini::Allocator& allocator)
+			: mesh_asset_index(0)
+			, mesh(0)
+			, local_bone_transforms(0)
+			, model_bone_transforms(0)
+			, inverse_bind_transforms(0)
+			, scale_channel(scale)
+			, rotation_channel(rotation)
+			, translation_channel(translation)
+			, allocator(allocator)
 		{
 		}
 
@@ -416,7 +418,7 @@ class ModelInterface : public gemini::IModelInterface
 
 		virtual int32_t add_animation(const char* name)
 		{
-			animation::SequenceId id = animation::load_sequence(name, mesh);
+			animation::SequenceId id = animation::load_sequence(allocator, name, mesh);
 			if (id > -1)
 			{
 				animations.push_back(id);

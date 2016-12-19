@@ -49,9 +49,9 @@ namespace renderer
 
 	IRenderDriver * driver() { return _render_driver; }
 
-	void create_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program)
+	void create_shaderprogram_from_file(gemini::Allocator& allocator, const char* path, renderer::ShaderProgram** program)
 	{
-		shader_config::load_shaderprogram_from_file(path, program);
+		shader_config::load_shaderprogram_from_file(allocator, path, program);
 	}
 
 	int startup(gemini::Allocator& allocator, DriverType /*driver_type*/, const RenderSettings& settings)
@@ -70,7 +70,7 @@ namespace renderer
 			if (config.major_version == 3 && config.minor_version >= 2)
 			{
 				// use core32
-				_render_driver = MEMORY_NEW(GLCore32, core::memory::global_allocator());
+				_render_driver = MEMORY2_NEW(allocator, GLCore32)(allocator);
 			}
 			else // fallback to 2.1
 			{
@@ -104,13 +104,13 @@ namespace renderer
 		return 0;
 	} // startup
 
-	void shutdown()
+	void shutdown(gemini::Allocator& allocator)
 	{
 		shader_config::shutdown();
 
 		if ( _render_driver )
 		{
-			MEMORY_DELETE(_render_driver, core::memory::global_allocator());
+			MEMORY2_DELETE(allocator, _render_driver);
 		}
 
 		// TODO@APP: This is no longer correct to be called here.
@@ -119,7 +119,14 @@ namespace renderer
 	} // shutdown
 
 
-	Geometry::Geometry()
+	Geometry::Geometry(gemini::Allocator& allocator)
+		: vertices(allocator)
+		, normals(allocator)
+		, colors(allocator)
+		, uvs(allocator)
+		, blend_indices(allocator)
+		, blend_weights(allocator)
+		, indices(allocator)
 	{
 	}
 
@@ -358,7 +365,7 @@ namespace render2
 		ResourceProvider* resource_provider = nullptr;
 	}
 
-	Device* create_device(const RenderParameters& params)
+	Device* create_device(gemini::Allocator& allocator, const RenderParameters& params)
 	{
 		// determine the renderer
 		assert(params.has_key("rendering_backend"));
@@ -367,18 +374,18 @@ namespace render2
 		LOGV("create device for rendering_backend '%s'\n", renderer());
 
 #if defined(PLATFORM_OPENGL_SUPPORT)
-		return MEMORY_NEW(OpenGLDevice, core::memory::global_allocator());
+		return MEMORY2_NEW(allocator, OpenGLDevice)(allocator);
 #elif defined(PLATFORM_GLES2_SUPPORT)
-		return MEMORY_NEW(GLES2Device, core::memory::global_allocator());
+		return MEMORY2_NEW(allocator, GLES2Device)(allocator);
 #else
 		#error Unknown renderer!
 		return nullptr;
 #endif
 	}
 
-	void destroy_device(Device* device)
+	void destroy_device(gemini::Allocator& allocator, Device* device)
 	{
-		MEMORY_DELETE(device, core::memory::global_allocator());
+		MEMORY2_DELETE(allocator, device);
 	}
 
 	void set_resource_provider(ResourceProvider* provider)

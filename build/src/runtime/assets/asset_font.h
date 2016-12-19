@@ -41,7 +41,7 @@ namespace gemini
 			char* font_data;
 			font::Handle handle;
 
-			Font();
+			Font(gemini::Allocator& allocator);
 			virtual void release();
 		}; // Font
 
