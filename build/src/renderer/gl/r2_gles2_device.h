@@ -108,7 +108,10 @@ namespace render2
 
 
 	public:
-		GLES2Device()
+		GLES2Device(gemini::Allocator& _allocator)
+			: allocator(_allocator)
+			, queue(_allocator)
+			, queued_buffers(_allocator)
 		{
 			reset();
 
@@ -122,6 +125,8 @@ namespace render2
 		}
 
 	private:
+		gemini::Allocator& allocator;
+
 		void reset()
 		{
 			locked_buffer = 0;
@@ -338,7 +343,7 @@ namespace render2
 
 		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader)
 		{
-			GLInputLayout* gllayout = MEMORY_NEW(GLInputLayout, core::memory::global_allocator());
+			GLInputLayout* gllayout = MEMORY2_NEW(allocator, GLInputLayout)(allocator);
 			GLShader* glshader = static_cast<GLShader*>(shader);
 
 			setup_input_layout(gllayout, descriptor, glshader);
@@ -348,12 +353,12 @@ namespace render2
 
 		virtual void destroy_input_layout(InputLayout* layout)
 		{
-			MEMORY_DELETE(layout, core::memory::global_allocator());
+			MEMORY2_DELETE(allocator, layout);
 		}
 
-		virtual Pipeline* create_pipeline(const PipelineDescriptor& descriptor)
+		virtual Pipeline* create_pipeline(gemini::Allocator& allocator, const PipelineDescriptor& descriptor)
 		{
-			GLPipeline* pipeline = MEMORY_NEW(GLPipeline, core::memory::global_allocator())(descriptor);
+			GLPipeline* pipeline = MEMORY2_NEW(allocator, GLPipeline)(allocator, descriptor);
 			setup_pipeline(pipeline, descriptor);
 			return pipeline;
 		}
@@ -364,14 +369,14 @@ namespace render2
 			destroy_shader(glp->program);
 			destroy_input_layout(glp->input_layout);
 
-			MEMORY_DELETE(glp, core::memory::global_allocator());
+			MEMORY2_DELETE(allocator, glp);
 		}
 
 		virtual Shader* create_shader(const char* name, Shader* reuse_shader);
 
 		virtual void destroy_shader(Shader* shader)
 		{
-			MEMORY_DELETE(shader, core::memory::global_allocator());
+			MEMORY2_DELETE(allocator, shader);
 		}
 
 		// ---------------------------------------------------------------------

@@ -68,7 +68,7 @@ namespace platform
 		snd_pcm_t* handle;
 		audio_sound_callback audio_pull_callback;
 		void* audio_pull_context;
-		Array<audio_device*, platform::PlatformAllocatorType> devices;
+		Array<audio_device*> devices;
 		snd_pcm_uframes_t period_frames;
 		char* sound_buffer;
 		size_t sound_buffer_size;
@@ -78,9 +78,9 @@ namespace platform
 		uint32_t running_thread;
 		Thread* thread;
 
-		alsa_audio_state()
+		alsa_audio_state(gemini::Allocator& allocator)
 			: handle(nullptr)
-			, devices(16, get_platform_allocator())
+			, devices(allocator, 16)
 			, audio_pull_callback(nullptr)
 			, sound_buffer(nullptr)
 			, sound_buffer_size(0)
@@ -180,6 +180,7 @@ namespace platform
 
 
 	alsa_audio_state* audio_state;
+	gemini::Allocator* _allocator = nullptr;
 
 
 	platform::Result audio_enumerate_devices(Array<audio_device*>& devices)
@@ -313,8 +314,7 @@ namespace platform
 
 		audio_state->sound_buffer_size = (sizeof(uint16_t) * 2 * audio_state->period_frames);
 		audio_state->sound_buffer = static_cast<char*>(
-			MEMORY_ALLOC(audio_state->sound_buffer_size,
-				get_platform_allocator())
+			MEMORY2_ALLOC(*_allocator, audio_state->sound_buffer_size)
 		);
 
 		//
@@ -391,12 +391,13 @@ namespace platform
 		audio_state->handle = nullptr;
 
 		// free sound buffer memory
-		MEMORY_DEALLOC(audio_state->sound_buffer, get_platform_allocator());
+		MEMORY2_DEALLOC(*_allocator, audio_state->sound_buffer);
 	} // audio_close_output_device
 
-	platform::Result audio_startup()
+	platform::Result audio_startup(gemini::Allocator& allocator)
 	{
-		audio_state = MEMORY_NEW(alsa_audio_state, get_platform_allocator());
+		_allocator = &allocator;
+		audio_state = MEMORY2_NEW(allocator, alsa_audio_state)(allocator);
 
 		// dump_alsa_params();
 
@@ -484,7 +485,7 @@ namespace platform
 					}
 
 					const size_t requested_bytes = sizeof(audio_device) + sizeof(alsa_audio_device);
-					char* memory = static_cast<char*>(MEMORY_ALLOC(requested_bytes, get_platform_allocator()));
+					char* memory = static_cast<char*>(MEMORY2_ALLOC(*_allocator, requested_bytes));
 					audio_device* device = new (memory) audio_device();
 					alsa_audio_device* audio_device = new (memory + sizeof(audio_device)) alsa_audio_device();
 
@@ -514,10 +515,10 @@ namespace platform
 		for (size_t index = 0; index < audio_state->devices.size(); ++index)
 		{
 			audio_device* device = audio_state->devices[index];
-			MEMORY_DEALLOC(device, get_platform_allocator());
+			MEMORY2_DEALLOC(*_allocator, device);
 		}
 
-		MEMORY_DELETE(audio_state, get_platform_allocator());
+		MEMORY2_DELETE(*_allocator, audio_state);
 	} // audio_shutdown
 
 	void audio_set_callback(audio_sound_callback callback, void* context)
