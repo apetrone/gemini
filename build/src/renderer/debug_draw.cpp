@@ -164,8 +164,8 @@ namespace debugdraw
 		public:
 			PrimitiveCache(gemini::Allocator& allocator)
 				: next_primitive(0)
-				//, per_frame_primitives(allocator)
-				//, persistent_primitives(allocator)
+				, per_frame_primitives(allocator)
+				, persistent_primitives(allocator)
 			{
 				persistent_primitives.resize(
 					DEBUGDRAW_PERSISTENT_PRIMITIVE_MAX);
@@ -254,16 +254,16 @@ namespace debugdraw
 
 	render2::Pipeline* line_pipeline = nullptr;
 	render2::Buffer* line_buffer = nullptr;
-	Array<DebugDrawVertex> line_vertex_cache;
+	Array<DebugDrawVertex>* line_vertex_cache;
 
 	render2::Pipeline* tris_pipeline = nullptr;
 	render2::Buffer* tris_buffer = nullptr;
-	Array<TexturedVertex> tris_vertex_cache;
+	Array<TexturedVertex>* tris_vertex_cache;
 	render2::Texture* white_texture = nullptr;
 
 	render2::Pipeline* text_pipeline = nullptr;
 	render2::Buffer* text_buffer = nullptr;
-	Array<font::FontVertex> text_vertex_cache;
+	Array<font::FontVertex>* text_vertex_cache;
 
 	font::Handle text_handle;
 	glm::mat4 orthographic_projection;
@@ -617,9 +617,13 @@ namespace debugdraw
 		tris_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator())(allocator);
 		text_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator())(allocator);
 
+		line_vertex_cache = MEMORY2_NEW(allocator, Array<DebugDrawVertex>)(allocator);
+		tris_vertex_cache = MEMORY2_NEW(allocator, Array<TexturedVertex>)(allocator);
+		text_vertex_cache = MEMORY2_NEW(allocator, Array<font::FontVertex>)(allocator);
+
 		device = render_device;
 
-		Array<unsigned char> fontdata;
+		Array<unsigned char> fontdata(allocator);
 		const render2::ResourceProvider* resource_provider = render2::get_resource_provider();
 		resource_provider->load_file(fontdata, "fonts/debug.ttf");
 		text_handle = font::load_from_memory(&fontdata[0], fontdata.size(), 16);
@@ -718,9 +722,9 @@ namespace debugdraw
 
 		device = nullptr;
 
-		line_vertex_cache.clear();
-		tris_vertex_cache.clear();
-		text_vertex_cache.clear();
+		MEMORY2_DELETE(*_allocator, line_vertex_cache);
+		MEMORY2_DELETE(*_allocator, tris_vertex_cache);
+		MEMORY2_DELETE(*_allocator, text_vertex_cache);
 
 		MEMORY_DELETE(line_list, core::memory::global_allocator());
 		MEMORY_DELETE(tris_list, core::memory::global_allocator());
@@ -792,12 +796,12 @@ namespace debugdraw
 		if (total_vertices_required > 0)
 		{
 			// step 2: resize the vertex cache
-			line_vertex_cache.resize(total_vertices_required);
+			line_vertex_cache->resize(total_vertices_required);
 
 			// and the vertex buffer
 			device->buffer_resize(line_buffer, sizeof(DebugDrawVertex) * total_vertices_required);
 
-			detail::VertexAccessor<DebugDrawVertex> accessor(line_vertex_cache);
+			detail::VertexAccessor<DebugDrawVertex> accessor(*line_vertex_cache);
 
 			// step 3: build the vertex cache
 			// persistent primitives
@@ -840,7 +844,7 @@ namespace debugdraw
 			device->destroy_serializer(serializer);
 		}
 
-		line_vertex_cache.clear(false);
+		line_vertex_cache->clear(false);
 		line_list->reset();
 	} // draw_lines
 
@@ -872,14 +876,14 @@ namespace debugdraw
 		if (total_vertices_required > 0)
 		{
 			// step 2: resize the cache
-			tris_vertex_cache.resize(total_vertices_required);
+			tris_vertex_cache->resize(total_vertices_required);
 
 			assert(total_vertices_required % 3 == 0);
 			const size_t new_vertexbuffer_size = sizeof(TexturedVertex) * total_vertices_required;
 
 			// resize the buffer
 			device->buffer_resize(tris_buffer, new_vertexbuffer_size);
-			detail::VertexAccessor<TexturedVertex> accessor(tris_vertex_cache);
+			detail::VertexAccessor<TexturedVertex> accessor(*tris_vertex_cache);
 
 			// step 3: build the vertex cache
 			// persistent primitives
@@ -918,7 +922,7 @@ namespace debugdraw
 			device->destroy_serializer(serializer);
 		}
 
-		tris_vertex_cache.clear(false);
+		tris_vertex_cache->clear(false);
 		tris_list->reset();
 	} // draw_triangles
 
@@ -951,7 +955,7 @@ namespace debugdraw
 			}
 		}
 
-		text_vertex_cache.resize(total_vertices_required);
+		text_vertex_cache->resize(total_vertices_required);
 
 		if (total_vertices_required > 0)
 		{
@@ -962,11 +966,11 @@ namespace debugdraw
 				if (primitive->type == TYPE_TEXT)
 				{
 					size_t prev_offset = offset_index;
-					offset_index += font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
+					offset_index += font::draw_string(text_handle, &(*text_vertex_cache)[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
 
 					for (size_t vertex_index = prev_offset; vertex_index < offset_index; ++vertex_index)
 					{
-						font::FontVertex* vertex = &text_vertex_cache[vertex_index];
+						font::FontVertex* vertex = &(*text_vertex_cache)[vertex_index];
 						vertex->position.x += primitive->start.x;
 						vertex->position.y += primitive->start.y;
 					}
@@ -979,11 +983,11 @@ namespace debugdraw
 				if (primitive->type == TYPE_TEXT)
 				{
 					size_t prev_offset = offset_index;
-					offset_index += font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
+					offset_index += font::draw_string(text_handle, &(*text_vertex_cache)[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
 
 					for (size_t vertex_index = prev_offset; vertex_index < offset_index; ++vertex_index)
 					{
-						font::FontVertex* vertex = &text_vertex_cache[vertex_index];
+						font::FontVertex* vertex = &(*text_vertex_cache)[vertex_index];
 						vertex->position.x += primitive->start.x;
 						vertex->position.y += primitive->start.y;
 					}
@@ -1011,7 +1015,7 @@ namespace debugdraw
 			device->destroy_serializer(serializer);
 		}
 
-		text_vertex_cache.clear(false);
+		text_vertex_cache->clear(false);
 		text_list->reset();
 	} // draw_text
 
@@ -1049,13 +1053,13 @@ namespace debugdraw
 	//void reset()
 	//{
 	//	// reset all render data.
-	//	line_vertex_cache.clear(false);
+	//	line_vertex_cache->clear(false);
 	//	line_list->reset();
 
-	//	tris_vertex_cache.clear(false);
+	//	tris_vertex_cache->clear(false);
 	//	tris_list->reset();
 
-	//	text_vertex_cache.clear(false);
+	//	text_vertex_cache->clear(false);
 	//	text_list->reset();
 	//}
 

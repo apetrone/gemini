@@ -806,7 +806,7 @@ namespace render2
 		vertex_shader_path.append(name);
 		vertex_shader_path.append(".vert");
 
-		Array<unsigned char> vertex_shader_source;
+		Array<unsigned char> vertex_shader_source(allocator);
 
 		const ResourceProvider* resource_provider = get_resource_provider();
 
@@ -822,7 +822,7 @@ namespace render2
 
 		LOGV("create shader \"%s\"\n", name);
 
-		Array<unsigned char> fragment_shader_source;
+		Array<unsigned char> fragment_shader_source(allocator);
 		resource_provider->load_file(fragment_shader_source, fragment_shader_path());
 		assert(!fragment_shader_source.empty());
 

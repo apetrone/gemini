@@ -158,18 +158,19 @@ namespace font
 
 		HashSet<int, GlyphData*> glyphdata_cache;
 
-		FontData(gemini::Allocator& allocator) :
-			type(FONT_TYPE_INVALID),
-			pixel_size(0),
-			face(nullptr),
-			data(nullptr),
-			data_size(0),
-			texture(nullptr),
-			has_kerning(0),
-			is_fixed_width(0),
-			line_height(0),
-			border(0),
-			glyphdata_cache(allocator)
+		FontData(gemini::Allocator& allocator)
+			: type(FONT_TYPE_INVALID)
+			, pixel_size(0)
+			, face(nullptr)
+			, data(nullptr)
+			, data_size(0)
+			, texture(nullptr)
+			, has_kerning(0)
+			, is_fixed_width(0)
+			, line_height(0)
+			, border(0)
+			, glyphdata_cache(allocator)
+			, rp_rects(allocator)
 		{
 		}
 
@@ -208,7 +209,7 @@ namespace font
 	namespace detail
 	{
 		FT_Library _ftlibrary;
-		Array<FontData*> _fonts(0);
+		Array<FontData*>* _fonts;
 		render2::Device* _device = nullptr;
 
 		void delete_font_data(FontData* data)
@@ -241,10 +242,8 @@ namespace font
 	bool Handle::is_valid() const
 	{
 		size_t reference = static_cast<size_t>(ref);
-		return (detail::_fonts.size() > reference) && (ref != -1);
+		return (detail::_fonts->size() > reference) && (ref != -1);
 	}
-
-
 
 
 	// ---------------------------------------------------------------------
@@ -254,6 +253,8 @@ namespace font
 	void startup(gemini::Allocator& allocator, render2::Device* device)
 	{
 		_font_allocator = &allocator;
+
+		detail::_fonts = MEMORY2_NEW(allocator, Array<FontData*>)(allocator);
 
 		FT_Error error = FT_Init_FreeType(&detail::_ftlibrary);
 		if (error)
@@ -270,11 +271,12 @@ namespace font
 
 	void shutdown()
 	{
-		for (auto& data : detail::_fonts)
+		for (auto& data : (*detail::_fonts))
 		{
 			detail::delete_font_data(data);
 		}
-		detail::_fonts.clear();
+
+		MEMORY2_DELETE(*_font_allocator, detail::_fonts);
 
 
 		if (FT_Done_FreeType(detail::_ftlibrary))
@@ -443,7 +445,7 @@ namespace font
 		}
 
 
-		handle.ref = static_cast<int>(detail::_fonts.size());
+		handle.ref = static_cast<int>(detail::_fonts->size());
 		font->type = FONT_TYPE_BITMAP;
 		font->face = face;
 
@@ -462,14 +464,14 @@ namespace font
 		image.create(FONT_ATLAS_RESOLUTION, FONT_ATLAS_RESOLUTION, 1);
 		image.fill(gemini::Color(1.0f, 0.0f, 1.0f));
 		font->texture = detail::_device->create_texture(image);
-		detail::_fonts.push_back(font);
+		(*detail::_fonts).push_back(font);
 
 		return handle;
 	}
 
 	void destroy_font(Handle& handle)
 	{
-		FontData* font = detail::_fonts[static_cast<size_t>(handle.ref)];
+		FontData* font = (*detail::_fonts)[static_cast<size_t>(handle.ref)];
 		detail::delete_font_data(font);
 
 		// invalidate the handle
@@ -478,7 +480,7 @@ namespace font
 
 	unsigned int get_pixel_size(Handle handle)
 	{
-		FontData* font = detail::_fonts[static_cast<size_t>(handle.ref)];
+		FontData* font = (*detail::_fonts)[static_cast<size_t>(handle.ref)];
 		return font->pixel_size;
 	}
 
@@ -489,7 +491,7 @@ namespace font
 			return;
 		}
 
-		FontData* font = detail::_fonts[static_cast<size_t>(handle.ref)];
+		FontData* font = (*detail::_fonts)[static_cast<size_t>(handle.ref)];
 		FT_Size_Metrics& sm = font->face->size->metrics;
 		out_metrics.height = sm.height >> 6;
 		out_metrics.ascender = sm.ascender >> 6;
@@ -510,7 +512,7 @@ namespace font
 			return -1;
 		}
 
-		FontData* font = detail::_fonts[static_cast<size_t>(handle.ref)];
+		FontData* font = (*detail::_fonts)[static_cast<size_t>(handle.ref)];
 		glm::vec2 pen;
 		uint32_t previous_codepoint = 0;
 
@@ -561,7 +563,7 @@ namespace font
 		if (!handle.is_valid())
 			return 0;
 
-		FontData* data = detail::_fonts[static_cast<size_t>(handle.ref)];
+		FontData* data = (*detail::_fonts)[static_cast<size_t>(handle.ref)];
 
 		glm::vec2 pen(0.0f, 0.0f);
 
@@ -641,7 +643,7 @@ namespace font
 	{
 		if (handle.is_valid())
 		{
-			FontData* data = detail::_fonts[static_cast<size_t>(handle.ref)];
+			FontData* data = (*detail::_fonts)[static_cast<size_t>(handle.ref)];
 			return data->texture;
 		}
 

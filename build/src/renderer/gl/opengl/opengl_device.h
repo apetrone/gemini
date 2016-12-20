@@ -141,7 +141,7 @@ namespace render2
 			: allocator(allocator)
 			, default_target(0, 0, true)
 			, queue(allocator)
-			//, queued_buffers(allocator)
+			, queued_buffers(allocator)
 		{
 			reset();
 

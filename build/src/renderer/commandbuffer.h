@@ -103,7 +103,7 @@ namespace render2
 		Pass pass;
 		Array<Command> commands;
 
-		CommandQueue(const Pass& pass = Pass());
+		CommandQueue(gemini::Allocator& allocator, const Pass& pass = Pass());
 		void add_command(const Command& command);
 		void reset();
 	};

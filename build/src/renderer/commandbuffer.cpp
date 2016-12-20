@@ -27,7 +27,8 @@
 
 namespace render2
 {
-	CommandQueue::CommandQueue(const Pass& pass)
+	CommandQueue::CommandQueue(gemini::Allocator& allocator, const Pass& pass)
+		: commands(allocator)
 	{
 		this->pass = pass;
 	}
