@@ -117,24 +117,27 @@ public:
 	{
 		if (elements && total_elements > 0)
 		{
-			MEMORY_DELETE_ARRAY(elements, core::memory::global_allocator());
+			for (size_t index = 0; index < total_elements; ++index)
+			{
+				(&elements[index])->~Type();
+			}
+			MEMORY2_DEALLOC(allocator, elements);
+			elements = nullptr;
 			total_elements = 0;
 		}
 	} // clear
 
-	void allocate(size_t element_total, bool zero_memory = false)
+	void allocate(size_t element_total, Type default_value = Type())
 	{
 		clear();
 		total_elements = element_total;
 		if (element_total > 0)
 		{
 			// allocate space for the pointers
-			elements = MEMORY_NEW_ARRAY(Type, total_elements, core::memory::global_allocator());
-
-			// optionally, zero the new memory
-			if (zero_memory)
+			elements = static_cast<Type*>(MEMORY2_ALLOC(allocator, sizeof(Type) * total_elements));
+			for (size_t index = 0; index < total_elements; ++index)
 			{
-				memset(elements, 0, sizeof(Type) * total_elements);
+				new (&elements[index]) Type(default_value);
 			}
 		}
 	} // allocate
@@ -161,10 +164,10 @@ struct CircularBuffer
 	container_type container;
 	size_t index;
 
-	CircularBuffer(gemini::Allocator& allocator)
+	CircularBuffer(gemini::Allocator& allocator, T default_value = T())
 		: container(allocator)
 	{
-		container.allocate(MaxSize);
+		container.allocate(MaxSize, default_value);
 		reset();
 	}
 

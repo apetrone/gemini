@@ -30,9 +30,10 @@ namespace gui
 
 namespace render
 {
-	CommandList::CommandList(Compositor* compositor_instance, Array<Vertex>* buffer) :
-		vertex_buffer(buffer),
-		compositor(compositor_instance)
+	CommandList::CommandList(gemini::Allocator& allocator, Compositor* compositor_instance, Array<Vertex>* buffer)
+		: commands(allocator)
+		, vertex_buffer(buffer)
+		, compositor(compositor_instance)
 	{
 	}
 

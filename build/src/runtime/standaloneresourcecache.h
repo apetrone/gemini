@@ -57,6 +57,7 @@ namespace renderer
 		typedef Array<gui::FontHandle> FontHandleArray;
 		typedef HashSet<const char*, FontHandleArray> FontByPathSet;
 
+		gemini::Allocator& allocator;
 		TextureToHandleSet handle_by_texture;
 		Array<render2::Texture*> textures;
 		FontByPathSet font_handle_by_path;

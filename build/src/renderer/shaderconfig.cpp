@@ -42,8 +42,11 @@ namespace renderer
 			Array<core::StackString<32>> attributes;
 			Array<core::StackString<32>> uniforms;
 
-			ShaderDescriptionBlock(const char* shader_name = nullptr) :
-				name(shader_name)
+			ShaderDescriptionBlock(gemini::Allocator& allocator, const char* shader_name = nullptr)
+				: name(shader_name)
+				, stages(allocator)
+				, attributes(allocator)
+				, uniforms(allocator)
 			{
 			}
 		};
@@ -54,7 +57,8 @@ namespace renderer
 			HashSet<core::StackString<32>, ShaderDescriptionBlock> shaders;
 
 			ShaderConfiguration(gemini::Allocator& allocator)
-				: shaders(allocator)
+				: preprocessor_defines(allocator)
+				, shaders(allocator, HASHSET_INITIAL_SIZE, HASHSET_GROWTH_FACTOR, ShaderDescriptionBlock(allocator))
 			{
 			}
 		};
@@ -73,7 +77,7 @@ namespace renderer
 			// as it's not worth spending much time on throw-away code.
 			_shader_config = MEMORY_NEW(ShaderConfiguration, core::memory::global_allocator())(allocator);
 
-			ShaderDescriptionBlock objects("objects");
+			ShaderDescriptionBlock objects(allocator, "objects");
 			objects.stages.push_back("vert");
 			objects.stages.push_back("frag");
 			objects.attributes.push_back("in_position");
@@ -90,7 +94,7 @@ namespace renderer
 			objects.uniforms.push_back("light_position");
 			add_shader(_shader_config, objects);
 
-			ShaderDescriptionBlock animation("animation");
+			ShaderDescriptionBlock animation(allocator, "animation");
 			animation.stages.push_back("vert");
 			animation.stages.push_back("frag");
 			animation.attributes.push_back("in_position");
@@ -234,11 +238,11 @@ namespace renderer
 			}
 		}
 
-		renderer::ShaderObject create_shader_from_file(const char* shader_path, renderer::ShaderObjectType type, std::string& preprocessor_defines )
+		renderer::ShaderObject create_shader_from_file(gemini::Allocator& allocator, const char* shader_path, renderer::ShaderObjectType type, std::string& preprocessor_defines )
 		{
 			renderer::ShaderObject shader_object;
 
-			Array<unsigned char> buffer;
+			Array<unsigned char> buffer(allocator);
 			render2::ResourceProvider* resource_provider = render2::get_resource_provider();
 			if (resource_provider->load_file(buffer, shader_path))
 			{
@@ -289,7 +293,7 @@ namespace renderer
 			for (size_t i = 0; i < shader_objects.size(); ++i)
 			{
 				std::string filename = path + shader_stage_to_extension(stages[i]);
-				shader_objects[i] = create_shader_from_file(filename.c_str(), shader_stage_to_shaderobject_type(stages[i]), preprocessor);
+				shader_objects[i] = create_shader_from_file(allocator, filename.c_str(), shader_stage_to_shaderobject_type(stages[i]), preprocessor);
 				driver->shaderprogram_attach(program, shader_objects[i]);
 			}
 

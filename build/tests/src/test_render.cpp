@@ -243,6 +243,7 @@ public:
 
 
 	TestRender()
+		: render_callbacks(render_allocator, 0)
 	{
 		state.native_window = nullptr;
 		active = true;
@@ -320,7 +321,7 @@ Options:
 			LOGV("display %lu rect = %2.2f, %2.2f, %2.2f x %2.2f\n", (unsigned long)i, frame.x, frame.y, frame.width, frame.height);
 		}
 
-		// automaticaly shutdown after 3 seconds
+		// automatically shutdown after 3 seconds
 		countdown = 3.0f;
 
 		// create a test window
@@ -466,27 +467,33 @@ Options:
 		// texture creation
 		// ---------------------------------------------------------------------
 		LOGV("generating textures...\n");
-		// generate a texture
-		image::Image checker_pattern(render_allocator);
-		checker_pattern.width = 32;
-		checker_pattern.height = 32;
-		checker_pattern.channels = 3;
-		image::generate_checker_pattern(checker_pattern, gemini::Color(1.0f, 0, 1.0f), gemini::Color(0, 1.0f, 0));
-		state.checker = state.device->create_texture(checker_pattern);
-		assert(state.checker);
-		LOGV("created checker_pattern texture procedurally\n");
+		{
+			// generate a texture
+			image::Image checker_pattern(render_allocator);
+			checker_pattern.width = 32;
+			checker_pattern.height = 32;
+			checker_pattern.channels = 3;
+			image::generate_checker_pattern(checker_pattern, gemini::Color(1.0f, 0, 1.0f), gemini::Color(0, 1.0f, 0));
+			state.checker = state.device->create_texture(checker_pattern);
+			assert(state.checker);
+			LOGV("created checker_pattern texture procedurally\n");
+		}
 
 
 		// load a texture from file
-		Array<unsigned char> buffer;
-		core::filesystem::instance()->virtual_load_file(buffer, "textures/notexture.png");
-		assert(!buffer.empty());
-		image::Image image = image::load_from_memory(&buffer[0], buffer.size());
-		LOGV("loaded image: %i x %i, @ %i\n", image.width, image.height, image.channels);
-		image.filter = image::FILTER_NONE;
-		state.notexture = state.device->create_texture(image);
-		assert(state.notexture);
-		LOGV("loaded notexture.png successfully\n");
+		{
+			gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_RENDERER);
+
+			Array<unsigned char> buffer(render_allocator);
+			core::filesystem::instance()->virtual_load_file(buffer, "textures/notexture.png");
+			assert(!buffer.empty());
+			image::Image image = image::load_from_memory(allocator, &buffer[0], buffer.size());
+			LOGV("loaded image: %i x %i, @ %i\n", image.width, image.height, image.channels);
+			image.filter = image::FILTER_NONE;
+			state.notexture = state.device->create_texture(image);
+			assert(state.notexture);
+			LOGV("loaded notexture.png successfully\n");
+		}
 
 		// load a compressed texture?
 
@@ -502,12 +509,12 @@ Options:
 		font_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		font::startup(font_allocator, state.device);
 
-		Array<unsigned char> fontdata;
+		Array<unsigned char> fontdata(render_allocator);
 		core::filesystem::instance()->virtual_load_file(fontdata, "fonts/debug.ttf");
 		state.handle = font::load_from_memory(&fontdata[0], fontdata.size(), 16);
 
 		const char* text = "The quick brown fox jumps over the lazy dog.";
-		Array<font::FontVertex> temp_vertices;
+		Array<font::FontVertex> temp_vertices(render_allocator);
 		const size_t text_size = core::str::len(text);
 		temp_vertices.resize(font::count_vertices(state.handle, text_size));
 		font::draw_string(state.handle, &temp_vertices[0], text, text_size, gemini::Color(1.0f, 1.0f, 1.0f));

@@ -43,7 +43,8 @@ namespace gui
 
 	Compositor::Compositor(ScreenInt width, ScreenInt height, ResourceCache* cache, Renderer* renderer)
 		: Panel(nullptr)
-		, command_list(this, &vertex_buffer)
+		, vertex_buffer(gui_allocator())
+		, command_list(gui_allocator(), this, &vertex_buffer)
 		, resource_cache(cache)
 		, renderer(renderer)
 		, event_filter(nullptr)

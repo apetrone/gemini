@@ -27,6 +27,9 @@
 #include <core/util.h>
 #include <core/mem.h>
 
+const size_t HASHSET_INITIAL_SIZE	= 16;
+const size_t HASHSET_GROWTH_FACTOR	= 2;
+
 template <class K, class T, class H = typename core::util::hash<K>>
 class HashSet
 {
@@ -36,6 +39,8 @@ private:
 	const float MAX_LOAD_FACTOR = 0.7f;
 	typedef uint32_t HashType;
 	const HashType REMOVED_SLOT = UINT32_MAX;
+
+	T default_value;
 
 	struct Bucket
 	{
@@ -167,23 +172,30 @@ private:
 
 	Bucket* allocate(uint32_t elements)
 	{
-		return MEMORY2_NEW_ARRAY(allocator, Bucket, elements);
+		Bucket* data = reinterpret_cast<Bucket*>(MEMORY2_ALLOC(allocator, sizeof(Bucket) * elements));
+		memset(data, 0, sizeof(Bucket) * elements);
+		return data;
 	} // allocate
 
 	void deallocate(Bucket* pointer)
 	{
-		MEMORY2_DELETE_ARRAY(allocator, pointer);
+		MEMORY2_DEALLOC(allocator, pointer);
 	} // deallocate
 
 public:
 	typedef std::pair<K, T> value_type;
 
-	HashSet(gemini::Allocator& memory_allocator, uint32_t initial_size = 16, uint32_t growth_factor = 2)
+	HashSet(gemini::Allocator& memory_allocator,
+			uint32_t initial_size = HASHSET_INITIAL_SIZE,
+			uint32_t growth_factor = HASHSET_GROWTH_FACTOR,
+			T default_value = T()
+		)
 		: allocator(memory_allocator)
 		, table(nullptr)
 		, table_size(initial_size)
 		, used_items(0)
 		, growth_factor(growth_factor)
+		, default_value(default_value)
 	{
 		table = allocate(table_size);
 	} // HashSet

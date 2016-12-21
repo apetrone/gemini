@@ -269,7 +269,7 @@ Options:
 			params["opengl.share_context"] = "true";
 
 			LOGV("creating render device...\n");
-			device = create_device(params);
+			device = create_device(render_allocator, params);
 			assert(device);
 
 			platform::window::Frame window_frame = platform::window::get_frame(main_window);
@@ -340,7 +340,7 @@ Options:
 		font_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
 		font::startup(font_allocator, device);
 
-		Array<unsigned char> data;
+		Array<unsigned char> data(font_allocator);
 		LOGV("load fonts/debug.ttf\n");
 		core::filesystem::instance()->virtual_load_file(data, "fonts/debug.ttf");
 		font = font::load_from_memory(&data[0], data.size(), 16);
@@ -407,7 +407,7 @@ Options:
 
 		device->destroy_pipeline(pipeline);
 
-		destroy_device(device);
+		destroy_device(render_allocator, device);
 
 //		glDeleteSync(fence);
 

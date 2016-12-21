@@ -70,6 +70,25 @@ namespace image
 		alignment = 4;
 	}
 
+	Image::Image(const Image& other)
+		: pixels(other.pixels)
+	{
+		type = other.type;
+		filter = other.filter;
+		flags = other.flags;
+		width = other.width;
+		height = other.height;
+		channels = other.channels;
+		alignment = other.alignment;
+	}
+
+	Image::~Image()
+	{
+		// shutting down image.
+		int z = 302;
+		pixels.clear();
+	}
+
 	Image& Image::operator=(const Image& other)
 	{
 		type = other.type;
@@ -80,7 +99,7 @@ namespace image
 		channels = other.channels;
 		alignment = other.alignment;
 
-		// invoke assigment operator on array
+		// invoke assignment operator on array
 		pixels = other.pixels;
 
 		return *this;
@@ -296,9 +315,8 @@ namespace image
 		return texture;
 	} // load_default_texture
 
-	Image load_from_memory(unsigned char* data, unsigned int data_size)
+	Image load_from_memory(gemini::Allocator& allocator, unsigned char* data, unsigned int data_size)
 	{
-		gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
 		Image image(allocator);
 		int width;
 		int height;

@@ -27,10 +27,27 @@
 
 namespace render2
 {
-	CommandQueue::CommandQueue(gemini::Allocator& allocator, const Pass& pass)
-		: commands(allocator)
+	CommandQueue::CommandQueue(gemini::Allocator& _allocator, const Pass& _pass)
+		: allocator(_allocator)
+		, commands(allocator)
 	{
-		this->pass = pass;
+		//commands = MEMORY2_NEW(allocator, Array<Command>)(allocator);
+		pass = _pass;
+	}
+
+	CommandQueue::~CommandQueue()
+	{
+		//MEMORY2_DELETE(allocator, commands);
+	}
+
+	CommandQueue& CommandQueue::operator=(const CommandQueue& other)
+	{
+		allocator = other.allocator;
+		pass = other.pass;
+
+		// For now, shallow copy of commands.
+		commands = other.commands;
+		return *this;
 	}
 
 	void CommandQueue::add_command(const Command& command)

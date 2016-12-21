@@ -69,6 +69,7 @@ namespace gui
 	TabControl::TabControl(Panel* root)
 		: Panel(root)
 		, active_tab(nullptr)
+		, tabs(gui_allocator())
 	{
 		// TODO: should get this from style
 		tab_size.width = 40;

@@ -42,10 +42,22 @@ namespace gui
 	gui_malloc _gmalloc = default_gui_malloc;
 	gui_free _gfree = default_gui_free;
 
+	gemini::Allocator* _allocator = nullptr;
+
 	void set_allocator(gui_malloc malloc_fn, gui_free free_fn)
 	{
 		_gmalloc = malloc_fn;
 		_gfree = free_fn;
+	}
+
+	void set_allocator(gemini::Allocator& allocator)
+	{
+		_allocator = &allocator;
+	}
+
+	gemini::Allocator& gui_allocator()
+	{
+		return *_allocator;
 	}
 
 	ResourceCache::~ResourceCache()

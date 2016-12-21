@@ -32,12 +32,12 @@
 
 namespace renderer
 {
-	StandaloneResourceCache::StandaloneResourceCache(gemini::Allocator& allocator)
-		: textures(0)
-		, handle_by_texture(allocator)
-		, font_handle_by_path(allocator)
+	StandaloneResourceCache::StandaloneResourceCache(gemini::Allocator& _allocator)
+		: allocator(_allocator)
+		, textures(_allocator, 0)
+		, handle_by_texture(_allocator)
+		, font_handle_by_path(_allocator, HASHSET_INITIAL_SIZE, HASHSET_GROWTH_FACTOR, Array<gui::FontHandle>(_allocator))
 	{
-
 	}
 
 	void StandaloneResourceCache::clear()
@@ -73,7 +73,7 @@ namespace renderer
 			}
 		}
 
-		Array<unsigned char> fontdata;
+		Array<unsigned char> fontdata(allocator);
 		core::filesystem::instance()->virtual_load_file(fontdata, filename);
 		font::Handle fonthandle = font::load_from_memory(&fontdata[0], fontdata.size(), pixel_size);
 		assert(fonthandle.is_valid());

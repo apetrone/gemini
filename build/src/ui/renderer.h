@@ -67,7 +67,7 @@ namespace gui
 			Array<Vertex>* vertex_buffer;
 			Compositor* compositor;
 
-			CommandList(Compositor* compositor_instance, Array<Vertex>* buffer);
+			CommandList(gemini::Allocator& allocator, Compositor* compositor_instance, Array<Vertex>* buffer);
 			Vertex* write_pointer;
 
 			void reset();

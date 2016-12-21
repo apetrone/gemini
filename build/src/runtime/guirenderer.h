@@ -89,6 +89,7 @@ public:
 		, font_pipeline(nullptr)
 		, white_texture(nullptr)
 		, resource_cache(cache)
+		, vertex_cache(allocator)
 	{}
 
 	void set_device(render2::Device* render_device) { device = render_device; }

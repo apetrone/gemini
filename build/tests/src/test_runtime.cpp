@@ -147,7 +147,8 @@ UNITTEST(jobqueue)
 		"GAMMA: 9"
 	};
 
-	gemini::JobQueue jq;
+	gemini::Allocator default_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	gemini::JobQueue jq(default_allocator);
 	jq.create_workers(3);
 
 	for (size_t index = 0; index < MAX_JOB_ITERATIONS; ++index)

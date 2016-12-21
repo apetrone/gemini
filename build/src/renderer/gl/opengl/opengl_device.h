@@ -140,7 +140,7 @@ namespace render2
 		OpenGLDevice(gemini::Allocator& allocator)
 			: allocator(allocator)
 			, default_target(0, 0, true)
-			, queue(allocator)
+			, queue(allocator, CommandQueue(allocator))
 			, queued_buffers(allocator)
 		{
 			reset();

@@ -96,15 +96,19 @@ namespace render2
 		bool depth_test;
 
 		CullMode cull_mode;
-	};
+	}; // Pass
 
 	struct CommandQueue
 	{
+		gemini::Allocator& allocator;
 		Pass pass;
 		Array<Command> commands;
 
 		CommandQueue(gemini::Allocator& allocator, const Pass& pass = Pass());
+		~CommandQueue();
+		CommandQueue& operator=(const CommandQueue& other);
+
 		void add_command(const Command& command);
 		void reset();
-	};
+	}; // CommandQueue
 } // namespace render2

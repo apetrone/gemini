@@ -52,6 +52,30 @@ using namespace core::util;
 
 using namespace gemini;
 
+
+class TestClassNoDefaultConstructor
+{
+public:
+	TestClassNoDefaultConstructor(int& index)
+		: _index(index)
+	{
+	}
+
+	TestClassNoDefaultConstructor& operator=(const TestClassNoDefaultConstructor& other)
+	{
+		_index = other._index;
+		return *this;
+	}
+
+	int get_index() const
+	{
+		return _index;
+	}
+
+private:
+	int& _index;
+}; // TestClassNoDefaultConstructor
+
 // ---------------------------------------------------------------------
 // ArgumentParser
 // ---------------------------------------------------------------------
@@ -371,6 +395,16 @@ UNITTEST(FixedArray)
 	}
 
 	TEST_ASSERT(values[0] == 128 && values[1] == 256, ranged_for_loop);
+
+
+	// allocate items that don't have a default constructor
+	FixedArray<TestClassNoDefaultConstructor> items(default_allocator);
+	int test_index = 127;
+
+	TestClassNoDefaultConstructor test_default(test_index);
+	items.allocate(32, test_default);
+
+	TEST_ASSERT_EQUALS(items[0].get_index(), 127);
 }
 
 

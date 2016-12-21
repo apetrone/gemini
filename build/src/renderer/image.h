@@ -106,6 +106,8 @@ namespace image
 		FixedArray<uint8_t> pixels;
 
 		Image(gemini::Allocator& allocator);
+		Image(const Image& other);
+		~Image();
 		Image& operator=(const Image& other);
 		void create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels);
 		void fill(const gemini::Color& color);
@@ -126,7 +128,7 @@ namespace image
 //	bool LoadCubemap( const char ** filenames, unsigned int & texID, unsigned int flags, unsigned int * out_width = 0, unsigned int * out_height = 0 );
 //	unsigned char * AllocImageFromFile( const char * filename, unsigned int * width, unsigned int * height, unsigned int * format, bool path_is_relative=true );
 
-	Image load_from_memory(unsigned char* data, unsigned int data_size);
+	Image load_from_memory(gemini::Allocator& allocator, unsigned char* data, unsigned int data_size);
 	unsigned char* load_image_from_memory(unsigned char* data, unsigned int dataSize, unsigned int* width, unsigned int* height, unsigned int* channels);
 //	void save_image_to_file( const char * filename, unsigned int width, unsigned int height, unsigned int channels, unsigned char * pixels, int imageType );
 	void free_image(unsigned char* pixels);

@@ -181,7 +181,7 @@ gui::TextureResult GUIRenderer::texture_info(const gui::TextureHandle& /*handle*
 
 gui::FontResult GUIRenderer::font_create(const char* path, gui::FontHandle& handle)
 {
-	Array<unsigned char> fontdata;
+	Array<unsigned char> fontdata(allocator);
 	core::filesystem::instance()->virtual_load_file(fontdata, path);
 	font::Handle fonthandle = font::load_from_memory(&fontdata[0], fontdata.size(), 16);
 	assert(fonthandle.is_valid());

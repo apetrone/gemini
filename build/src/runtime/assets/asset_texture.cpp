@@ -55,7 +55,7 @@ namespace gemini
 		} // release
 
 
-		AssetLoadStatus texture_load_callback(const char* path, Texture* texture, const TextureParameters& parameters)
+		AssetLoadStatus texture_load_callback(gemini::Allocator& allocator, const char* path, Texture* texture, const TextureParameters& parameters)
 		{
 			unsigned int width = 0;
 			unsigned int height = 0;
@@ -63,7 +63,7 @@ namespace gemini
 
 			if ( !(parameters.flags & image::F_CUBEMAP) ) // load 2d texture
 			{
-				texture->texture = load_texture_from_file(path, parameters, texture->image);
+				texture->texture = load_texture_from_file(allocator, path, parameters, texture->image);
 				load_result = texture->texture != 0;
 			}
 			else // load cubemap
@@ -126,9 +126,9 @@ namespace gemini
 			extension.append(ext);
 		} // texture_construct_extension
 
-		::renderer::Texture* load_texture_from_file(const char* filename, const assets::TextureParameters& parameters, image::Image& image)
+		::renderer::Texture* load_texture_from_file(gemini::Allocator& allocator, const char* filename, const assets::TextureParameters& parameters, image::Image& image)
 		{
-			Array<unsigned char> buffer;
+			Array<unsigned char> buffer(allocator);
 			::renderer::Texture* render_texture = nullptr;
 			core::filesystem::instance()->virtual_load_file(buffer, filename);
 

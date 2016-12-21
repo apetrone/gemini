@@ -72,12 +72,13 @@ namespace gemini
 		platform::Semaphore* semaphore;
 
 	public:
-		JobQueue() :
-			total_jobs(0),
-			next_write_index(0),
-			next_read_index(0),
-			jobs_completed(0),
-			semaphore(nullptr)
+		JobQueue(gemini::Allocator& allocator)
+			: total_jobs(0)
+			, next_write_index(0)
+			, next_read_index(0)
+			, jobs_completed(0)
+			, semaphore(nullptr)
+			, workers(allocator)
 		{
 		}
 

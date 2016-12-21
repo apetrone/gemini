@@ -119,9 +119,9 @@ namespace gemini
 		}
 
 		// TODO: This could fail; add error checking/codes.
-		int load_wave(Array<audio::InMemorySampleType>& samples, size_t& channels, const char* path)
+		int load_wave(gemini::Allocator& allocator, Array<audio::InMemorySampleType>& samples, size_t& channels, const char* path)
 		{
-			Array<unsigned char> filecontents;
+			Array<unsigned char> filecontents(allocator);
 			core::filesystem::instance()->virtual_load_file(filecontents, path);
 
 			unsigned char* wavedata = static_cast<unsigned char*>(&filecontents[0]);
@@ -209,6 +209,7 @@ namespace gemini
 
 		Sound::Sound(gemini::Allocator& allocator)
 			: channels(0)
+			, pcmdata(allocator)
 		{
 		}
 
@@ -231,10 +232,10 @@ namespace gemini
 			return pcmdata.size() / audio::InMemoryChannelCount;
 		}
 
-		AssetLoadStatus sound_load_callback(const char* path, Sound* sound, const AssetParameters& parameters)
+		AssetLoadStatus sound_load_callback(gemini::Allocator& allocator, const char* path, Sound* sound, const AssetParameters& parameters)
 		{
 			// load the file into a memory buffer
-			if (load_wave(sound->pcmdata, sound->channels, path) != 0)
+			if (load_wave(allocator, sound->pcmdata, sound->channels, path) != 0)
 			{
 				LOGE("An error occurred while loading '%s'\n", path);
 				assert(0);

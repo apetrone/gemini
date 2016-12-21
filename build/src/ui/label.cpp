@@ -39,6 +39,7 @@ namespace gui
 		, font_cache_index(0)
 		, cache_is_dirty(1)
 		, font_height(0)
+		, font_cache(gui_allocator())
 	{
 		content_bounds.set(0, 0, 0, 0);
 	}
