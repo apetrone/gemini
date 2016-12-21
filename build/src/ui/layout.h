@@ -143,6 +143,7 @@ namespace gui
 		void recursive_update(const Size& size, size_t& fixed_size_children, size_t& visible_children);
 
 	public:
+		BoxLayout();
 		virtual ~BoxLayout();
 
 		void add_panel(Panel* panel);

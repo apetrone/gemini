@@ -267,6 +267,11 @@ namespace gui
 	//
 	// Box Layout
 	//
+	BoxLayout::BoxLayout()
+		: items(gui_allocator())
+	{
+	}
+
 	BoxLayout::~BoxLayout()
 	{
 		clear_children();
