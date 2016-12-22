@@ -40,8 +40,6 @@ private:
 	typedef uint32_t HashType;
 	const HashType REMOVED_SLOT = UINT32_MAX;
 
-	T default_value;
-
 	struct Bucket
 	{
 		HashType hash;
@@ -53,11 +51,12 @@ private:
 		}
 	};
 
+	gemini::Allocator& allocator;
 	Bucket* table;
 	uint32_t table_size;
 	uint32_t used_items;
 	uint32_t growth_factor;
-	gemini::Allocator& allocator;
+	T default_value;
 
 	int32_t find_bucket(HashType hash, int32_t& bucket_index, bool inserting = false) const
 	{

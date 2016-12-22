@@ -169,8 +169,8 @@ namespace font
 			, is_fixed_width(0)
 			, line_height(0)
 			, border(0)
-			, glyphdata_cache(allocator)
 			, rp_rects(allocator)
+			, glyphdata_cache(allocator)
 		{
 		}
 
