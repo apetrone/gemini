@@ -558,7 +558,7 @@ struct PLATFORM_ALIGN(16) AlignedStructTest
 	float one[4];
 	float two[4];
 	float three[3];
-	uint32_t padding[5];
+	uint32_t padding;
 }; // AlignedStructTest
 #pragma pack(pop)
 

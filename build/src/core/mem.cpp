@@ -111,7 +111,7 @@ namespace gemini
 		unsigned char* block = static_cast<unsigned char*>(mem);
 
 		// this assumes alignment is a power of two.
-		const uint32_t one_minus_alignment = (alignment - 1);
+		const size_t one_minus_alignment = (alignment - 1);
 
 		return reinterpret_cast<void*>(((size_t)(block + one_minus_alignment)) & ~one_minus_alignment);
 	} // memory_force_alignment
@@ -157,6 +157,7 @@ namespace gemini
 			case MEMORY_ZONE_RENDERER:	return "renderer";
 			case MEMORY_ZONE_GUI:		return "gui";
 			case MEMORY_ZONE_ASSETS:	return "assets";
+			case MEMORY_ZONE_MAX:
 			default:					return "unknown";
 		}
 	} // memory_zone_name
@@ -172,16 +173,16 @@ namespace gemini
 	// common allocation functions
 	// ---------------------------------------------------------------------
 #if defined(DEBUG_MEMORY)
-	void* memory_allocate(MemoryZone zone, size_t requested_size, size_t alignment, const char* filename, int line)
+	void* memory_allocate(MemoryZone zone, size_t requested_size, uint32_t alignment, const char* filename, int line)
 	{
 		// Add header sizes onto the requested size.
 		size_t allocation_size = requested_size + memory_per_allocation_overhead();
 
 		// compute alignment offset if the allocation_size would spill
 		// across boundaries.
-		void* pointer_size = reinterpret_cast<void*>(allocation_size);
-		pointer_size = memory_force_alignment(pointer_size, alignment);
-		uint32_t alignment_offset = (size_t)pointer_size - (size_t)allocation_size;
+		uintptr_t pointer_size = static_cast<uintptr_t>(allocation_size);
+		pointer_size = reinterpret_cast<uintptr_t>(memory_force_alignment(reinterpret_cast<void*>(pointer_size), alignment));
+		uintptr_t alignment_offset = pointer_size - allocation_size;
 		allocation_size += alignment_offset;
 
 		// request the memory from the OS
@@ -217,9 +218,9 @@ namespace gemini
 
 		MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(memory);
 		zone_header->zone = zone;
-		zone_header->requested_size = requested_size;
-		zone_header->allocation_size = allocation_size;
-		zone_header->alignment_offset = alignment_offset;
+		zone_header->requested_size = static_cast<uint32_t>(requested_size);
+		zone_header->allocation_size = static_cast<uint32_t>(allocation_size);
+		zone_header->alignment_offset = static_cast<uint32_t>(alignment_offset);
 		memory_zone_track(zone, allocation_size);
 
 		// populate zone header
@@ -229,7 +230,7 @@ namespace gemini
 	} // memory_allocate
 
 
-	void memory_deallocate(void* pointer, const char* filename, int line)
+	void memory_deallocate(void* pointer, const char* /*filename*/, int /*line*/)
 	{
 		unsigned char* memory = reinterpret_cast<unsigned char*>(pointer);
 
@@ -313,7 +314,7 @@ namespace gemini
 	// default allocator: Standard operating system-level heap allocator
 	// ---------------------------------------------------------------------
 #if defined(DEBUG_MEMORY)
-	void* default_allocate(Allocator& allocator, size_t requested_size, size_t alignment, const char* filename, int line)
+	void* default_allocate(Allocator& allocator, size_t requested_size, uint32_t alignment, const char* filename, int line)
 	{
 		return memory_allocate(allocator.zone, requested_size, alignment, filename, line);
 	}
@@ -323,7 +324,7 @@ namespace gemini
 		memory_deallocate(pointer, filename, line);
 	}
 #else
-	void* default_allocate(Allocator& /*allocator*/, size_t bytes, size_t alignment)
+	void* default_allocate(Allocator& /*allocator*/, size_t bytes, uint32_t alignment)
 	{
 		return core::memory::aligned_malloc(bytes, alignment);
 	}
@@ -348,7 +349,7 @@ namespace gemini
 	// ---------------------------------------------------------------------
 	// linear allocator: Basic linear allocator
 	// ---------------------------------------------------------------------
-	void* linear_allocate_common(Allocator& allocator, MemoryZone zone, size_t requested_size, size_t alignment)
+	void* linear_allocate_common(Allocator& allocator, MemoryZone zone, size_t requested_size, uint32_t alignment)
 	{
 		// We purposely don't track memory leaks for the linear allocators.
 		// That memory is the responsibility of the allocator's creator.
@@ -356,7 +357,7 @@ namespace gemini
 
 		void* pointer_size = reinterpret_cast<void*>(allocation_size);
 		pointer_size = memory_force_alignment(pointer_size, alignment);
-		uint32_t alignment_offset = (size_t)pointer_size - (size_t)allocation_size;
+		uint32_t alignment_offset = static_cast<uint32_t>((size_t)pointer_size - (size_t)allocation_size);
 		allocation_size += alignment_offset;
 
 		if (allocator.bytes_used + allocation_size <= allocator.memory_size)
@@ -366,8 +367,8 @@ namespace gemini
 			block += alignment_offset;
 			MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(block);
 			zone_header->zone = zone;
-			zone_header->requested_size = requested_size;
-			zone_header->allocation_size = allocation_size;
+			zone_header->requested_size = static_cast<uint32_t>(requested_size);
+			zone_header->allocation_size = static_cast<uint32_t>(allocation_size);
 			zone_header->alignment_offset = alignment_offset;
 
 			block += sizeof(MemoryZoneHeader);
@@ -387,7 +388,7 @@ namespace gemini
 	} // linear_deallocate_common
 
 #if defined(DEBUG_MEMORY)
-	void* linear_allocate(Allocator& allocator, size_t requested_size, size_t alignment, const char* /*filename*/, int /*line*/)
+	void* linear_allocate(Allocator& allocator, size_t requested_size, uint32_t alignment, const char* /*filename*/, int /*line*/)
 	{
 		return linear_allocate_common(allocator, allocator.zone, requested_size, alignment);
 	} // linear_allocate
@@ -398,7 +399,7 @@ namespace gemini
 	} // linear_deallocate
 
 #else
-	void* linear_allocate(Allocator& allocator, size_t requested_size, size_t alignment)
+	void* linear_allocate(Allocator& allocator, size_t requested_size, uint32_t alignment)
 	{
 		return linear_allocate_common(allocator, allocator.zone, requested_size, alignment);
 	} // linear_allocate

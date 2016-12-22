@@ -136,10 +136,10 @@ namespace gemini
 	struct Allocator
 	{
 #if defined(DEBUG_MEMORY)
-		void* (*allocate)(Allocator& allocator, size_t requested_size, size_t alignment, const char* filename, int line);
+		void* (*allocate)(Allocator& allocator, size_t requested_size, uint32_t alignment, const char* filename, int line);
 		void (*deallocate)(Allocator& allocator, void* pointer, const char* filename, int line);
 #else
-		void* (*allocate)(Allocator& allocator, size_t requested_size, size_t alignment);
+		void* (*allocate)(Allocator& allocator, size_t requested_size, uint32_t alignment);
 		void (*deallocate)(Allocator& allocator, void* pointer);
 #endif
 		// internal allocator type
@@ -277,7 +277,7 @@ namespace gemini
 	#define MEMORY2_NEW_ARRAY(allocator, type, size) gemini::memory_array_allocate< type >((allocator), size, __FILE__, __LINE__)
 	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate((allocator), pointer, __FILE__, __LINE__), pointer = 0
 
-	void* memory_allocate(MemoryZone zone, size_t requested_size, size_t alignment, const char* filename, int line);
+	void* memory_allocate(MemoryZone zone, size_t requested_size, uint32_t alignment, const char* filename, int line);
 	void memory_deallocate(void* pointer, const char* filename, int line);
 
 	template <class T>
@@ -302,7 +302,7 @@ namespace gemini
 	#define MEMORY2_NEW_ARRAY(allocator, type, size) gemini::memory_array_allocate< type >((allocator), size)
 	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate((allocator), pointer), pointer = 0
 
-	void* memory_allocate(MemoryZone zone, size_t requested_size, size_t alignment);
+	void* memory_allocate(MemoryZone zone, size_t requested_size, uint32_t alignment);
 	void memory_deallocate(void* pointer);
 
 	template <class T>
