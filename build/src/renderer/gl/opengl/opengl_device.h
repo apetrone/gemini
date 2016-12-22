@@ -436,7 +436,7 @@ namespace render2
 		// ---------------------------------------------------------------------
 		// pipeline
 		// ---------------------------------------------------------------------
-		virtual Pipeline* create_pipeline(gemini::Allocator& allocator, const PipelineDescriptor& descriptor)
+		virtual Pipeline* create_pipeline(const PipelineDescriptor& descriptor)
 		{
 			GLPipeline* pipeline = MEMORY2_NEW(allocator, GLPipeline)(allocator, descriptor);
 			setup_pipeline(pipeline, descriptor);

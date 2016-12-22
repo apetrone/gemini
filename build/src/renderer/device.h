@@ -70,7 +70,7 @@ namespace render2
 		// ---------------------------------------------------------------------
 		// pipeline
 		// ---------------------------------------------------------------------
-		virtual Pipeline* create_pipeline(gemini::Allocator& allocator, const PipelineDescriptor& descriptor) = 0;
+		virtual Pipeline* create_pipeline(const PipelineDescriptor& descriptor) = 0;
 		virtual void destroy_pipeline(Pipeline* pipeline) = 0;
 
 		// ---------------------------------------------------------------------
