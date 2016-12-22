@@ -35,14 +35,31 @@ namespace gemini
 #if defined(GEMINI_ENABLE_PROFILER)
 	namespace profiler
 	{
-		Array<profile_block*> scopes;
-		profile_block* current_scope = nullptr;
+		typedef HashSet<const char*, ProfileBlock*> ScopeToProfileBlockHashSet;
 
-		typedef HashSet<const char*, profile_block*> profile_hash_t;
-		profile_hash_t* blocks;
-		gemini::stack<profile_block*> profile_stack;
-		size_t depth = 0;
-		uint64_t overhead = 0;
+		struct ProfilerState
+		{
+			Array<ProfileBlock*> scopes;
+			size_t depth;
+			uint64_t overhead;
+			gemini::stack<ProfileBlock*> profile_stack;
+			ScopeToProfileBlockHashSet blocks;
+			ProfileBlock* current_scope;
+
+			ProfilerState(gemini::Allocator& allocator)
+				: scopes(allocator)
+				, depth(0)
+				, overhead(0)
+				//, profile_stack(allocator)
+				, blocks(allocator)
+				, current_scope(nullptr)
+			{
+			}
+		}; // ProfilerState
+
+
+		gemini::Allocator* _allocator = nullptr;
+		ProfilerState* _state = nullptr;
 
 		void default_profile_output(const char* name, uint64_t cycles, uint32_t depth, uint32_t hitcount, float parent_weight)
 		{
@@ -56,46 +73,46 @@ namespace gemini
 			LOGV(" %s, cycles: %llu, hits: %i, pct: %2.3f cycles/hit: %2.2f\n", name, cycles, hitcount, parent_weight * 100.0, cycles / (float)hitcount);
 		}
 
-		profile_block* find_or_create_block(const char* name)
+		ProfileBlock* find_or_create_block(const char* name)
 		{
-			if (blocks->has_key(name))
-				return blocks->get(name);
+			if (_state->blocks.has_key(name))
+				return _state->blocks.get(name);
 
-			profile_block* block = new profile_block();
-			block->index = static_cast<uint32_t>(scopes.size());
-			scopes.push_back(block);
-			(*blocks)[name] = block;
+			ProfileBlock* block = new ProfileBlock();
+			block->index = static_cast<uint32_t>(_state->scopes.size());
+			_state->scopes.push_back(block);
+			_state->blocks[name] = block;
 			return block;
 		}
 
 		void begin_scope(const char* name, const char* /*fancy_name*/)
 		{
-			profile_block* block = find_or_create_block(name);
-			block->parent_index = current_scope ? current_scope->index : block->index;
+			ProfileBlock* block = find_or_create_block(name);
+			block->parent_index = _state->current_scope ? _state->current_scope->index : block->index;
 			block->cycles -= platform::time_ticks();
 			block->name = name;
-			block->depth = static_cast<uint32_t>(depth++);
+			block->depth = static_cast<uint32_t>(_state->depth++);
 			block->hitcount++;
-			profile_stack.push(block);
-			current_scope = block;
+			_state->profile_stack.push(block);
+			_state->current_scope = block;
 		}
 
 		void end_scope(const char* /*name*/, const char* /*fancy_name*/)
 		{
-			profile_block* scope = profile_stack.top();
-			scope->cycles += platform::time_ticks() - overhead;
+			ProfileBlock* scope = _state->profile_stack.top();
+			scope->cycles += platform::time_ticks() - _state->overhead;
 
-			--depth;
+			--_state->depth;
 
 			// restore the last scope
-			profile_stack.pop();
-			if (profile_stack.empty())
+			_state->profile_stack.pop();
+			if (_state->profile_stack.empty())
 			{
-				current_scope = nullptr;
+				_state->current_scope = nullptr;
 			}
 			else
 			{
-				current_scope = profile_stack.top();
+				_state->current_scope = _state->profile_stack.top();
 			}
 		}
 
@@ -106,9 +123,9 @@ namespace gemini
 				callback = &default_profile_output;
 			}
 
-			for (profile_block* scope : scopes)
+			for (ProfileBlock* scope : _state->scopes)
 			{
-				const profile_block* parent = scopes[scope->parent_index];
+				const ProfileBlock* parent = _state->scopes[scope->parent_index];
 				const float parent_weight = scope->cycles / float(parent->cycles);
 				callback(scope->name, scope->cycles, scope->depth, scope->hitcount, parent_weight);
 			}
@@ -116,16 +133,18 @@ namespace gemini
 
 		void reset()
 		{
-			depth = 0;
-			profile_stack.clear(false);
-			current_scope = nullptr;
-			scopes.clear(false);
-			blocks->clear(/*false*/);
+			_state->depth = 0;
+			_state->profile_stack.clear(false);
+			_state->current_scope = nullptr;
+			_state->scopes.clear(false);
+			_state->blocks.clear(/*false*/);
 		}
 
-		void startup()
+		void startup(gemini::Allocator& allocator)
 		{
-			blocks = MEMORY_NEW(profile_hash_t, core::memory::global_allocator());
+			_allocator = &allocator;
+
+			_state = MEMORY2_NEW(allocator, ProfilerState)(allocator);
 
 			// calculate an average overhead for ticks
 			uint64_t sum = 0;
@@ -138,24 +157,24 @@ namespace gemini
 			}
 
 			// multiply by two since we call ticks TWICE for a scope
-			// and this will allow us to simply subtrack overhead.
-			overhead = (sum / 11) * 2;
+			// and this will allow us to simply subtract overhead.
+			_state->overhead = (sum / 11) * 2;
 		}
 
 		void shutdown()
 		{
-			for (profile_block* block : scopes)
+			for (ProfileBlock* block : _state->scopes)
 			{
 				delete block;
 			}
-			scopes.clear();
-			profile_stack.clear();
-			blocks->clear();
+			_state->scopes.clear();
+			_state->profile_stack.clear();
+			_state->blocks.clear();
 
-			MEMORY_DELETE(blocks, core::memory::global_allocator());
+			MEMORY2_DELETE(*_allocator, _state);
 		}
 
-		static_assert(sizeof(profiler::profile_block) == 32, "profile_block is not aligned on cache line.");
+		static_assert(sizeof(profiler::ProfileBlock) == 32, "ProfileBlock is not aligned on cache line.");
 	} // namespace profiler
 #endif
 } // namespace gemini

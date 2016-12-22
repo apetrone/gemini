@@ -43,7 +43,7 @@ namespace gemini
 
 	namespace profiler
 	{
-		struct profile_block
+		struct ProfileBlock
 		{
 			uint32_t parent_index;
 			uint32_t index;
@@ -51,7 +51,7 @@ namespace gemini
 			uint32_t depth;
 			uint64_t cycles;
 			const char* name;
-		};
+		}; // ProfileBlock
 
 		typedef void (*profile_callback)(const char* name, uint64_t cycles, uint32_t depth, uint32_t hitcount, float parent_weight);
 
@@ -59,7 +59,7 @@ namespace gemini
 		void end_scope(const char* name, const char* caller_name);
 		void report(profile_callback callback = nullptr);
 		void reset();
-		void startup();
+		void startup(gemini::Allocator& allocator);
 		void shutdown();
 
 	} // namespace profiler

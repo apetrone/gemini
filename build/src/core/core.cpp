@@ -38,6 +38,10 @@ namespace gemini
 	// For this, we'll allocate this in static memory.
 	StaticMemory<core::logging::LogInterface> log_system_data;
 
+#if defined(GEMINI_ENABLE_PROFILER)
+	gemini::Allocator _profile_allocator;
+#endif
+
 	platform::Result core_startup()
 	{
 		// create an instance of the log system
@@ -50,7 +54,8 @@ namespace gemini
 		assert(result.succeeded());
 
 #if defined(GEMINI_ENABLE_PROFILER)
-		profiler::startup();
+		_profile_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+		profiler::startup(_profile_allocator);
 #endif
 
 		return platform::Result::success();

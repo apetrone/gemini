@@ -178,6 +178,7 @@ private:
 		for (size_t index = 0; index < elements; ++index)
 		{
 			data[index].hash = 0;
+			new (&data[index].key) K();
 			new (&data[index].value) T(default_value);
 		}
 		return data;
