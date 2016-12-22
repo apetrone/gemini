@@ -82,7 +82,7 @@ namespace platform
 			: sample_rate_hz(0)
 			, handle(nullptr)
 			, audio_pull_callback(nullptr)
-			, context(nullptr)
+			, audio_pull_context(nullptr)
 			, devices(allocator, 16)
 			, sound_buffer(nullptr)
 			, sound_buffer_size(0)
