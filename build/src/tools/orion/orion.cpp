@@ -260,6 +260,7 @@ private:
 	platform::DynamicLibrary* rapid_library;
 
 	gemini::Allocator sensor_allocator;
+	gemini::Allocator render_allocator;
 
 	glm::vec3* lines;
 	size_t current_line_index;
@@ -429,7 +430,8 @@ public:
 
 	void test_open_dialog()
 	{
-		Array<PathString> paths;
+		gemini::Allocator allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+		Array<PathString> paths(allocator);
 		uint32_t flags = platform::OpenDialogFlags::CanChooseDirectories;
 
 		if (platform::show_open_dialog("Choose Game Directory", flags, paths).succeeded())
@@ -458,7 +460,7 @@ public:
 		if (is_recording_frames == false)
 		{
 			current_mocap_filename.clear();
-			Array<PlatformExtensionDescription> extensions;
+			Array<PlatformExtensionDescription> extensions(sensor_allocator);
 			extensions.push_back(PlatformExtensionDescription("Sensor Stream", "sensor"));
 
 			platform::Result save_result = platform::show_save_dialog(
@@ -520,7 +522,7 @@ public:
 
 	void on_playback_start(void)
 	{
-		Array<PathString> paths;
+		Array<PathString> paths(sensor_allocator);
 		platform::Result open_result = platform::show_open_dialog("Choose Sensor Stream", OpenDialogFlags::CanChooseFiles, paths);
 		if (open_result.succeeded())
 		{
@@ -711,8 +713,10 @@ Options:
 
 		// initialize the renderer
 		{
+			render_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
+
 			using namespace render2;
-			RenderParameters params;
+			RenderParameters params(render_allocator);
 
 			// set some options
 			params["vsync"] = "true";
@@ -724,7 +728,7 @@ Options:
 			params["rendering_backend"] = "opengl";
 
 
-			device = create_device(params);
+			device = create_device(render_allocator, params);
 
 			window_frame = platform::window::get_frame(main_window);
 			device->init(window_frame.width, window_frame.height);
@@ -798,10 +802,10 @@ Options:
 //			fs->add_virtual_path("editor/assets");
 		}
 
-		font::startup(device);
+		font::startup(render_allocator, device);
 
 		// initialize debug draw
-		debugdraw::startup(device);
+		debugdraw::startup(render_allocator, device);
 
 #if 0
 		// load the gui
@@ -825,7 +829,7 @@ Options:
 #else
 		{
 			// in lieu of the above working; manually setup the gui...
-			gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(resource_cache);
+			gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(render_allocator, resource_cache);
 			gui_renderer->set_device(device);
 
 			assert(window_frame.width > 0);
@@ -923,7 +927,7 @@ Options:
 			gui::RenderableSurface* surface = new gui::RenderableSurface(main_panel);
 			surface->on_render_content.bind<EditorKernel, &EditorKernel::render_main_content>(this);
 
-			image::Image checker_pattern;
+			image::Image checker_pattern(render_allocator);
 			checker_pattern.create(512, 512, 3);
 			checker_pattern.fill(gemini::Color::from_rgba(0, 25, 25, 255));
 			texture = device->create_texture(checker_pattern);
@@ -1299,7 +1303,7 @@ Options:
 		device->destroy_pipeline(pipeline);
 		device->destroy_pipeline(surface_pipeline);
 
-		destroy_device(device);
+		destroy_device(render_allocator, device);
 
 //		glDeleteSync(fence);
 
