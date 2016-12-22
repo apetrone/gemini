@@ -79,9 +79,11 @@ namespace platform
 		Thread* thread;
 
 		alsa_audio_state(gemini::Allocator& allocator)
-			: handle(nullptr)
-			, devices(allocator, 16)
+			: sample_rate_hz(0)
+			, handle(nullptr)
 			, audio_pull_callback(nullptr)
+			, context(nullptr)
+			, devices(allocator, 16)
 			, sound_buffer(nullptr)
 			, sound_buffer_size(0)
 			, frame_delay(0)

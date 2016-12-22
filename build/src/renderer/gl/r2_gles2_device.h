@@ -110,7 +110,7 @@ namespace render2
 	public:
 		GLES2Device(gemini::Allocator& _allocator)
 			: allocator(_allocator)
-			, queue(_allocator)
+			, queue(_allocator, CommandQueue(allocator))
 			, queued_buffers(_allocator)
 		{
 			reset();
