@@ -78,7 +78,7 @@ void GUIRenderer::startup(gui::Compositor* target_compositor)
 	desc.blend_source = render2::BlendOp::SourceAlpha;
 	desc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 	desc.primitive_type = render2::PrimitiveType::Triangles;
-	gui_pipeline = device->create_pipeline(allocator, desc);
+	gui_pipeline = device->create_pipeline(desc);
 
 
 	// font pipeline
@@ -91,7 +91,7 @@ void GUIRenderer::startup(gui::Compositor* target_compositor)
 	fontdesc.enable_blending = true;
 	fontdesc.blend_source = render2::BlendOp::SourceAlpha;
 	fontdesc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
-	font_pipeline = device->create_pipeline(allocator, fontdesc);
+	font_pipeline = device->create_pipeline(fontdesc);
 
 	render2::Image white_image(allocator);
 	white_image.create(4, 4, 3);

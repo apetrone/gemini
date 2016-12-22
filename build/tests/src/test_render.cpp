@@ -377,7 +377,7 @@ Options:
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = state.device->create_input_layout(desc.vertex_description, desc.shader);
 		desc.primitive_type = render2::PrimitiveType::Triangles;
-		state.pipeline = state.device->create_pipeline(render_allocator, desc);
+		state.pipeline = state.device->create_pipeline(desc);
 
 		// create a vertex buffer and populate it with data
 		float width = (float)window_frame.width;
@@ -403,7 +403,7 @@ Options:
 		td.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		td.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
 		td.input_layout = state.device->create_input_layout(td.vertex_description, td.shader);
-		state.texture_pipeline = state.device->create_pipeline(render_allocator, td);
+		state.texture_pipeline = state.device->create_pipeline(td);
 
 		// setup font pipeline
 		render2::PipelineDescriptor fd;
@@ -412,7 +412,7 @@ Options:
 		fd.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		fd.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
 		fd.input_layout = state.device->create_input_layout(td.vertex_description, fd.shader);
-		state.font_pipeline = state.device->create_pipeline(render_allocator, fd);
+		state.font_pipeline = state.device->create_pipeline(fd);
 
 		// setup line pipeline
 		render2::PipelineDescriptor ld;
@@ -421,7 +421,7 @@ Options:
 		ld.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		ld.input_layout = state.device->create_input_layout(ld.vertex_description, ld.shader);
 		ld.primitive_type = render2::PrimitiveType::Lines;
-		state.line_pipeline = state.device->create_pipeline(render_allocator, ld);
+		state.line_pipeline = state.device->create_pipeline(ld);
 
 		// setup texture vertex buffer
 		const size_t TOTAL_TEXTURED_VERTICES = 15;

@@ -288,7 +288,7 @@ Options:
 			LOGV("vertexcolor - create_input_layout\n");
 			desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
 			LOGV("vertexcolor - create_pipeline\n");
-			pipeline = device->create_pipeline(render_allocator, desc);
+			pipeline = device->create_pipeline(desc);
 			LOGV("vertexcolor shader loaded OK\n");
 
 			size_t total_bytes = sizeof(MyVertex) * 6;
@@ -428,7 +428,7 @@ Options:
 		}
 		else
 		{
-			LOGV("key is_down: '%s', name: '%s', modifiers: %zu\n", event.is_down ? "Yes" : "No", gemini::key_name(event.key), event.modifiers);
+			LOGV("key is_down: '%s', name: '%s', modifiers: %zu\n", event.is_down ? "Yes" : "No", gemini::key_name(static_cast<uint32_t>(event.key)), event.modifiers);
 		}
 	}
 

@@ -827,7 +827,7 @@ Options:
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
-		pipeline = device->create_pipeline(render_allocator, desc);
+		pipeline = device->create_pipeline(desc);
 
 		// create a vertex buffer and populate it with data
 		float width = (float)window_frame.width;

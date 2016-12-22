@@ -645,7 +645,7 @@ namespace debugdraw
 			descriptor.blend_source = render2::BlendOp::SourceAlpha;
 			descriptor.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 			descriptor.primitive_type = render2::PrimitiveType::Lines;
-			line_pipeline = device->create_pipeline(allocator, descriptor);
+			line_pipeline = device->create_pipeline(descriptor);
 		}
 
 		// triangle pipeline
@@ -660,7 +660,7 @@ namespace debugdraw
 			descriptor.blend_source = render2::BlendOp::SourceAlpha;
 			descriptor.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 			descriptor.primitive_type = render2::PrimitiveType::Triangles;
-			tris_pipeline = device->create_pipeline(allocator, descriptor);
+			tris_pipeline = device->create_pipeline(descriptor);
 
 			render2::Image white_image(allocator);
 			white_image.create(4, 4, 3);
@@ -682,7 +682,7 @@ namespace debugdraw
 			descriptor.blend_source = render2::BlendOp::SourceAlpha;
 			descriptor.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 			descriptor.primitive_type = render2::PrimitiveType::Triangles;
-			text_pipeline = device->create_pipeline(allocator, descriptor);
+			text_pipeline = device->create_pipeline(descriptor);
 		}
 	}
 
