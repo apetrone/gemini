@@ -558,6 +558,7 @@ struct PLATFORM_ALIGN(16) AlignedStructTest
 	float one[4];
 	float two[4];
 	float three[3];
+	uint32_t padding[5];
 }; // AlignedStructTest
 #pragma pack(pop)
 
@@ -612,7 +613,7 @@ UNITTEST(memory_allocator_linear)
 	int* items2 = MEMORY2_NEW_ARRAY(s2, int, 8);
 	for (size_t index = 0; index < 8; ++index)
 	{
-		items2[index] = (index * 2);
+		items2[index] = int(index * 2);
 	}
 	MEMORY2_DELETE_ARRAY(s2, items2);
 }

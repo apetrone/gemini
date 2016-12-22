@@ -84,6 +84,12 @@ public:
 	{
 	}
 
+	LinearFreeList& operator=(const LinearFreeList& other)
+	{
+		allocator = other.allocator;
+		elements = other.elements;
+	}
+
 	~LinearFreeList()
 	{
 		clear();
