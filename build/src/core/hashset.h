@@ -173,7 +173,13 @@ private:
 	Bucket* allocate(uint32_t elements)
 	{
 		Bucket* data = reinterpret_cast<Bucket*>(MEMORY2_ALLOC(allocator, sizeof(Bucket) * elements));
-		memset(data, 0, sizeof(Bucket) * elements);
+		// Iterate over the bucket data. Be sure to placement new value T with
+		// the default value to invoke its copy constructor.
+		for (size_t index = 0; index < elements; ++index)
+		{
+			data[index].hash = 0;
+			new (&data[index].value) T(default_value);
+		}
 		return data;
 	} // allocate
 

@@ -34,9 +34,9 @@ namespace renderer
 {
 	StandaloneResourceCache::StandaloneResourceCache(gemini::Allocator& _allocator)
 		: allocator(_allocator)
-		, textures(_allocator, 0)
-		, handle_by_texture(_allocator)
-		, font_handle_by_path(_allocator, HASHSET_INITIAL_SIZE, HASHSET_GROWTH_FACTOR, Array<gui::FontHandle>(_allocator))
+		, textures(allocator, 0)
+		, handle_by_texture(allocator)
+		, font_handle_by_path(allocator, HASHSET_INITIAL_SIZE, HASHSET_GROWTH_FACTOR, Array<gui::FontHandle>(allocator))
 	{
 	}
 

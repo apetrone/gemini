@@ -333,6 +333,10 @@ namespace gemini
 	_Type* memory_array_allocate(Allocator& allocator, size_t array_size)
 #endif
 	{
+		// If you hit this assert, someone wanted to allocate zero items of
+		// an array. Sad panda.
+		assert(array_size > 0);
+
 		// As part of the allocation for arrays store the requested
 		// array_size and the size of the _Type.
 		size_t total_size = sizeof(_Type) * array_size + (sizeof(size_t) + sizeof(size_t));

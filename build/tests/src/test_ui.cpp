@@ -403,6 +403,7 @@ public:
 		renderer->set_device(device);
 
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
+		gui::set_allocator(gui_allocator);
 		compositor = new gui::Compositor(width, height, resource_cache, renderer);
 		compositor->set_name("main_compositor");
 

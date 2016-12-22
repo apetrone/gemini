@@ -222,8 +222,11 @@ public:
 
 			// copy data from rhs
 			total_elements = rhs.total_elements;
-			data = allocate(total_elements);
-			memcpy(data, rhs.data, sizeof(value_type) * rhs.total_elements);
+			if (total_elements > 0)
+			{
+				data = allocate(total_elements);
+				memcpy(data, rhs.data, sizeof(value_type) * rhs.total_elements);
+			}
 			max_capacity = rhs.max_capacity;
 		}
 
