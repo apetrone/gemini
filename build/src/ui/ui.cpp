@@ -57,6 +57,8 @@ namespace gui
 
 	gemini::Allocator& gui_allocator()
 	{
+		// If you hit this, the allocator hasn't been set.
+		assert(_allocator);
 		return *_allocator;
 	}
 

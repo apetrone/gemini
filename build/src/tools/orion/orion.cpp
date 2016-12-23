@@ -216,7 +216,7 @@ private:
 	gui::Label* log_window;
 	GUIRenderer* gui_renderer;
 	gui::Panel* main_panel;
-	::renderer::StandaloneResourceCache resource_cache;
+	::renderer::StandaloneResourceCache* resource_cache;
 	render2::RenderTarget* render_target;
 	render2::Texture* texture;
 	AssetProcessingPanel* asset_processor;
@@ -270,6 +270,7 @@ public:
 		: active(true)
 		, compositor(nullptr)
 		, gui_renderer(nullptr)
+		, resource_cache(nullptr)
 		, render_target(nullptr)
 		, texture(nullptr)
 		, value(0.0f)
@@ -280,6 +281,7 @@ public:
 		, rapid_library(nullptr)
 		, lines(nullptr)
 		, current_line_index(0)
+		, mocap_frames(sensor_allocator, 0)
 	{
 		yaw = 0.0f;
 		pitch = 0.0f;
@@ -829,12 +831,16 @@ Options:
 #else
 		{
 			// in lieu of the above working; manually setup the gui...
-			gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(render_allocator, resource_cache);
+			resource_cache = MEMORY2_NEW(render_allocator, StandaloneResourceCache)(render_allocator);
+
+			gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(render_allocator, *resource_cache);
 			gui_renderer->set_device(device);
+
+			gui::set_allocator(render_allocator);
 
 			assert(window_frame.width > 0);
 			assert(window_frame.height > 0);
-			compositor = new gui::Compositor(window_frame.width, window_frame.height, &resource_cache, gui_renderer);
+			compositor = new gui::Compositor(window_frame.width, window_frame.height, resource_cache, gui_renderer);
 			compositor->set_name("compositor");
 
 #if ENABLE_UI
@@ -932,7 +938,7 @@ Options:
 			checker_pattern.fill(gemini::Color::from_rgba(0, 25, 25, 255));
 			texture = device->create_texture(checker_pattern);
 
-			int handle = resource_cache.track_texture(texture);
+			int handle = resource_cache->track_texture(texture);
 
 			// TODO: sort out this interface!
 			render_target = device->create_render_target(texture);
@@ -1293,7 +1299,8 @@ Options:
 
 		// explicitly clear the resource cache or else the allocator will
 		// detect leaks.
-		resource_cache.clear();
+		resource_cache->clear();
+		MEMORY2_DELETE(render_allocator, resource_cache);
 
 		font::shutdown();
 

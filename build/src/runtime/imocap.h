@@ -52,7 +52,7 @@ namespace imocap
 	};
 
 
-	void startup(gemini::Allocator allocator);
+	void startup(gemini::Allocator& allocator);
 	void shutdown();
 
 	// Returns true if timeout_msec has passed since target_msec.
