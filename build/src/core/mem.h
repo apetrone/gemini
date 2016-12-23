@@ -132,6 +132,8 @@ namespace gemini
 
 		MEMORY_ZONE_DEBUGDRAW,
 
+		MEMORY_ZONE_NAVIGATION,
+
 		MEMORY_ZONE_MAX
 	}; // MemoryZone
 

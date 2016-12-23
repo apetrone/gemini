@@ -216,7 +216,7 @@ namespace font
 		{
 			FT_Done_Face(data->face);
 
-			MEMORY_DEALLOC(data->data, core::memory::global_allocator());
+			MEMORY2_DEALLOC(*_font_allocator, data->data);
 
 			if (data->texture)
 			{
@@ -416,7 +416,7 @@ namespace font
 
 		// font needs a copy of the data so long as FT_Face is loaded.
 		// so make a local copy and store it.
-		font->data = MEMORY_ALLOC(data_size, core::memory::global_allocator());
+		font->data = MEMORY2_ALLOC(*_font_allocator, data_size);
 		font->data_size = data_size;
 		font->pixel_size = static_cast<uint32_t>(pixel_size);
 		memcpy(font->data, data, data_size);

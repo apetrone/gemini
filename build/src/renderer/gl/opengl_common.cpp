@@ -77,14 +77,14 @@ namespace renderer
 		return types[ type ];
 	}
 
-	char * query_shader_info_log( GLObject handle )
+	char * query_shader_info_log(gemini::Allocator& allocator, GLObject handle )
 	{
 		int log_length = 0;
 		char * logbuffer = 0;
 		gl.GetShaderiv( handle, GL_INFO_LOG_LENGTH, &log_length );
 		if ( log_length > 0 )
 		{
-			logbuffer = (char*)MEMORY_ALLOC(static_cast<size_t>(log_length+1), core::memory::global_allocator());
+			logbuffer = static_cast<char*>(MEMORY2_ALLOC(allocator, static_cast<size_t>(log_length+1)));
 			memset( logbuffer, 0, static_cast<size_t>(log_length));
 
 			gl.GetShaderInfoLog( handle, log_length, &log_length, logbuffer );
@@ -94,21 +94,21 @@ namespace renderer
 			}
 			else
 			{
-				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
+				MEMORY2_DEALLOC(allocator, logbuffer);
 			}
 		}
 
 		return 0;
 	} // query_shader_info_log
 
-	char * query_program_info_log( GLObject handle )
+	char * query_program_info_log(gemini::Allocator& allocator, GLObject handle )
 	{
 		int log_length = 0;
 		char * logbuffer = 0;
 		gl.GetProgramiv( handle, GL_INFO_LOG_LENGTH, &log_length );
 		if ( log_length > 0 )
 		{
-			logbuffer = (char*)MEMORY_ALLOC(static_cast<size_t>(log_length+1), core::memory::global_allocator());
+			logbuffer = static_cast<char*>(MEMORY2_ALLOC(allocator, static_cast<size_t>(log_length+1)));
 			memset(logbuffer, 0, static_cast<size_t>(log_length));
 
 			gl.GetProgramInfoLog( handle, log_length, &log_length, logbuffer );
@@ -118,7 +118,7 @@ namespace renderer
 			}
 			else
 			{
-				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
+				MEMORY2_DEALLOC(allocator, logbuffer);
 			}
 		}
 

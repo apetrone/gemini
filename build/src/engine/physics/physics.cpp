@@ -46,16 +46,6 @@ namespace gemini
 {
 	namespace physics
 	{
-		void * bullet2_custom_alloc( size_t size )
-		{
-			return MEMORY_ALLOC(size, core::memory::global_allocator());
-		}
-
-		void bullet2_custom_free( void * memblock )
-		{
-			MEMORY_DEALLOC(memblock, core::memory::global_allocator());
-		}
-
 		void startup()
 		{
 			IPhysicsInterface* physics_interface = MEMORY_NEW(PhysicsInterface, core::memory::global_allocator());

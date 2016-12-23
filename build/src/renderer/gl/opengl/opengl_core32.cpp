@@ -1116,7 +1116,7 @@ namespace renderer
 		assert(stream->vertex_stride > 0);
 
 		unsigned int data_size = geometry->vertex_count * stream->vertex_stride;
-		char* vertex_data = (char*)MEMORY_ALLOC(data_size, core::memory::global_allocator());
+		char* vertex_data = static_cast<char*>(MEMORY2_ALLOC(allocator, data_size));
 		core::util::MemoryStream ms;
 		ms.init( vertex_data, data_size );
 
@@ -1168,7 +1168,7 @@ namespace renderer
 
 		stream->upload_interleaved_data( vertex_data, geometry->vertex_count );
 
-		MEMORY_DEALLOC(vertex_data, core::memory::global_allocator());
+		MEMORY2_DEALLOC(allocator, vertex_data);
 
 		if ( geometry->index_count > 0 )
 		{
@@ -1230,12 +1230,12 @@ namespace renderer
 		if ( !is_compiled )
 		{
 			LOGE( "Error compiling shader!\n" );
-			char * logbuffer = query_shader_info_log( shader_object.shader_id );
+			char* logbuffer = query_shader_info_log(allocator, shader_object.shader_id);
 			if ( logbuffer )
 			{
 				LOGW( "Shader Info Log:\n" );
 				LOGW( "%s\n", logbuffer );
-				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
+				MEMORY2_DEALLOC(allocator, logbuffer);
 			}
 			status = false;
 		}
@@ -1407,13 +1407,12 @@ namespace renderer
 		{
 			status = false;
 			LOGE( "Error linking program!\n" );
-			char * logbuffer = query_program_info_log(static_cast<GLObject>(program->object) );
+			char * logbuffer = query_program_info_log(allocator, static_cast<GLObject>(program->object) );
 			if ( logbuffer )
 			{
 				LOGW( "Program Info Log:\n" );
 				LOGW( "%s\n", logbuffer );
-				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
-
+				MEMORY2_DEALLOC(allocator, logbuffer);
 			}
 
 	//		assert( link_status == 1 );

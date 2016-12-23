@@ -287,10 +287,8 @@ namespace image
 		size_t scanline_size = static_cast<size_t>(width * components);
 		const size_t image_size_bytes = static_cast<size_t>(width * height * components);
 		int dst = 0;
-		unsigned char* copy = (unsigned char*)MEMORY_ALLOC(
-			image_size_bytes,
-			core::memory::global_allocator()
-		);
+		gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+		unsigned char* copy = static_cast<unsigned char*>(MEMORY2_ALLOC(allocator, image_size_bytes));
 		memcpy(copy, pixels, image_size_bytes);
 
 		for(int h = 0; h < height; ++h)
@@ -299,7 +297,7 @@ namespace image
 			memcpy(&pixels[ (h*scanline_size) ], &copy[ (dst*scanline_size) ], scanline_size);
 		}
 
-		MEMORY_DEALLOC(copy, core::memory::global_allocator());
+		MEMORY2_DEALLOC(allocator, copy);
 	} // flip_image_vertically
 
 

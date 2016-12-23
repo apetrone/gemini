@@ -43,10 +43,10 @@ namespace renderer
 	GLenum shaderobject_type_to_gl_shaderobjecttype( renderer::ShaderObjectType type );
 
 	// the callee is responsible for deallocating the memory returned from this function
-	char * query_shader_info_log( GLObject handle );
+	char * query_shader_info_log( gemini::Allocator& allocator, GLObject handle );
 
 	// the callee is responsible for deallocating the memory returned from this function
-	char * query_program_info_log( GLObject handle );
+	char * query_program_info_log( gemini::Allocator& allocator,  GLObject handle );
 
 	GLenum driver_state_to_gl_state( renderer::DriverState state );
 	GLenum convert_blendstate( renderer::RenderBlendType state );

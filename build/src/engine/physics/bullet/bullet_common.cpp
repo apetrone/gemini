@@ -160,6 +160,8 @@ namespace gemini
 
 			void startup()
 			{
+				// TODO@apetrone: set up custom allocation with btAlignedAllocSetCustom.
+
 				collision_config = new btDefaultCollisionConfiguration();
 				dispatcher = new btCollisionDispatcher( collision_config );
 
@@ -180,9 +182,6 @@ namespace gemini
 //				dynamics_world->getDispatchInfo().m_useConvexConservativeDistanceUtil = true;
 //				dynamics_world->getDispatchInfo().m_convexConservativeDistanceThreshold = 0.01;
 				dynamics_world->getDispatchInfo().m_allowedCcdPenetration = 0.0001f;
-
-
-				//btAlignedAllocSetCustom( bullet2_custom_alloc, bullet2_custom_free );
 
 				// instance and set the debug renderer
 				debug_renderer = MEMORY_NEW(bullet::DebugPhysicsRenderer, core::memory::global_allocator());

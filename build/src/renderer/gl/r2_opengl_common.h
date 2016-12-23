@@ -110,11 +110,11 @@ namespace render2
 		GLShader(gemini::Allocator& allocator);
 		virtual ~GLShader();
 
-		bool compile_shader(GLuint shader, const char* source, const char* preprocessor_defines, const char* version);
-		void query_program_info_log(renderer::GLObject handle);
-		void query_shader_info_log(renderer::GLObject handle);
+		bool compile_shader(gemini::Allocator& allocator, GLuint shader, const char* source, const char* preprocessor_defines, const char* version);
+		void query_program_info_log(gemini::Allocator& allocator, renderer::GLObject handle);
+		void query_shader_info_log(gemini::Allocator& allocator, renderer::GLObject handle);
 
-		int build_from_source(const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version);
+		int build_from_source(gemini::Allocator& allocator, const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version);
 		GLint get_attribute_location(const char* name);
 		GLint get_uniform_location(const char* name);
 

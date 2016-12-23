@@ -161,6 +161,7 @@ namespace gemini
 			case MEMORY_ZONE_GUI:		return "gui";
 			case MEMORY_ZONE_ASSETS:	return "assets";
 			case MEMORY_ZONE_DEBUGDRAW: return "debugdraw";
+			case MEMORY_ZONE_NAVIGATION: return "navigation";
 			case MEMORY_ZONE_MAX:
 			default:					return "unknown";
 		}

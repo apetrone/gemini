@@ -58,7 +58,7 @@ namespace render2
 	}
 
 
-	bool GLShader::compile_shader(GLuint shader, const char* source, const char* preprocessor_defines, const char* version)
+	bool GLShader::compile_shader(gemini::Allocator& allocator, GLuint shader, const char* source, const char* preprocessor_defines, const char* version)
 	{
 		GLint is_compiled = 0;
 		const char* shader_source[3] = {
@@ -81,7 +81,7 @@ namespace render2
 
 		if (!is_compiled)
 		{
-			query_shader_info_log(shader);
+			query_shader_info_log(allocator, shader);
 		}
 
 		assert(is_compiled);
@@ -89,7 +89,7 @@ namespace render2
 		return (is_compiled == 1);
 	} // compile_shader
 
-	void GLShader::query_program_info_log(GLObject handle)
+	void GLShader::query_program_info_log(gemini::Allocator& allocator, GLObject handle)
 	{
 		int log_length = 0;
 		char* logbuffer = 0;
@@ -104,7 +104,7 @@ namespace render2
 		}
 		else
 		{
-			logbuffer = (char*)MEMORY_ALLOC(static_cast<size_t>(log_length + 1), core::memory::global_allocator());
+			logbuffer = static_cast<char*>(MEMORY2_ALLOC(allocator, static_cast<size_t>(log_length + 1)));
 		}
 
 		memset(logbuffer, 0, static_cast<size_t>(log_length));
@@ -119,13 +119,13 @@ namespace render2
 		}
 		else
 		{
-			MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
+			MEMORY2_DEALLOC(allocator, logbuffer);
 		}
 
 	} // query_program_info_log
 
 
-	void GLShader::query_shader_info_log(GLObject handle)
+	void GLShader::query_shader_info_log(gemini::Allocator& allocator, GLObject handle)
 	{
 		GLint log_length = 0;
 		char* logbuffer = 0;
@@ -142,9 +142,8 @@ namespace render2
 		}
 		else
 		{
-			logbuffer = (char*)MEMORY_ALLOC(static_cast<size_t>(log_length + 1), core::memory::global_allocator());
+			logbuffer = static_cast<char*>(MEMORY2_ALLOC(allocator, static_cast<size_t>(log_length + 1)));
 		}
-
 
 		memset(logbuffer, 0, static_cast<size_t>(log_length));
 
@@ -159,19 +158,19 @@ namespace render2
 
 		if (logbuffer != buffer)
 		{
-			MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
+			MEMORY2_DEALLOC(allocator, logbuffer);
 		}
 	} // query_shader_info_log
 
-	int GLShader::build_from_source(const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version)
+	int GLShader::build_from_source(gemini::Allocator& allocator, const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version)
 	{
 		GLuint vert = gl.CreateShader(GL_VERTEX_SHADER);
 		gl.CheckError("CreateShader");
 		GLuint frag = gl.CreateShader(GL_FRAGMENT_SHADER);
 		gl.CheckError("CreateShader");
 
-		compile_shader(vert, vertex_shader, preprocessor, version);
-		compile_shader(frag, fragment_shader, preprocessor, version);
+		compile_shader(allocator, vert, vertex_shader, preprocessor, version);
+		compile_shader(allocator, frag, fragment_shader, preprocessor, version);
 
 		// attach shaders
 		gl.AttachShader(id, vert); gl.CheckError("AttachShader (vert)"); gl.CheckError("AttachShader");
@@ -192,7 +191,7 @@ namespace render2
 
 		if (!is_linked)
 		{
-			query_program_info_log(id);
+			query_program_info_log(allocator, id);
 		}
 
 		assert(is_linked == 1);
@@ -833,10 +832,11 @@ namespace render2
 
 		GLShader* shader = MEMORY2_NEW(allocator, GLShader)(allocator);
 		shader->build_from_source(
-		  (char*)&vertex_shader_source[0],
-		  (char*)&fragment_shader_source[0],
-		  preprocessor,
-		  version
+			allocator,
+			(char*)&vertex_shader_source[0],
+			(char*)&fragment_shader_source[0],
+			preprocessor,
+			version
 		);
 
 		return shader;
