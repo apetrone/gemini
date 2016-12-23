@@ -1155,451 +1155,6 @@ void test_endian()
 	uint32_t* val = reinterpret_cast<uint32_t*>(buffer);
 }
 
-namespace audio
-{
-	// [design questions]
-	// 1. I want to support large music files? How do we stream these in?
-	// 2. Create an audio thread for the sole purpose of filling the OS buffer
-	//	  to send to the driver when required.
-	// 3.
-
-	struct SoundInstance
-	{
-		uint32_t samples_played;
-		uint32_t total_samples;
-		uint16_t channels;
-		uint16_t repeats;
-
-		// allocated for each channel, packed.
-		float* volume;
-
-		// total_samples * channels
-		float* samples;
-
-		SoundInstance() :
-			samples_played(0),
-			total_samples(0),
-			channels(0),
-			repeats(0),
-			volume(nullptr),
-			samples(nullptr)
-		{
-		}
-	}; // SoundInstance
-} // namespace audio
-
-// code for reading and writing WAVE files
-namespace wav
-{
-	// http://www-mmsp.ece.mcgill.ca/documents/audioformats/wave/wave.html
-	// http://soundfile.sapp.org/doc/WaveFormat/
-#define MAKE_RIFF_CODE(a) static_cast<uint32_t>(((a[0]) << 0 | (a[1]) << 8 | (a[2]) << 16 | (a[3]) << 24))
-#ifndef WAVE_FORMAT_PCM
-	const size_t WAVE_FORMAT_PCM = 0x001;
-	const size_t WAVE_FORMAT_IEEE_FLOAT = 0x0003;
-	const size_t WAVE_FORMAT_ALAW = 0x0006;
-	const size_t WAVE_FORMAT_MULAW = 0x0007;
-	const size_t WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
-#endif
-
-	const uint32_t RIFF_CHUNK_ID = MAKE_RIFF_CODE("RIFF");
-	const uint32_t RIFF_WAVE_FORMAT = MAKE_RIFF_CODE("WAVE");
-	const uint32_t WAVE_FORMAT_CHUNK_ID = MAKE_RIFF_CODE("fmt ");
-	const uint32_t WAVE_DATA_CHUNK_ID = MAKE_RIFF_CODE("data");
-
-	// riff header
-	struct wave_chunk_descriptor
-	{
-		uint32_t chunk_id; // should be 'RIFF'
-		uint32_t chunk_size;
-		uint32_t format; // should be 'WAVE'
-
-		uint32_t advance_size() const
-		{
-			return 8 + 4;
-		}
-	};
-
-	struct wave_format_chunk
-	{
-		uint32_t chunk_id; // should be 'fmt '
-		uint32_t chunk_size; // should be 16, 18, or 40.
-		uint16_t format_code; // format tag
-		uint16_t total_channels; // number of interleaved channels
-		uint32_t sample_rate; // blocks per second
-		uint32_t data_rate; // avg bytes per sec
-		uint16_t block_align; // data block size (bytes)
-		uint16_t bits_per_sample;
-		uint16_t extended_size; // size of extension (0 or 22)
-		uint16_t valid_bits_per_sample; // number of valid bits
-		uint32_t channel_mask; // speaker position mask
-		uint8_t subformat[16]; // GUID including the data format code
-
-		uint32_t advance_size() const
-		{
-			return 8 + chunk_size;
-		}
-	};
-
-	struct wave_data_chunk
-	{
-		uint32_t chunk_id; // should be 'data'
-		uint32_t chunk_size; // == num_samples * num_channels * bits_per_sample / 8
-
-		uint32_t advance_size() const
-		{
-			return 8;
-		}
-	};
-} // namespace wav
-
-
-
-void test_load_wav(Array<int16_t>& samples, const char* path)
-{
-	using namespace wav;
-
-	Array<unsigned char> filecontents;
-	core::filesystem::instance()->virtual_load_file(filecontents, path);
-
-	LOGV("loaded %s\n", path);
-	LOGV("file size: %i bytes\n", filecontents.size());
-
-
-	unsigned char* wavedata = static_cast<unsigned char*>(&filecontents[0]);
-	wave_chunk_descriptor* desc = reinterpret_cast<wave_chunk_descriptor*>(wavedata);
-	if (desc->chunk_id != RIFF_CHUNK_ID)
-	{
-		LOGV("Is not a valid RIFF file\n");
-		return;
-	}
-
-	if (desc->format != RIFF_WAVE_FORMAT)
-	{
-		LOGV("Is not a valid WAVE file format\n");
-		return;
-	}
-
-	wave_format_chunk* format = reinterpret_cast<wave_format_chunk*>(
-		reinterpret_cast<char*>(desc) + desc->advance_size()
-		);
-	if (format->chunk_id != WAVE_FORMAT_CHUNK_ID)
-	{
-		LOGV("Expected WAVE 'fmt ' chunk!\n");
-		return;
-	}
-
-	// We only support PCM.
-	assert(format->format_code == wav::WAVE_FORMAT_PCM);
-
-	// Only support our sample rate of 44.1KHz.
-	assert(format->sample_rate == 44100);
-
-	// Support mono and stereo sounds.
-	assert(format->total_channels == 1 || format->total_channels == 2);
-
-	wave_data_chunk* data = reinterpret_cast<wave_data_chunk*>(
-		reinterpret_cast<char*>(format) + format->advance_size()
-		);
-	if (data->chunk_id != WAVE_DATA_CHUNK_ID)
-	{
-		LOGV("Expected WAVE 'data' chunk!\n");
-		return;
-	}
-
-	// this describes how long in seconds the file is.
-	// data->chunk_size / format->data_rate;
-
-	const bool has_pad_byte = ((data->chunk_size + 1) & ~1) == 0;
-
-	const uint32_t total_samples = (data->chunk_size / format->block_align);
-
-	samples.resize(total_samples * 2);
-	int16_t* sample_data = reinterpret_cast<int16_t*>(reinterpret_cast<char*>(data) + data->advance_size());
-	for (size_t sample = 0; sample < total_samples * 2; ++sample)
-	{
-		samples[sample] = sample_data[sample];
-	}
-}
-
-
-void test_write_wav(Array<int16_t>& samples, const char* path)
-{
-	FILE* f = fopen(path, "wb");
-
-	wav::wave_chunk_descriptor desc;
-	desc.chunk_id = MAKE_RIFF_CODE("RIFF");
-	desc.format = MAKE_RIFF_CODE("WAVE");
-	// TODO: fill out desc with the total file size - 8
-
-	wav::wave_format_chunk format;
-	format.chunk_id = MAKE_RIFF_CODE("fmt ");
-	format.chunk_size = 16;
-	format.format_code = wav::WAVE_FORMAT_PCM;
-	format.total_channels = 2;
-	format.sample_rate = 44100;
-	format.bits_per_sample = 16;
-	format.data_rate = format.sample_rate * format.total_channels * (format.bits_per_sample / 8);
-	format.block_align = static_cast<uint16_t>((format.total_channels * format.bits_per_sample) / 8);
-
-	wav::wave_data_chunk data;
-	data.chunk_id = MAKE_RIFF_CODE("data");
-	data.chunk_size = static_cast<uint32_t>((samples.size() * format.bits_per_sample) / 8);
-	desc.chunk_size = data.chunk_size + 36;
-
-	if (f)
-	{
-		fwrite(&desc, 1, desc.advance_size(), f);
-		fwrite(&format, 1, format.advance_size(), f);
-		fwrite(&data, 1, data.advance_size(), f);
-		fwrite(&samples[0], 2, samples.size(), f);
-
-		// see if we need to write a padding byte.
-		if (((data.chunk_size + 1) & ~1) == 0)
-		{
-			char padding = '\0';
-			fwrite(&padding, 1, 1, f);
-		}
-		fclose(f);
-	}
-}
-
-// potential test code for reading/writing wav files
-#if 0
-void test_wav()
-{
-	Array<int16_t> samples;
-	test_load_wav(samples, "sounds/sound.wav");
-
-	test_write_wav(samples, "sounds/output.wav");
-
-	Array<int16_t> input;
-	test_load_wav(input, "sounds/output.wav");
-}
-#endif
-
-Array<int16_t> loaded_sound;
-
-#if defined(PLATFORM_LINUX)
-// use the newer alsa api
-#define ALSA_PCM_NEW_HW_PARAMS_API
-
-// The old sys/asoundlib is deprecated in favor of this.
-#include <alsa/asoundlib.h>
-
-
-// /usr/share/sounds/alsa/Front_Center.wav
-
-
-// REFERENCES:
-// http://www.linuxjournal.com/article/6735?page=0,1
-
-int check_alsa_error(int result, const char* action)
-{
-	if (result < 0)
-	{
-		LOGW("Failed on '%s', error: '%s'\n", action,
-			snd_strerror(result)
-		);
-		assert(0);
-	}
-
-	return result;
-}
-
-#include <core/mathlib.h>
-
-static float t_sin = 0.0f;
-void fill_buffer(char* data, uint32_t frames_available, uint32_t sample_rate_hz)
-{
-	// generate a sin wave
-	const float volume = 0.5f;
-	const float wave_period = (sample_rate_hz / 256);
-	const float sin_per = 2.0f * mathlib::PI;
-
-	int16_t* buffer = reinterpret_cast<int16_t*>(data);
-	for (uint32_t frame = 0; frame < frames_available; ++frame)
-	{
-		float sin_value = sinf(t_sin);
-		short value = sin_value * 0x7fff;
-		uint32_t index = frame * 2;
-		buffer[index + 0] = static_cast<short>(value * volume);
-		buffer[index + 1] = static_cast<short>(value * volume);
-
-		// increment the t_sin value
-		t_sin += (1.0 * sin_per) / wave_period;
-
-		// make sure it wraps to avoid glitches.
-		if (t_sin > sin_per)
-		{
-			t_sin -= sin_per;
-		}
-	}
-}
-
-platform::Result test_alsa()
-{
-	snd_pcm_t* handle = 0;
-	int open_result = snd_pcm_open(&handle,
-		"default",
-		SND_PCM_STREAM_PLAYBACK,
-		0
-	);
-	if (open_result < 0)
-	{
-		LOGE("snd_pcm_open failed with '%s'\n", snd_strerror(open_result));
-		if (open_result == -ENOENT)
-		{
-			LOGW("ENOENT: Please make sure you have permissions.\n");
-		}
-		return platform::Result::failure("snd_pcm_open failed");
-	}
-	assert(open_result == 0);
-
-
-
-	// allocate new hwparams
-	snd_pcm_hw_params_t* params;
-	snd_pcm_hw_params_alloca(&params);
-
-	// populate it with default values
-	check_alsa_error(snd_pcm_hw_params_any(handle, params), "set defaults");
-
-	// interleaved mode
-	check_alsa_error(snd_pcm_hw_params_set_access(handle,
-		params,
-		SND_PCM_ACCESS_RW_INTERLEAVED
-		),
-		"set interleaved"
-	);
-
-	// signed 16-bit little-endian format
-	check_alsa_error(snd_pcm_hw_params_set_format(handle,
-		params,
-		SND_PCM_FORMAT_S16_LE),
-		"set format"
-	);
-
-	// set two channels
-	check_alsa_error(snd_pcm_hw_params_set_channels(handle,
-		params,
-		2),
-		"set channels"
-	);
-
-	// set sample rate
-	uint32_t sample_rate = 44100;
-	int32_t subunit_direction;
-	check_alsa_error(snd_pcm_hw_params_set_rate_near(handle,
-		params,
-		&sample_rate,
-		&subunit_direction),
-		"set sample rate"
-	);
-
-
-	{
-		snd_pcm_uframes_t frames = 32;
-		snd_pcm_hw_params_set_period_size_near(handle,
-			params,
-			&frames,
-			&subunit_direction);
-	}
-
-
-
-	// write params to the driver
-	int write_result = check_alsa_error(
-		snd_pcm_hw_params(handle, params),
-		"write params"
-	);
-	if (write_result < 0)
-	{
-		return platform::Result::failure("Unable to set params on driver");
-	}
-
-
-	// display PCM interface details
-	LOGV("name: %s\n", snd_pcm_name(handle));
-	LOGV("state: %s\n", snd_pcm_state_name(snd_pcm_state(handle)));
-	snd_pcm_access_t access_value;
-	snd_pcm_hw_params_get_access(params, &access_value);
-	LOGV("access: %s\n", snd_pcm_access_name(static_cast<snd_pcm_access_t>(access_value)));
-
-	uint32_t channels;
-	snd_pcm_hw_params_get_channels(params, &channels);
-	LOGV("channels: %i\n", channels);
-
-
-
-
-	snd_pcm_uframes_t period_frames;
-	int subunit;
-	check_alsa_error(snd_pcm_hw_params_get_period_size(params,
-		&period_frames,
-		&subunit),
-		"get_period_size"
-	);
-	LOGV("period_frames: %i, subunit: %i\n", period_frames, subunit);
-
-	uint32_t period_time;
-	check_alsa_error(snd_pcm_hw_params_get_period_time(params,
-		&period_time,
-		&subunit),
-		"get_period_time"
-	);
-	LOGV("period_time: %i\n", period_time);
-
-	int buffer_size = period_frames * 4; // 2 bytes per sample * 2 channels
-	char* buffer = static_cast<char*>(
-		MEMORY_ALLOC(buffer_size,
-			core::memory::global_allocator())
-	);
-
-	// 2 seconds over period time
-	long loops = (2 * MicrosecondsPerSecond) / period_time;
-
-	memset(buffer, 0, buffer_size);
-
-
-
-	while (loops > 0)
-	{
-		loops--;
-
-
-		// for (size_t index = 0; index < period_frames; ++index)
-		// {
-		// 	short* ptr = reinterpret_cast<short*>(&buffer[index * 2]);
-		// 	ptr[0] = 3000;
-		// 	ptr[1] = 3000;
-		// 	++ptr;
-		// }
-
-		fill_buffer(buffer, period_frames, sample_rate);
-
-		int res = snd_pcm_writei(handle, buffer, period_frames);
-
-		if (res == -EPIPE)
-		{
-			LOGW("Buffer underrun occurred\n");
-			snd_pcm_prepare(handle);
-		}
-		//check_alsa_error(res, "snd_pcm_writei");
-	}
-
-	// finish playing sound samples
-	snd_pcm_drain(handle);
-
-	int close_result = snd_pcm_close(handle);
-	assert(close_result == 0);
-
-	MEMORY_DEALLOC(buffer, core::memory::global_allocator());
-
-	return platform::Result::success();
-}
-#endif // defined(PLATFORM_WINDOWS)
-
 // #include <core/logging.h>
 #include <core/array.h>
 
@@ -1613,7 +1168,7 @@ struct DialogueNode
 		Flag_SecondPass
 	};
 
-	DialogueNode();
+	DialogueNode(gemini::Allocator& allocator);
 	DialogueNode* child_at(size_t index);
 	void add_child(DialogueNode* node);
 
@@ -1624,8 +1179,9 @@ struct DialogueNode
 	String responses[4];
 };
 
-DialogueNode::DialogueNode()
+DialogueNode::DialogueNode(gemini::Allocator& allocator)
 	: flags(0)
+	, children(allocator)
 {
 }
 
@@ -1657,6 +1213,8 @@ int main(int, char**)
 	gemini::core_startup();
 	gemini::runtime_startup("arcfusion.net/gemini/rnd");
 
+	gemini::Allocator default_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+
 //	test_memory();
 //	test_maths();
 //	test_coroutines();
@@ -1678,7 +1236,7 @@ int main(int, char**)
 	assert(test.succeeded());
 #endif
 
-	DialogueNode root;
+	DialogueNode root(default_allocator);
 	root.question = "Hello, how can I help you?";
 	root.responses[0] = "What items do you have for sale?";
 	root.responses[1] = "Do you know of a man named Crane?";
@@ -1687,7 +1245,7 @@ int main(int, char**)
 	// root.responses[4] = "What items do you have for sale?";
 
 
-	DialogueNode items;
+	DialogueNode items(default_allocator);
 	items.question = "What are you looking for?";
 	items.responses[0] = "A Sword.";
 	items.responses[1] = "A Shield.";
@@ -1699,7 +1257,7 @@ int main(int, char**)
 	items.add_child(&root);
 	root.add_child(&items);
 
-	DialogueNode opt2;
+	DialogueNode opt2(default_allocator);
 	opt2.question = "Crane? The name sounds familiar. I don't remember...";
 	opt2.responses[0] = "Would 20 credits entice you?";
 	opt2.responses[1] = "Would 50 credits jog your memory?";

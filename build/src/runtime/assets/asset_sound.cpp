@@ -195,6 +195,49 @@ namespace gemini
 		} // load_wave
 
 
+#if 0
+		void test_write_wav(Array<int16_t>& samples, const char* path)
+		{
+			FILE* f = fopen(path, "wb");
+
+			wav::wave_chunk_descriptor desc;
+			desc.chunk_id = MAKE_RIFF_CODE("RIFF");
+			desc.format = MAKE_RIFF_CODE("WAVE");
+			// TODO: fill out desc with the total file size - 8
+
+			wav::wave_format_chunk format;
+			format.chunk_id = MAKE_RIFF_CODE("fmt ");
+			format.chunk_size = 16;
+			format.format_code = wav::WAVE_FORMAT_PCM;
+			format.total_channels = 2;
+			format.sample_rate = 44100;
+			format.bits_per_sample = 16;
+			format.data_rate = format.sample_rate * format.total_channels * (format.bits_per_sample / 8);
+			format.block_align = static_cast<uint16_t>((format.total_channels * format.bits_per_sample) / 8);
+
+			wav::wave_data_chunk data;
+			data.chunk_id = MAKE_RIFF_CODE("data");
+			data.chunk_size = static_cast<uint32_t>((samples.size() * format.bits_per_sample) / 8);
+			desc.chunk_size = data.chunk_size + 36;
+
+			if (f)
+			{
+				fwrite(&desc, 1, desc.advance_size(), f);
+				fwrite(&format, 1, format.advance_size(), f);
+				fwrite(&data, 1, data.advance_size(), f);
+				fwrite(&samples[0], 2, samples.size(), f);
+
+				// see if we need to write a padding byte.
+				if (((data.chunk_size + 1) & ~1) == 0)
+				{
+					char padding = '\0';
+					fwrite(&padding, 1, 1, f);
+				}
+				fclose(f);
+			}
+		}
+#endif
+
 		// -------------------------------------------------------------
 		size_t get_frame_wave(Sound* sound, size_t frame, float* buffer)
 		{
