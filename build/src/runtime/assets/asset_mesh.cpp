@@ -480,7 +480,9 @@ namespace gemini
 		} // mesh_construct_extension
 
 		Geometry::Geometry(gemini::Allocator& allocator)
-			: Geometry(allocator)
+			: ::renderer::Geometry(allocator)
+			, bind_poses(allocator)
+			, inverse_bind_poses(allocator)
 		{
 			material_id = 0;
 			vertex_count = 0;
