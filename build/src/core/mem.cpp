@@ -154,16 +154,18 @@ namespace gemini
 	{
 		switch (zone)
 		{
-			case MEMORY_ZONE_DEFAULT:	return "default";
-			case MEMORY_ZONE_PLATFORM:	return "platform";
-			case MEMORY_ZONE_AUDIO:		return "audio";
-			case MEMORY_ZONE_RENDERER:	return "renderer";
-			case MEMORY_ZONE_GUI:		return "gui";
-			case MEMORY_ZONE_ASSETS:	return "assets";
-			case MEMORY_ZONE_DEBUGDRAW: return "debugdraw";
-			case MEMORY_ZONE_NAVIGATION: return "navigation";
+			case MEMORY_ZONE_DEFAULT:		return "default";
+			case MEMORY_ZONE_PLATFORM:		return "platform";
+			case MEMORY_ZONE_AUDIO:			return "audio";
+			case MEMORY_ZONE_RENDERER:		return "renderer";
+			case MEMORY_ZONE_GUI:			return "gui";
+			case MEMORY_ZONE_ASSETS:		return "assets";
+			case MEMORY_ZONE_DEBUGDRAW:		return "debugdraw";
+			case MEMORY_ZONE_NAVIGATION:	return "navigation";
+			case MEMORY_ZONE_RUNTIME:		return "runtime";
+			case MEMORY_ZONE_FILESYSTEM:	return "filesystem";
 			case MEMORY_ZONE_MAX:
-			default:					return "unknown";
+			default:						return "unknown";
 		}
 	} // memory_zone_name
 

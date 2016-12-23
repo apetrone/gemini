@@ -50,6 +50,14 @@ namespace gemini
 {
 	namespace detail
 	{
+		struct RuntimeState
+		{
+			gemini::Allocator allocator;
+		}; // RuntimeState
+
+		RuntimeState _runtime_state;
+		RuntimeState* _state = &_runtime_state;
+
 		// log handler function declarations
 		void file_logger_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
 		{
@@ -102,13 +110,15 @@ namespace gemini
 		std::function<void(const char*)> custom_path_setup,
 		uint32_t runtime_flags)
 	{
+		detail::_state->allocator = memory_allocator_default(MEMORY_ZONE_RUNTIME);
+
 		platform::PathString root_path = platform::get_program_directory();
 		LOGV("root_path: %s\n", root_path());
 		platform::PathString content_path = platform::fs_content_directory();
 		LOGV("content_path: %s\n", content_path());
 
 		// create file system instance
-		core::filesystem::IFileSystem* filesystem = MEMORY_NEW(core::filesystem::FileSystemInterface, core::memory::global_allocator());
+		core::filesystem::IFileSystem* filesystem = MEMORY2_NEW(detail::_state->allocator, core::filesystem::FileSystemInterface);
 		core::filesystem::set_instance(filesystem);
 		if (!filesystem)
 		{
@@ -182,7 +192,7 @@ namespace gemini
 		core::filesystem::instance()->shutdown();
 
 		core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
-		MEMORY_DELETE(filesystem, core::memory::global_allocator());
+		MEMORY2_DELETE(detail::_state->allocator, filesystem);
 	} // shutdown
 
 	void runtime_load_arguments(std::vector<std::string>& arguments, ::core::argparse::ArgumentParser& parser)

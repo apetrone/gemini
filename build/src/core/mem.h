@@ -134,6 +134,10 @@ namespace gemini
 
 		MEMORY_ZONE_NAVIGATION,
 
+		MEMORY_ZONE_RUNTIME,
+
+		MEMORY_ZONE_FILESYSTEM,
+
 		MEMORY_ZONE_MAX
 	}; // MemoryZone
 

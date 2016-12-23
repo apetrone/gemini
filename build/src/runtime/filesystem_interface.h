@@ -39,7 +39,9 @@ namespace core
 			::platform::PathString user_application_path;
 			::platform::PathString content_path;
 
+			gemini::Allocator allocator;
 		public:
+			FileSystemInterface();
 			virtual ~FileSystemInterface();
 
 			virtual void startup();
@@ -59,8 +61,10 @@ namespace core
 
 			virtual bool virtual_file_exists(const char* relative_path) const;
 			virtual bool virtual_directory_exists(const char* relative_path) const;
-			virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) const;
-			virtual void virtual_load_file(Array<unsigned char>& buffer, const char* relative_path) const;
+			virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length);
+			virtual void virtual_load_file(Array<unsigned char>& buffer, const char* relative_path);
+
+			virtual void free_file_memory(void* memory);
 		};
 	} // namespace filesystem
 } // namespace core

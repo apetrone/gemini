@@ -68,9 +68,11 @@ namespace core
 			// bufferLength will contain the size of the buffer
 			// if buffer is null, a new buffer is allocated and must be DEALLOC'd after use
 			// if buffer is not null, bufferLength should contain the size of the buffer which will not be exceeded.
-			virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) const = 0;
+			virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) = 0;
 
-			virtual void virtual_load_file(Array<unsigned char>& buffer, const char* relative_path) const = 0;
+			virtual void virtual_load_file(Array<unsigned char>& buffer, const char* relative_path) = 0;
+
+			virtual void free_file_memory(void* memory) = 0;
 		};
 
 

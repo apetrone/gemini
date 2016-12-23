@@ -97,7 +97,6 @@ namespace gemini
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MeshAssetLibrary, meshes)
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MaterialAssetLibrary, materials)
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(EmitterConfigAssetLibrary, emitters)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(FontAssetLibrary, fonts)
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(ShaderAssetLibrary, shaders)
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(SoundAssetLibrary, sounds);
 
@@ -139,7 +138,6 @@ namespace gemini
 			_meshes =		MEMORY2_NEW(asset_allocator, MeshAssetLibrary)				(asset_allocator, mesh_load_callback, mesh_construct_extension);
 			_materials =	MEMORY2_NEW(asset_allocator, MaterialAssetLibrary)			(asset_allocator, material_load_callback, material_construct_extension);
 			_emitters =		MEMORY2_NEW(asset_allocator, EmitterConfigAssetLibrary)		(asset_allocator, emitterconfig_load_callback, emitterconfig_construct_extension);
-			_fonts =		MEMORY2_NEW(asset_allocator, FontAssetLibrary)				(asset_allocator, font_load_callback, font_construct_extension);
 			_shaders =		MEMORY2_NEW(asset_allocator, ShaderAssetLibrary)			(asset_allocator, shader_load_callback, shader_construct_extension);
 			_sounds =		MEMORY2_NEW(asset_allocator, SoundAssetLibrary)				(asset_allocator, sound_load_callback, sound_construct_extension);
 
@@ -153,7 +151,6 @@ namespace gemini
 			MEMORY2_DELETE(asset_allocator, _meshes);
 			MEMORY2_DELETE(asset_allocator, _materials);
 			MEMORY2_DELETE(asset_allocator, _emitters);
-			MEMORY2_DELETE(asset_allocator, _fonts);
 			MEMORY2_DELETE(asset_allocator, _shaders);
 			MEMORY2_DELETE(asset_allocator, _sounds);
 		} // shutdown

@@ -26,11 +26,17 @@
 #include "array.h"
 
 #include <core/logging.h>
+#include <core/mem.h>
 
 namespace core
 {
 	namespace filesystem
 	{
+		FileSystemInterface::FileSystemInterface()
+		{
+			allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_FILESYSTEM);
+		}
+
 		FileSystemInterface::~FileSystemInterface()
 		{
 		}
@@ -116,7 +122,7 @@ namespace core
 			return directory_exists(relative_path, true);
 		}
 
-		char* FileSystemInterface::virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) const
+		char* FileSystemInterface::virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length)
 		{
 			size_t file_size;
 
@@ -157,7 +163,7 @@ namespace core
 				*buffer_length = file_size;
 				if (!buffer)
 				{
-					buffer = (char*)MEMORY_ALLOC((*buffer_length)+1, core::memory::global_allocator());
+					buffer = static_cast<char*>(MEMORY2_ALLOC(allocator, (*buffer_length) + 1));
 					memset(buffer, 0, (*buffer_length)+1);
 				}
 
@@ -168,7 +174,7 @@ namespace core
 			return buffer;
 		} // virtual load file
 
-		void FileSystemInterface::virtual_load_file(Array<unsigned char>& buffer, const char* relative_path) const
+		void FileSystemInterface::virtual_load_file(Array<unsigned char>& buffer, const char* relative_path)
 		{
 			platform::PathString fullpath;
 			absolute_path_from_relative(fullpath, relative_path, content_directory());
@@ -196,5 +202,10 @@ namespace core
 				platform::fs_close(handle);
 			}
 		} // virtual_load_file
+
+		void FileSystemInterface::free_file_memory(void* memory)
+		{
+			MEMORY2_DEALLOC(allocator, memory);
+		} // free_file_memory
 	} // namespace filesystem
 } // namespace core
