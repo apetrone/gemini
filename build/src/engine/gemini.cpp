@@ -937,8 +937,6 @@ private:
 	gui::Graph* graph;
 	gui::Panel* root;
 
-	//::renderer::VertexStream alt_vs;
-
 	::renderer::StandaloneResourceCache* resource_cache;
 
 	// used by debug draw

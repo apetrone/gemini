@@ -26,7 +26,6 @@
 
 #include <renderer/debug_draw.h>
 #include <renderer/renderer.h>
-#include <renderer/vertexstream.h>
 #include <renderer/renderstream.h>
 #include <renderer/font.h>
 #include <renderer/color.h>

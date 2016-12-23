@@ -37,7 +37,6 @@
 
 #include <renderer/renderer.h>
 #include <renderer/vertexbuffer.h>
-#include <renderer/vertexstream.h>
 #include <renderer/font.h>
 #include <renderer/color.h>
 

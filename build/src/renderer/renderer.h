@@ -262,7 +262,6 @@ namespace renderer
 #include "texture.h"
 #include "material.h"
 #include "rendertarget.h"
-#include "vertexstream.h"
 #include "constantbuffer.h"
 #include "pipeline.h"
 #include "commandbuffer.h"
@@ -277,8 +276,6 @@ namespace renderer
 
 namespace renderer
 {
-	struct VertexStream;
-
 	// This interface can be derived for each new platform
 	class RenderDevice
 	{
