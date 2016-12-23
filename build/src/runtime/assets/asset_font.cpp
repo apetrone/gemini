@@ -107,7 +107,7 @@ namespace gemini
 			return core::util::ConfigLoad_Failure;
 		} // load_font_from_file
 
-		AssetLoadStatus font_load_callback( const char * path, Font * font, const AssetParameters & parameters )
+		AssetLoadStatus font_load_callback(gemini::Allocator& allocator, const char * path, Font * font, const AssetParameters & parameters )
 		{
 			if ( core::util::json_load_with_callback(path, load_font_from_file, font, true ) == core::util::ConfigLoad_Success )
 			{

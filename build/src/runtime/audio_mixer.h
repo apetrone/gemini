@@ -116,7 +116,7 @@ namespace gemini
 		void set_master_volume(float new_volume);
 		float get_master_volume();
 
-		void startup();
+		void startup(gemini::Allocator& allocator);
 		void shutdown();
 
 		// returns the number of sounds currently playing.

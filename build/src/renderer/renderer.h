@@ -138,7 +138,7 @@ namespace renderer
 
 	// returns 0 on failure, 1 on success
 	int startup(gemini::Allocator& allocator, DriverType driver, const RenderSettings& settings);
-	void shutdown();
+	void shutdown(gemini::Allocator& allocator);
 
 #if defined(PLATFORM_GLES2_SUPPORT)
 	typedef unsigned short IndexType;

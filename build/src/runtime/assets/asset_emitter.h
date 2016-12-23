@@ -55,7 +55,7 @@ namespace gemini
 			virtual void release();
 		}; // EmitterConfig
 
-		AssetLoadStatus emitterconfig_load_callback( const char * path, EmitterConfig * config, const AssetParameters & parameters );
+		AssetLoadStatus emitterconfig_load_callback(gemini::Allocator& allocator, const char * path, EmitterConfig * config, const AssetParameters & parameters );
 		void emitterconfig_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(EmitterConfig, AssetParameters, emitters);

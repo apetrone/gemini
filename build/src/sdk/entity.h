@@ -227,3 +227,4 @@ void entity_post_script_load();
 void entity_shutdown();
 void entity_update_physics();
 void entity_update(float delta_seconds, float alpha);
+gemini::Allocator& entity_allocator();

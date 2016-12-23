@@ -166,7 +166,7 @@ namespace gemini
 			return core::util::ConfigLoad_Success;
 		} // load_emitter_from_file
 
-		AssetLoadStatus emitterconfig_load_callback( const char * path, EmitterConfig * config, const AssetParameters & parameters )
+		AssetLoadStatus emitterconfig_load_callback(gemini::Allocator& allocator, const char * path, EmitterConfig * config, const AssetParameters & parameters )
 		{
 			if ( core::util::json_load_with_callback(path, load_emitter_from_file, config, true ) == core::util::ConfigLoad_Success )
 			{

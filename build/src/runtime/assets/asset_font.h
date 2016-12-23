@@ -45,7 +45,7 @@ namespace gemini
 			virtual void release();
 		}; // Font
 
-		AssetLoadStatus font_load_callback( const char * path, Font * config, const AssetParameters & parameters );
+		AssetLoadStatus font_load_callback(gemini::Allocator& allocator, const char * path, Font * config, const AssetParameters & parameters );
 		void font_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Font, AssetParameters, fonts);

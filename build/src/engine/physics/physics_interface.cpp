@@ -113,7 +113,7 @@ namespace gemini
 
 			for( uint32_t index = 0; index < mesh->geometry.size(); ++index )
 			{
-				assets::Geometry* geo = &mesh->geometry[index];
+				assets::Geometry* geo = mesh->geometry[index];
 				FixedArray<glm::vec3>& vertices = geo->vertices;
 
 				// this shape's transform

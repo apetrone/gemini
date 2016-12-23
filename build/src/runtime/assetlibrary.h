@@ -39,7 +39,7 @@ namespace gemini
 		template <class AssetClass, class AssetParameterClass = AssetParameters>
 		class AssetLibrary
 		{
-			typedef AssetLoadStatus (*AssetLoadCallback)( const char * path, AssetClass * asset, const AssetParameterClass & parameters );
+			typedef AssetLoadStatus (*AssetLoadCallback)(gemini::Allocator& allocator, const char * path, AssetClass * asset, const AssetParameterClass & parameters );
 			typedef void (*AssetConstructExtension)( core::StackString<MAX_PATH_SIZE> & path );
 			typedef void (*AssetIterator)( AssetClass * asset, void * userdata );
 
@@ -100,7 +100,7 @@ namespace gemini
 					return AssetLoad_Failure;
 				}
 
-				return load_callback( path, asset, parameters );
+				return load_callback(allocator, path, asset, parameters );
 			} // load_with_callback
 
 			void construct_extension( core::StackString<MAX_PATH_SIZE> & extension )

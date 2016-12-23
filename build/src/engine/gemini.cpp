@@ -300,26 +300,25 @@ class ModelInterface : public gemini::IModelInterface
 #endif
 
 			size_t bone_index = 0;
-			for (FixedArray<animation::Channel>& node : instance->ChannelSet)
+			for (size_t channel_index = 0; channel_index < ANIMATION_KEYFRAME_VALUES_MAX; ++channel_index)
 			{
+				animation::Channel* channel = &instance->channel_set[channel_index * ANIMATION_KEYFRAME_VALUES_MAX];
+
 				assert(bone_index < MAX_BONES);
 
 				glm::vec3& pos = positions[bone_index];
 				glm::quat& rot = rotations[bone_index];
-				const animation::Channel& tx = node[0];
-				const animation::Channel& ty = node[1];
-				const animation::Channel& tz = node[2];
+				const animation::Channel& tx = channel[0];
+				const animation::Channel& ty = channel[1];
+				const animation::Channel& tz = channel[2];
 				pos = glm::vec3(tx(), ty(), tz());
 
-				if (node.size() > 3)
-				{
-					const animation::Channel& rx = node[3];
-					const animation::Channel& ry = node[4];
-					const animation::Channel& rz = node[5];
-					const animation::Channel& rw = node[6];
+				const animation::Channel& rx = channel[3];
+				const animation::Channel& ry = channel[4];
+				const animation::Channel& rz = channel[5];
+				const animation::Channel& rw = channel[6];
 
-					rot = glm::quat(rw(), rx(), ry(), rz());
-				}
+				rot = glm::quat(rw(), rx(), ry(), rz());
 
 #if defined(GEMINI_DEBUG_BONES)
 				debugdraw::text(origin.x,
@@ -348,11 +347,11 @@ class ModelInterface : public gemini::IModelInterface
 
 			size_t geometry_index = 0;
 			// we must update the transforms for each geometry instance
-			for (const assets::Geometry& geo : mesh->geometry)
+			for (const assets::Geometry* geo : mesh->geometry)
 			{
 				// If you hit this assert, one mesh in this model didn't have
 				// blend weights.
-				assert(!geo.bind_poses.empty());
+				assert(!geo->bind_poses.empty());
 
 				size_t transform_index;
 
@@ -377,13 +376,13 @@ class ModelInterface : public gemini::IModelInterface
 					}
 
 					// this will be cached in local transforms
-					local_bone_pose = geo.bind_poses[index] * local_pose;
+					local_bone_pose = geo->bind_poses[index] * local_pose;
 
 					// this will be used for skinning in the vertex shader
 					model_pose = parent_pose * local_bone_pose;
 
 					// set the inverse_bind_pose
-					inverse_bind_pose = geo.inverse_bind_poses[index];
+					inverse_bind_pose = geo->inverse_bind_poses[index];
 
 					glm::mat4 local_bbox_xf = glm::toMat4(glm::angleAxis(glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 					Hitbox* hitbox = (hitboxes + index);
@@ -520,8 +519,15 @@ class ModelInterface : public gemini::IModelInterface
 	typedef std::map<int32_t, ModelInstanceData> ModelInstanceMap;
 	ModelInstanceMap id_to_instance;
 
+	gemini::Allocator& allocator;
+
 
 public:
+	ModelInterface(gemini::Allocator& _allocator)
+		: allocator(_allocator)
+	{
+	}
+
 	virtual int32_t create_instance_data(const char* model_path)
 	{
 		assets::Mesh* mesh = assets::meshes()->load_from_path(model_path);
@@ -531,7 +537,7 @@ public:
 			{
 				mesh->prepare_geometry();
 			}
-			ModelInstanceData data;
+			ModelInstanceData data(allocator);
 			data.set_mesh_index(mesh->Id());
 			data.create_bones();
 			int32_t index = (int32_t)id_to_instance.size();
@@ -617,7 +623,7 @@ public:
 	virtual void navmesh_generate_from_model(const char* path)
 	{
 		assets::Mesh* mesh = assets::meshes()->load_from_path(path);
-		assets::Geometry* geom = &mesh->geometry[0];
+		assets::Geometry* geom = mesh->geometry[0];
 		navigation::create_from_geometry(geom->vertices, geom->indices, geom->mins, geom->maxs);
 	}
 
@@ -703,7 +709,8 @@ class EngineInterface : public IEngineInterface
 
 public:
 
-	EngineInterface(IEntityManager* em,
+	EngineInterface(gemini::Allocator& allocator,
+					IEntityManager* em,
 					IModelInterface* mi,
 					gemini::physics::IPhysicsInterface* pi,
 					IExperimental* ei,
@@ -717,6 +724,8 @@ public:
 		, game_memory_zone("game")
 		, game_allocator(&game_memory_zone)
 		, scenelink(scene_link)
+		, render_stream_data(allocator)
+		, render_commands(allocator)
 	{
 		render_stream_data.resize(GEMINI_MAX_RENDERSTREAM_BYTES);
 		render_commands.resize(GEMINI_MAX_RENDER_STREAM_COMMANDS);
@@ -930,8 +939,6 @@ private:
 
 	//::renderer::VertexStream alt_vs;
 
-	gemini::Allocator renderer_allocator;
-
 	::renderer::StandaloneResourceCache* resource_cache;
 
 	// used by debug draw
@@ -940,9 +947,11 @@ private:
 	assets::Sound* test_sound;
 	audio::SoundHandle_t background_music;
 
-
+	gemini::Allocator audio_allocator;
+	gemini::Allocator renderer_allocator;
 	gemini::Allocator animation_allocator;
 	gemini::Allocator gui_allocator;
+	gemini::Allocator engine_allocator;
 
 	void open_gamelibrary()
 	{
@@ -1040,6 +1049,8 @@ public:
 		experimental(0),
 		engine_interface(0),
 		game_interface(0)
+		, engine_allocator(memory_allocator_default(MEMORY_ZONE_DEFAULT))
+		, model_interface(engine_allocator)
 	{
 		game_path = "";
 		compositor = nullptr;
@@ -1147,7 +1158,7 @@ public:
 		gui_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
-
+		gui::set_allocator(gui_allocator);
 		resource_cache = MEMORY_NEW(::renderer::StandaloneResourceCache, core::memory::global_allocator())(renderer_allocator);
 
 		gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(gui_allocator, *resource_cache);
@@ -1156,8 +1167,6 @@ public:
 		compositor = new gui::Compositor(width, height, resource_cache, gui_renderer);
 		compositor->set_name("compositor");
 		_compositor = compositor;
-
-
 
 		root = new gui::Panel(compositor);
 		root->set_name("root");
@@ -1303,11 +1312,13 @@ Options:
 		main_window = platform::window::create(window_params);
 		platform::window::focus(main_window);
 
+
+		engine_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		renderer_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
 
 		// initialize rendering subsystems
 		{
-			render2::RenderParameters render_params;
+			render2::RenderParameters render_params(renderer_allocator);
 			// set some options
 			render_params["vsync"] = "true";
 			render_params["double_buffer"] = "true";
@@ -1321,11 +1332,11 @@ Options:
 			render_params["opengl.profile"] = "core";
 			render_params["opengl.share_context"] = "true";
 
-			device = render2::create_device(render_params);
+			device = render2::create_device(renderer_allocator, render_params);
 			device->init(config.window_width, config.window_height);
 
 			scenelink = MEMORY_NEW(SceneLink, core::memory::global_allocator());
-			int render_result = ::renderer::startup(::renderer::Default, config.render_settings);
+			int render_result = ::renderer::startup(renderer_allocator, ::renderer::Default, config.render_settings);
 			if (render_result == 0)
 			{
 				LOGE("renderer initialization failed!\n");
@@ -1338,14 +1349,16 @@ Options:
 		if (device)
 		{
 			// initialize fonts
-			font::startup(device);
+			font::startup(renderer_allocator, device);
 
 			// initialize debug draw
-			debugdraw::startup(device);
+			debugdraw::startup(renderer_allocator, device);
 		}
 
+		audio_allocator = memory_allocator_default(MEMORY_ZONE_AUDIO);
+
 		// initialize main subsystems
-		audio::startup();
+		audio::startup(audio_allocator);
 		IAudioInterface* audio_instance = MEMORY_NEW(AudioInterface, core::memory::global_allocator());
 		audio::set_instance(audio_instance);
 
@@ -1368,7 +1381,8 @@ Options:
 
 		// setup interfaces
 		engine_interface = MEMORY_NEW(EngineInterface, core::memory::global_allocator())
-			(&entity_manager,
+			(engine_allocator,
+			&entity_manager,
 			&model_interface,
 			physics::instance(),
 			&experimental,
@@ -1552,8 +1566,8 @@ Options:
 		audio::set_instance(nullptr);
 
 		// must shutdown the renderer before our window
-		::renderer::shutdown();
-		render2::destroy_device(device);
+		::renderer::shutdown(renderer_allocator);
+		render2::destroy_device(renderer_allocator, device);
 
 		platform::window::destroy(main_window);
 		main_window = 0;

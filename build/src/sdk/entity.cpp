@@ -51,7 +51,7 @@
 using namespace gemini;
 using namespace gemini::physics;
 
-gemini::Allocator entity_allocator;
+gemini::Allocator _entity_allocator;
 
 void entity_collision_callback(CollisionEventType type, ICollisionObject* first, ICollisionObject* second)
 {
@@ -84,7 +84,7 @@ void entity_collision_callback(CollisionEventType type, ICollisionObject* first,
 
 void entity_startup()
 {
-	entity_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+	_entity_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 }
 
 void entity_post_script_load()
@@ -140,6 +140,11 @@ void entity_update(float delta_seconds, float alpha)
 	entity_deferred_delete( true );
 }
 
+gemini::Allocator& entity_allocator()
+{
+	return _entity_allocator;
+}
+
 
 void entity_shutdown()
 {
@@ -154,8 +159,8 @@ Entity::Entity()
 //	, motion_interface(0)
 	, model_index(-1)
 	, local_time(0)
-	, colliders(entity_allocator)
-	, collider_offsets(entity_allocator)
+	, colliders(_entity_allocator)
+	, collider_offsets(_entity_allocator)
 {
 	this->id = entity_list().count();
 

@@ -614,7 +614,7 @@ namespace gemini
 			return 0;
 		} // find_bone_named
 
-		AssetLoadStatus mesh_load_callback(const char* path, Mesh* mesh, const AssetParameters& parameters)
+		AssetLoadStatus mesh_load_callback(gemini::Allocator& allocator, const char* path, Mesh* mesh, const AssetParameters& parameters)
 		{
 			mesh->path = path;
 			if (core::util::json_load_with_callback(path, /*mesh_load_from_json*/load_json_model, mesh, true) == core::util::ConfigLoad_Success)

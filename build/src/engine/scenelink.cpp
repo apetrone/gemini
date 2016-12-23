@@ -158,7 +158,7 @@ namespace gemini
 							// queue this mesh
 							for (size_t geometry_index = 0; geometry_index < mesh->geometry.size(); ++geometry_index)
 							{
-								assets::Geometry* geometry = &mesh->geometry[geometry_index];
+								assets::Geometry* geometry = mesh->geometry[geometry_index];
 
 								// TODO: compute render key
 								::renderer::RenderKey key = 0;

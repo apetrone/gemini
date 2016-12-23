@@ -50,7 +50,7 @@ namespace gemini
 
 
 	#if 0
-		AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters)
+		AssetLoadStatus shader_load_callback(gemini::Allocator& allocator, const char* path, Shader* shader, const AssetParameters& parameters)
 		{
 			// populate all attribute names
 			const Json::Value& attribute_block = _internal::shader_config["attribute_block"];
@@ -112,9 +112,8 @@ namespace gemini
 	#endif
 
 
-		AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters)
+		AssetLoadStatus shader_load_callback(gemini::Allocator& allocator, const char* path, Shader* shader, const AssetParameters& parameters)
 		{
-			gemini::Allocator allocator = memory_allocator_default(MEMORY_ZONE_ASSETS);
 			create_shaderprogram_from_file(allocator, path, &shader->program);
 			if (!shader->program)
 			{
