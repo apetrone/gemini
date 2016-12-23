@@ -49,7 +49,7 @@ namespace gemini
 #endif
 	} // memory_per_allocation_overhead
 
-	void memory_leak_report()
+	void memory_leak_report(bool assert_on_active_allocations)
 	{
 		// Now we try to iterate over zone stats.
 		ZoneStats* stats = memory_zone_tracking_stats();
@@ -79,27 +79,30 @@ namespace gemini
 					(unsigned long)zone_stat.smallest_allocation,
 					(unsigned long)zone_stat.largest_allocation);
 
-#if defined(DEBUG_MEMORY)
-				size_t leaked_allocations = 0;
-				MemoryDebugHeader* debug = zone_stat.tail;
-				while (debug)
+				if (assert_on_active_allocations)
 				{
-					unsigned char* block = reinterpret_cast<unsigned char*>(debug);
-					MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(block + sizeof(MemoryDebugHeader));
-					LOGV("\t%s(%i): MEMORY LEAK allocation_id = %i, requested_size = %i, actual_size = %i\n",
-						debug->filename,
-						debug->line,
-						debug->allocation_index,
-						zone_header->requested_size,
-						zone_header->allocation_size);
-					debug = debug->next;
-					++leaked_allocations;
+#if defined(DEBUG_MEMORY)
+					size_t leaked_allocations = 0;
+					MemoryDebugHeader* debug = zone_stat.tail;
+					while (debug)
+					{
+						unsigned char* block = reinterpret_cast<unsigned char*>(debug);
+						MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(block + sizeof(MemoryDebugHeader));
+						LOGV("\t%s(%i): MEMORY LEAK allocation_id = %i, requested_size = %i, actual_size = %i\n",
+							debug->filename,
+							debug->line,
+							debug->allocation_index,
+							zone_header->requested_size,
+							zone_header->allocation_size);
+						debug = debug->next;
+						++leaked_allocations;
+					}
+
+					LOGV("\t %i leaked allocations!\n", leaked_allocations);
+
+					// if you hit this, there may be a memory leak!
+					assert(leaked_allocations == 0);
 				}
-
-				LOGV("\t %i leaked allocations!\n", leaked_allocations);
-
-				// if you hit this, there may be a memory leak!
-				assert(leaked_allocations == 0);
 #endif
 			}
 		}
@@ -157,6 +160,7 @@ namespace gemini
 			case MEMORY_ZONE_RENDERER:	return "renderer";
 			case MEMORY_ZONE_GUI:		return "gui";
 			case MEMORY_ZONE_ASSETS:	return "assets";
+			case MEMORY_ZONE_DEBUGDRAW: return "debugdraw";
 			case MEMORY_ZONE_MAX:
 			default:					return "unknown";
 		}

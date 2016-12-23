@@ -216,6 +216,7 @@ namespace renderer
 	VertexDescriptor::VertexDescriptor()
 	{
 		id = 0;
+		attribs = 0;
 		reset();
 		memset( description, 0, sizeof(VertexDescriptorType) * MAX_DESCRIPTORS );
 	}
@@ -225,9 +226,9 @@ namespace renderer
 		description[ id ] = desc;
 		++id;
 
-		if ( id >= MAX_DESCRIPTORS-1 )
+		if ( id >= (MAX_DESCRIPTORS - 1) )
 		{
-			printf( "Reached MAX_DESCRIPTORS. Resetting\n" );
+			LOGV("Reached MAX_DESCRIPTORS. Resetting\n");
 			id = 0;
 		}
 

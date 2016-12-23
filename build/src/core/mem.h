@@ -130,6 +130,8 @@ namespace gemini
 
 		MEMORY_ZONE_ASSETS,
 
+		MEMORY_ZONE_DEBUGDRAW,
+
 		MEMORY_ZONE_MAX
 	}; // MemoryZone
 
@@ -246,7 +248,7 @@ namespace gemini
 	// Returns the amount of overhead in bytes per allocation.
 	size_t memory_per_allocation_overhead();
 
-	void memory_leak_report();
+	void memory_leak_report(bool assert_on_active_allocations = true);
 
 	// Ensures memory is aligned to alignment.
 	// Assumes alignment is a power of two.

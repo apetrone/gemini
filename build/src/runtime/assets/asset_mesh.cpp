@@ -83,9 +83,15 @@ namespace gemini
 		{
 			size_t current_geometry;
 			Mesh* mesh;
+			gemini::Allocator& allocator;
 
-			MeshLoaderState(Mesh* input) : current_geometry(0), mesh(input) {}
-		};
+			MeshLoaderState(gemini::Allocator& _allocator, Mesh* input)
+				: allocator(_allocator)
+				, current_geometry(0)
+				, mesh(input)
+			{
+			}
+		}; // MeshLoaderState
 
 
 		void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, const bool is_world)
@@ -146,7 +152,10 @@ namespace gemini
 				// setup materials
 				assets::Material* default_material = assets::materials()->get_default();
 
-				assets::Geometry* geo = state.mesh->geometry[state.current_geometry++];
+				assets::Geometry* geo = MEMORY2_NEW(state.allocator, Geometry)(state.allocator);
+				//assets::Geometry* geo = state.mesh->geometry[state.current_geometry++];
+				state.mesh->geometry[state.current_geometry++] = geo;
+
 				geo->material_id = default_material->Id();
 
 				Json::Value material_id = node["material_id"];
@@ -200,7 +209,7 @@ namespace gemini
 				geo->indices.allocate(index_array.size());
 				geo->vertices.allocate(vertex_array.size());
 				geo->normals.allocate(vertex_array.size());
-				geo->uvs.allocate(uv_sets.size() * GEOMETRY_UV_SET_MAX);
+				geo->uvs.allocate(vertex_array.size() * GEOMETRY_UV_SET_MAX);
 				geo->colors.allocate(vertex_colors.size());
 
 				if (!bind_data.empty())
@@ -241,7 +250,7 @@ namespace gemini
 					for (int v = 0; v < static_cast<int>(geo->vertices.size()); ++v)
 					{
 						const Json::Value& texcoord = uv_sets[set_id][v];
-						glm::vec2& uv = geo->uvs[(set_id * GEOMETRY_UV_SET_MAX) + v];
+						glm::vec2& uv = geo->uvs[(v * GEOMETRY_UV_SET_MAX) + set_id];
 						uv.x = texcoord[0].asFloat();
 						uv.y = texcoord[1].asFloat();
 //						LOGV("uv (set=%i) (vertex=%i) %g %g\n", set_id, v, uv.s, uv.t);
@@ -402,6 +411,8 @@ namespace gemini
 		{
 			Mesh* mesh = (Mesh*)data;
 
+			gemini::Allocator allocator = memory_allocator_default(MEMORY_ZONE_ASSETS);
+
 			// TODO: remove this hack for maps in the re-write.
 			core::StackString<MAX_PATH_SIZE> fullpath = mesh->path;
 			bool is_world = fullpath.startswith("maps");
@@ -459,7 +470,7 @@ namespace gemini
 
 
 
-			MeshLoaderState state(mesh);
+			MeshLoaderState state(allocator, mesh);
 
 			// traverse over hierarchy
 			node_iter = node_root.begin();
@@ -531,13 +542,14 @@ namespace gemini
 					descriptor.add( VD_FLOAT2 );
 				}
 
+#if 0
 				if ( uvs.size() > 1 )
 				{
 					ShaderString uv1 = "uv1";
 	//				attributes |= find_parameter_mask( uv1 );
 					descriptor.add( VD_FLOAT2 );
 				}
-
+#endif
 				if (!blend_indices.empty() && !blend_weights.empty())
 				{
 //					ShaderString hardware_skinning = "hardware_skinning";

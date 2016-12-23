@@ -220,22 +220,22 @@ namespace gemini
 			sequence_index = sequence->index;
 
 			// reserve enough space
-			animation_set.allocate(sequence->animation_set.size() * ANIMATION_KEYFRAME_VALUES_MAX);
-			channel_set.allocate(sequence->animation_set.size() * ANIMATION_KEYFRAME_VALUES_MAX);
+			animation_set.allocate(sequence->animation_set.size());
+			channel_set.allocate(sequence->animation_set.size());
+
+			const size_t total_animations = sequence->animation_set.size() / ANIMATION_KEYFRAME_VALUES_MAX;
 
 			// associate the channels with the keyframe lists
 			size_t index = 0;
-			for (const KeyframeList& kfl : sequence->animation_set)
+			for (size_t index = 0; index < total_animations; ++index)
 			{
 				for (size_t channel_index = 0; channel_index < ANIMATION_KEYFRAME_VALUES_MAX; ++channel_index)
 				{
-					const size_t channel_offset = (ANIMATION_KEYFRAME_VALUES_MAX * index + channel_index);
+					const size_t channel_offset = ((ANIMATION_KEYFRAME_VALUES_MAX * index) + channel_index);
 					Channel& channel = channel_set[channel_offset];
 					channel.set_keyframe_list(&sequence->animation_set[channel_offset]);
 					channel.set_target(&animation_set[channel_offset]);
 				 }
-
-				++index;
 			}
 		}
 

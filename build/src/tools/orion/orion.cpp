@@ -261,6 +261,7 @@ private:
 
 	gemini::Allocator sensor_allocator;
 	gemini::Allocator render_allocator;
+	gemini::Allocator debugdraw_allocator;
 
 	glm::vec3* lines;
 	size_t current_line_index;
@@ -717,6 +718,8 @@ Options:
 		{
 			render_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
 
+			debugdraw_allocator = memory_allocator_default(MEMORY_ZONE_DEBUGDRAW);
+
 			using namespace render2;
 			RenderParameters params(render_allocator);
 
@@ -807,7 +810,7 @@ Options:
 		font::startup(render_allocator, device);
 
 		// initialize debug draw
-		debugdraw::startup(render_allocator, device);
+		debugdraw::startup(debugdraw_allocator, device);
 
 #if 0
 		// load the gui
@@ -1269,6 +1272,8 @@ Options:
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 		last_time = current_time;
+
+		//memory_leak_report(false);
 	}
 
 

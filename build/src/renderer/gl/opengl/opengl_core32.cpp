@@ -1094,6 +1094,7 @@ namespace renderer
 			buffer_type = renderer::BUFFER_STREAM;
 		}
 		unsigned int vertex_stride = descriptor.calculate_vertex_stride();
+		assert(vertex_stride > 0);
 		unsigned int max_vertices = geometry->vertex_count;
 		unsigned int max_indices = geometry->index_count;
 
@@ -1110,6 +1111,9 @@ namespace renderer
 
 		gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
 		gl.CheckError( "BindVertexArray" );
+
+		// If you hit this, vertex stride was incorrectly computed.
+		assert(stream->vertex_stride > 0);
 
 		unsigned int data_size = geometry->vertex_count * stream->vertex_stride;
 		char* vertex_data = (char*)MEMORY_ALLOC(data_size, core::memory::global_allocator());
@@ -1150,10 +1154,10 @@ namespace renderer
 				ms.write( &geometry->uvs[(vertex_id * GEOMETRY_UV_SET_MAX)], sizeof(glm::vec2) );
 			}
 
-			if ( geometry->uvs.size() > 1 )
-			{
-				ms.write( &geometry->uvs[(vertex_id * GEOMETRY_UV_SET_MAX) + 1], sizeof(glm::vec2) );
-			}
+			//if ( geometry->uvs.size() > 1 )
+			//{
+			//	ms.write( &geometry->uvs[(vertex_id * GEOMETRY_UV_SET_MAX) + 1], sizeof(glm::vec2) );
+			//}
 
 			if ( !geometry->blend_indices.empty() && !geometry->blend_weights.empty() )
 			{

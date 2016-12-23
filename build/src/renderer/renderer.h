@@ -40,7 +40,7 @@
 namespace renderer
 {
 	typedef String ShaderString;
-	const size_t GEOMETRY_UV_SET_MAX = 2;
+	const size_t GEOMETRY_UV_SET_MAX = 1;
 
 	enum DriverType
 	{
