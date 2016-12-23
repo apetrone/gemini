@@ -82,7 +82,7 @@ namespace platform
 
 	Thread* thread_create(ThreadEntry entry, void* data)
 	{
-		Win32Thread* thread = MEMORY_NEW(Win32Thread, platform::get_platform_allocator());
+		Win32Thread* thread = MEMORY2_NEW(get_platform_allocator2(), Win32Thread);
 		thread->entry = entry;
 		thread->state = THREAD_STATE_ACTIVE;
 		thread->user_data = data;
@@ -126,7 +126,7 @@ namespace platform
 	void thread_destroy(Thread* thread)
 	{
 		Win32Thread* native_thread = static_cast<Win32Thread*>(thread);
-		MEMORY_DELETE(native_thread, platform::get_platform_allocator());
+		MEMORY2_DELETE(get_platform_allocator2(), native_thread);
 	}
 
 	int thread_join(Thread* thread, uint32_t timeout_milliseconds)
@@ -233,12 +233,12 @@ namespace platform
 
 	Mutex* mutex_create()
 	{
-		return MEMORY_NEW(Win32Mutex, platform::get_platform_allocator());
+		return MEMORY2_NEW(get_platform_allocator2(), Win32Mutex);
 	}
 
 	void mutex_destroy(Mutex* mutex)
 	{
-		MEMORY_DELETE(mutex, platform::get_platform_allocator());
+		MEMORY2_DELETE(get_platform_allocator2(), mutex);
 	}
 
 	void mutex_lock(Mutex* mutex)
@@ -292,7 +292,7 @@ namespace platform
 
 	Semaphore* semaphore_create(uint32_t initial_count, uint32_t max_count)
 	{
-		return MEMORY_NEW(Win32Semaphore, platform::get_platform_allocator())(initial_count, max_count);
+		return MEMORY2_NEW(get_platform_allocator2(), Win32Semaphore)(initial_count, max_count);
 	}
 
 	void semaphore_wait(Semaphore* sem)
@@ -312,7 +312,7 @@ namespace platform
 
 	void semaphore_destroy(Semaphore* sem)
 	{
-		MEMORY_DELETE(sem, platform::get_platform_allocator());
+		MEMORY2_DELETE(get_platform_allocator2(), sem);
 	}
 
 } // namespace platform

@@ -32,9 +32,7 @@
 
 namespace platform
 {
-	core::memory::Zone* get_memory_zone();
-	typedef core::memory::HeapAllocator<core::memory::DefaultTrackingPolicy> PlatformAllocatorType;
-	PlatformAllocatorType& get_platform_allocator();
+	gemini::Allocator& get_platform_allocator2();
 
 	// backend (low level platform interface)
 	Result backend_startup();

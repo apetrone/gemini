@@ -1273,7 +1273,7 @@ Options:
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 		last_time = current_time;
 
-		//memory_leak_report(false);
+		memory_leak_report(false);
 	}
 
 

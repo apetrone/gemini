@@ -59,18 +59,11 @@
 namespace platform
 {
 	MainParameters _mainparameters;
-	static core::memory::Zone* _zone = nullptr;
-	static PlatformAllocatorType* _allocator = nullptr;
+	gemini::Allocator _platform_allocator;
 
-
-	core::memory::Zone* get_memory_zone()
+	gemini::Allocator& get_platform_allocator2()
 	{
-		return _zone;
-	}
-
-	PlatformAllocatorType& get_platform_allocator()
-	{
-		return *_allocator;
+		return _platform_allocator;
 	}
 
 	DynamicLibrary::~DynamicLibrary()
@@ -202,8 +195,7 @@ namespace platform
 #endif
 		}
 
-		_zone = MEMORY_NEW(core::memory::Zone, core::memory::global_allocator())("platform");
-		_allocator = MEMORY_NEW(PlatformAllocatorType, core::memory::global_allocator())(_zone);
+		_platform_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_PLATFORM);
 
 		result = backend_startup();
 		if (result.failed())
@@ -224,9 +216,6 @@ namespace platform
 	{
 		timer_shutdown();
 		backend_shutdown();
-
-		MEMORY_DELETE(_allocator, core::memory::global_allocator());
-		MEMORY_DELETE(_zone, core::memory::global_allocator());
 	}
 
 	void update(float delta_milliseconds)

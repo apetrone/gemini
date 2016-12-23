@@ -132,7 +132,7 @@ namespace platform
 
 		// We need a buffer size of fiter_buffer_size bytes to pass to the
 		// dialog function. This buffer requires TWO NULL TERMINATORS.
-		char* filter_buffer = static_cast<char*>(MEMORY_ALLOC(filter_buffer_size + 2, core::memory::global_allocator()));
+		char* filter_buffer = static_cast<char*>(MEMORY2_ALLOC(get_platform_allocator2(), filter_buffer_size + 2));
 		memset(filter_buffer, 0, filter_buffer_size + 2);
 
 		char* working_buffer = filter_buffer;
@@ -240,12 +240,12 @@ namespace platform
 
 		if (GetSaveFileNameA(&info))
 		{
-			MEMORY_DEALLOC(filter_buffer, core::memory::global_allocator());
+			MEMORY2_DEALLOC(get_platform_allocator2(), filter_buffer);
 			filename = filename_buffer;
 			return Result::success();
 		}
 
-		MEMORY_DEALLOC(filter_buffer, core::memory::global_allocator());
+		MEMORY2_DEALLOC(get_platform_allocator2(), filter_buffer);
 
 		return Result::failure("User canceled dialog.");
 	} // show_save_dialog

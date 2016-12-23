@@ -646,8 +646,8 @@ namespace platform
 			assert(result != static_cast<UINT>(-1));
 
 			device_list = reinterpret_cast<RAWINPUTDEVICELIST*>(
-				MEMORY_ALLOC(sizeof(RAWINPUTDEVICELIST) * total_devices,
-					core::memory::global_allocator())
+				MEMORY2_ALLOC(get_platform_allocator2(),
+					sizeof(RAWINPUTDEVICELIST) * total_devices)
 			);
 
 			// retrieve the full array of devices
@@ -690,7 +690,7 @@ namespace platform
 				assert(buffer_size > 0);
 
 				buffer = reinterpret_cast<char*>(
-					MEMORY_ALLOC(buffer_size, core::memory::global_allocator())
+					MEMORY2_ALLOC(get_platform_allocator2(), buffer_size)
 				);
 
 				info_result = GetRawInputDeviceInfoA(device,
@@ -702,10 +702,10 @@ namespace platform
 				assert(info_result > 0);
 				LOGV("device_name: %s\n", buffer);
 
-				MEMORY_DEALLOC(buffer, core::memory::global_allocator());
+				MEMORY2_DEALLOC(get_platform_allocator2(), buffer);
 			}
 
-			MEMORY_DEALLOC(device_list, core::memory::global_allocator());
+			MEMORY2_DEALLOC(get_platform_allocator2(), device_list);
 
 			return Result::success();
 		}
@@ -719,7 +719,7 @@ namespace platform
 			const wchar_t WINDOW_CLASS_NAME[] = L"platform_window_class";
 			const size_t WINDOW_MAX_LENGTH = 128;
 
-			win32::Window* window = MEMORY_NEW(win32::Window, get_platform_allocator())(parameters);
+			win32::Window* window = MEMORY2_NEW(get_platform_allocator2(), win32::Window)(parameters);
 			window->set_destroy_behavior(DestroyWindowBehavior::None);
 
 			// a new window must have a valid title
@@ -837,7 +837,7 @@ namespace platform
 			native_window->set_destroy_behavior(behavior);
 			HWND window_handle = static_cast<HWND>(native_window->get_native_handle());
 			DestroyWindow(window_handle);
-			MEMORY_DELETE(native_window, get_platform_allocator());
+			MEMORY2_DELETE(get_platform_allocator2(), native_window);
 		}
 
 		Frame Win32WindowProvider::get_frame(NativeWindow* window) const
@@ -909,7 +909,7 @@ namespace platform
 		Result startup(RenderingBackend)
 		{
 			// create the win32 window provider instance
-			_window_provider = MEMORY_NEW(Win32WindowProvider, get_platform_allocator());
+			_window_provider = MEMORY2_NEW(get_platform_allocator2(), Win32WindowProvider);
 
 			// out of memory?
 			assert(_window_provider != nullptr);
@@ -923,7 +923,7 @@ namespace platform
 			}
 
 			// try to create the graphics provider
-			_graphics_provider = MEMORY_NEW(Win32GraphicsProvider, get_platform_allocator());
+			_graphics_provider = MEMORY2_NEW(get_platform_allocator2(), Win32GraphicsProvider);
 
 			// out of memory?
 			assert(_graphics_provider);
@@ -944,10 +944,10 @@ namespace platform
 		void shutdown()
 		{
 			_graphics_provider->shutdown(_window_provider);
-			MEMORY_DELETE(_graphics_provider, get_platform_allocator());
+			MEMORY2_DELETE(get_platform_allocator2(), _graphics_provider);
 
 			_window_provider->shutdown();
-			MEMORY_DELETE(_window_provider, get_platform_allocator());
+			MEMORY2_DELETE(get_platform_allocator2(), _window_provider);
 		}
 
 		void dispatch_events()
@@ -964,7 +964,7 @@ namespace platform
 			if (graphics_data_size)
 			{
 				// alloc graphics data for this window
-				graphics_data = MEMORY_ALLOC(graphics_data_size, get_platform_allocator());
+				graphics_data = MEMORY2_ALLOC(get_platform_allocator2(), graphics_data_size);
 				memset(graphics_data, 0, sizeof(graphics_data_size));
 			}
 
@@ -995,7 +995,7 @@ namespace platform
 			_graphics_provider->destroy_surface(window);
 			_graphics_provider->destroy_context(window);
 
-			MEMORY_DEALLOC(window->graphics_data, get_platform_allocator());
+			MEMORY2_DEALLOC(get_platform_allocator2(), window->graphics_data);
 			_window_provider->destroy(window, behavior);
 		}
 

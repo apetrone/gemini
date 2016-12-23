@@ -90,7 +90,7 @@ namespace platform
 			return nullptr;
 		}
 
-		Win32Serial* serial = MEMORY_NEW(Win32Serial, platform::get_platform_allocator());
+		Win32Serial* serial = MEMORY2_NEW(get_platform_allocator2(), Win32Serial);
 		serial->handle = handle;
 		return serial;
 	}
@@ -99,7 +99,7 @@ namespace platform
 	{
 		Win32Serial* native_serial = static_cast<Win32Serial*>(serial);
 		CloseHandle(native_serial->handle);
-		MEMORY_DELETE(native_serial, platform::get_platform_allocator());
+		MEMORY2_DELETE(get_platform_allocator2(), native_serial);
 	}
 
 	int serial_read(Serial* serial, void* buffer, int bytes_requested)
