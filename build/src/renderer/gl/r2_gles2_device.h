@@ -304,17 +304,17 @@ namespace render2
 
 		virtual Buffer* create_vertex_buffer(size_t size_bytes)
 		{
-			return MEMORY_NEW(GLBuffer, core::memory::global_allocator())(size_bytes, GL_ARRAY_BUFFER);
+			return MEMORY2_NEW(allocator, GLBuffer)(size_bytes, GL_ARRAY_BUFFER);
 		}
 
 		virtual Buffer* create_index_buffer(size_t size_bytes)
 		{
-			return MEMORY_NEW(GLBuffer, core::memory::global_allocator())(size_bytes, GL_ELEMENT_ARRAY_BUFFER);
+			return MEMORY2_NEW(allocator, GLBuffer)(size_bytes, GL_ELEMENT_ARRAY_BUFFER);
 		}
 
 		virtual void destroy_buffer(Buffer* buffer)
 		{
-			MEMORY_DELETE(buffer, core::memory::global_allocator());
+			MEMORY2_DELETE(allocator, buffer);
 		}
 
 		virtual void* buffer_lock(Buffer* buffer)

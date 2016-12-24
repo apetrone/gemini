@@ -675,21 +675,21 @@ namespace render2
 		return blend_table[static_cast<size_t>(op)];
 	}
 
-	RenderTarget* common_create_render_target(Texture* texture)
+	RenderTarget* common_create_render_target(gemini::Allocator& allocator, Texture* texture)
 	{
 		GLTexture* gltexture = static_cast<GLTexture*>(texture);
 
-		GLRenderTarget* rt = MEMORY_NEW(GLRenderTarget, core::memory::global_allocator())(gltexture->width, gltexture->height);
+		GLRenderTarget* rt = MEMORY2_NEW(allocator, GLRenderTarget)(gltexture->width, gltexture->height);
 
 		rt->attach_texture(gltexture);
 
 		return rt;
 	}
 
-	void common_destroy_render_target(RenderTarget* render_target)
+	void common_destroy_render_target(gemini::Allocator& allocator, RenderTarget* render_target)
 	{
 		GLRenderTarget* rt = static_cast<GLRenderTarget*>(render_target);
-		MEMORY_DELETE(rt, core::memory::global_allocator());
+		MEMORY2_DELETE(allocator, rt);
 	}
 
 	void common_push_render_target(RenderTarget* render_target)
@@ -922,12 +922,12 @@ namespace render2
 		return GL_INVALID_ENUM;
 	} // texture_type_from_image
 
-	GLTexture* common_create_texture(const Image& image)
+	GLTexture* common_create_texture(gemini::Allocator& allocator, const Image& image)
 	{
 		GLenum source_format = image_to_source_format(image);
 		GLint internal_format = image_to_internal_format(image);
 
-		GLTexture* texture = MEMORY_NEW(GLTexture, core::memory::global_allocator())(image);
+		GLTexture* texture = MEMORY2_NEW(allocator, GLTexture)(image);
 
 #if defined(PLATFORM_GLES2_SUPPORT)
 		// GL_INVALID_OPERATION is generated if <source_format> does not match <internal_format>

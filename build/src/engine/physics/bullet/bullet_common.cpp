@@ -127,6 +127,7 @@ namespace gemini
 			DebugPhysicsRenderer* debug_renderer;
 
 			std::vector<BulletConstraint*> constraints;
+			gemini::Allocator physics_allocator;
 
 			btDiscreteDynamicsWorld* get_world()
 			{
@@ -161,6 +162,8 @@ namespace gemini
 			void startup()
 			{
 				// TODO@apetrone: set up custom allocation with btAlignedAllocSetCustom.
+
+				physics_allocator = memory_allocator_default(MEMORY_ZONE_PHYSICS);
 
 				collision_config = new btDefaultCollisionConfiguration();
 				dispatcher = new btCollisionDispatcher( collision_config );

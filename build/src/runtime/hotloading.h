@@ -28,7 +28,7 @@ namespace gemini
 {
 	namespace hotloading
 	{
-		void startup();
+		void startup(gemini::Allocator& allocator);
 		void tick();
 		void shutdown();
 	} // namespace hotloading

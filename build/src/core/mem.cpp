@@ -139,6 +139,21 @@ namespace gemini
 
 		stats.total_allocations++;
 		stats.total_bytes += allocation_size;
+
+		if (allocation_size > stats.largest_allocation)
+		{
+			stats.largest_allocation = allocation_size;
+		}
+
+		if (allocation_size < stats.smallest_allocation || (stats.smallest_allocation == 0))
+		{
+			stats.smallest_allocation = allocation_size;
+		}
+
+		if (stats.active_bytes > stats.high_watermark)
+		{
+			stats.high_watermark = stats.active_bytes;
+		}
 	} // memory_zone_track
 
 	void memory_zone_untrack(MemoryZone zone, size_t allocation_size)
@@ -164,6 +179,7 @@ namespace gemini
 			case MEMORY_ZONE_NAVIGATION:	return "navigation";
 			case MEMORY_ZONE_RUNTIME:		return "runtime";
 			case MEMORY_ZONE_FILESYSTEM:	return "filesystem";
+			case MEMORY_ZONE_PHYSICS:		return "physics";
 			case MEMORY_ZONE_MAX:
 			default:						return "unknown";
 		}

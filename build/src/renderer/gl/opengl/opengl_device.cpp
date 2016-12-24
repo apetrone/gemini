@@ -49,12 +49,12 @@ namespace render2
 
 	RenderTarget* OpenGLDevice::create_render_target(Texture* texture)
 	{
-		return common_create_render_target(texture);
+		return common_create_render_target(allocator, texture);
 	}
 
 	void OpenGLDevice::destroy_render_target(RenderTarget* target)
 	{
-		return common_destroy_render_target(target);
+		return common_destroy_render_target(allocator, target);
 	}
 
 	// ---------------------------------------------------------------------
@@ -110,7 +110,7 @@ namespace render2
 	// ---------------------------------------------------------------------
 	Texture* OpenGLDevice::create_texture(const Image& image)
 	{
-		return common_create_texture(image);
+		return common_create_texture(allocator, image);
 	}
 
 	void OpenGLDevice::update_texture(Texture* tex, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions)

@@ -71,11 +71,14 @@ namespace renderer
 			configuration->shaders[shader.name] = shader;
 		}
 
+		gemini::Allocator* _allocator = nullptr;
+
 		void startup(gemini::Allocator& allocator)
 		{
 			// This data is hard-coded here until this renderer is removed
 			// as it's not worth spending much time on throw-away code.
-			_shader_config = MEMORY_NEW(ShaderConfiguration, core::memory::global_allocator())(allocator);
+			_allocator = &allocator;
+			_shader_config = MEMORY2_NEW(allocator, ShaderConfiguration)(allocator);
 
 			ShaderDescriptionBlock objects(allocator, "objects");
 			objects.stages.push_back("vert");
@@ -117,7 +120,7 @@ namespace renderer
 		{
 			if (_shader_config)
 			{
-				MEMORY_DELETE(_shader_config, core::memory::global_allocator());
+				MEMORY2_DELETE(*_allocator, _shader_config);
 				_shader_config = nullptr;
 			}
 		} // shutdown

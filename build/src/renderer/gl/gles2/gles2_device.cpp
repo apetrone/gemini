@@ -47,12 +47,12 @@ namespace render2
 
 	RenderTarget* GLES2Device::create_render_target(Texture* texture)
 	{
-		return common_create_render_target(texture);
+		return common_create_render_target(allocator, texture);
 	}
 
 	void GLES2Device::destroy_render_target(RenderTarget* target)
 	{
-		return common_destroy_render_target(target);
+		return common_destroy_render_target(allocator, target);
 	}
 
 	// ---------------------------------------------------------------------

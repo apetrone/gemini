@@ -522,14 +522,14 @@ namespace gemini
 		void startup(gemini::Allocator& allocator)
 		{
 			_allocator = &allocator;
-			_sequences_by_name = MEMORY_NEW(SequenceHash, core::memory::global_allocator())(allocator);
+			_sequences_by_name = MEMORY2_NEW(allocator, SequenceHash)(allocator);
 		}
 
 		void shutdown()
 		{
 			for (Sequence* sequence : detail::_sequences)
 			{
-				MEMORY_DELETE(sequence, core::memory::global_allocator());
+				MEMORY2_DELETE(*_allocator, sequence);
 			}
 			detail::_sequences.clear();
 
@@ -539,7 +539,7 @@ namespace gemini
 			}
 			detail::_instances.clear();
 
-			MEMORY_DELETE(_sequences_by_name, core::memory::global_allocator());
+			MEMORY2_DELETE(*_allocator, _sequences_by_name);
 		}
 
 
@@ -553,7 +553,6 @@ namespace gemini
 				}
 			}
 		}
-
 
 		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, Mesh* mesh)
 		{

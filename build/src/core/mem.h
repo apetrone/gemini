@@ -138,6 +138,8 @@ namespace gemini
 
 		MEMORY_ZONE_FILESYSTEM,
 
+		MEMORY_ZONE_PHYSICS,
+
 		MEMORY_ZONE_MAX
 	}; // MemoryZone
 

@@ -1373,7 +1373,7 @@ Options:
 
 		if (config.enable_asset_reloading)
 		{
-			hotloading::startup();
+			hotloading::startup(renderer_allocator);
 		}
 
 

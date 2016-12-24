@@ -764,7 +764,7 @@ namespace renderer
 
 	void GLCore32::create_default_render_target()
 	{
-		default_render_target = MEMORY_NEW(GL32RenderTarget, core::memory::global_allocator());
+		default_render_target = MEMORY2_NEW(allocator, GL32RenderTarget);
 		default_render_target->color_texture_id = 0;
 		default_render_target->depth_texture_id = 0;
 		default_render_target->width = 0;
@@ -849,7 +849,7 @@ namespace renderer
 
 	renderer::Texture* GLCore32::texture_create(image::Image& image)
 	{
-		GL32Texture* texture = MEMORY_NEW(GL32Texture, core::memory::global_allocator());
+		GL32Texture* texture = MEMORY2_NEW(allocator, GL32Texture);
 
 		GLenum source_format = image_source_format(image.channels);
 		GLenum internal_format = image_to_internal_format(image.flags);
@@ -988,7 +988,7 @@ namespace renderer
 
 	renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 	{
-		GL32VertexBuffer * stream = MEMORY_NEW(GL32VertexBuffer, core::memory::global_allocator());
+		GL32VertexBuffer * stream = MEMORY2_NEW(allocator, GL32VertexBuffer);
 		assert( stream != 0 );
 
 		// initial values for stream
@@ -1085,7 +1085,7 @@ namespace renderer
 
 	renderer::VertexBuffer * GLCore32::vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry )
 	{
-		GL32VertexBuffer * stream = MEMORY_NEW(GL32VertexBuffer, core::memory::global_allocator());
+		GL32VertexBuffer * stream = MEMORY2_NEW(allocator, GL32VertexBuffer);
 		assert( stream != 0 );
 
 		renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC;
@@ -1493,7 +1493,7 @@ namespace renderer
 
 	renderer::RenderTarget* GLCore32::render_target_create(uint16_t width, uint16_t height)
 	{
-		GL32RenderTarget* rt = MEMORY_NEW(GL32RenderTarget, core::memory::global_allocator());
+		GL32RenderTarget* rt = MEMORY2_NEW(allocator, GL32RenderTarget);
 
 		rt->width = width;
 		rt->height = height;

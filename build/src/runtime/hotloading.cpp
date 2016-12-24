@@ -189,6 +189,7 @@ namespace gemini
 		{
 			CivetServer* server = nullptr;
 			ThreadSafeQueue<String> reload_queue;
+			gemini::Allocator* allocator = nullptr;
 		}
 
 
@@ -329,7 +330,7 @@ namespace gemini
 
 
 
-		void startup()
+		void startup(gemini::Allocator& allocator)
 		{
 			struct mg_callbacks cb;
 			memset(&cb, 0, sizeof(mg_callbacks));
@@ -341,14 +342,15 @@ namespace gemini
 				0
 			};
 
-			_internal::server = MEMORY_NEW(CivetServer, core::memory::global_allocator()) (options, &cb);
+			_internal::allocator = &allocator;
+			_internal::server = MEMORY2_NEW(allocator, CivetServer) (options, &cb);
 			_internal::server->addHandler("/json", new JsonConfigHandler());
 			_internal::server->addHandler("/reload", new AssetHotloadHandler(_internal::reload_queue));
 		}
 
 		void shutdown()
 		{
-			MEMORY_DELETE(_internal::server, core::memory::global_allocator());
+			MEMORY2_DELETE(*_internal::allocator, _internal::server);
 		}
 
 		void tick()

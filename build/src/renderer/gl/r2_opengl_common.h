@@ -198,8 +198,8 @@ namespace render2
 
 	GLenum convert_blendstate(BlendOp op);
 
-	RenderTarget* common_create_render_target(Texture* texture);
-	void common_destroy_render_target(RenderTarget* render_target);
+	RenderTarget* common_create_render_target(gemini::Allocator& allocator, Texture* texture);
+	void common_destroy_render_target(gemini::Allocator& allocator, RenderTarget* render_target);
 
 	void common_push_render_target(RenderTarget* render_target);
 	void common_pop_render_target(RenderTarget* render_target);
@@ -215,7 +215,7 @@ namespace render2
 	GLenum image_to_source_format(const Image& image);
 	GLint image_to_internal_format(const Image& image);
 	GLenum texture_type_from_image(const Image& image);
-	GLTexture* common_create_texture(const Image& image);
+	GLTexture* common_create_texture(gemini::Allocator& allocator, const Image& image);
 	void common_update_texture(GLTexture* texture, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions);
 	void common_destroy_texture(Texture* texture);
 
