@@ -30,6 +30,9 @@
 #include <renderer/font.h>
 #include <renderer/color.h>
 
+// Enable this to temporarily make all debug draw functions a no-op.
+//#define DISABLE_DEBUG_DRAW 1
+
 namespace debugdraw
 {
 	const size_t DEBUGDRAW_PERSISTENT_PRIMITIVE_MAX = 16;
@@ -611,6 +614,10 @@ namespace debugdraw
 
 	void startup(gemini::Allocator& allocator, render2::Device* render_device)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		_allocator = &allocator;
 		line_list = MEMORY2_NEW(allocator, detail::PrimitiveCache)(allocator);
 		tris_list = MEMORY2_NEW(allocator, detail::PrimitiveCache)(allocator);
@@ -687,6 +694,10 @@ namespace debugdraw
 
 	void shutdown()
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		device->destroy_texture(white_texture);
 
 		if (line_buffer)
@@ -734,6 +745,10 @@ namespace debugdraw
 
 	void update(float delta_msec)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		line_list->update(delta_msec);
 		tris_list->update(delta_msec);
 		text_list->update(delta_msec);
@@ -1020,6 +1035,10 @@ namespace debugdraw
 
 	void render(const glm::mat4& modelview, const glm::mat4& projection, int viewport_width, int viewport_height, render2::RenderTarget* render_target)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		render2::Pass pass;
 		pass.depth_test = false;
 		pass.cull_mode = render2::CullMode::None;
@@ -1065,6 +1084,10 @@ namespace debugdraw
 
 	void axes(const glm::mat4& transform, float axis_length, float duration)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
 		if ( primitive )
 		{
@@ -1079,6 +1102,10 @@ namespace debugdraw
 
 	void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
 		if (primitive)
 		{
@@ -1097,6 +1124,10 @@ namespace debugdraw
 
 	void box(const glm::vec3& mins, const glm::vec3& maxs, const gemini::Color& color, float duration)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
 		if ( primitive )
 		{
@@ -1110,6 +1141,10 @@ namespace debugdraw
 
 	void point(const glm::vec3& pt, const gemini::Color& color, float size, float duration)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
 		if ( primitive )
 		{
@@ -1123,6 +1158,10 @@ namespace debugdraw
 
 	void line(const glm::vec3& start, const glm::vec3& end, const gemini::Color& color, float duration)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
 		if ( primitive )
 		{
@@ -1136,6 +1175,10 @@ namespace debugdraw
 
 	void sphere(const glm::vec3& center, const gemini::Color& color, float radius, float duration)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
 		if ( primitive )
 		{
@@ -1149,6 +1192,10 @@ namespace debugdraw
 
 	void text(int x, int y, const char* string, const gemini::Color& color, float duration)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		DebugPrimitive* primitive = text_list->request(duration > 0.0f);
 		if ( primitive )
 		{
@@ -1162,6 +1209,10 @@ namespace debugdraw
 
 	void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const gemini::Color& color, float duration)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		DebugPrimitive* primitive = tris_list->request(duration > 0.0f);
 		if (primitive)
 		{
@@ -1176,6 +1227,10 @@ namespace debugdraw
 
 	void camera(const glm::vec3& origin, const glm::vec3& view, float duration)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
 		if (primitive)
 		{
@@ -1189,6 +1244,10 @@ namespace debugdraw
 
 	void oriented_box(const glm::mat3& orientation, const glm::vec3& origin, const glm::vec3& extents, const gemini::Color& color, float duration)
 	{
+#if defined(DISABLE_DEBUG_DRAW)
+		return;
+#endif
+
 		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
 		if (primitive)
 		{
