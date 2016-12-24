@@ -74,7 +74,6 @@ namespace gemini
 		ALLOCATOR_TYPE_MAX
 	}; // AllocatorType
 
-
 	// Replace this with a string-based system? I dunno yet.
 	enum MemoryZone
 	{
@@ -92,7 +91,6 @@ namespace gemini
 
 		MEMORY_ZONE_MAX
 	}; // MemoryZone
-
 
 	struct Allocator
 	{
@@ -114,8 +112,7 @@ namespace gemini
 		void* memory;
 	}; // Allocator
 
-
-#if defined(DEBUG_MEMORY)
+	#if defined(DEBUG_MEMORY)
 #pragma pack(push, 8)
 	struct MemoryDebugHeader
 	{
@@ -130,7 +127,6 @@ namespace gemini
 	}; // MemoryDebugHeader
 #pragma pack(pop)
 #endif
-
 
 	struct PLATFORM_ALIGN(16) MemoryZoneHeader
 	{
@@ -148,7 +144,6 @@ namespace gemini
 		uint32_t alignment_offset;
 	}; // MemoryZoneHeader
 
-
 	// The static memory reserved by this class is not supposed to be
 	// placed into an allocator.
 
@@ -163,7 +158,6 @@ namespace gemini
 		unsigned char memory[size];
 	}; // StaticMemory
 
-
 	// Allocator functions used with StaticMemory
 	template <class T>
 	T* memory_static_allocate(StaticMemory<T, 1>& mem)
@@ -171,20 +165,17 @@ namespace gemini
 		return new (mem.memory) T;
 	} // memory_static_allocate
 
-
 	template <class T, class ... Types>
 	T* memory_static_allocate(StaticMemory<T, 1>& mem, Types && ... tail)
 	{
 		return new (mem.memory) T(tail ...);
 	} // memory_static_allocate
 
-
 	template <class T, size_t count>
 	T* memory_static_allocate(StaticMemory<T, count>& mem)
 	{
 		return new (mem.memory) T[count];
 	} // memory_static_allocate
-
 
 	struct ZoneStats
 	{
@@ -203,7 +194,6 @@ namespace gemini
 		MemoryDebugHeader* tail;
 #endif
 	}; // ZoneStats
-
 
 	// fetch current zone stats
 	ZoneStats* memory_zone_tracking_stats();

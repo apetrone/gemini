@@ -117,9 +117,6 @@ struct DerivedClass : public BaseClass
 	}
 };
 
-
-using namespace core::memory;
-
 void test_memory()
 {
 #if 0

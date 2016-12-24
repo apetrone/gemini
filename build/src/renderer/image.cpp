@@ -85,7 +85,6 @@ namespace image
 	Image::~Image()
 	{
 		// shutting down image.
-		int z = 302;
 		pixels.clear();
 	}
 

@@ -56,15 +56,6 @@ def setup_common_variables(arguments, target_platform, product):
 
 		# excluded, but not yet removed game crap
 		"src/engine/kernels/test_universal.cpp",
-		"src/engine/game/gamescreen.*",
-		"src/engine/game/win_loss_screen.*",
-		"src/engine/game/componentmanager.*",
-		"src/engine/game/componentlibrary.*",
-		"src/engine/game/components.h",
-		"src/engine/game/menuscreen.*",
-		"src/engine/game/helpscreen.*",
-		"src/engine/game/logoscreen.*",
-		"src/engine/game/screencontrol.*",
 
 		# temporarily removing script/squirrel
 		"src/engine/script.*",
@@ -670,10 +661,10 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 
 		# assets
 		"src/runtime/assetlibrary.h",
-		"src/runtime/assets/asset_emitter.cpp",
-		"src/runtime/assets/asset_emitter.h",
-		"src/runtime/assets/asset_font.cpp",
-		"src/runtime/assets/asset_font.h",
+		# "src/runtime/assets/asset_emitter.cpp",
+		# "src/runtime/assets/asset_emitter.h",
+		# "src/runtime/assets/asset_font.cpp",
+		# "src/runtime/assets/asset_font.h",
 		"src/runtime/assets/asset_material.cpp",
 		"src/runtime/assets/asset_material.h",
 		"src/runtime/assets/asset_mesh.cpp",
@@ -1165,7 +1156,21 @@ def products(arguments, **kwargs):
 		# "src/engine/script.cpp",
 		# "src/engine/script.h",
 
-		"src/engine/game/**.*",
+		# "src/engine/game/gamescreen.*",
+		# "src/engine/game/win_loss_screen.*",
+		# "src/engine/game/componentmanager.*",
+		# "src/engine/game/componentlibrary.*",
+		# "src/engine/game/components.h",
+		# "src/engine/game/menu.h",
+		# "src/engine/game/menu.cpp",
+		# "src/engine/game/menuscreen.*",
+		# "src/engine/game/helpscreen.*",
+		# "src/engine/game/logoscreen.*",
+		# "src/engine/game/screencontrol.*",
+
+		"src/engine/game/entity_allocator.h",
+		"src/engine/game/particlesystem.h",
+		"src/engine/game/particlesystem.cpp",
 
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_image.h"),
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_vorbis.c")

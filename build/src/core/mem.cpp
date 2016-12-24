@@ -322,7 +322,7 @@ namespace gemini
 		// across boundaries.
 		void* pointer_size = reinterpret_cast<void*>(allocation_size);
 		pointer_size = memory_force_alignment(pointer_size, alignment);
-		uint32_t alignment_offset = (size_t)pointer_size - (size_t)allocation_size;
+		uint32_t alignment_offset = static_cast<uint32_t>((size_t)pointer_size - (size_t)allocation_size);
 		allocation_size += alignment_offset;
 
 		// request the memory from the OS
@@ -331,8 +331,8 @@ namespace gemini
 		block += alignment_offset;
 		MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(block);
 		zone_header->zone = zone;
-		zone_header->requested_size = requested_size;
-		zone_header->allocation_size = allocation_size;
+		zone_header->requested_size = static_cast<uint32_t>(requested_size);
+		zone_header->allocation_size = static_cast<uint32_t>(allocation_size);
 		zone_header->alignment_offset = alignment_offset;
 
 		block += sizeof(MemoryZoneHeader);
