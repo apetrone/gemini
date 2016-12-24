@@ -46,7 +46,7 @@ namespace gemini
 		template <class AssetClass, class AssetParameterClass = AssetParameters>
 		class AssetLibrary
 		{
-			typedef AssetLoadStatus (*AssetLoadCallback)(gemini::Allocator& allocator, const char * path, AssetLoadState<typename AssetClass>& load_state, const AssetParameterClass & parameters );
+			typedef AssetLoadStatus (*AssetLoadCallback)(gemini::Allocator& allocator, const char * path, AssetLoadState<AssetClass>& load_state, const AssetParameterClass & parameters );
 			typedef void (*AssetConstructExtension)( core::StackString<MAX_PATH_SIZE> & path );
 			typedef void (*AssetIterator)( AssetClass * asset, void * userdata );
 
@@ -100,7 +100,7 @@ namespace gemini
 			} // for_each
 
 			// providing stubs for these functions
-			AssetLoadStatus load_with_callback( const char * path, AssetLoadState<typename AssetClass>& load_state, const AssetParameterClass & parameters )
+			AssetLoadStatus load_with_callback( const char * path, AssetLoadState<AssetClass>& load_state, const AssetParameterClass & parameters )
 			{
 				if ( !load_callback )
 				{
@@ -159,7 +159,7 @@ namespace gemini
 				}
 
 				// case 2 && 3
-				AssetLoadState<typename AssetClass> load_state;
+				AssetLoadState<AssetClass> load_state;
 				load_state.asset = asset;
 				load_state.allocator = &allocator;
 				load_result = load_with_callback(fullpath(), load_state, parameters);
