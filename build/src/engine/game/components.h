@@ -30,6 +30,11 @@
 #include "renderer.h"
 #include "vertexstream.h"
 
+#define DECLARE_FACTORY_CLASS( class_name, abstract_class )\
+	public:\
+		static abstract_class* creator() { return MEMORY_NEW(class_name, core::memory::global_allocator()); }\
+		static const char* get_classname() { return #class_name; }
+
 class Movement : public IComponent
 {
 public:

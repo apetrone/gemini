@@ -186,7 +186,7 @@ namespace gemini
 				dynamics_world->getDispatchInfo().m_allowedCcdPenetration = 0.0001f;
 
 				// instance and set the debug renderer
-				debug_renderer = MEMORY2_NEW(*physics_allocator, bullet::DebugPhysicsRenderer, core::memory::global_allocator());
+				debug_renderer = MEMORY2_NEW(*physics_allocator, bullet::DebugPhysicsRenderer);
 				dynamics_world->setDebugDrawer(debug_renderer);
 			}
 

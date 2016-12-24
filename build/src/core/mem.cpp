@@ -34,6 +34,7 @@
 namespace gemini
 {
 	ZoneStats* _tracking_stats = nullptr;
+	gemini::StaticMemory<gemini::ZoneStats, gemini::MEMORY_ZONE_MAX> zone_stat_memory;
 
 	ZoneStats* memory_zone_tracking_stats()
 	{
@@ -86,9 +87,9 @@ namespace gemini
 				//	(unsigned long)block->allocation_size,
 				//	(unsigned long)block->allocation_index);
 
+#if defined(DEBUG_MEMORY)
 				if (assert_on_active_allocations)
 				{
-#if defined(DEBUG_MEMORY)
 					size_t leaked_allocations = 0;
 					MemoryDebugHeader* debug = zone_stat.tail;
 					while (debug)
@@ -216,7 +217,7 @@ namespace gemini
 		allocation_size += alignment_offset;
 
 		// request the memory from the OS
-		void* memory = core::memory::aligned_malloc(allocation_size, alignment);
+		void* memory = memory_aligned_malloc(allocation_size, alignment);
 
 		ZoneStats* stats = memory_zone_tracking_stats();
 		ZoneStats& target_stat = stats[zone];
@@ -309,7 +310,7 @@ namespace gemini
 		//	header->line,
 		//	header->allocation_index);
 
-		core::memory::aligned_free(memory);
+		memory_aligned_free(memory);
 	} // memory_deallocate
 #else
 	void* memory_allocate(MemoryZone zone, size_t requested_size, size_t alignment)
@@ -325,7 +326,7 @@ namespace gemini
 		allocation_size += alignment_offset;
 
 		// request the memory from the OS
-		unsigned char* block = reinterpret_cast<unsigned char*>(core::memory::aligned_malloc(allocation_size, alignment));
+		unsigned char* block = reinterpret_cast<unsigned char*>(memory_aligned_malloc(allocation_size, alignment));
 
 		block += alignment_offset;
 		MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(block);
@@ -349,7 +350,7 @@ namespace gemini
 		unsigned char* block = reinterpret_cast<unsigned char*>(zone_header);
 		block -= zone_header->alignment_offset;
 
-		core::memory::aligned_free(block);
+		memory_aligned_free(block);
 	} // memory_deallocate
 #endif
 
@@ -373,12 +374,12 @@ namespace gemini
 #else
 	void* default_allocate(Allocator& /*allocator*/, size_t bytes, uint32_t alignment)
 	{
-		return core::memory::aligned_malloc(bytes, alignment);
+		return memory_aligned_malloc(bytes, alignment);
 	}
 
 	void default_deallocate(Allocator& /*allocator*/, void* pointer)
 	{
-		core::memory::aligned_free(pointer);
+		memory_aligned_free(pointer);
 	}
 #endif
 
@@ -470,74 +471,67 @@ namespace gemini
 		return allocator;
 	} // memory_allocator_linear
 
-} // namespace gemini
 
-namespace core
-{
-	namespace memory
+	// ---------------------------------------------------------------------
+	// interface
+	// ---------------------------------------------------------------------
+
+	void memory_startup()
 	{
-		// ---------------------------------------------------------------------
-		// interface
-		// ---------------------------------------------------------------------
-		gemini::StaticMemory<gemini::ZoneStats, gemini::MEMORY_ZONE_MAX> zone_stat_memory;
+		static_assert(sizeof(gemini::MemoryZoneHeader) == 16, "MemoryZoneHeader padding is incorrect.");
 
-		void startup()
-		{
-			static_assert(sizeof(gemini::MemoryZoneHeader) == 16, "MemoryZoneHeader padding is incorrect.");
+		// If you hit this assert, there's a double memory startup
+		assert(gemini::_tracking_stats == nullptr);
 
-			// If you hit this assert, there's a double memory startup
-			assert(gemini::_tracking_stats == nullptr);
+		// create zone tracking stats
+		gemini::ZoneStats* zone_stats = memory_static_allocate(zone_stat_memory);
+		memset(zone_stats, 0, zone_stat_memory.size);
+		gemini::memory_zone_install_stats(zone_stats);
+	}
 
-			// create zone tracking stats
-			gemini::ZoneStats* zone_stats = memory_static_allocate(zone_stat_memory);
-			memset(zone_stats, 0, zone_stat_memory.size);
-			gemini::memory_zone_install_stats(zone_stats);
-		}
+	void memory_shutdown()
+	{
+		gemini::memory_leak_report();
 
-		void shutdown()
-		{
-			gemini::memory_leak_report();
+		// If you hit this assert, there's a double memory shutdown
+		assert(gemini::_tracking_stats);
+		gemini::_tracking_stats = nullptr;
+	}
 
-			// If you hit this assert, there's a double memory shutdown
-			assert(gemini::_tracking_stats);
-			gemini::_tracking_stats = nullptr;
-		}
-
-		void* aligned_malloc(size_t bytes, size_t alignment)
-		{
+	void* memory_aligned_malloc(size_t bytes, size_t alignment)
+	{
 #if defined(PLATFORM_POSIX)
-			void* mem = nullptr;
+		void* mem = nullptr;
 
-			// alignment must be a multiple of sizeof(void*)
-			if (alignment < sizeof(void*))
-			{
-				alignment = sizeof(void*);
-			}
-			assert(alignment / sizeof(void*) > 0);
+		// alignment must be a multiple of sizeof(void*)
+		if (alignment < sizeof(void*))
+		{
+			alignment = sizeof(void*);
+		}
+		assert(alignment / sizeof(void*) > 0);
 
-			if (0 == posix_memalign(&mem, alignment, bytes))
-			{
-				return mem;
-			}
+		if (0 == posix_memalign(&mem, alignment, bytes))
+		{
+			return mem;
+		}
 
-			return nullptr;
+		return nullptr;
 
 #elif defined(PLATFORM_WINDOWS)
-			return _aligned_malloc(bytes, alignment);
+		return _aligned_malloc(bytes, alignment);
 #else
-	#error aligned_malloc not defined for this platform!
+#error aligned_malloc not defined for this platform!
 #endif
-		}
+	} // memory_aligned_malloc
 
-		void aligned_free(void* pointer)
-		{
+	void memory_aligned_free(void* pointer)
+	{
 #if defined(PLATFORM_POSIX)
-			free(pointer);
+		free(pointer);
 #elif defined(PLATFORM_WINDOWS)
-			_aligned_free(pointer);
+		_aligned_free(pointer);
 #else
-	#error aligned_free not defined for this platform!
+#error aligned_free not defined for this platform!
 #endif
-		}
-	} // namespace memory
-} // namespace core
+	} // memory_aligned_free
+} // namespace gemini

@@ -24,7 +24,6 @@
 // -------------------------------------------------------------
 #include "audio.h"
 
-#include <core/factory.h>
 #include <core/typedefs.h>
 #include <core/stackstring.h>
 #include <core/logging.h>

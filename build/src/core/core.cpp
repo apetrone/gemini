@@ -48,7 +48,7 @@ namespace gemini
 		core::logging::ILog* log_system = memory_static_allocate(log_system_data);
 		core::logging::set_instance(log_system);
 
-		core::memory::startup();
+		memory_startup();
 
 		platform::Result result = platform::startup();
 		assert(result.succeeded());
@@ -69,7 +69,7 @@ namespace gemini
 		profiler::shutdown();
 #endif
 
-		core::memory::shutdown();
+		memory_shutdown();
 
 		core::logging::ILog* log_system = core::logging::instance();
 		log_system->~ILog();

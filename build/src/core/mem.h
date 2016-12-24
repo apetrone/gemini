@@ -39,21 +39,20 @@
 	#error Unknown platform!
 #endif
 
-// uncomment this to debug memory allocations (performance hit!)
-//#define ENABLE_MEMORY_TRACKING 1
+// define ENABLE_MEMORY_TRACKING to track memory allocations and debug leaks.
+#define ENABLE_MEMORY_TRACKING 1
 
 #include <assert.h>
 
-
-#if defined(ENABLE_MEMORY_TRACKING)
-#include <list>
-#endif
-
-// TODO: replace this with ENABLE_MEMORY_TRACKING when refactor is done.
-#define DEBUG_MEMORY 1
-
 namespace gemini
 {
+	// ---------------------------------------------------------------------
+	// constants
+	// ---------------------------------------------------------------------
+	const size_t Kilobyte = 1024;
+	const size_t Megabyte = (Kilobyte * 1024);
+	const size_t Gigabyte = (Megabyte * 1024);
+
 	// Anything that allocates memory should accept an allocator.
 	// Anything that deletes memory should accept an allocator.
 	// Any container should be able to accept an allocator.
@@ -75,37 +74,25 @@ namespace gemini
 		ALLOCATOR_TYPE_MAX
 	}; // AllocatorType
 
+
+	// Replace this with a string-based system? I dunno yet.
 	enum MemoryZone
 	{
-		// All static memory
 		MEMORY_ZONE_DEFAULT,
-
-		// Memory allocated by the platform layer
 		MEMORY_ZONE_PLATFORM,
-
-		// Memory allocated by the audio subsystem
 		MEMORY_ZONE_AUDIO,
-
-		// Memory allocated by the renderer
 		MEMORY_ZONE_RENDERER,
-
-		// gui subsystem
 		MEMORY_ZONE_GUI,
-
 		MEMORY_ZONE_ASSETS,
-
 		MEMORY_ZONE_DEBUGDRAW,
-
 		MEMORY_ZONE_NAVIGATION,
-
 		MEMORY_ZONE_RUNTIME,
-
 		MEMORY_ZONE_FILESYSTEM,
-
 		MEMORY_ZONE_PHYSICS,
 
 		MEMORY_ZONE_MAX
 	}; // MemoryZone
+
 
 	struct Allocator
 	{
@@ -161,6 +148,7 @@ namespace gemini
 		uint32_t alignment_offset;
 	}; // MemoryZoneHeader
 
+
 	// The static memory reserved by this class is not supposed to be
 	// placed into an allocator.
 
@@ -175,6 +163,7 @@ namespace gemini
 		unsigned char memory[size];
 	}; // StaticMemory
 
+
 	// Allocator functions used with StaticMemory
 	template <class T>
 	T* memory_static_allocate(StaticMemory<T, 1>& mem)
@@ -182,18 +171,19 @@ namespace gemini
 		return new (mem.memory) T;
 	} // memory_static_allocate
 
+
 	template <class T, class ... Types>
 	T* memory_static_allocate(StaticMemory<T, 1>& mem, Types && ... tail)
 	{
 		return new (mem.memory) T(tail ...);
 	} // memory_static_allocate
 
+
 	template <class T, size_t count>
 	T* memory_static_allocate(StaticMemory<T, count>& mem)
 	{
 		return new (mem.memory) T[count];
 	} // memory_static_allocate
-
 
 
 	struct ZoneStats
@@ -214,6 +204,7 @@ namespace gemini
 #endif
 	}; // ZoneStats
 
+
 	// fetch current zone stats
 	ZoneStats* memory_zone_tracking_stats();
 
@@ -227,7 +218,6 @@ namespace gemini
 	void* memory_force_alignment(void* memory, uint32_t alignment);
 	bool memory_is_aligned(void* mem, uint32_t alignment);
 
-
 	// share zone stats
 	void memory_zone_install_stats(ZoneStats* other);
 	void memory_zone_track(MemoryZone zone, size_t allocation_size);
@@ -238,8 +228,6 @@ namespace gemini
 	// Allocator factory functions
 	Allocator memory_allocator_default(MemoryZone zone);
 	Allocator memory_allocator_linear(MemoryZone zone, void* memory, size_t memory_size);
-
-
 
 #if defined(DEBUG_MEMORY)
 	#define MEMORY2_ALLOC(allocator, size) (allocator).allocate((allocator), size, alignof(void*), __FILE__, __LINE__)
@@ -387,35 +375,15 @@ namespace gemini
 	#pragma warning(pop)
 #endif
 
+	// ---------------------------------------------------------------------
+	// platform-specific memory functions
+	// ---------------------------------------------------------------------
+	void* memory_aligned_malloc(size_t bytes, size_t alignment);
+	void memory_aligned_free(void* pointer);
+
+	// ---------------------------------------------------------------------
+	// interface
+	// ---------------------------------------------------------------------
+	void memory_startup();
+	void memory_shutdown();
 } // namespace gemini
-
-namespace core
-{
-	namespace memory
-	{
-		// ---------------------------------------------------------------------
-		// constants
-		// ---------------------------------------------------------------------
-		const size_t Kilobyte = 1024;
-		const size_t Megabyte = (Kilobyte*1024);
-		const size_t Gigabyte = (Megabyte*1024);
-
-		// ---------------------------------------------------------------------
-		// utility functions
-		// ---------------------------------------------------------------------
-		void* aligned_malloc(size_t bytes, size_t alignment);
-		void aligned_free(void* pointer);
-
-		// ---------------------------------------------------------------------
-		// allocator
-		// ---------------------------------------------------------------------
-		// Allocators provide an interface between code and memory. Different
-		// allocation strategies are provided by each new allocator type.
-
-		// ---------------------------------------------------------------------
-		// interface
-		// ---------------------------------------------------------------------
-		void startup();
-		void shutdown();
-	} // namespace memory
-} // namespace core
