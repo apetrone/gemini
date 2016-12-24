@@ -108,27 +108,16 @@ animation:
 Exporting Models
 ----------------------
 
-The model conversion tool (muse) has direct support for Autodesk's FBX file
-format. Any DCC tool which can export to this, is in theory, supported.
+Ultimately, shouldn't matter which tool the artist is using to create content.
+
+Unfortunately, supporting various other file formats requires bloating the build
+requirements and times by including third-party libraries.
+
+The alternative would be finding or writing libraries that support these other formats.
+
 
 ----------------------
 Exporting from Blender
 ----------------------
-Exporting from Blender is most reliable with the following settings.
 
-[Skeletal Animations]
-
-Version: FBX 6.1 ASCII
-+ Selected Objects
-+ Animation
-+ All Actions
-- Uncheck Default Take
-
-NOTES:
-
-	* FBX 7.4 binary mangles the action names
-
-----------------------
-Exporting from Maya LT
-----------------------
-Maya LT hasn't been tested yet, but I'm sure full FBX support is there.
+Exporting from Blender is the best option.
