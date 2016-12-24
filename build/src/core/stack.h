@@ -34,15 +34,14 @@
 
 namespace gemini
 {
-	template <class T, class Allocator = core::memory::SystemAllocator<core::memory::DefaultTrackingPolicy>>
+	template <class T>
 	class stack
 	{
 	public:
 		typedef T value_type;
 		typedef T* value_pointer;
-		typedef Allocator allocator_type;
 
-		stack(const allocator_type& _allocator = allocator_type())
+		stack(gemini::Allocator& _allocator)
 			: allocator(_allocator)
 			, data(nullptr)
 			, stack_pointer(0)
@@ -118,12 +117,12 @@ namespace gemini
 
 		value_pointer allocate(size_t count)
 		{
-			return MEMORY_NEW_ARRAY(value_type, count, const_cast<allocator_type&>(allocator));
+			return MEMORY2_NEW_ARRAY(allocator, value_type, count);
 		}
 
 		void deallocate(value_pointer pointer)
 		{
-			MEMORY_DELETE_ARRAY(pointer, const_cast<allocator_type&>(allocator));
+			MEMORY2_DELETE_ARRAY(allocator, pointer);
 		}
 
 		// grow to capacity
@@ -144,7 +143,7 @@ namespace gemini
 			}
 		}
 
-		const allocator_type& allocator;
+		gemini::Allocator& allocator;
 		value_pointer data;
 		uint32_t stack_pointer;
 		uint32_t max_capacity;

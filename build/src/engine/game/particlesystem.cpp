@@ -43,7 +43,8 @@ namespace gemini
 	// -------------------------------------------------------------
 	// ParticleEmitter
 	// -------------------------------------------------------------
-	ParticleEmitter::ParticleEmitter()
+	ParticleEmitter::ParticleEmitter(gemini::Allocator& _allocator)
+		: allocator(_allocator)
 	{
 		emitter_config = 0;
 		num_particles_alive = 0;
@@ -58,7 +59,7 @@ namespace gemini
 
 	void ParticleEmitter::init()
 	{
-		particle_list = MEMORY_NEW_ARRAY(Particle, this->emitter_config->max_particles, core::memory::global_allocator());
+		particle_list = MEMORY2_NEW_ARRAY(allocator, Particle, emitter_config->max_particles);
 
 		this->next_spawn = 0;
 		this->num_particles_alive = this->emitter_config->max_particles;
@@ -133,7 +134,7 @@ namespace gemini
 	{
 		if (this->emitter_config && this->particle_list)
 		{
-			MEMORY_DELETE_ARRAY(particle_list, core::memory::global_allocator());
+			MEMORY2_DELETE_ARRAY(allocator, particle_list);
 		}
 	} // purge
 
@@ -169,7 +170,8 @@ namespace gemini
 	// ParticleSystem
 	// -------------------------------------------------------------
 
-	ParticleSystem::ParticleSystem()
+	ParticleSystem::ParticleSystem(gemini::Allocator& _allocator)
+		: allocator(_allocator)
 	{
 	} // ParticleSystem
 
@@ -202,7 +204,7 @@ namespace gemini
 
 	ParticleEmitter* ParticleSystem::add_emitter()
 	{
-		ParticleEmitter* emitter = MEMORY_NEW(ParticleEmitter, core::memory::global_allocator());
+		ParticleEmitter* emitter = MEMORY2_NEW(allocator, ParticleEmitter)(allocator);
 		this->emitters.push_back(emitter);
 		return emitter;
 	} // add_emitter
@@ -215,7 +217,7 @@ namespace gemini
 		{
 			if (emitter == (*iter))
 			{
-				MEMORY_DELETE(emitter, core::memory::global_allocator());
+				MEMORY2_DELETE(allocator, emitter);
 				emitters.erase(iter);
 				break;
 			}

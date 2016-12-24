@@ -81,8 +81,9 @@ namespace gemini
 		unsigned int num_particles_alive;
 		Particle * particle_list;
 		float next_spawn;
+		gemini::Allocator& allocator;
 
-		ParticleEmitter();
+		ParticleEmitter(gemini::Allocator& allocator);
 		~ParticleEmitter();
 		void init();
 		void step( float delta_seconds );
@@ -101,8 +102,9 @@ namespace gemini
 	//	unsigned int num_active_emitters;
 	//	ParticleEmitter * emitter_list;
 		ParticleEmitterVector emitters;
+		gemini::Allocator& allocator;
 
-		ParticleSystem();
+		ParticleSystem(gemini::Allocator& allocator);
 		~ParticleSystem();
 		void purge();
 		void step( float delta_seconds );

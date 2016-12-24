@@ -248,8 +248,10 @@ namespace gemini
 		Type post_infinity;
 		Type * samples;
 		static Interpolator interpolator;
+		gemini::Allocator& allocator;
 
-		KeyframeChannel()
+		KeyframeChannel(gemini::Allocator& _allocator)
+			: allocator(_allocator)
 		{
 			samples = 0;
 			total_samples = 0;
@@ -259,7 +261,7 @@ namespace gemini
 		{
 			if ( samples )
 			{
-				MEMORY_DELETE_ARRAY(samples, core::memory::global_allocator());
+				MEMORY2_DELETE_ARRAY(allocator, samples);
 				samples = 0;
 			}
 
@@ -269,8 +271,7 @@ namespace gemini
 		void create( unsigned int max_samples, const Type * values, float framedelay, Type pre_infinity_value = Type(), Type post_infinity_value = Type() )
 		{
 			total_samples = max_samples;
-			samples = MEMORY_NEW_ARRAY(Type, total_samples, core::memory::global_allocator());
-
+			samples = MEMORY2_NEW_ARRAY(allocator, Type, total_samples);
 
 			set_keys( values, total_samples );
 

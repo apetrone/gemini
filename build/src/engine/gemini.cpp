@@ -793,7 +793,7 @@ public:
 	virtual void render_viewmodel(IEngineEntity* entity, const View& view)
 	{
 //		render_method->render_viewmodel(entity, main_window, origin, view_angles);
-		::renderer::RenderStream rs;
+		::renderer::RenderStream rs((char*)&render_stream_data[0], GEMINI_MAX_RENDERSTREAM_BYTES, (::renderer::RenderState*)&render_commands[0], GEMINI_MAX_RENDER_STREAM_COMMANDS);
 		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
 		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
 		rs.add_state(::renderer::STATE_DEPTH_TEST, 0);

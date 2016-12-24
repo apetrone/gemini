@@ -52,8 +52,13 @@ namespace gemini
 		// KeyframeList
 		//
 
-		KeyframeList::KeyframeList() : keys(0), total_keys(0), duration_seconds(0.0f)
-		{}
+		KeyframeList::KeyframeList(gemini::Allocator& _allocator)
+			: allocator(_allocator)
+			, keys(0)
+			, total_keys(0)
+			, duration_seconds(0.0f)
+		{
+		}
 
 		KeyframeList::~KeyframeList()
 		{
@@ -63,12 +68,12 @@ namespace gemini
 		void KeyframeList::allocate(size_t key_count)
 		{
 			total_keys = static_cast<uint32_t>(key_count);
-			keys = MEMORY_NEW_ARRAY(Keyframe, total_keys, core::memory::global_allocator());
+			keys = MEMORY2_NEW_ARRAY(allocator, Keyframe, total_keys);
 		}
 
 		void KeyframeList::deallocate()
 		{
-			MEMORY_DELETE_ARRAY(keys, core::memory::global_allocator());
+			MEMORY2_DELETE_ARRAY(allocator, keys);
 			total_keys = 0;
 		}
 
@@ -200,8 +205,9 @@ namespace gemini
 
 
 		// Sequence
-		Sequence::Sequence(gemini::Allocator& allocator)
-			: animation_set(allocator)
+		Sequence::Sequence(gemini::Allocator& _allocator)
+			: allocator(_allocator)
+			, animation_set(allocator)
 		{
 		}
 
@@ -226,7 +232,6 @@ namespace gemini
 			const size_t total_animations = sequence->animation_set.size() / ANIMATION_KEYFRAME_VALUES_MAX;
 
 			// associate the channels with the keyframe lists
-			size_t index = 0;
 			for (size_t index = 0; index < total_animations; ++index)
 			{
 				for (size_t channel_index = 0; channel_index < ANIMATION_KEYFRAME_VALUES_MAX; ++channel_index)
@@ -375,7 +380,7 @@ namespace gemini
 				sequence->frame_delay_seconds = (1.0f/(float)fps_rate);
 
 				// 1. allocate enough space for each bone
-				sequence->animation_set.allocate(bones_array.size() * ANIMATION_KEYFRAME_VALUES_MAX);
+				sequence->animation_set.allocate(bones_array.size() * ANIMATION_KEYFRAME_VALUES_MAX, KeyframeList(sequence->allocator));
 
 
 				Json::ValueIterator node_iter = bones_array.begin();

@@ -33,18 +33,6 @@
 
 namespace renderer
 {
-	RenderStream::RenderStream(unsigned int max_bytes, unsigned int max_render_commands)
-	{
-		buffer = static_cast<char*>(MEMORY_ALLOC(max_bytes, core::memory::global_allocator()));
-		commands = MEMORY_NEW_ARRAY(RenderState, max_render_commands, core::memory::global_allocator());
-
-		max_commands = max_render_commands;
-		num_commands = 0;
-		stream.init(buffer, MAX_RENDERER_STREAM_BYTES);
-
-		should_cleanup_buffers = 1;
-	}
-
 	RenderStream::RenderStream(char* stream_buffer, size_t stream_buffer_size, RenderState* command_buffer, size_t max_render_commands)
 	{
 		buffer = stream_buffer;
@@ -52,17 +40,10 @@ namespace renderer
 		max_commands = max_render_commands;
 		num_commands = 0;
 		stream.init(buffer, stream_buffer_size);
-
-		should_cleanup_buffers = 0;
 	}
 
 	RenderStream::~RenderStream()
 	{
-		if (should_cleanup_buffers)
-		{
-			MEMORY_DEALLOC(buffer, core::memory::global_allocator());
-			MEMORY_DELETE_ARRAY(commands, core::memory::global_allocator());
-		}
 	}
 
 	void RenderStream::save_offset(long& offset)

@@ -56,8 +56,9 @@ namespace gemini
 			Keyframe* keys;
 			uint32_t total_keys;
 			float duration_seconds;
+			gemini::Allocator& allocator;
 
-			KeyframeList();
+			KeyframeList(gemini::Allocator& _allocator);
 			~KeyframeList();
 
 			void allocate(size_t key_count);
@@ -112,6 +113,7 @@ namespace gemini
 
 			core::StackString<64> name;
 			SequenceId index;
+			gemini::Allocator& allocator;
 
 			FixedArray<KeyframeList> animation_set;
 

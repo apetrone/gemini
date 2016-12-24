@@ -100,7 +100,7 @@ namespace gemini
 #include <runtime/assets/asset_shader.h>
 #include <runtime/assets/asset_material.h>
 #include <runtime/assets/asset_mesh.h>
-#include <runtime/assets/asset_emitter.h>
+//#include <runtime/assets/asset_emitter.h>
 #include <runtime/assets/asset_sound.h>
 
 namespace gemini

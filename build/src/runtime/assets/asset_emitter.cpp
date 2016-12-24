@@ -36,6 +36,9 @@ namespace gemini
 	namespace assets
 	{
 		EmitterConfig::EmitterConfig(gemini::Allocator& allocator)
+			: color_channel(allocator)
+			, alpha_channel(allocator)
+			, size_channel(allocator)
 		{
 			max_particles = 0;
 			material_id = 0;
