@@ -38,7 +38,6 @@ namespace gui
 	extern gui_malloc _gmalloc;
 	extern gui_free _gfree;
 
-	void set_allocator(gui_malloc malloc_fn, gui_free free_fn);
 	void set_allocator(gemini::Allocator& allocator);
 
 	typedef float real;

@@ -700,32 +700,31 @@ class EngineInterface : public IEngineInterface
 	IExperimental* experimental_interface;
 
 	platform::window::NativeWindow* main_window;
-	core::memory::Zone game_memory_zone;
-	core::memory::GlobalAllocatorType game_allocator;
 	SceneLink& scenelink;
 
 	Array<char> render_stream_data;
 	Array<::renderer::RenderState> render_commands;
 
+	gemini::Allocator& engine_allocator;
+
 public:
 
-	EngineInterface(gemini::Allocator& allocator,
+	EngineInterface(gemini::Allocator& _allocator,
 					IEntityManager* em,
 					IModelInterface* mi,
 					gemini::physics::IPhysicsInterface* pi,
 					IExperimental* ei,
 					SceneLink& scene_link,
 					platform::window::NativeWindow* window)
-		: entity_manager(em)
+		: engine_allocator(_allocator)
+		, entity_manager(em)
 		, model_interface(mi)
 		, physics_interface(pi)
 		, experimental_interface(ei)
 		, main_window(window)
-		, game_memory_zone("game")
-		, game_allocator(&game_memory_zone)
 		, scenelink(scene_link)
-		, render_stream_data(allocator)
-		, render_commands(allocator)
+		, render_stream_data(_allocator)
+		, render_commands(_allocator)
 	{
 		render_stream_data.resize(GEMINI_MAX_RENDERSTREAM_BYTES);
 		render_commands.resize(GEMINI_MAX_RENDER_STREAM_COMMANDS);
@@ -743,12 +742,14 @@ public:
 
 	virtual void* allocate(size_t size)
 	{
-		return game_allocator.allocate(size, sizeof(void*), __FILE__, __LINE__);
+		return MEMORY2_ALLOC(engine_allocator, size);
+		//return game_allocator.allocate(size, sizeof(void*), __FILE__, __LINE__);
 	}
 
 	virtual void deallocate(void* pointer)
 	{
-		game_allocator.deallocate(pointer);
+		MEMORY2_DEALLOC(engine_allocator, pointer);
+		//game_allocator.deallocate(pointer);
 	}
 
 	virtual void render_view(const View& view, const Color& clear_color)
@@ -785,9 +786,9 @@ public:
 		}
 	}
 
-	virtual core::memory::GlobalAllocatorType& allocator()
+	virtual Allocator& allocator()
 	{
-		return core::memory::global_allocator();
+		return engine_allocator;
 	}
 
 	virtual void render_viewmodel(IEngineEntity* entity, const View& view)
@@ -1140,22 +1141,10 @@ public:
 		}
 	}
 
-	static void* gui_malloc_callback(size_t size)
-	{
-		return core::memory::global_allocator().allocate(size, sizeof(void*), __FILE__, __LINE__);
-	}
-
-	static void gui_free_callback(void* pointer)
-	{
-		core::memory::global_allocator().deallocate(pointer);
-	}
-
-
 	void setup_gui(render2::Device* device, gemini::Allocator& renderer_allocator, uint32_t width, uint32_t height)
 	{
 		gui_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 
-		gui::set_allocator(gui_malloc_callback, gui_free_callback);
 		gui::set_allocator(gui_allocator);
 		resource_cache = MEMORY2_NEW(renderer_allocator, ::renderer::StandaloneResourceCache)(renderer_allocator);
 
@@ -1437,10 +1426,10 @@ Options:
 		int y = 16;
 		debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", params.framedelta_milliseconds), Color());
 		y += 12;
-		debugdraw::text(x, y, core::str::format("allocations = %i, total %2.2f MB\n",
-			core::memory::global_allocator().get_zone()->get_active_allocations(),
-			core::memory::global_allocator().get_zone()->get_active_bytes() / (float)(1024 * 1024)), Color());
-		y += 12;
+		//debugdraw::text(x, y, core::str::format("allocations = %i, total %2.2f MB\n",
+		//	core::memory::global_allocator().get_zone()->get_active_allocations(),
+		//	core::memory::global_allocator().get_zone()->get_active_bytes() / (float)(1024 * 1024)), Color());
+		//y += 12;
 
 		while (accumulator >= params.step_interval_seconds)
 		{

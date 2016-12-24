@@ -74,15 +74,6 @@ using namespace renderer;
 // ---------------------------------------------------------------------
 // gui
 // ---------------------------------------------------------------------
-static void* gui_malloc_callback(size_t size)
-{
-	return core::memory::global_allocator().allocate(size, sizeof(void*), __FILE__, __LINE__);
-}
-
-static void gui_free_callback(void* pointer)
-{
-	core::memory::global_allocator().deallocate(pointer);
-}
 
 struct MyVertex
 {
@@ -401,7 +392,6 @@ public:
 		renderer = MEMORY2_NEW(gui_allocator, GUIRenderer)(gui_allocator, *resource_cache);
 		renderer->set_device(device);
 
-		gui::set_allocator(gui_malloc_callback, gui_free_callback);
 		gui::set_allocator(gui_allocator);
 		compositor = new gui::Compositor(width, height, resource_cache, renderer);
 		compositor->set_name("main_compositor");
@@ -953,8 +943,8 @@ Options:
 
 		if (label)
 		{
-			core::memory::Zone* zone = core::memory::global_allocator().memory_zone;
-			label->set_text(core::str::format("total_bytes: %i, total_allocations: %i", zone->get_total_bytes(), zone->get_total_allocations()));
+			// TODO@apetrone: Fill in memory allocation stats.
+			//label->set_text(core::str::format("total_bytes: %i, total_allocations: %i", zone->get_total_bytes(), zone->get_total_allocations()));
 		}
 
 

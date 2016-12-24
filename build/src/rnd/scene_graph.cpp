@@ -38,6 +38,16 @@
 //#include "core/assets/asset_mesh.h"
 //#include "physics.h"
 
+// Useful to hand to a std::for_each statement in order to clean up a container.
+template <class _Type>
+struct DestroyPointer
+{
+	void operator()(_Type * p)
+	{
+		MEMORY_DELETE(p, core::memory::global_allocator());
+	}
+}; // DestroyPointer
+
 namespace gemini
 {
 	namespace scenegraph

@@ -58,16 +58,6 @@ namespace core
 		}
 	}; // RangedValue
 
-	// Useful to hand to a std::for_each statement in order to clean up a container.
-	template <class _Type>
-	struct DestroyPointer
-	{
-		void operator()(_Type * p)
-		{
-			MEMORY_DELETE(p, core::memory::global_allocator());
-		}
-	}; // DestroyPointer
-
 	namespace util
 	{
 		unsigned int hash_32bit(const void* data, size_t data_size, unsigned int seed);

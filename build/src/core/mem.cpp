@@ -79,6 +79,13 @@ namespace gemini
 					(unsigned long)zone_stat.smallest_allocation,
 					(unsigned long)zone_stat.largest_allocation);
 
+				//LOGV("*** MEMORY LEAK [addr=%x] [file=%s] [line=%i] [size=%lu] [alloc_num=%lu]\n",
+				//	(((char*)block) + sizeof(MemoryHeader)),
+				//	block->filename,
+				//	block->line,
+				//	(unsigned long)block->allocation_size,
+				//	(unsigned long)block->allocation_index);
+
 				if (assert_on_active_allocations)
 				{
 #if defined(DEBUG_MEMORY)
@@ -249,6 +256,15 @@ namespace gemini
 		// populate zone header
 		memory = block + sizeof(MemoryDebugHeader) + alignment_offset + sizeof(MemoryZoneHeader);
 
+		//LOGV("[+] '%s' %x size=%lu, align=%lu, line=%i, alloc_num=%zu, file='%s'\n",
+		//	zone ? zone->name() : "",
+		//	(header + 1),
+		//	requested_size,
+		//	alignment,
+		//	line,
+		//	header->allocation_index,
+		//	filename);
+
 		return memory;
 	} // memory_allocate
 
@@ -284,6 +300,14 @@ namespace gemini
 		{
 			target_stat.tail = next;
 		}
+
+		//LOGV("[-] '%s' %x size=%lu, align=%lu, line=%i, alloc_num=%zu\n",
+		//	zone ? zone->name() : "",
+		//	pointer,
+		//	header->allocation_size,
+		//	header->alignment,
+		//	header->line,
+		//	header->allocation_index);
 
 		core::memory::aligned_free(memory);
 	} // memory_deallocate
@@ -455,27 +479,19 @@ namespace core
 		// ---------------------------------------------------------------------
 		// interface
 		// ---------------------------------------------------------------------
-		Zone* _global_zone = nullptr;
-		GlobalAllocatorType* _global_allocator = nullptr;
-
-		gemini::StaticMemory<Zone> global_zone_memory;
-
 		gemini::StaticMemory<gemini::ZoneStats, gemini::MEMORY_ZONE_MAX> zone_stat_memory;
 
 		void startup()
 		{
 			static_assert(sizeof(gemini::MemoryZoneHeader) == 16, "MemoryZoneHeader padding is incorrect.");
 
+			// If you hit this assert, there's a double memory startup
+			assert(gemini::_tracking_stats == nullptr);
+
 			// create zone tracking stats
 			gemini::ZoneStats* zone_stats = memory_static_allocate(zone_stat_memory);
 			memset(zone_stats, 0, zone_stat_memory.size);
 			gemini::memory_zone_install_stats(zone_stats);
-
-			// If you hit this assert, there's a double memory startup
-			assert(_global_zone == nullptr && _global_allocator == nullptr);
-			_global_zone = memory_static_allocate(global_zone_memory, "global");
-			static GlobalAllocatorType global_allocator_instance(_global_zone);
-			_global_allocator = &global_allocator_instance;
 		}
 
 		void shutdown()
@@ -483,101 +499,8 @@ namespace core
 			gemini::memory_leak_report();
 
 			// If you hit this assert, there's a double memory shutdown
-			assert(_global_zone && _global_allocator);
-
-			_global_zone->~Zone();
-
-			// sanity test; these are no longer valid!
-			_global_zone = nullptr;
-			_global_allocator = nullptr;
-		}
-
-		SystemAllocatorType& system_allocator()
-		{
-			static SystemAllocatorType _system_allocator;
-			return _system_allocator;
-		}
-
-		GlobalAllocatorType& global_allocator()
-		{
-			return *_global_allocator;
-		}
-
-		void global_allocator(GlobalAllocatorType& allocator)
-		{
-			_global_allocator = &allocator;
-		}
-
-		// ---------------------------------------------------------------------
-		// zone
-		// ---------------------------------------------------------------------
-		Zone::Zone(const char* zone_name, size_t max_budget_bytes)
-		{
-			memset(this, 0, sizeof(Zone));
-			this->zone_name = zone_name;
-			budget_bytes = max_budget_bytes;
-			current_allocation = 0;
-		}
-
-		Zone::~Zone()
-		{
-			report();
-		}
-
-		int Zone::add_allocation(size_t size)
-		{
-			if (budget_bytes > 0 && (active_bytes + size) > budget_bytes)
-			{
-				// over budget!
-				return -1;
-			}
-
-			total_allocations++;
-			total_bytes += size;
-
-			active_allocations++;
-			active_bytes += size;
-
-			if (size > largest_allocation)
-				largest_allocation = size;
-
-			if (size < smallest_allocation || (smallest_allocation == 0))
-				smallest_allocation = size;
-
-			if (active_bytes > high_watermark)
-				high_watermark = active_bytes;
-
-			return 0;
-		}
-
-		void Zone::remove_allocation(size_t size)
-		{
-			// Attempted to free something that wasn't allocated.
-			assert(active_allocations > 0 && active_bytes >= size);
-
-			active_allocations--;
-			active_bytes -= size;
-		}
-
-		void Zone::report()
-		{
-			// could use %zu on C99, but fallback to %lu and casts for C89.
-			LOGV("[zone: '%s'] total_allocations = %lu, total_bytes = %lu, budget_bytes = %lu\n", zone_name,
-					(unsigned long)total_allocations,
-					(unsigned long)total_bytes,
-					(unsigned long)budget_bytes);
-
-			LOGV("[zone: '%s'] active_allocations = %lu, active_bytes = %lu, high_watermark = %lu\n", zone_name,
-					(unsigned long)active_allocations,
-					(unsigned long)active_bytes,
-					(unsigned long)high_watermark);
-
-			LOGV("[zone: '%s'] smallest_allocation = %lu, largest_allocation = %lu\n", zone_name,
-					(unsigned long)smallest_allocation,
-					(unsigned long)largest_allocation);
-
-			// if you hit this, there may be a memory leak!
-			assert(active_allocations == 0 && active_bytes == 0);
+			assert(gemini::_tracking_stats);
+			gemini::_tracking_stats = nullptr;
 		}
 
 		void* aligned_malloc(size_t bytes, size_t alignment)

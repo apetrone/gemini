@@ -29,20 +29,22 @@
 
 namespace gui
 {
+	gemini::Allocator* _allocator = nullptr;
+
 	void* default_gui_malloc(size_t bytes)
 	{
-		return malloc(bytes);
+		//return malloc(bytes);
+		return MEMORY2_ALLOC(*_allocator, bytes);
 	} // default_gui_malloc
 
 	void default_gui_free(void* pointer)
 	{
-		free(pointer);
+		//free(pointer);
+		MEMORY2_DEALLOC(*_allocator, pointer);
 	} // default_gui_free
 
 	gui_malloc _gmalloc = default_gui_malloc;
 	gui_free _gfree = default_gui_free;
-
-	gemini::Allocator* _allocator = nullptr;
 
 	void set_allocator(gui_malloc malloc_fn, gui_free free_fn)
 	{
