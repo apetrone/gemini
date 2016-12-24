@@ -109,7 +109,7 @@ namespace render2
 	// ---------------------------------------------------------------------
 	Texture* GLES2Device::create_texture(const Image& image)
 	{
-		return common_create_texture(image);
+		return common_create_texture(allocator, image);
 	}
 
 	void GLES2Device::update_texture(Texture* texture, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions)
