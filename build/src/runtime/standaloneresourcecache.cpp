@@ -40,6 +40,11 @@ namespace renderer
 	{
 	}
 
+	StandaloneResourceCache::~StandaloneResourceCache()
+	{
+		clear();
+	}
+
 	void StandaloneResourceCache::clear()
 	{
 		for (FontByPathSet::Iterator it = font_handle_by_path.begin(); it != font_handle_by_path.end(); ++it)

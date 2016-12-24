@@ -409,9 +409,8 @@ namespace gemini
 
 		core::util::ConfigLoadStatus load_json_model(const Json::Value& root, void* data)
 		{
-			Mesh* mesh = (Mesh*)data;
-
-			gemini::Allocator allocator = memory_allocator_default(MEMORY_ZONE_ASSETS);
+			AssetLoadState<Mesh>* load_state = reinterpret_cast<AssetLoadState<Mesh>*>(data);
+			Mesh* mesh = load_state->asset;
 
 			// TODO: remove this hack for maps in the re-write.
 			core::StackString<MAX_PATH_SIZE> fullpath = mesh->path;
@@ -470,7 +469,7 @@ namespace gemini
 
 
 
-			MeshLoaderState state(allocator, mesh);
+			MeshLoaderState state(*load_state->allocator, mesh);
 
 			// traverse over hierarchy
 			node_iter = node_root.begin();
@@ -575,11 +574,12 @@ namespace gemini
 		}
 
 
-		Mesh::Mesh(gemini::Allocator& allocator)
-			: geometry(allocator)
-			, geometry_vn(allocator)
-			, skeleton(allocator)
-			, hitboxes(allocator)
+		Mesh::Mesh(gemini::Allocator& _allocator)
+			: allocator(_allocator)
+			, geometry(_allocator)
+			, geometry_vn(_allocator)
+			, skeleton(_allocator)
+			, hitboxes(_allocator)
 		{
 			is_dirty = true;
 			has_skeletal_animation = false;
@@ -587,7 +587,10 @@ namespace gemini
 
 		Mesh::~Mesh()
 		{
-
+			for (assets::Geometry* geo : geometry)
+			{
+				MEMORY2_DELETE(allocator, geo);
+			}
 		}
 
 		void Mesh::release()
@@ -626,10 +629,10 @@ namespace gemini
 			return 0;
 		} // find_bone_named
 
-		AssetLoadStatus mesh_load_callback(gemini::Allocator& allocator, const char* path, Mesh* mesh, const AssetParameters& parameters)
+		AssetLoadStatus mesh_load_callback(gemini::Allocator& allocator, const char* path, AssetLoadState<Mesh>& load_state, const AssetParameters& parameters)
 		{
-			mesh->path = path;
-			if (core::util::json_load_with_callback(path, /*mesh_load_from_json*/load_json_model, mesh, true) == core::util::ConfigLoad_Success)
+			load_state.asset->path = path;
+			if (core::util::json_load_with_callback(path, /*mesh_load_from_json*/load_json_model, &load_state, true) == core::util::ConfigLoad_Success)
 			{
 				return AssetLoad_Success;
 			}

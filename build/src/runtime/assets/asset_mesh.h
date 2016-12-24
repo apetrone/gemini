@@ -73,7 +73,7 @@ namespace gemini
 			glm::vec3 maxs;
 
 			Geometry(gemini::Allocator& allocator);
-			~Geometry();
+			virtual ~Geometry();
 
 			Geometry& operator=(const Geometry& rhs) = delete;
 
@@ -108,6 +108,8 @@ namespace gemini
 			glm::vec3 aabb_mins;
 			glm::vec3 aabb_maxs;
 
+			gemini::Allocator& allocator;
+
 			Mesh(gemini::Allocator& allocator);
 			~Mesh();
 			void reset();
@@ -126,7 +128,7 @@ namespace gemini
 			FixedArray<Hitbox> hitboxes;
 		}; // Mesh
 
-		AssetLoadStatus mesh_load_callback(gemini::Allocator& allocator, const char * path, Mesh * mesh, const AssetParameters & parameters );
+		AssetLoadStatus mesh_load_callback(gemini::Allocator& allocator, const char * path, AssetLoadState<Mesh>& load_state, const AssetParameters & parameters );
 		void mesh_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Mesh, AssetParameters, meshes);

@@ -112,8 +112,9 @@ namespace gemini
 	#endif
 
 
-		AssetLoadStatus shader_load_callback(gemini::Allocator& allocator, const char* path, Shader* shader, const AssetParameters& parameters)
+		AssetLoadStatus shader_load_callback(gemini::Allocator& allocator, const char* path, AssetLoadState<Shader>& load_state, const AssetParameters& parameters)
 		{
+			Shader* shader = load_state.asset;
 			create_shaderprogram_from_file(allocator, path, &shader->program);
 			if (!shader->program)
 			{

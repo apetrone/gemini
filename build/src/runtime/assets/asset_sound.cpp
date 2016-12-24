@@ -275,8 +275,10 @@ namespace gemini
 			return pcmdata.size() / audio::InMemoryChannelCount;
 		}
 
-		AssetLoadStatus sound_load_callback(gemini::Allocator& allocator, const char* path, Sound* sound, const AssetParameters& parameters)
+		AssetLoadStatus sound_load_callback(gemini::Allocator& allocator, const char* path, AssetLoadState<Sound>& load_state, const AssetParameters& parameters)
 		{
+			Sound* sound = load_state.asset;
+
 			// load the file into a memory buffer
 			if (load_wave(allocator, sound->pcmdata, sound->channels, path) != 0)
 			{

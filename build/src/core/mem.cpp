@@ -54,6 +54,10 @@ namespace gemini
 	{
 		// Now we try to iterate over zone stats.
 		ZoneStats* stats = memory_zone_tracking_stats();
+#if defined(ENABLE_MEMORY_TRACKING)
+		size_t leaked_allocations = 0;
+#endif
+
 		for (size_t index = 0; index < MEMORY_ZONE_MAX; ++index)
 		{
 			const ZoneStats& zone_stat = stats[index];
@@ -90,7 +94,7 @@ namespace gemini
 #if defined(ENABLE_MEMORY_TRACKING)
 				if (assert_on_active_allocations)
 				{
-					size_t leaked_allocations = 0;
+
 					MemoryDebugHeader* debug = zone_stat.tail;
 					while (debug)
 					{
@@ -105,15 +109,22 @@ namespace gemini
 						debug = debug->next;
 						++leaked_allocations;
 					}
-
-					LOGV("\t %i leaked allocations!\n", leaked_allocations);
-
-					// if you hit this, there may be a memory leak!
-					assert(leaked_allocations == 0);
 				}
 #endif
 			}
 		}
+
+#if defined(ENABLE_MEMORY_TRACKING)
+		if (leaked_allocations)
+		{
+			LOGV("\t %i leaked allocations!\n", leaked_allocations);
+
+			// if you hit this, there may be a memory leak!
+			assert(leaked_allocations == 0);
+		}
+#endif
+
+
 	} // memory_leak_report
 
 

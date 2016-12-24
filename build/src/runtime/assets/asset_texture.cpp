@@ -55,11 +55,13 @@ namespace gemini
 		} // release
 
 
-		AssetLoadStatus texture_load_callback(gemini::Allocator& allocator, const char* path, Texture* texture, const TextureParameters& parameters)
+		AssetLoadStatus texture_load_callback(gemini::Allocator& allocator, const char* path, AssetLoadState<Texture>& load_state, const TextureParameters& parameters)
 		{
 			unsigned int width = 0;
 			unsigned int height = 0;
 			bool load_result = 0;
+
+			Texture* texture = load_state.asset;
 
 			if ( !(parameters.flags & image::F_CUBEMAP) ) // load 2d texture
 			{

@@ -36,10 +36,17 @@ namespace gemini
 {
 	namespace assets
 	{
+		template <class T>
+		struct AssetLoadState
+		{
+			gemini::Allocator* allocator;
+			T* asset;
+		}; // AssetLoadState
+
 		template <class AssetClass, class AssetParameterClass = AssetParameters>
 		class AssetLibrary
 		{
-			typedef AssetLoadStatus (*AssetLoadCallback)(gemini::Allocator& allocator, const char * path, AssetClass * asset, const AssetParameterClass & parameters );
+			typedef AssetLoadStatus (*AssetLoadCallback)(gemini::Allocator& allocator, const char * path, AssetLoadState<typename AssetClass>& load_state, const AssetParameterClass & parameters );
 			typedef void (*AssetConstructExtension)( core::StackString<MAX_PATH_SIZE> & path );
 			typedef void (*AssetIterator)( AssetClass * asset, void * userdata );
 
@@ -93,14 +100,14 @@ namespace gemini
 			} // for_each
 
 			// providing stubs for these functions
-			AssetLoadStatus load_with_callback( const char * path, AssetClass * asset, const AssetParameterClass & parameters )
+			AssetLoadStatus load_with_callback( const char * path, AssetLoadState<typename AssetClass>& load_state, const AssetParameterClass & parameters )
 			{
 				if ( !load_callback )
 				{
 					return AssetLoad_Failure;
 				}
 
-				return load_callback(allocator, path, asset, parameters );
+				return load_callback(allocator, path, load_state, parameters );
 			} // load_with_callback
 
 			void construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
@@ -152,7 +159,10 @@ namespace gemini
 				}
 
 				// case 2 && 3
-				load_result = load_with_callback(fullpath(), asset, parameters);
+				AssetLoadState<typename AssetClass> load_state;
+				load_state.asset = asset;
+				load_state.allocator = &allocator;
+				load_result = load_with_callback(fullpath(), load_state, parameters);
 				if (load_result != AssetLoad_Failure)
 				{
 					if (asset_is_new)
@@ -250,6 +260,5 @@ namespace gemini
 				return default_asset;
 			} // get_default
 		}; // AssetLibrary
-
 	} // namespace assets
 } // namespace gemini

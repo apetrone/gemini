@@ -44,7 +44,7 @@ namespace gemini
 			virtual void release();
 		}; // Shader
 
-		AssetLoadStatus shader_load_callback(gemini::Allocator& allocator, const char* path, Shader* shader, const AssetParameters& parameters);
+		AssetLoadStatus shader_load_callback(gemini::Allocator& allocator, const char* path, AssetLoadState<Shader>& load_state, const AssetParameters& parameters);
 		void shader_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Shader, AssetParameters, shaders);

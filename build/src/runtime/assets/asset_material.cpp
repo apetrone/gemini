@@ -355,9 +355,9 @@ namespace gemini
 			return 0;
 		} // texture_unit_for_map
 
-		AssetLoadStatus material_load_callback(gemini::Allocator& allocator, const char* path, Material* material, const AssetParameters& parameters )
+		AssetLoadStatus material_load_callback(gemini::Allocator& allocator, const char* path, AssetLoadState<Material>& load_state, const AssetParameters& parameters )
 		{
-			if (core::util::json_load_with_callback(path, material_load_from_json, material, true) == core::util::ConfigLoad_Success)
+			if (core::util::json_load_with_callback(path, material_load_from_json, load_state.asset, true) == core::util::ConfigLoad_Success)
 			{
 				return AssetLoad_Success;
 			}

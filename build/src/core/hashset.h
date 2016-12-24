@@ -185,6 +185,15 @@ private:
 
 	void deallocate(Bucket* pointer)
 	{
+		// Call the destructor for each element
+		for (size_t index = 0; index < table_size; ++index)
+		{
+			if (pointer[index].hash != 0)
+			{
+				(&pointer[index].key)->~K();
+				//(&pointer[index].value)->~T();
+			}
+		}
 		MEMORY2_DEALLOC(allocator, pointer);
 	} // deallocate
 

@@ -42,6 +42,8 @@ namespace renderer
 	{
 	public:
 		StandaloneResourceCache(gemini::Allocator& allocator);
+		virtual ~StandaloneResourceCache();
+
 		virtual void clear() override;
 		virtual gui::FontHandle create_font(const char* filename, size_t pixel_size) override;
 		virtual void destroy_font(const gui::FontHandle& handle) override;

@@ -54,21 +54,40 @@ namespace renderer
 		struct ShaderConfiguration
 		{
 			Array<core::StackString<64>> preprocessor_defines;
-			HashSet<core::StackString<32>, ShaderDescriptionBlock> shaders;
 
-			ShaderConfiguration(gemini::Allocator& allocator)
-				: preprocessor_defines(allocator)
-				, shaders(allocator, HASHSET_INITIAL_SIZE, HASHSET_GROWTH_FACTOR, ShaderDescriptionBlock(allocator))
+			typedef HashSet<core::StackString<32>, ShaderDescriptionBlock*> ShaderHashSet;
+			ShaderHashSet shaders;
+
+			gemini::Allocator& allocator;
+
+			ShaderConfiguration(gemini::Allocator& _allocator)
+				: allocator(_allocator)
+				, preprocessor_defines(_allocator)
+				, shaders(_allocator)
 			{
+			}
+
+			~ShaderConfiguration()
+			{
+				preprocessor_defines.clear();
+
+				ShaderHashSet::Iterator it = shaders.begin();
+				for (; it != shaders.end(); ++it)
+				{
+					ShaderDescriptionBlock* block = it.value();
+					MEMORY2_DELETE(allocator, block);
+				}
+
+				shaders.clear();
 			}
 		};
 
 		ShaderConfiguration* _shader_config = nullptr;
 		typedef std::vector<std::string> StringVector;
 
-		void add_shader(ShaderConfiguration* configuration, const ShaderDescriptionBlock& shader)
+		void add_shader(ShaderConfiguration* configuration, ShaderDescriptionBlock* shader)
 		{
-			configuration->shaders[shader.name] = shader;
+			configuration->shaders[shader->name] = shader;
 		}
 
 		gemini::Allocator* _allocator = nullptr;
@@ -80,37 +99,37 @@ namespace renderer
 			_allocator = &allocator;
 			_shader_config = MEMORY2_NEW(allocator, ShaderConfiguration)(allocator);
 
-			ShaderDescriptionBlock objects(allocator, "objects");
-			objects.stages.push_back("vert");
-			objects.stages.push_back("frag");
-			objects.attributes.push_back("in_position");
-			objects.attributes.push_back("in_normal");
-			objects.attributes.push_back("in_uv0");
-			objects.attributes.push_back("in_uv1");
-			objects.uniforms.push_back("modelview_matrix");
-			objects.uniforms.push_back("projection_matrix");
-			objects.uniforms.push_back("object_matrix");
-			objects.uniforms.push_back("diffusemap");
-			objects.uniforms.push_back("lightmap");
-			objects.uniforms.push_back("viewer_direction");
-			objects.uniforms.push_back("viewer_position");
-			objects.uniforms.push_back("light_position");
+			ShaderDescriptionBlock* objects = MEMORY2_NEW(allocator, ShaderDescriptionBlock)(allocator, "objects");
+			objects->stages.push_back("vert");
+			objects->stages.push_back("frag");
+			objects->attributes.push_back("in_position");
+			objects->attributes.push_back("in_normal");
+			objects->attributes.push_back("in_uv0");
+			objects->attributes.push_back("in_uv1");
+			objects->uniforms.push_back("modelview_matrix");
+			objects->uniforms.push_back("projection_matrix");
+			objects->uniforms.push_back("object_matrix");
+			objects->uniforms.push_back("diffusemap");
+			objects->uniforms.push_back("lightmap");
+			objects->uniforms.push_back("viewer_direction");
+			objects->uniforms.push_back("viewer_position");
+			objects->uniforms.push_back("light_position");
 			add_shader(_shader_config, objects);
 
-			ShaderDescriptionBlock animation(allocator, "animation");
-			animation.stages.push_back("vert");
-			animation.stages.push_back("frag");
-			animation.attributes.push_back("in_position");
-			animation.attributes.push_back("in_normal");
-			animation.attributes.push_back("in_uv0");
-			animation.attributes.push_back("in_blendindices");
-			animation.attributes.push_back("in_blendweights");
-			animation.uniforms.push_back("modelview_matrix");
-			animation.uniforms.push_back("projection_matrix");
-			animation.uniforms.push_back("object_matrix");
-			animation.uniforms.push_back("node_transforms");
-			animation.uniforms.push_back("inverse_bind_transforms");
-			animation.uniforms.push_back("diffusemap");
+			ShaderDescriptionBlock* animation = MEMORY2_NEW(allocator, ShaderDescriptionBlock)(allocator, "animation");
+			animation->stages.push_back("vert");
+			animation->stages.push_back("frag");
+			animation->attributes.push_back("in_position");
+			animation->attributes.push_back("in_normal");
+			animation->attributes.push_back("in_uv0");
+			animation->attributes.push_back("in_blendindices");
+			animation->attributes.push_back("in_blendweights");
+			animation->uniforms.push_back("modelview_matrix");
+			animation->uniforms.push_back("projection_matrix");
+			animation->uniforms.push_back("object_matrix");
+			animation->uniforms.push_back("node_transforms");
+			animation->uniforms.push_back("inverse_bind_transforms");
+			animation->uniforms.push_back("diffusemap");
 			add_shader(_shader_config, animation);
 
 			_shader_config->preprocessor_defines.push_back("#extension GL_ARB_explicit_attrib_location: require");
@@ -138,19 +157,19 @@ namespace renderer
 				return false;
 			}
 
-			ShaderDescriptionBlock& shader_block = _shader_config->shaders[shader_name];
+			ShaderDescriptionBlock* shader_block = _shader_config->shaders[shader_name];
 
-			for (const core::StackString<32>& item : shader_block.attributes)
+			for (const core::StackString<32>& item : shader_block->attributes)
 			{
 				attributes.push_back(item());
 			}
 
-			for (const core::StackString<32>& item : shader_block.uniforms)
+			for (const core::StackString<32>& item : shader_block->uniforms)
 			{
 				uniforms.push_back(item());
 			}
 
-			for (const core::StackString<32>& item : shader_block.stages)
+			for (const core::StackString<32>& item : shader_block->stages)
 			{
 				stages.push_back(item());
 			}
