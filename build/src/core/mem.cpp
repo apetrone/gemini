@@ -43,7 +43,7 @@ namespace gemini
 
 	size_t memory_per_allocation_overhead()
 	{
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 		return sizeof(MemoryDebugHeader) + sizeof(MemoryZoneHeader);
 #else
 		return sizeof(MemoryZoneHeader);
@@ -57,7 +57,7 @@ namespace gemini
 		for (size_t index = 0; index < MEMORY_ZONE_MAX; ++index)
 		{
 			const ZoneStats& zone_stat = stats[index];
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 			if (zone_stat.tail != nullptr)
 #else
 			if (zone_stat.active_bytes > 0)
@@ -87,7 +87,7 @@ namespace gemini
 				//	(unsigned long)block->allocation_size,
 				//	(unsigned long)block->allocation_index);
 
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 				if (assert_on_active_allocations)
 				{
 					size_t leaked_allocations = 0;
@@ -188,6 +188,7 @@ namespace gemini
 			case MEMORY_ZONE_RUNTIME:		return "runtime";
 			case MEMORY_ZONE_FILESYSTEM:	return "filesystem";
 			case MEMORY_ZONE_PHYSICS:		return "physics";
+			case MEMORY_ZONE_GAME:			return "game";
 			case MEMORY_ZONE_MAX:
 			default:						return "unknown";
 		}
@@ -203,7 +204,7 @@ namespace gemini
 	// ---------------------------------------------------------------------
 	// common allocation functions
 	// ---------------------------------------------------------------------
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 	void* memory_allocate(MemoryZone zone, size_t requested_size, uint32_t alignment, const char* filename, int line)
 	{
 		// Add header sizes onto the requested size.
@@ -361,7 +362,7 @@ namespace gemini
 	// ---------------------------------------------------------------------
 	// default allocator: Standard operating system-level heap allocator
 	// ---------------------------------------------------------------------
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 	void* default_allocate(Allocator& allocator, size_t requested_size, uint32_t alignment, const char* filename, int line)
 	{
 		return memory_allocate(allocator.zone, requested_size, alignment, filename, line);
@@ -435,7 +436,7 @@ namespace gemini
 		memory_zone_untrack(zone_header->zone, zone_header->allocation_size);
 	} // linear_deallocate_common
 
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 	void* linear_allocate(Allocator& allocator, size_t requested_size, uint32_t alignment, const char* /*filename*/, int /*line*/)
 	{
 		return linear_allocate_common(allocator, allocator.zone, requested_size, alignment);

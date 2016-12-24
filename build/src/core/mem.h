@@ -88,13 +88,14 @@ namespace gemini
 		MEMORY_ZONE_RUNTIME,
 		MEMORY_ZONE_FILESYSTEM,
 		MEMORY_ZONE_PHYSICS,
+		MEMORY_ZONE_GAME,
 
 		MEMORY_ZONE_MAX
 	}; // MemoryZone
 
 	struct Allocator
 	{
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 		void* (*allocate)(Allocator& allocator, size_t requested_size, uint32_t alignment, const char* filename, int line);
 		void (*deallocate)(Allocator& allocator, void* pointer, const char* filename, int line);
 #else
@@ -112,7 +113,7 @@ namespace gemini
 		void* memory;
 	}; // Allocator
 
-	#if defined(DEBUG_MEMORY)
+	#if defined(ENABLE_MEMORY_TRACKING)
 #pragma pack(push, 8)
 	struct MemoryDebugHeader
 	{
@@ -189,7 +190,7 @@ namespace gemini
 		size_t smallest_allocation;
 		size_t largest_allocation;
 
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 		// list of active allocations for this zone
 		MemoryDebugHeader* tail;
 #endif
@@ -219,7 +220,7 @@ namespace gemini
 	Allocator memory_allocator_default(MemoryZone zone);
 	Allocator memory_allocator_linear(MemoryZone zone, void* memory, size_t memory_size);
 
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 	#define MEMORY2_ALLOC(allocator, size) (allocator).allocate((allocator), size, alignof(void*), __FILE__, __LINE__)
 	#define MEMORY2_DEALLOC(allocator, pointer) (allocator).deallocate((allocator), pointer, __FILE__, __LINE__)
 
@@ -279,7 +280,7 @@ namespace gemini
 #endif
 
 	template <class _Type>
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 	_Type* memory_array_allocate(Allocator& allocator, size_t array_size, const char* filename, int line)
 #else
 	_Type* memory_array_allocate(Allocator& allocator, size_t array_size)
@@ -293,7 +294,7 @@ namespace gemini
 		// array_size and the size of the _Type.
 		size_t total_size = sizeof(_Type) * array_size + (sizeof(size_t) + sizeof(size_t));
 
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 		void* mem = allocator.allocate(allocator, total_size, alignof(_Type), filename, line);
 		assert(mem != nullptr);
 #else
@@ -319,7 +320,7 @@ namespace gemini
 
 
 	template <class _Type>
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 	void memory_array_deallocate(Allocator& allocator, _Type* pointer, const char* filename, int line)
 #else
 	void memory_array_deallocate(Allocator& allocator, _Type* pointer)
@@ -353,7 +354,7 @@ namespace gemini
 			}
 
 			// deallocate the block
-#if defined(DEBUG_MEMORY)
+#if defined(ENABLE_MEMORY_TRACKING)
 			allocator.deallocate(allocator, block, filename, line);
 #else
 			allocator.deallocate(allocator, block);
