@@ -1016,7 +1016,7 @@ Options:
 		rapid_library = platform::dylib_open("X:/gemini/build/lib/debug_x86_64/rapid.dll");
 		assert(rapid_library);
 
-		populate_interface_fn pif = static_cast<populate_interface_fn>(platform::dylib_find(rapid_library, "populate_interface"));
+		populate_interface_fn pif = reinterpret_cast<populate_interface_fn>(platform::dylib_find(rapid_library, "populate_interface"));
 		assert(pif);
 
 		pif(rapid);

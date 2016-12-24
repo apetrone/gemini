@@ -120,18 +120,19 @@ struct DerivedClass : public BaseClass
 void test_memory()
 {
 #if 0
-	int* a = MEMORY_NEW(int, global_allocator());
-	BaseClass* foo = MEMORY_NEW(DerivedClass, global_allocator());
-	BaseClass* values = MEMORY_NEW_ARRAY(DerivedClass, 1024, global_allocator());
-	DerivedClass* derived = MEMORY_NEW_ARRAY(DerivedClass, 512, global_allocator());
+	gemini::Allocator test_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	int* a = MEMORY2_NEW(test_allocator, int;
+	BaseClass* foo = MEMORY2_NEW(test_allocator, DerivedClass);
+	BaseClass* values = MEMORY2_NEW_ARRAY(test_allocator, DerivedClass, 1024);
+	DerivedClass* derived = MEMORY2_NEW_ARRAY(test_allocator, DerivedClass, 512);
 
-	uint64_t* sixyfours = MEMORY_NEW_ARRAY(uint64_t, 16384, global_allocator());
+	uint64_t* sixyfours = MEMORY2_NEW_ARRAY(test_allocator, uint64_t, 16384);
 
-	MEMORY_DELETE(a, global_allocator());
-	MEMORY_DELETE(foo, global_allocator());
-	MEMORY_DELETE_ARRAY(values, global_allocator());
-	MEMORY_DELETE_ARRAY(sixyfours, global_allocator());
-	MEMORY_DELETE_ARRAY(derived, global_allocator());
+	MEMORY2_DELETE(test_allocator, a);
+	MEMORY2_DELETE(test_allocator, foo);
+	MEMORY2_DELETE_ARRAY(test_allocator, values);
+	MEMORY2_DELETE_ARRAY(test_allocator, sixyfours);
+	MEMORY2_DELETE_ARRAY(test_allocator, derived);
 #endif
 }
 
@@ -635,8 +636,8 @@ namespace test
 		gemini::GamepadButton buttonmap[128];
 	};
 
-
-	static Array<InputDevice*> _devices;
+	gemini::Allocator device_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	static Array<InputDevice*> _devices(device_allocator);
 
 	void create_device_with_path(const char* device_path,
 								DeviceType device_type)
@@ -645,13 +646,13 @@ namespace test
 		switch(device_type)
 		{
 			case DeviceType::Keyboard:
-				device = MEMORY_NEW(KeyboardDevice, core::memory::global_allocator())(device_path);
+				device = MEMORY2_NEW(device_allocator, KeyboardDevice)(device_path);
 				break;
 			case DeviceType::Mouse:
-				device = MEMORY_NEW(MouseDevice, core::memory::global_allocator())(device_path);
+				device = MEMORY2_NEW(device_allocator, MouseDevice)(device_path);
 				break;
 			case DeviceType::Joystick:
-				device = MEMORY_NEW(JoystickDevice, core::memory::global_allocator())(device_path);
+				device = MEMORY2_NEW(device_allocator, JoystickDevice)(device_path);
 				break;
 			default:
 				LOGE("Unknown device type specified!\n");
@@ -803,7 +804,7 @@ namespace test
 	{
 		for (InputDevice* device : _devices)
 		{
-			MEMORY_DELETE(device, core::memory::global_allocator());
+			MEMORY2_DELETE(device_allocator, device);
 		}
 		_devices.clear();
 	}
