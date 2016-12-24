@@ -42,14 +42,15 @@
 
 namespace gemini
 {
-	SceneLink::SceneLink()
+	SceneLink::SceneLink(gemini::Allocator& _allocator)
+		: allocator(_allocator)
 	{
-		queue = MEMORY_NEW(::renderer::RenderQueue, core::memory::global_allocator());
+		queue = MEMORY2_NEW(allocator, ::renderer::RenderQueue);
 	}
 
 	SceneLink::~SceneLink()
 	{
-		MEMORY_DELETE(queue, core::memory::global_allocator());
+		MEMORY2_DELETE(allocator, queue);
 	}
 
 	void SceneLink::clear()

@@ -1065,10 +1065,10 @@ namespace render2
 #endif
 	}
 
-	void common_destroy_texture(Texture* tex)
+	void common_destroy_texture(gemini::Allocator& allocator, Texture* tex)
 	{
 		GLTexture* texture = static_cast<GLTexture*>(tex);
-		MEMORY_DELETE(texture, core::memory::global_allocator());
+		MEMORY2_DELETE(allocator, texture);
 	}
 
 

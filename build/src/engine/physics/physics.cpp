@@ -46,12 +46,16 @@ namespace gemini
 {
 	namespace physics
 	{
+		gemini::Allocator _physics_allocator;
+
 		void startup()
 		{
-			IPhysicsInterface* physics_interface = MEMORY_NEW(PhysicsInterface, core::memory::global_allocator());
+			_physics_allocator = memory_allocator_default(MEMORY_ZONE_PHYSICS);
+
+			IPhysicsInterface* physics_interface = MEMORY2_NEW(_physics_allocator, PhysicsInterface)(_physics_allocator);
 			set_instance(physics_interface);
 
-			bullet::startup();
+			bullet::startup(_physics_allocator);
 		}
 
 		void shutdown()
@@ -63,7 +67,7 @@ namespace gemini
 			bullet::shutdown();
 
 			IPhysicsInterface* physics_interface = instance();
-			MEMORY_DELETE(physics_interface, core::memory::global_allocator());
+			MEMORY2_DELETE(_physics_allocator, physics_interface);
 		} // shutdown
 
 		void debug_draw()

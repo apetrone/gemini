@@ -76,7 +76,8 @@ namespace renderer
 			{
 				// TODO: if at least 2.1 is NOT supported,
 				// this has to fail hard.
-//				_render_driver = MEMORY_NEW(GL21, core::memory::global_allocator());
+				// return GL2.1 render driver
+				_render_driver = nullptr;
 			}
 #endif
 
@@ -85,7 +86,8 @@ namespace renderer
 			if (config.major_version == 2)
 			{
 				_render_driver = nullptr;
-				// DISABLED! MEMORY_NEW(GLESv2, core::memory::global_allocator());
+				// return the gles2 driver.
+				assert(0);
 			}
 #endif
 

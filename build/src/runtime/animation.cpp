@@ -535,13 +535,12 @@ namespace gemini
 
 			for (AnimatedInstance* instance : detail::_instances)
 			{
-				destroy_sequence_instance(instance);
+				destroy_sequence_instance(*_allocator, instance);
 			}
 			detail::_instances.clear();
 
 			MEMORY2_DELETE(*_allocator, _sequences_by_name);
 		}
-
 
 		void update(float delta_seconds)
 		{
@@ -596,9 +595,9 @@ namespace gemini
 			return instance;
 		}
 
-		void destroy_sequence_instance(AnimatedInstance* instance)
+		void destroy_sequence_instance(gemini::Allocator& allocator, AnimatedInstance* instance)
 		{
-			MEMORY_DELETE(instance, core::memory::global_allocator());
+			MEMORY2_DELETE(allocator, instance);
 		}
 
 		AnimatedInstance* get_instance_by_index(SequenceId index)

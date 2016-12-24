@@ -836,7 +836,7 @@ Options:
 			// in lieu of the above working; manually setup the gui...
 			resource_cache = MEMORY2_NEW(render_allocator, StandaloneResourceCache)(render_allocator);
 
-			gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(render_allocator, *resource_cache);
+			gui_renderer = MEMORY2_NEW(render_allocator, GUIRenderer)(render_allocator, *resource_cache);
 			gui_renderer->set_device(device);
 
 			gui::set_allocator(render_allocator);
@@ -1300,7 +1300,7 @@ Options:
 		delete compositor;
 
 		// shutdown the gui
-		MEMORY_DELETE(gui_renderer, core::memory::global_allocator());
+		MEMORY2_DELETE(render_allocator, gui_renderer);
 
 		// explicitly clear the resource cache or else the allocator will
 		// detect leaks.

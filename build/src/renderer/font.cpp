@@ -197,7 +197,7 @@ namespace font
 			}
 
 			// create a new one, populate it and store in the cache
-			GlyphData* glyph_data = MEMORY_NEW(GlyphData, core::memory::global_allocator());
+			GlyphData* glyph_data = MEMORY2_NEW(*_font_allocator, GlyphData);
 			get_gylph_info(face, codepoint, *glyph_data);
 			glyphdata_cache[codepoint] = glyph_data;
 
@@ -229,12 +229,12 @@ namespace font
 			for (HashSet<int, GlyphData*>::Iterator it = data->glyphdata_cache.begin(); it != data->glyphdata_cache.end(); ++it)
 			{
 				GlyphData* gd = it.value();
-				MEMORY_DELETE(gd, core::memory::global_allocator());
+				MEMORY2_DELETE(*_font_allocator, gd);
 			}
 
 			data->glyphdata_cache.clear();
 
-			MEMORY_DELETE(data, core::memory::global_allocator());
+			MEMORY2_DELETE(*_font_allocator, data);
 		}
 
 	} // namespace detail
@@ -412,7 +412,7 @@ namespace font
 		Handle handle;
 		FT_Error error = FT_Err_Ok;
 
-		FontData* font = MEMORY_NEW(FontData, core::memory::global_allocator())(*_font_allocator);
+		FontData* font = MEMORY2_NEW(*_font_allocator, FontData)(*_font_allocator);
 
 		// font needs a copy of the data so long as FT_Face is loaded.
 		// so make a local copy and store it.

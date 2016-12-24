@@ -66,7 +66,7 @@ namespace gemini
 			void add_constraint(BulletConstraint* constraint);
 			void remove_constraint(BulletConstraint* constraint);
 
-			void startup();
+			void startup(gemini::Allocator& allocator);
 			void shutdown();
 			void step(float fixed_step_seconds);
 			void debug_draw();

@@ -119,6 +119,6 @@ namespace render2
 
 	void GLES2Device::destroy_texture(Texture* texture)
 	{
-		common_destroy_texture(texture);
+		common_destroy_texture(allocator, texture);
 	}
 } // namespace render2

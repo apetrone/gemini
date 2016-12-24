@@ -264,9 +264,11 @@ private:
 	glm::vec3 view;
 	glm::vec3 offset;
 
+	gemini::Allocator& allocator;
+
 	void normalize_weights(float top_weight);
 public:
-	CameraMixer();
+	CameraMixer(gemini::Allocator& allocator);
 	~CameraMixer();
 
 	// push a new camera onto the stack with the desired blend weight

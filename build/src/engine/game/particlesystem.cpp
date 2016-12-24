@@ -186,7 +186,7 @@ namespace gemini
 		for( ; iter != emitters.end(); ++iter)
 		{
 			ParticleEmitter* emitter = (*iter);
-			MEMORY_DELETE(emitter, core::memory::global_allocator());
+			MEMORY2_DELETE(allocator, emitter);
 		}
 
 		emitters.clear();

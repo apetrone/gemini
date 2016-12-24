@@ -217,7 +217,7 @@ namespace render2
 	GLenum texture_type_from_image(const Image& image);
 	GLTexture* common_create_texture(gemini::Allocator& allocator, const Image& image);
 	void common_update_texture(GLTexture* texture, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions);
-	void common_destroy_texture(Texture* texture);
+	void common_destroy_texture(gemini::Allocator& allocator, Texture* texture);
 
 	void common_setup_uniforms(GLShader* shader, ConstantBuffer& constants);
 } // namespace render2

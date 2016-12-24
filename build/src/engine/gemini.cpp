@@ -1157,9 +1157,9 @@ public:
 
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
 		gui::set_allocator(gui_allocator);
-		resource_cache = MEMORY_NEW(::renderer::StandaloneResourceCache, core::memory::global_allocator())(renderer_allocator);
+		resource_cache = MEMORY2_NEW(renderer_allocator, ::renderer::StandaloneResourceCache)(renderer_allocator);
 
-		gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(gui_allocator, *resource_cache);
+		gui_renderer = MEMORY2_NEW(renderer_allocator, GUIRenderer)(gui_allocator, *resource_cache);
 		gui_renderer->set_device(device);
 
 		compositor = new gui::Compositor(width, height, resource_cache, gui_renderer);
@@ -1333,7 +1333,7 @@ Options:
 			device = render2::create_device(renderer_allocator, render_params);
 			device->init(config.window_width, config.window_height);
 
-			scenelink = MEMORY_NEW(SceneLink, core::memory::global_allocator());
+			scenelink = MEMORY2_NEW(renderer_allocator, SceneLink)(renderer_allocator);
 			int render_result = ::renderer::startup(renderer_allocator, ::renderer::Default, config.render_settings);
 			if (render_result == 0)
 			{
@@ -1357,7 +1357,7 @@ Options:
 
 		// initialize main subsystems
 		audio::startup(audio_allocator);
-		IAudioInterface* audio_instance = MEMORY_NEW(AudioInterface, core::memory::global_allocator());
+		IAudioInterface* audio_instance = MEMORY2_NEW(audio_allocator, AudioInterface);
 		audio::set_instance(audio_instance);
 
 		test_sound = gemini::assets::sounds()->load_from_path("sounds/select");
@@ -1378,7 +1378,7 @@ Options:
 
 
 		// setup interfaces
-		engine_interface = MEMORY_NEW(EngineInterface, core::memory::global_allocator())
+		engine_interface = MEMORY2_NEW(engine_allocator, EngineInterface)
 			(engine_allocator,
 			&entity_manager,
 			&model_interface,
@@ -1533,7 +1533,7 @@ Options:
 
 		if (gui_renderer)
 		{
-			MEMORY_DELETE(gui_renderer, core::memory::global_allocator());
+			MEMORY2_DELETE(renderer_allocator, gui_renderer);
 		}
 
 
@@ -1546,7 +1546,7 @@ Options:
 		// our memory detects any leaks.
 		if (resource_cache)
 		{
-			MEMORY_DELETE(resource_cache, core::memory::global_allocator());
+			MEMORY2_DELETE(renderer_allocator, resource_cache);
 		}
 
 		font::shutdown();
@@ -1560,7 +1560,7 @@ Options:
 		assets::shutdown();
 
 		IAudioInterface* interface = audio::instance();
-		MEMORY_DELETE(interface, core::memory::global_allocator());
+		MEMORY2_DELETE(audio_allocator, interface);
 		audio::set_instance(nullptr);
 
 		// must shutdown the renderer before our window
@@ -1577,8 +1577,8 @@ Options:
 
 		gemini::runtime_shutdown();
 
-		MEMORY_DELETE(engine_interface, core::memory::global_allocator());
-		MEMORY_DELETE(scenelink, core::memory::global_allocator());
+		MEMORY2_DELETE(engine_allocator, engine_interface);
+		MEMORY2_DELETE(renderer_allocator, scenelink);
 	}
 };
 

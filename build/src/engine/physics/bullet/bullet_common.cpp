@@ -127,7 +127,7 @@ namespace gemini
 			DebugPhysicsRenderer* debug_renderer;
 
 			std::vector<BulletConstraint*> constraints;
-			gemini::Allocator physics_allocator;
+			gemini::Allocator* physics_allocator = nullptr;
 
 			btDiscreteDynamicsWorld* get_world()
 			{
@@ -159,11 +159,10 @@ namespace gemini
 				}
 			}
 
-			void startup()
+			void startup(gemini::Allocator& allocator)
 			{
+				physics_allocator = &allocator;
 				// TODO@apetrone: set up custom allocation with btAlignedAllocSetCustom.
-
-				physics_allocator = memory_allocator_default(MEMORY_ZONE_PHYSICS);
 
 				collision_config = new btDefaultCollisionConfiguration();
 				dispatcher = new btCollisionDispatcher( collision_config );
@@ -187,7 +186,7 @@ namespace gemini
 				dynamics_world->getDispatchInfo().m_allowedCcdPenetration = 0.0001f;
 
 				// instance and set the debug renderer
-				debug_renderer = MEMORY_NEW(bullet::DebugPhysicsRenderer, core::memory::global_allocator());
+				debug_renderer = MEMORY2_NEW(*physics_allocator, bullet::DebugPhysicsRenderer, core::memory::global_allocator());
 				dynamics_world->setDebugDrawer(debug_renderer);
 			}
 
@@ -196,7 +195,7 @@ namespace gemini
 				// remove all constraints from objects
 				for (int i = constraints.size()-1; i >= 0; --i)
 				{
-					MEMORY_DELETE(constraints[i], core::memory::global_allocator());
+					MEMORY2_DELETE(*physics_allocator, constraints[i]);
 				}
 				constraints.clear();
 
@@ -227,7 +226,7 @@ namespace gemini
 				}
 
 				dynamics_world->setDebugDrawer(0);
-				MEMORY_DELETE(debug_renderer, core::memory::global_allocator());
+				MEMORY2_DELETE(*physics_allocator, debug_renderer);
 
 				//delete dynamics world
 				delete dynamics_world;

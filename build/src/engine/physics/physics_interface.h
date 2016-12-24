@@ -41,9 +41,10 @@ namespace gemini
 		{
 		private:
 			std::vector<ICollisionShape*> collision_shapes;
+			gemini::Allocator& allocator;
 
 		public:
-			PhysicsInterface() {}
+			PhysicsInterface(gemini::Allocator& allocator);
 			virtual ~PhysicsInterface();
 
 			virtual physics::ICollisionObject* create_physics_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, ObjectProperties& properties);

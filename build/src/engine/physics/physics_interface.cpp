@@ -56,18 +56,23 @@ namespace gemini
 {
 	namespace physics
 	{
+		PhysicsInterface::PhysicsInterface(gemini::Allocator& _allocator)
+			: allocator(_allocator)
+		{
+		}
+
 		PhysicsInterface::~PhysicsInterface()
 		{
 			// purge collision shapes
 			for (auto& shape : collision_shapes)
 			{
-				MEMORY_DELETE(shape, core::memory::global_allocator());
+				MEMORY2_DELETE(allocator, shape);
 			}
 		}
 
 		physics::ICollisionObject* PhysicsInterface::create_physics_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, ObjectProperties& properties)
 		{
-			BulletRigidBody* rigidbody = MEMORY_NEW(BulletRigidBody, core::memory::global_allocator());
+			BulletRigidBody* rigidbody = MEMORY2_NEW(allocator, BulletRigidBody);
 
 			btScalar mass(properties.mass_kg);
 			btVector3 local_inertia(0.0f, 0.0f, 0.0f);
@@ -77,7 +82,7 @@ namespace gemini
 
 			rigidbody->set_motion_state(motion_state);
 
-			// calculate local intertia
+			// calculate local inertia
 			bullet_shape->calculateLocalInertia(mass, local_inertia);
 
 			btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motion_state, bullet_shape, local_inertia);
@@ -127,7 +132,7 @@ namespace gemini
 					btCollisionShape* shape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
 					btVector3 local_inertia(0, 0, 0);
 
-					// calculate local intertia
+					// calculate local inertia
 					shape->calculateLocalInertia(mass, local_inertia);
 					compound->addChildShape(local_transform, shape);
 				}
@@ -189,12 +194,12 @@ namespace gemini
 			bool dynamic_body = (mass != 0.0f);
 			if (!dynamic_body)
 			{
-				static_body = MEMORY_NEW(BulletStaticBody, core::memory::global_allocator());
+				static_body = MEMORY2_NEW(allocator, BulletStaticBody);
 				object = static_body;
 			}
 			else
 			{
-				rb = MEMORY_NEW(BulletRigidBody, core::memory::global_allocator());
+				rb = MEMORY2_NEW(allocator, BulletRigidBody);
 				object = rb;
 			}
 
@@ -254,7 +259,7 @@ namespace gemini
 
 		physics::ICollisionObject* PhysicsInterface::create_character_object(ICollisionShape* shape)
 		{
-			BulletCollisionObject* collision_object = MEMORY_NEW(BulletCollisionObject, core::memory::global_allocator());
+			BulletCollisionObject* collision_object = MEMORY2_NEW(allocator, BulletCollisionObject);
 
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
 			ghost->setUserPointer(collision_object);
@@ -284,7 +289,7 @@ namespace gemini
 
 		physics::ICollisionObject* PhysicsInterface::create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& /*orientation*/)
 		{
-			BulletCollisionObject* collision_object = MEMORY_NEW(BulletCollisionObject, core::memory::global_allocator());
+			BulletCollisionObject* collision_object = MEMORY2_NEW(allocator, BulletCollisionObject);
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
 			ghost->setUserPointer(collision_object);
 			collision_object->set_collision_object(ghost);
@@ -311,7 +316,7 @@ namespace gemini
 
 		physics::ICollisionObject* PhysicsInterface::create_kinematic_object(gemini::physics::ICollisionShape* shape, const glm::vec3& position, const glm::quat& /*orientation*/, uint16_t collision_mask)
 		{
-			BulletCollisionObject* collision_object = MEMORY_NEW(BulletCollisionObject, core::memory::global_allocator());
+			BulletCollisionObject* collision_object = MEMORY2_NEW(allocator, BulletCollisionObject);
 
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
 			ghost->setUserPointer(collision_object);
@@ -355,7 +360,7 @@ namespace gemini
 			assert(radius_meters >= FLT_EPSILON);
 			assert(height_meters >= FLT_EPSILON);
 
-			BulletCollisionShape* collision_shape = MEMORY_NEW(BulletCollisionShape, core::memory::global_allocator());
+			BulletCollisionShape* collision_shape = MEMORY2_NEW(allocator, BulletCollisionShape);
 			collision_shapes.push_back(collision_shape);
 
 			btCollisionShape* capsule = new btCapsuleShape(radius_meters, height_meters);
@@ -370,7 +375,7 @@ namespace gemini
 			assert(dimensions.y >= FLT_EPSILON);
 			assert(dimensions.z >= FLT_EPSILON);
 
-			BulletCollisionShape* collision_shape = MEMORY_NEW(BulletCollisionShape, core::memory::global_allocator());
+			BulletCollisionShape* collision_shape = MEMORY2_NEW(allocator, BulletCollisionShape);
 			collision_shapes.push_back(collision_shape);
 
 			btVector3 half_extents(dimensions.x*0.5f, dimensions.y*0.5f, dimensions.z*0.5f);
@@ -390,7 +395,7 @@ namespace gemini
 
 		physics::ICollisionShape* PhysicsInterface::create_cylinder(float radius_meters, float height_meters)
 		{
-			BulletCollisionShape* collision_shape = MEMORY_NEW(BulletCollisionShape, core::memory::global_allocator());
+			BulletCollisionShape* collision_shape = MEMORY2_NEW(allocator, BulletCollisionShape);
 			collision_shapes.push_back(collision_shape);
 			btVector3 half_extents(radius_meters*0.5f, height_meters*0.5f, radius_meters*0.5f);
 			btCollisionShape* shape = new btCylinderShape(half_extents);
@@ -400,7 +405,7 @@ namespace gemini
 
 		physics::ICollisionShape* PhysicsInterface::create_sphere(float radius_meters)
 		{
-			BulletCollisionShape* collision_shape = MEMORY_NEW(BulletCollisionShape, core::memory::global_allocator());
+			BulletCollisionShape* collision_shape = MEMORY2_NEW(allocator, BulletCollisionShape);
 			collision_shapes.push_back(collision_shape);
 			btCollisionShape* sphere = new btSphereShape(radius_meters);
 			collision_shape->set_shape(sphere);
@@ -409,7 +414,7 @@ namespace gemini
 
 		physics::ICollisionShape* PhysicsInterface::create_convex_shape(const glm::vec3* vertices, size_t total_vertices)
 		{
-			BulletCollisionShape* collision_shape = MEMORY_NEW(BulletCollisionShape, core::memory::global_allocator());
+			BulletCollisionShape* collision_shape = MEMORY2_NEW(allocator, BulletCollisionShape);
 			collision_shapes.push_back(collision_shape);
 			btConvexHullShape* shape = new btConvexHullShape((const btScalar*)vertices, total_vertices, sizeof(glm::vec3));
 			collision_shape->set_shape(shape);
@@ -418,7 +423,7 @@ namespace gemini
 
 		void PhysicsInterface::destroy_object(ICollisionObject* object)
 		{
-			MEMORY_DELETE(object, core::memory::global_allocator());
+			MEMORY2_DELETE(allocator, object);
 		} // destroy_object
 
 		void PhysicsInterface::step_simulation(float step_interval_seconds)

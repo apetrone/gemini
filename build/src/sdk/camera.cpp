@@ -517,10 +517,11 @@ void CameraMixer::normalize_weights(float top_weight)
 	}
 }
 
-CameraMixer::CameraMixer()
+CameraMixer::CameraMixer(gemini::Allocator& _allocator)
+	: allocator(_allocator)
 {
 	// default camera
-	DefaultCamera* camera = MEMORY_NEW(DefaultCamera, core::memory::global_allocator());
+	DefaultCamera* camera = MEMORY2_NEW(allocator, DefaultCamera);
 	push_camera(camera, 1.0f);
 
 	origin = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -534,7 +535,7 @@ CameraMixer::~CameraMixer()
 	for (size_t index = 0; index < total_cameras; ++index)
 	{
 		CameraBlend blend = cameras.pop();
-		MEMORY_DELETE(blend.camera, core::memory::global_allocator());
+		MEMORY2_DELETE(allocator, blend.camera);
 	}
 }
 
@@ -552,7 +553,7 @@ void CameraMixer::push_camera(GameCamera* camera, float weight)
 void CameraMixer::pop_camera(float weight)
 {
 	CameraBlend blend = cameras.pop();
-	MEMORY_DELETE(blend.camera, core::memory::global_allocator());
+	MEMORY2_DELETE(allocator, blend.camera);
 
 	normalize_weights(weight);
 

@@ -612,9 +612,9 @@ namespace debugdraw
 	void startup(gemini::Allocator& allocator, render2::Device* render_device)
 	{
 		_allocator = &allocator;
-		line_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator())(allocator);
-		tris_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator())(allocator);
-		text_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator())(allocator);
+		line_list = MEMORY2_NEW(allocator, detail::PrimitiveCache)(allocator);
+		tris_list = MEMORY2_NEW(allocator, detail::PrimitiveCache)(allocator);
+		text_list = MEMORY2_NEW(allocator, detail::PrimitiveCache)(allocator);
 
 		line_vertex_cache = MEMORY2_NEW(allocator, Array<DebugDrawVertex>)(allocator);
 		tris_vertex_cache = MEMORY2_NEW(allocator, Array<TexturedVertex>)(allocator);
@@ -725,9 +725,9 @@ namespace debugdraw
 		MEMORY2_DELETE(*_allocator, tris_vertex_cache);
 		MEMORY2_DELETE(*_allocator, text_vertex_cache);
 
-		MEMORY_DELETE(line_list, core::memory::global_allocator());
-		MEMORY_DELETE(tris_list, core::memory::global_allocator());
-		MEMORY_DELETE(text_list, core::memory::global_allocator());
+		MEMORY2_DELETE(*_allocator, line_list);
+		MEMORY2_DELETE(*_allocator, tris_list);
+		MEMORY2_DELETE(*_allocator, text_list);
 
 		_allocator = nullptr;
 	}

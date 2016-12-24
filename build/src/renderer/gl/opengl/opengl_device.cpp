@@ -121,7 +121,7 @@ namespace render2
 
 	void OpenGLDevice::destroy_texture(Texture* tex)
 	{
-		common_destroy_texture(tex);
+		common_destroy_texture(allocator, tex);
 	}
 
 	// ---------------------------------------------------------------------

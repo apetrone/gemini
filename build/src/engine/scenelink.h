@@ -42,9 +42,10 @@ namespace gemini
 	class SceneLink
 	{
 		::renderer::RenderQueue* queue;
+		gemini::Allocator& allocator;
 
 	public:
-		SceneLink();
+		SceneLink(gemini::Allocator& allocator);
 		~SceneLink();
 
 		void clear();

@@ -447,7 +447,7 @@ namespace renderer
 	GLCore32::~GLCore32()
 	{
 		LOGV( "GLCore32 shutting down.\n" );
-		MEMORY_DELETE(default_render_target, core::memory::global_allocator());
+		MEMORY2_DELETE(allocator, default_render_target);
 	}
 
 	void c_shader( core::util::MemoryStream & stream, GLCore32 & renderer )
@@ -926,7 +926,7 @@ namespace renderer
 	void GLCore32::texture_destroy(renderer::Texture* texture)
 	{
 		GL32Texture* gltexture = static_cast<GL32Texture*>(texture);
-		MEMORY_DELETE(gltexture, core::memory::global_allocator());
+		MEMORY2_DELETE(allocator, gltexture);
 	}
 
 	void GLCore32::texture_update(renderer::Texture* texture, const image::Image& image, const mathlib::Recti& rect)
@@ -1019,8 +1019,7 @@ namespace renderer
 			gl.CheckError( "DeleteBuffers" );
 		}
 
-
-		MEMORY_DELETE(stream, core::memory::global_allocator());
+		MEMORY2_DELETE(allocator, stream);
 	} // vertexbuffer_destroy
 
 	void GLCore32::vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int /*vertex_stride*/, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
@@ -1292,7 +1291,7 @@ namespace renderer
 			gl.CheckError( "DeleteProgram" );
 		}
 
-		MEMORY_DELETE(program, core::memory::global_allocator());
+		MEMORY2_DELETE(allocator, program);
 	}
 
 	void GLCore32::shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object )
@@ -1540,7 +1539,7 @@ namespace renderer
 		gl.DeleteFramebuffers(1, &rt->framebuffer);
 		gl.DeleteRenderbuffers(1, &rt->renderbuffer);
 
-		MEMORY_DELETE(rt, core::memory::global_allocator());
+		MEMORY2_DELETE(allocator, rt);
 	}
 
 	void GLCore32::render_target_activate(renderer::RenderTarget* rendertarget)
