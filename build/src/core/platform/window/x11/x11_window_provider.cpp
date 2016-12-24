@@ -112,7 +112,7 @@ namespace platform
 
 		NativeWindow* X11WindowProvider::create(const Parameters& parameters, void* native_visual)
 		{
-			X11Window* window = MEMORY_NEW(X11Window, get_platform_allocator());
+			X11Window* window = MEMORY2_NEW(get_platform_allocator2(), X11Window);
 			Visual* visual = static_cast<Visual*>(native_visual);
 			assert(visual != nullptr);
 
@@ -166,7 +166,7 @@ namespace platform
 			Window* window_handle = static_cast<Window*>(native_handle);
 
 			XDestroyWindow(display, *window_handle);
-			MEMORY_DELETE(window, get_platform_allocator());
+			MEMORY2_DELETE(get_platform_allocator2(), window);
 		}
 
 		Frame X11WindowProvider::get_frame(NativeWindow* window) const

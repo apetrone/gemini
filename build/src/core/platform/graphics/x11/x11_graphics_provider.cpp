@@ -45,7 +45,7 @@ namespace platform
 
 		int _global_error_code = 0;
 
-		int error_handler(Display* display, XErrorEvent* event)
+		int error_handler(Display* /*display*/, XErrorEvent* event)
 		{
 			LOGE("XErrorEvent->error_code: %i\n", event->error_code);
 			_global_error_code = event->error_code;
@@ -123,7 +123,7 @@ namespace platform
 			return Result::success();
 		}
 
-		void X11GraphicsProvider::shutdown(WindowProvider* window_provider)
+		void X11GraphicsProvider::shutdown(WindowProvider* /*window_provider*/)
 		{
 		}
 
@@ -210,16 +210,16 @@ namespace platform
 			glXMakeCurrent(window_provider->get_display(), *window_handle, data->context);
 		}
 
-		void X11GraphicsProvider::detach_context(NativeWindow* window)
+		void X11GraphicsProvider::detach_context(NativeWindow* /*window*/)
 		{
 			glXMakeCurrent(window_provider->get_display(), None, nullptr);
 		}
 
-		void X11GraphicsProvider::create_surface(NativeWindow* window)
+		void X11GraphicsProvider::create_surface(NativeWindow* /*window*/)
 		{
 		}
 
-		void X11GraphicsProvider::destroy_surface(NativeWindow* window)
+		void X11GraphicsProvider::destroy_surface(NativeWindow* /*window*/)
 		{
 		}
 
@@ -230,7 +230,7 @@ namespace platform
 			glXSwapBuffers(window_provider->get_display(), *window_handle);
 		}
 
-		void* X11GraphicsProvider::get_symbol(const char* symbol_name)
+		void* X11GraphicsProvider::get_symbol(const char* /*symbol_name*/)
 		{
 			return nullptr;
 		}

@@ -70,7 +70,7 @@ namespace platform
 			#error No window provider for this platform!
 #endif
 
-			return MEMORY_NEW(window_provider_type, get_platform_allocator());
+			return MEMORY2_NEW(get_platform_allocator2(), window_provider_type);
 		}
 
 		GraphicsProvider* create_graphics_provider()
@@ -83,7 +83,7 @@ namespace platform
 			#error No graphics provider for this platform!
 #endif
 
-			return MEMORY_NEW(graphics_provider_type, get_platform_allocator());
+			return MEMORY2_NEW(get_platform_allocator2(), graphics_provider_type);
 		}
 	} // namespace linux
 
@@ -200,11 +200,11 @@ namespace platform
 		{
 			assert(_graphics_provider != nullptr);
 			_graphics_provider->shutdown(_window_provider);
-			MEMORY_DELETE(_graphics_provider, get_platform_allocator());
+			MEMORY2_DELETE(get_platform_allocator2(), _graphics_provider);
 
 			assert(_window_provider != nullptr);
 			_window_provider->shutdown();
-			MEMORY_DELETE(_window_provider, get_platform_allocator());
+			MEMORY2_DELETE(get_platform_allocator2(), _window_provider);
 			_window_provider = nullptr;
 
 #if defined(PLATFORM_RASPBERRYPI)
@@ -226,7 +226,7 @@ namespace platform
 			if (graphics_data_size)
 			{
 				// alloc graphics data for this window
-				graphics_data = MEMORY_ALLOC(graphics_data_size, get_platform_allocator());
+				graphics_data = MEMORY2_ALLOC(get_platform_allocator2(), graphics_data_size);
 			}
 
 			// have the graphics provider figure out what it may need prior
@@ -258,7 +258,7 @@ namespace platform
 			_graphics_provider->destroy_surface(window);
 			_graphics_provider->destroy_context(window);
 
-			MEMORY_DEALLOC(window->graphics_data, get_platform_allocator());
+			MEMORY2_DEALLOC(get_platform_allocator2(), window->graphics_data);
 			_window_provider->destroy(window, behavior);
 		}
 
@@ -357,16 +357,16 @@ namespace platform
 		return version;
 	}
 
-	Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths)
+	Result show_open_dialog(const char* /*title*/, uint32_t /*open_flags*/, Array<PathString>& /*paths*/)
 	{
 		return Result::failure("Not implemented.");
 	} // show_open_dialog
 
-	Result show_save_dialog(const char* title,
-							uint32_t save_flags,
-							const Array<PlatformExtensionDescription>& extensions,
-							const PathString& default_extension,
-							PathString& filename)
+	Result show_save_dialog(const char* /*title*/,
+							uint32_t /*save_flags*/,
+							const Array<PlatformExtensionDescription>& /*extensions*/,
+							const PathString& /*default_extension*/,
+							PathString& /*filename*/)
 	{
 		return Result::failure("Not implemented.");
 	} // show_save_dialog

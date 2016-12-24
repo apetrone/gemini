@@ -94,7 +94,7 @@ namespace platform
 			return nullptr;
 		}
 
-		PosixThread* thread = MEMORY_NEW(PosixThread, platform::get_platform_allocator());
+		PosixThread* thread = MEMORY2_NEW(get_platform_allocator2(), PosixThread);
 		thread->entry = entry;
 		thread->user_data = data;
 
@@ -110,7 +110,7 @@ namespace platform
 		}
 		else
 		{
-			MEMORY_DELETE(thread, platform::get_platform_allocator());
+			MEMORY2_DELETE(get_platform_allocator2(), thread);
 			assert(!"PosixThread failed on pthread_create");
 			return nullptr;
 		}
@@ -118,7 +118,7 @@ namespace platform
 
 	void posix_thread_destroy(Thread* thread)
 	{
-		MEMORY_DELETE(thread, platform::get_platform_allocator());
+		MEMORY2_DELETE(get_platform_allocator2(), thread);
 	}
 
 	int posix_thread_join(Thread* thread)
@@ -176,7 +176,7 @@ namespace platform
 
 	Semaphore* posix_semaphore_create(uint32_t initial_count, uint32_t max_count)
 	{
-		return MEMORY_NEW(PosixSemaphore, platform::get_platform_allocator())(initial_count, max_count);
+		return MEMORY2_NEW(get_platform_allocator2(), PosixSemaphore)(initial_count, max_count);
 	}
 
 	void posix_semaphore_wait(Semaphore* sem)
@@ -197,7 +197,7 @@ namespace platform
 	void posix_semaphore_destroy(Semaphore* sem)
 	{
 		PosixSemaphore* posix_sem = static_cast<PosixSemaphore*>(sem);
-		MEMORY_DELETE(posix_sem, platform::get_platform_allocator());
+		MEMORY2_DELETE(get_platform_allocator2(), posix_sem);
 	}
 
 } // namespace platform
