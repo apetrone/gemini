@@ -482,6 +482,14 @@ namespace test
 					printf("type: %x, code: %d, value: %d -> %i\n",
 						event.type, event.code, event.value, keymap[event.code]);
 				}
+				else if (event.value == 0)
+				{
+					fprintf(stdout, "key up: %i\n", keymap[event.code]);
+				}
+				else if (event.value == 1)
+				{
+					fprintf(stdout, "key down: %i\n", keymap[event.code]);
+				}
 					break;
 
 				// ignore these for now
@@ -705,8 +713,7 @@ namespace test
 			// get the filename of the /sys entry for the device
 			// and create a udev_device object representing it.
 			sys_device_path = udev_list_entry_get_name(entry);
-			// LOGV("name: %s\n",
-			// 	sys_device_path);
+			LOGV("sys_device_path: %s\n", sys_device_path);
 
 			udev_device* udevice = udev_device_new_from_syspath(lib, sys_device_path);
 			if (!udevice)
@@ -716,6 +723,15 @@ namespace test
 				);
 				continue;
 			}
+
+			int initialized = udev_device_get_is_initialized(udevice);
+			LOGV("device initialized? %s\n", initialized ? "yes" : "no");
+
+			const char* driver_name = udev_device_get_driver(udevice);
+			LOGV("device_driver: %s\n", driver_name);
+
+			const char* device_path = udev_device_get_devpath(udevice);
+			LOGV("device_path = %s\n", device_path);
 
 			// get the path of the device in the /dev/ tree
 			const char* device_node_path = udev_device_get_devnode(udevice);
@@ -795,7 +811,7 @@ namespace test
 		//
 		add_devices("input", "ID_INPUT_KEYBOARD", "1", DeviceType::Keyboard);
 		// add_devices("input", "ID_INPUT_MOUSE", "1", DeviceType::Mouse);
-		add_devices("input", "ID_INPUT_JOYSTICK", "1", DeviceType::Joystick);
+		//add_devices("input", "ID_INPUT_JOYSTICK", "1", DeviceType::Joystick);
 
 		return true;
 	}
@@ -831,7 +847,7 @@ namespace test
 		// by setting the values to zero.
 		struct timeval timeout;
 		timeout.tv_sec = 0;
-		timeout.tv_usec = 0;
+		timeout.tv_usec = 10;
 
 		const int select_result = select(highest_fd + 1, &read_fds, 0, 0, &timeout);
 		if (select_result > 0)
@@ -840,6 +856,7 @@ namespace test
 			{
 				if (device->get_descriptor() > 0)
 				{
+					fprintf(stdout, "device descriptor %i\n", device->get_descriptor());
 					if (FD_ISSET(device->get_descriptor(), &read_fds))
 					{
 						struct input_event buffer[64] = {0};
@@ -852,10 +869,8 @@ namespace test
 							break;
 						}
 
-
-
 						const int total_events_read = (read_bytes / sizeof(struct input_event));
-						//LOGV("read %i bytes, %i events\n", read_bytes, total_events_read);
+						LOGV("read %i bytes, %i events\n", read_bytes, total_events_read);
 						for (int index = 0; index < total_events_read; ++index)
 						{
 							device->process_event(buffer[index]);
@@ -1219,7 +1234,7 @@ int main(int, char**)
 //	test_serialization();
 //	test_reflection();
 
-#if defined(PLATFORM_LINUX) && 0
+#if defined(PLATFORM_LINUX)
 	const size_t event_size = sizeof(struct input_event);
 	LOGV("event_size: %i\n", event_size);
 
@@ -1234,6 +1249,7 @@ int main(int, char**)
 	assert(test.succeeded());
 #endif
 
+#if 0
 	DialogueNode root(default_allocator);
 	root.question = "Hello, how can I help you?";
 	root.responses[0] = "What items do you have for sale?";
@@ -1285,6 +1301,7 @@ int main(int, char**)
 			current = nullptr;
 		}
 	}
+#endif
 
 	gemini::runtime_shutdown();
 
