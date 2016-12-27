@@ -67,7 +67,7 @@ namespace gemini
 		}; // KeyframeList
 
 		// This contains a stateful representation of a KeyframeList.
-		// It only uses the keyframe list as a source of data.
+		// It only uses the key frame list as a source of data.
 		class Channel
 		{
 		private:

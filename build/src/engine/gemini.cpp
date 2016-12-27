@@ -299,10 +299,11 @@ class ModelInterface : public gemini::IModelInterface
 			const glm::vec2 origin(10.0f, 30.0f);
 #endif
 
-			size_t bone_index = 0;
-			for (size_t channel_index = 0; channel_index < ANIMATION_KEYFRAME_VALUES_MAX; ++channel_index)
+			const size_t total_joints = instance->animation_set.size() / ANIMATION_KEYFRAME_VALUES_MAX;
+
+			for (size_t bone_index = 0; bone_index < total_joints; ++bone_index)
 			{
-				animation::Channel* channel = &instance->channel_set[channel_index * ANIMATION_KEYFRAME_VALUES_MAX];
+				animation::Channel* channel = &instance->channel_set[bone_index * ANIMATION_KEYFRAME_VALUES_MAX];
 
 				assert(bone_index < MAX_BONES);
 
@@ -328,7 +329,6 @@ class ModelInterface : public gemini::IModelInterface
 					rot.x, rot.y, rot.z, rot.w),
 					Color(0.0f, 0.0f, 0.0f));
 #endif
-				++bone_index;
 			}
 		}
 

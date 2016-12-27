@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #include <core/mem.h>
 
+#include <core/logging.h>
+
 #include <renderer/debug_draw.h>
 #include <renderer/renderer.h>
 #include <renderer/renderstream.h>
@@ -754,7 +756,7 @@ namespace debugdraw
 		text_list->update(delta_msec);
 	}
 
-	void draw_lines(const render2::Pass& pass)
+	size_t draw_lines(const render2::Pass& pass)
 	{
 		buffer_primitive_fn buffer_primitive_table[] =
 		{
@@ -860,9 +862,11 @@ namespace debugdraw
 
 		line_vertex_cache->clear(false);
 		line_list->reset();
+
+		return total_vertices_required / 2;
 	} // draw_lines
 
-	void draw_triangles(const render2::Pass& pass)
+	size_t draw_triangles(const render2::Pass& pass)
 	{
 		size_t total_vertices_required = 0;
 
@@ -938,9 +942,11 @@ namespace debugdraw
 
 		tris_vertex_cache->clear(false);
 		tris_list->reset();
+
+		return total_vertices_required / 3;
 	} // draw_triangles
 
-	void draw_text(const render2::Pass& pass)
+	size_t draw_text(const render2::Pass& pass)
 	{
 		size_t total_vertices_required = 0;
 
@@ -1031,6 +1037,8 @@ namespace debugdraw
 
 		text_vertex_cache->clear(false);
 		text_list->reset();
+
+		return total_vertices_required / 6;
 	} // draw_text
 
 	void render(const glm::mat4& modelview, const glm::mat4& projection, int viewport_width, int viewport_height, render2::RenderTarget* render_target)
@@ -1062,9 +1070,11 @@ namespace debugdraw
 		text_pipeline->constants().set("projection_matrix", &orthographic_projection);
 		text_pipeline->constants().set("diffuse", &diffuse_texture_unit);
 
-		draw_lines(pass);
-		draw_triangles(pass);
-		draw_text(pass);
+
+		size_t total_lines = draw_lines(pass);
+		size_t total_triangles = draw_triangles(pass);
+		size_t total_characters = draw_text(pass);
+		LOGV("lines: %i, tris: %i, chars: %i\n", total_lines, total_triangles, total_characters);
 	}
 
 
