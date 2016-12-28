@@ -650,7 +650,7 @@ namespace platform
 
 		NativeWindow* create(const Parameters& window_parameters)
 		{
-			cocoa::cocoa_native_window* window = MEMORY_NEW(cocoa::cocoa_native_window, get_platform_allocator())(window_parameters);
+			cocoa::cocoa_native_window* window = MEMORY2_NEW(get_platform_allocator2(), cocoa::cocoa_native_window)(window_parameters);
 
 			platform::Result result = create_window(window, window_parameters);
 			if (result.failed())
@@ -673,7 +673,7 @@ namespace platform
 
 		void destroy(NativeWindow* window, DestroyWindowBehavior)
 		{
-			MEMORY_DELETE(window, get_platform_allocator());
+			MEMORY2_DELETE(get_platform_allocator2(), window);
 		}
 
 		void activate_context(NativeWindow* window)

@@ -446,7 +446,7 @@ namespace platform
 			requested_working_directory = cocoa::to_nsstring(working_directory);
 		}
 
-		Process* proc = MEMORY_NEW(CocoaProcess, core::memory::global_allocator())(
+		Process* proc = MEMORY2_NEW(get_platform_allocator2(), CocoaProcess)(
 			cocoa::to_nsstring(executable_path),
 			argument_array,
 			requested_working_directory
@@ -461,7 +461,7 @@ namespace platform
 		{
 			instance->terminate();
 		}
-		MEMORY_DELETE(instance, core::memory::global_allocator());
+		MEMORY2_DELETE(get_platform_allocator2(), instance);
 	}
 
 	bool process_is_running(Process* process)

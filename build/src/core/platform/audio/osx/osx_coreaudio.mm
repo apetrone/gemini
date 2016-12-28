@@ -61,8 +61,9 @@ namespace platform
 		uint32_t frame_size;
 		platform::Thread* thread;
 
-		coreaudio_state()
-			: previous_output_device(0)
+		coreaudio_state(gemini::Allocator& allocator)
+			: devices(allocator)
+			, previous_output_device(0)
 			, audio_queue(nullptr)
 			, audio_pull_callback(nullptr)
 			, context(nullptr)
@@ -81,6 +82,7 @@ namespace platform
 	};
 
 	coreaudio_state* audio_state = nullptr;
+	gemini::Allocator* _audio_allocator = nullptr;
 
 	void coreaudio_fill_buffer(void* user_data, AudioQueueRef audio_queue, AudioQueueBufferRef buffer)
 	{
@@ -259,9 +261,10 @@ namespace platform
 		assert(status == kAudioHardwareNoError);
 	} // audio_close_output_device
 
-	platform::Result audio_startup()
+	platform::Result audio_startup(gemini::Allocator& allocator)
 	{
-		audio_state = MEMORY_NEW(coreaudio_state, get_platform_allocator());
+		_audio_allocator = &allocator;
+		audio_state = MEMORY2_NEW(*_audio_allocator, coreaudio_state)(*_audio_allocator);
 
 		// get the device list
 		AudioObjectPropertyAddress property_address = {
@@ -327,7 +330,7 @@ namespace platform
 		{
 			// create a new instance
 			const size_t requested_bytes = sizeof(audio_device) + sizeof(coreaudio_device);
-			char* memory = static_cast<char*>(MEMORY_ALLOC(requested_bytes, get_platform_allocator()));
+			char* memory = static_cast<char*>(MEMORY2_ALLOC(*_audio_allocator, requested_bytes));
 			assert(memory);
 			audio_device* device = new (memory) audio_device();
 			coreaudio_device* coreaudio_instance = new (memory + sizeof(audio_device)) coreaudio_device();
@@ -407,9 +410,9 @@ namespace platform
 		for (size_t index = 0; index < audio_state->devices.size(); ++index)
 		{
 			audio_device* device = audio_state->devices[index];
-			MEMORY_DEALLOC(device, get_platform_allocator());
+			MEMORY2_DEALLOC(*_audio_allocator, device);
 		}
-		MEMORY_DELETE(audio_state, get_platform_allocator());
+		MEMORY2_DELETE(*_audio_allocator, audio_state);
 	} // audio_shutdown
 
 	void audio_set_callback(audio_sound_callback callback, void* context)
