@@ -1136,7 +1136,6 @@ Options:
 			last_origin = origin;
 
 			debugdraw::sphere(origin, Color::from_rgba(255, 0, 0, 255), 0.025f);
-			//mocap_frame.poses[index] = local_rotations[index];
 
 			const glm::vec3 acceleration = imocap::device_sensor_local_acceleration(mocap_device, index);
 
@@ -1249,8 +1248,6 @@ Options:
 		{
 			compositor->draw();
 		}
-
-		/*debugdraw::render(modelview_matrix, projection_matrix, window_frame.width, window_frame.height);*/
 
 		device->submit();
 
