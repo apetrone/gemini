@@ -1070,11 +1070,9 @@ namespace debugdraw
 		text_pipeline->constants().set("projection_matrix", &orthographic_projection);
 		text_pipeline->constants().set("diffuse", &diffuse_texture_unit);
 
-
-		size_t total_lines = draw_lines(pass);
-		size_t total_triangles = draw_triangles(pass);
-		size_t total_characters = draw_text(pass);
-		LOGV("lines: %i, tris: %i, chars: %i\n", total_lines, total_triangles, total_characters);
+		draw_lines(pass);
+		draw_triangles(pass);
+		draw_text(pass);
 	}
 
 
