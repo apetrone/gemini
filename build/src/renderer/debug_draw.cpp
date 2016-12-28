@@ -846,7 +846,7 @@ namespace debugdraw
 
 			device->buffer_upload(
 				line_buffer,
-				&line_vertex_cache[0],
+				&(*line_vertex_cache)[0],
 				sizeof(DebugDrawVertex) * total_vertices_required);
 
 			render2::CommandQueue* queue = device->create_queue(pass);
@@ -926,7 +926,7 @@ namespace debugdraw
 
 			device->buffer_upload(
 				tris_buffer,
-				&tris_vertex_cache[0],
+				&(*tris_vertex_cache)[0],
 				new_vertexbuffer_size);
 
 			render2::CommandQueue* queue = device->create_queue(pass);
@@ -1020,7 +1020,7 @@ namespace debugdraw
 		if (new_vertexbuffer_size > 0)
 		{
 			device->buffer_resize(text_buffer, new_vertexbuffer_size);
-			device->buffer_upload(text_buffer, &text_vertex_cache[0], new_vertexbuffer_size);
+			device->buffer_upload(text_buffer, &(*text_vertex_cache)[0], new_vertexbuffer_size);
 
 			render2::CommandQueue* queue = device->create_queue(pass);
 			render2::CommandSerializer* serializer = device->create_serializer(queue);
