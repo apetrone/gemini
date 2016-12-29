@@ -110,6 +110,13 @@ namespace gui
 		// target.
 		gemini::Delegate<void (render2::RenderTarget*)> on_render_content;
 
+		virtual void set_size(const Size& new_size)
+		{
+			// resize the render target
+			LOGV("resize render target %i %i\n", new_size.width, new_size.height);
+			gui::Panel::set_size(new_size);
+		}
+
 	private:
 		render2::RenderTarget* target;
 		int handle;

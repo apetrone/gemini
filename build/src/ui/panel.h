@@ -158,7 +158,7 @@ namespace gui
 		void set_name(const char* name) { debug_name = name; }
 		virtual void set_origin(float x, float y);
 		void set_origin(const Point& origin);
-		void set_size(const Size& new_size);
+		virtual void set_size(const Size& new_size);
 		void set_size(uint32_t width, uint32_t height);
 
 		void swap_child(size_t first_index, size_t second_index);
