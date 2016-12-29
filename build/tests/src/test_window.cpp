@@ -215,10 +215,9 @@ Options:
 			filesystem->user_application_directory(application_data_path);
 		};
 
-
-
-
 		gemini::runtime_startup("arcfusion.net/test_window", custom_path_setup);
+
+		render_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_RENDERER);
 
 		VkApplicationInfo app;
 		app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -243,13 +242,13 @@ Options:
 		vkEnumerateInstanceExtensionProperties(nullptr, &total_extensions, nullptr);
 		LOGV("total extensions: %i\n", total_extensions);
 
-		Array<VkExtensionProperties> props;
+		Array<VkExtensionProperties> props(render_allocator);
 		props.resize(total_extensions);
 
 		const char* validation_layers[] = { "VK_LAYER_LUNARG_standard_validation" };
 		uint32_t total_layers = 0;
 		vkEnumerateInstanceLayerProperties(&total_layers, nullptr);
-		Array<VkLayerProperties> layers;
+		Array<VkLayerProperties> layers(render_allocator);
 		layers.resize(total_layers);
 		vkEnumerateInstanceLayerProperties(&total_layers, &layers[0]);
 		LOGV("Listing Vulkan Layers (%i)...\n", total_layers);
@@ -292,7 +291,7 @@ Options:
 		uint32_t total_devices = 0;
 		vkEnumeratePhysicalDevices(instance, &total_devices, nullptr);
 
-		Array<VkPhysicalDevice> devices;
+		Array<VkPhysicalDevice> devices(render_allocator);
 		devices.resize(total_devices);
 		vkEnumeratePhysicalDevices(instance, &total_devices, &devices[0]);
 
@@ -311,7 +310,7 @@ Options:
 		uint32_t queue_family_count = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties(devices[0], &queue_family_count, nullptr);
 
-		Array<VkQueueFamilyProperties> queue_families;
+		Array<VkQueueFamilyProperties> queue_families(render_allocator);
 		queue_families.resize(queue_family_count);
 		vkGetPhysicalDeviceQueueFamilyProperties(devices[0], &queue_family_count, &queue_families[0]);
 
@@ -328,7 +327,7 @@ Options:
 			}
 		}
 
-		VkDeviceQueueCreateInfo queue_create_info;
+		VkDeviceQueueCreateInfo queue_create_info = {};
 		queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 		queue_create_info.queueFamilyIndex = queue_graphics_index;
 		queue_create_info.queueCount = 1;
@@ -336,10 +335,8 @@ Options:
 		float queue_priority = 1.0f;
 		queue_create_info.pQueuePriorities = &queue_priority;
 
-
-
-		VkPhysicalDeviceFeatures requested_features;
-		VkDeviceCreateInfo device_create_info;
+		VkPhysicalDeviceFeatures requested_features = {};
+		VkDeviceCreateInfo device_create_info = {};
 		device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		device_create_info.pQueueCreateInfos = &queue_create_info;
 		device_create_info.queueCreateInfoCount = 1;
@@ -426,7 +423,6 @@ Options:
 		// initialize the renderer
 		{
 			using namespace render2;
-			render_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_RENDERER);
 			RenderParameters params(render_allocator);
 
 			// set some options
