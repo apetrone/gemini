@@ -26,26 +26,26 @@
 
 #include <core/str.h>
 
-#define LOGV(message, ...) \
+#define LOGV(...) \
 	core::logging::instance()->dispatch(\
 	core::logging::ILog::Verbose,\
-	core::str::format(message, ##__VA_ARGS__),\
+	core::str::format(__VA_ARGS__),\
 	__FUNCTION__,\
 	__FILE__,\
 	__LINE__)
 
-#define LOGW(message, ...) \
+#define LOGW(...) \
 	core::logging::instance()->dispatch(\
 	core::logging::ILog::Warning,\
-	core::str::format(message, ##__VA_ARGS__),\
+	core::str::format(__VA_ARGS__),\
 	__FUNCTION__,\
 	__FILE__,\
 	__LINE__)
 
-#define LOGE(message, ...) \
+#define LOGE(...) \
 	core::logging::instance()->dispatch(\
 	core::logging::ILog::Error,\
-	core::str::format(message, ##__VA_ARGS__),\
+	core::str::format(__VA_ARGS__),\
 	__FUNCTION__,\
 	__FILE__,\
 	__LINE__)
