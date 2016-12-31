@@ -487,7 +487,7 @@ namespace render2
 		_vertex_data_to_gl[ vdt ] = VertexDataTypeToGL(gl_type, gl_normalized, element_size)
 
 
-	void convert_type(GLenum attribute_type, VertexDataType& type, size_t& elements)
+	void opengl_type_to_vertex_data_type(GLenum attribute_type, VertexDataType& type, size_t& elements)
 	{
 		switch(attribute_type)
 		{
@@ -564,7 +564,7 @@ namespace render2
 			assert(index < shader->attributes.size());
 
 			// extract the gl data for attribute types
-			convert_type(shader->attributes[attribute_index].type, expected_type, expected_elements);
+			opengl_type_to_vertex_data_type(shader->attributes[attribute_index].type, expected_type, expected_elements);
 
 			// Types should match; otherwise byte offsets will be incorrect.
 			// Element counts can vary slightly if the input element size
