@@ -79,12 +79,12 @@ namespace render2
 
 	const VertexDescriptor& VertexDescriptor::operator= (const VertexDescriptor & other)
 	{
-		this->total_attributes = other.total_attributes;
-		this->id = other.id;
+		total_attributes = other.total_attributes;
+		id = other.id;
 
 		for( unsigned int index = 0; index < MAX_VERTEX_DESCRIPTORS; ++index )
 		{
-			this->description[index] = other.description[index];
+			description[index] = other.description[index];
 		}
 
 		return *this;
