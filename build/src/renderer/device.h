@@ -91,6 +91,7 @@ namespace render2
 		virtual RenderTarget* default_render_target() = 0;
 		virtual RenderTarget* create_render_target(Texture* texture) = 0;
 		virtual void destroy_render_target(RenderTarget* target) = 0;
+		virtual void resize_render_target(RenderTarget* target, uint32_t width, uint32_t height) = 0;
 
 		// ---------------------------------------------------------------------
 		// initialization

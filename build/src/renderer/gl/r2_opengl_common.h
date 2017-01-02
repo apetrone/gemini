@@ -151,6 +151,7 @@ namespace render2
 		GLuint texture_id;
 		GLenum texture_type;
 		uint8_t unpack_alignment;
+		GLenum internal_format;
 
 		// texture dimensions
 		uint32_t width;
@@ -167,10 +168,13 @@ namespace render2
 		void deactivate();
 		bool is_complete() const;
 		void attach_texture(GLTexture* texture);
+		void resize(uint32_t width, uint32_t height);
 
 	private:
 		GLuint framebuffer;
 //		GLuint renderbuffer;
+
+		GLTexture* attached_texture;
 	};	// GLRenderTarget
 
 	struct VertexDataTypeToGL
@@ -200,6 +204,7 @@ namespace render2
 
 	RenderTarget* common_create_render_target(gemini::Allocator& allocator, Texture* texture);
 	void common_destroy_render_target(gemini::Allocator& allocator, RenderTarget* render_target);
+	void common_resize_render_target(RenderTarget* target, uint32_t width, uint32_t height);
 
 	void common_push_render_target(RenderTarget* render_target);
 	void common_pop_render_target(RenderTarget* render_target);

@@ -85,6 +85,7 @@ namespace gui
 	public:
 		RenderableSurface(Panel* parent)
 			: Panel(parent)
+			, render_device(nullptr)
 			, target(nullptr)
 			, handle(render::WhiteTexture)
 		{
@@ -92,6 +93,7 @@ namespace gui
 			set_name("RenderableSurface");
 		}
 
+		void set_device(render2::Device* device) { render_device = device; }
 		void set_render_target(render2::RenderTarget* render_target) { target = render_target; }
 		render2::RenderTarget* get_render_target() const { return target; }
 		void set_texture_handle(int ref) { handle = ref; }
@@ -115,9 +117,12 @@ namespace gui
 			// resize the render target
 			LOGV("resize render target %i %i\n", new_size.width, new_size.height);
 			gui::Panel::set_size(new_size);
+			//https://blog.nelhage.com/2016/12/how-i-test/
+			render_device->resize_render_target(target, new_size.width, new_size.height);
 		}
 
 	private:
+		render2::Device* render_device;
 		render2::RenderTarget* target;
 		int handle;
 	}; // RenderableSurface
@@ -952,6 +957,7 @@ Options:
 
 			// TODO: sort out this interface!
 			render_target = device->create_render_target(texture);
+			surface->set_device(device);
 			surface->set_render_target(render_target);
 			surface->set_texture_handle(handle);
 

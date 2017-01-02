@@ -424,6 +424,7 @@ namespace render2
 		width = _width;
 		height = _height;
 		framebuffer = 0;
+		attached_texture = nullptr;
 
 		if (!_is_default)
 		{
@@ -475,10 +476,49 @@ namespace render2
 		gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+index, texture->texture_type, texture->texture_id, 0);
 		gl.CheckError("FramebufferTexture2D");
 
+		attached_texture = texture;
+
 		assert(is_complete());
 
 		deactivate();
 	}
+
+	void GLRenderTarget::resize(uint32_t new_width, uint32_t new_height)
+	{
+		width = new_width;
+		height = new_height;
+
+		if (attached_texture)
+		{
+			attached_texture->width = width;
+			attached_texture->height = height;
+
+			if (attached_texture->texture_type == GL_TEXTURE_2D)
+			{
+				attached_texture->bind();
+
+				// resize image
+				gl.TexImage2D(attached_texture->texture_type,
+					0,
+					attached_texture->internal_format,
+					static_cast<GLsizei>(attached_texture->width),
+					static_cast<GLsizei>(attached_texture->height),
+					0,
+					GL_RGBA,
+					GL_UNSIGNED_BYTE,
+					nullptr
+				);
+				gl.CheckError("TexImage2D");
+
+				attached_texture->unbind();
+			}
+			else
+			{
+				LOGV("Unknown texture type %i\n", attached_texture->texture_type);
+			}
+		}
+	}
+
 	// ---------------------------------------------------------------------
 	// implementation
 	// ---------------------------------------------------------------------
@@ -690,6 +730,12 @@ namespace render2
 	{
 		GLRenderTarget* rt = static_cast<GLRenderTarget*>(render_target);
 		MEMORY2_DELETE(allocator, rt);
+	}
+
+	void common_resize_render_target(RenderTarget* target, uint32_t width, uint32_t height)
+	{
+		GLRenderTarget* rt = static_cast<GLRenderTarget*>(target);
+		rt->resize(width, height);
 	}
 
 	void common_push_render_target(RenderTarget* render_target)
@@ -936,7 +982,7 @@ namespace render2
 
 		texture->bind();
 		texture->set_parameters(image);
-
+		texture->internal_format = internal_format;
 
 		GLvoid* pixels = nullptr;
 		if (!image.pixels.empty())

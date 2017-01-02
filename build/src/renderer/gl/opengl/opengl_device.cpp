@@ -57,6 +57,11 @@ namespace render2
 		return common_destroy_render_target(allocator, target);
 	}
 
+	void OpenGLDevice::resize_render_target(RenderTarget* target, uint32_t width, uint32_t height)
+	{
+		common_resize_render_target(target, width, height);
+	}
+
 	// ---------------------------------------------------------------------
 	// initialization
 	// ---------------------------------------------------------------------
