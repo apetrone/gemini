@@ -32,10 +32,6 @@
 #include <platform/kernel.h>
 #include <platform/kernel_events.h>
 
-#include <X11/extensions/Xrandr.h>
-
-// requires: libxinerama-dev (ubuntu)
-// see if we can replace this with XRandR
 #include <X11/extensions/Xinerama.h>
 
 namespace platform

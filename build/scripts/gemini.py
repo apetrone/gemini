@@ -494,9 +494,6 @@ def get_libcore(arguments, target_platform):
 		found_glx = target_platform.find_include_path("GL/glx.h")
 		assert_dependency(found_glx, "GL/glx.h not found!")
 
-		found_xrandr = target_platform.find_include_path("X11/extensions/Xrandr.h")
-		assert_dependency(found_xrandr, "X11/extensions/Xrandr.h not found!")
-
 		found_xinerama = target_platform.find_include_path("X11/extensions/Xinerama.h")
 		assert_dependency(found_xinerama, "X11/extensions/Xinerama.h not found!")
 

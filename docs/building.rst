@@ -63,11 +63,11 @@ Debian/Ubuntu/SteamOS
 
 		sudo apt-get install sox libasound2-dev libudev-dev
 
-	If building with X11; you need X11 libs.
+	If building with X11; you also need X11 libs.
 
 	.. code-block:: bash
 
-		sudo apt-get install libx11-dev libxrandr-dev libxinerama-dev mesa-common-dev
+		sudo apt-get install libx11-dev libxinerama-dev mesa-common-dev
 
 	You may also need to symlink libGL to /usr/lib/libGL.so. Find it with:
 
