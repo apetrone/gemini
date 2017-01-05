@@ -53,7 +53,7 @@ namespace platform
 		// GetModuleFilenameA failed!
 		assert(result != 0);
 
-		char* path = directory();
+		char* path = &directory[0];
 		char* sep;
 		if (result != 0)
 		{
