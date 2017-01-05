@@ -60,6 +60,11 @@ namespace render2
 		common_resize_render_target(target, width, height);
 	}
 
+	void GLES2Device::render_target_read_pixels(RenderTarget* target, Image& image)
+	{
+		common_render_target_read_pixels(target, image);
+	}
+
 	// ---------------------------------------------------------------------
 	// initialization
 	// ---------------------------------------------------------------------

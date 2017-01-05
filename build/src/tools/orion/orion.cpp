@@ -336,24 +336,36 @@ public:
 		if (event.key == BUTTON_S)
 			backward_down = event.is_down;
 
-		if (event.key == BUTTON_SPACE)
+		if (event.is_down)
 		{
-			LOGV("freezing rotations\n");
-			imocap::zero_rotations(mocap_device);
+			if (event.key == BUTTON_SPACE)
+			{
+				LOGV("freezing rotations\n");
+				imocap::zero_rotations(mocap_device);
 
-			position_test = velocity_test = glm::vec3(0.0f, 0.0f, 0.0f);
-		}
+				position_test = velocity_test = glm::vec3(0.0f, 0.0f, 0.0f);
+			}
 
-		if (event.key == BUTTON_F2)
-		{
-			unload_rapid_interface();
+			if (event.key == BUTTON_F2)
+			{
+				unload_rapid_interface();
 
-			LOGV("unloaded rapid interface\n");
-		}
-		else if (event.key == BUTTON_F3)
-		{
-			load_rapid_interface();
-			LOGV("loading rapid interface\n");
+				LOGV("unloaded rapid interface\n");
+			}
+			else if (event.key == BUTTON_F3)
+			{
+				load_rapid_interface();
+				LOGV("loading rapid interface\n");
+			}
+
+			if (event.key == BUTTON_F4)
+			{
+				LOGV("take a snapshot\n");
+				render2::Image image(render_allocator);
+				image.create(render_target->width, render_target->height, 4);
+				device->render_target_read_pixels(render_target, image);
+				image::save_image_to_file(image, "test.png");
+			}
 		}
 	}
 

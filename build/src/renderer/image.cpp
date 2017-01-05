@@ -31,6 +31,7 @@
 #define STBI_HEADER_FILE_ONLY 1
 #define STBI_NO_STDIO 1
 #define STB_IMAGE_IMPLEMENTATION 1
+#define STB_IMAGE_WRITE_IMPLEMENTATION 1
 
 #if defined(PLATFORM_COMPILER_MSVC)
 	// disable some warnings in stb_image
@@ -42,6 +43,7 @@
 #endif
 
 #include "stb_image.h"
+#include "stb_image_write.h"
 
 #if defined(PLATFORM_COMPILER_MSVC)
 	#pragma warning(pop)
@@ -353,4 +355,8 @@ namespace image
 		stbi_image_free(pixels);
 	} // free_image
 
+	void save_image_to_file(const Image& image, const char* filename)
+	{
+		stbi_write_png(filename, image.width, image.height, image.channels, &image.pixels[0], image.alignment * image.width);
+	} // save_image_to_file
 } // namespace image

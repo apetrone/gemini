@@ -738,6 +738,21 @@ namespace render2
 		rt->resize(width, height);
 	}
 
+	void common_render_target_read_pixels(RenderTarget* target, Image& image)
+	{
+		GLRenderTarget* rt = static_cast<GLRenderTarget*>(target);
+		rt->bind();
+
+		// May also need to set GL_PACK_ALIGNMENT and GL_PACK_ROW_LENGTH?
+
+		// ensure the color attachment matches that of the image bound to the
+		// render target. (We only use this one for now)
+		glReadBuffer(GL_COLOR_ATTACHMENT0);
+		glReadPixels(0, 0, rt->width, rt->height, GL_RGBA, GL_UNSIGNED_BYTE, &image.pixels[0]);
+
+		rt->bind(false);
+	}
+
 	void common_push_render_target(RenderTarget* render_target)
 	{
 		GLRenderTarget* rt = static_cast<GLRenderTarget*>(render_target);

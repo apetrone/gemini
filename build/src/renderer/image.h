@@ -133,4 +133,6 @@ namespace image
 //	void save_image_to_file( const char * filename, unsigned int width, unsigned int height, unsigned int channels, unsigned char * pixels, int imageType );
 	void free_image(unsigned char* pixels);
 
+	void save_image_to_file(const Image& image, const char* filename);
+
 } // namespace image

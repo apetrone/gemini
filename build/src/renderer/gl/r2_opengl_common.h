@@ -205,6 +205,7 @@ namespace render2
 	RenderTarget* common_create_render_target(gemini::Allocator& allocator, Texture* texture);
 	void common_destroy_render_target(gemini::Allocator& allocator, RenderTarget* render_target);
 	void common_resize_render_target(RenderTarget* target, uint32_t width, uint32_t height);
+	void common_render_target_read_pixels(RenderTarget* target, Image& image);
 
 	void common_push_render_target(RenderTarget* render_target);
 	void common_pop_render_target(RenderTarget* render_target);
