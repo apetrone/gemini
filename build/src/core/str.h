@@ -58,20 +58,22 @@ namespace core
 		// use count = 0 to mean: pick the smallest string
 		int case_insensitive_compare(const char* s1, const char* s2, size_t count);
 		const char* strstr(const char* s1, const char* s2);
-		
+
 		// Returns the index of the last slash in the string.
 		// returns -1 if no slash is found.
 		intptr_t find_last_slash(const char* cstring);
 
 		// returns the basename of the string
 		const char* basename(const char* cstring);
-		
+
 		// this accepts a path entered by the user (possibly on the commandline)
 		// and returns an expanded absolute path for use.
 		// this should take into account leading tilde (~), which denotes the
 		// special $(HOME) environment variable.
-		std::string make_absolute_path(const std::string& path);
+		// std::string make_absolute_path(const std::string& path);
 
+		// effectively appending "../" and resolving.
+		char* directory_up(char* source);
 
 		std::vector<std::string> split(const std::string& input, const std::string& substring);
 		std::string trim_left(const std::string& input, const std::string& chars = "\t ");

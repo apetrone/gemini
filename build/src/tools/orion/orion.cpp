@@ -1026,7 +1026,24 @@ Options:
 		{
 			unload_rapid_interface();
 		}
-		rapid_library = platform::dylib_open("X:/gemini/build/lib/debug_x86_64/rapid.dll");
+
+		PathString program_directory = platform::get_program_directory();
+		PathString lib_directory = program_directory;
+		core::str::directory_up(&lib_directory[0]);
+		core::str::directory_up(&lib_directory[0]);
+		lib_directory.append(PATH_SEPARATOR_STRING);
+		lib_directory.append("lib");
+		lib_directory.append(PATH_SEPARATOR_STRING);
+		lib_directory.append("debug_x86_64");
+		lib_directory.append(PATH_SEPARATOR_STRING);
+#if defined(PLATFORM_LINUX)
+		lib_directory.append("lib");
+#endif
+		lib_directory.append("rapid");
+		lib_directory.append(platform::dylib_extension());
+
+		LOGV("rapid lib = %s\n", lib_directory());
+		rapid_library = platform::dylib_open(lib_directory());
 		assert(rapid_library);
 
 		populate_interface_fn pif = reinterpret_cast<populate_interface_fn>(platform::dylib_find(rapid_library, "populate_interface"));

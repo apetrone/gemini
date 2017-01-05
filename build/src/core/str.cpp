@@ -192,6 +192,38 @@ namespace core
 			return cstring;
 		} // basename
 
+		char* directory_up(char* source)
+		{
+			assert(source);
+
+			const char* last_slash = source;
+			// seek to the end of the string
+			while(*last_slash)
+			{
+				++last_slash;
+			}
+
+			// back up from the NULL terminator
+			--last_slash;
+
+			while(last_slash > source)
+			{
+				if (*last_slash == '/' || *last_slash == '\\')
+				{
+					// ignore trailing slashes
+					if (last_slash[1] != '\0')
+					{
+						break;
+					}
+				}
+
+				--last_slash;
+			}
+
+			source[last_slash - source] = '\0';
+			return source;
+		} // directory_up
+
 		std::vector<std::string> split(const std::string& input, const std::string& substring)
 		{
 			std::vector<std::string> elements;
