@@ -907,7 +907,7 @@ Options:
 			status->set_font(dev_font, dev_font_size);
 			status->set_text("");
 			status->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
-			status->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.25f));
+			status->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.0f));
 
 #if 1
 			asset_processor = new AssetProcessingPanel(compositor);

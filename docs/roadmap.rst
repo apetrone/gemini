@@ -6,6 +6,14 @@ priority.
 
 
 - editor: Asset Pipeline / Processing framework
+- editor/engine separation
+	Pros of separation:
+	- Clearly defined boundaries between code and responsibilities.
+		For now, I'm going with a separate engine and editor.
+		I'd rather have the clear separation. I'm sure I will come around
+		and want an integrated one later, but that's the point. I want to
+		run into all of these problems so I can intelligently reason
+		one way or the other.
 - runtime: Hot loading shaders (render system v2)
 	- pub/sub for asset loading?
 
@@ -19,22 +27,7 @@ Brainstorming
 
 Ideas or nice to haves I want to learn or integrate.
 
-- editor: separate or integrated?
-	* separate
-	Pros:
-		- Clearly defined boundaries between code and responsibilities.
-
-	Cons:
-		- Requires engine/runtime be robust and need to work with live data.
-
-	* integrated
-	Pros:
-		- Intuitive to work on project, can offer play in editor like functionality.
-
-	Cons:
-		- Boundaries not clearly defined.
-
-
+- live updates from Blender
 
 - deployment system
 	- Use itch.io? or Steam? Leverage precache code?
