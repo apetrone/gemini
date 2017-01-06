@@ -747,7 +747,11 @@ namespace render2
 
 		// ensure the color attachment matches that of the image bound to the
 		// render target. (We only use this one for now)
+
+		// This is not supported on GLES2. GLES3 supports it.
+#if !defined(PLATFORM_GLES2_SUPPORT)
 		glReadBuffer(GL_COLOR_ATTACHMENT0);
+#endif
 		glReadPixels(0, 0, rt->width, rt->height, GL_RGBA, GL_UNSIGNED_BYTE, &image.pixels[0]);
 
 		rt->bind(false);
