@@ -81,7 +81,7 @@ namespace render2
 
 		if (!is_compiled)
 		{
-			query_shader_info_log(allocator, shader);
+			query_shader_info_log(allocator, id, shader);
 		}
 
 		assert(is_compiled);
@@ -89,81 +89,9 @@ namespace render2
 		return (is_compiled == 1);
 	} // compile_shader
 
-	void GLShader::query_program_info_log(gemini::Allocator& allocator, GLObject handle)
-	{
-		int log_length = 0;
-		char* logbuffer = 0;
-
-		char buffer[128] = {0};
-
-		gl.GetProgramiv(id, GL_INFO_LOG_LENGTH, &log_length);
-		if (log_length == 0)
-		{
-			log_length = 128;
-			logbuffer = buffer;
-		}
-		else
-		{
-			logbuffer = static_cast<char*>(MEMORY2_ALLOC(allocator, static_cast<size_t>(log_length + 1)));
-		}
-
-		memset(logbuffer, 0, static_cast<size_t>(log_length));
-
-		gl.GetProgramInfoLog(handle, log_length, &log_length, logbuffer);
-		gl.CheckError("GetProgramInfoLog");
-
-		if (log_length > 0)
-		{
-			LOGW("program info log:\n");
-			LOGW("%s\n", logbuffer);
-		}
-		else
-		{
-			MEMORY2_DEALLOC(allocator, logbuffer);
-		}
-
-	} // query_program_info_log
-
-
-	void GLShader::query_shader_info_log(gemini::Allocator& allocator, GLObject handle)
-	{
-		GLint log_length = 0;
-		char* logbuffer = 0;
-
-		// due to log_length returning 0 even when there's data;
-		// this will be used as a fallback
-		char buffer[128] = {0};
-
-		gl.GetShaderiv(id, GL_INFO_LOG_LENGTH, &log_length);
-		if (log_length == 0)
-		{
-			log_length = 128;
-			logbuffer = buffer;
-		}
-		else
-		{
-			logbuffer = static_cast<char*>(MEMORY2_ALLOC(allocator, static_cast<size_t>(log_length + 1)));
-		}
-
-		memset(logbuffer, 0, static_cast<size_t>(log_length));
-
-		gl.GetShaderInfoLog(handle, log_length, &log_length, logbuffer);
-		gl.CheckError("GetShaderInfoLog");
-
-		if (log_length > 0)
-		{
-			LOGW("shader info log:\n");
-			LOGW("%s\n", logbuffer);
-		}
-
-		if (logbuffer != buffer)
-		{
-			MEMORY2_DEALLOC(allocator, logbuffer);
-		}
-	} // query_shader_info_log
-
 	int GLShader::build_from_source(gemini::Allocator& allocator, const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version)
 	{
+		LOGW("GLShader::build_from_source is deprecated. Please migrate to GLShader::build_from_sources.\n");
 		GLuint vert = gl.CreateShader(GL_VERTEX_SHADER);
 		gl.CheckError("CreateShader");
 		GLuint frag = gl.CreateShader(GL_FRAGMENT_SHADER);
@@ -278,7 +206,126 @@ namespace render2
 		gl.DeleteShader(vert);
 
 		return 0;
-	}
+	} // build_from_source
+
+	int32_t GLShader::build_from_sources(gemini::Allocator& allocator, ShaderSource** sources, uint32_t total_sources)
+	{
+		// If you hit this, I'm assuming you're providing vertex and fragment stages.
+		// We now need to support whatever you passed in.
+		assert(total_sources == 2);
+
+		GLuint vert = gl.CreateShader(GL_VERTEX_SHADER);
+		gl.CheckError("CreateShader");
+		GLuint frag = gl.CreateShader(GL_FRAGMENT_SHADER);
+		gl.CheckError("CreateShader");
+
+		common_compile_source(allocator, id, vert, sources[0]);
+		common_compile_source(allocator, id, frag, sources[1]);
+
+		// attach shaders
+		gl.AttachShader(id, vert); gl.CheckError("AttachShader (vert)"); gl.CheckError("AttachShader");
+		gl.AttachShader(id, frag); gl.CheckError("AttachShader (frag)"); gl.CheckError("AttachShader");
+
+#if defined(PLATFORM_OPENGL_SUPPORT)
+		// bind attributes
+		gl.BindFragDataLocation(id, 0, "out_color");
+		gl.CheckError("BindFragDataLocation");
+#endif
+
+		// link and activate shader
+		gl.LinkProgram(id);
+		gl.CheckError("LinkProgram");
+		GLint is_linked = 0;
+		gl.GetProgramiv(id, GL_LINK_STATUS, &is_linked);
+		gl.CheckError("link and activate shader GetProgramiv");
+
+		if (!is_linked)
+		{
+			query_program_info_log(allocator, id);
+		}
+
+		assert(is_linked == 1);
+
+
+		// activate program
+		gl.UseProgram(id);
+		gl.CheckError("activate program UseProgram");
+
+
+		{
+			GLint active_attributes = 0;
+			gl.GetProgramiv(id, GL_ACTIVE_ATTRIBUTES, &active_attributes);
+			gl.CheckError("inspect attributes GetProgramiv");
+
+			attributes.allocate(static_cast<size_t>(active_attributes));
+
+			for (size_t attribute_index = 0; attribute_index < static_cast<size_t>(active_attributes); ++attribute_index)
+			{
+				shader_variable& attribute = attributes[attribute_index];
+				gl.GetActiveAttrib(id,
+					static_cast<GLuint>(attribute_index),
+					MAX_ATTRIBUTE_NAME_LENGTH,
+					&attribute.length,
+					&attribute.size,
+					&attribute.type,
+					attribute.name
+				);
+				attribute.location = gl.GetAttribLocation(id, attribute.name);
+				//				LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
+				//					 attribute_index,
+				//					 attribute.location,
+				//					 attribute.name,
+				//					 attribute.size,
+				//					 attribute.type);
+
+				attribute.compute_size();
+			}
+		}
+
+		// cache uniform locations
+		{
+			GLint active_uniforms = 0;
+			gl.GetProgramiv(id, GL_ACTIVE_UNIFORMS, &active_uniforms);
+
+			// allocate data for uniforms
+			uniforms.allocate(static_cast<size_t>(active_uniforms));
+
+			for (size_t uniform_index = 0; uniform_index < static_cast<size_t>(active_uniforms); ++uniform_index)
+			{
+				shader_variable& uniform = uniforms[uniform_index];
+				gl.GetActiveUniform(id,
+					static_cast<GLuint>(uniform_index),
+					MAX_ATTRIBUTE_NAME_LENGTH,
+					&uniform.length,
+					&uniform.size,
+					&uniform.type,
+					uniform.name
+				);
+				uniform.location = gl.GetUniformLocation(id, uniform.name);
+				//				LOGV("uniform: %i, location: %i, name: %s, size: %i, type: %i\n",
+				//					 uniform_index,
+				//					 uniform.location,
+				//					 uniform.name,
+				//					 uniform.size,
+				//					 uniform.type);
+
+				uniform.compute_size();
+			}
+		}
+
+		// deactivate
+		gl.UseProgram(0);
+
+		// detach shaders
+		gl.DetachShader(id, vert);
+		gl.DetachShader(id, frag);
+
+		// delete shaders
+		gl.DeleteShader(frag);
+		gl.DeleteShader(vert);
+
+		return 0;
+	} // build_from_sources
 
 	GLint GLShader::get_attribute_location(const char* name)
 	{
@@ -854,6 +901,36 @@ namespace render2
 		}
 	}
 
+	bool common_compile_source(gemini::Allocator& allocator, GLuint program, GLuint shader, ShaderSource* source)
+	{
+		GLint is_compiled = 0;
+
+		assert(gl.IsShader(shader));
+
+		GLchar* shader_source[] = {
+			(GLchar*)source->data
+		};
+
+		GLint data_size = source->data_size;
+		gl.ShaderSource(shader, 1, shader_source, &data_size);
+		gl.CheckError("ShaderSource");
+
+		gl.CompileShader(shader);
+		gl.CheckError("CompileShader");
+
+		gl.GetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
+		gl.CheckError("GetShaderiv");
+
+		if (!is_compiled)
+		{
+			query_shader_info_log(allocator, program, shader);
+		}
+
+		assert(is_compiled);
+
+		return (is_compiled == 1);
+	} // common_compile_source
+
 	GLShader* common_create_shader(gemini::Allocator& allocator, const char* subfolder, const char* name, GLShader* reuse_shader, const char* preprocessor, const char* version)
 	{
 		// I haven't re-implemented hot loading of shaders; do that if you
@@ -906,8 +983,6 @@ namespace render2
 
 		return shader;
 	}
-
-
 
 	// ---------------------------------------------------------------------
 	// image
@@ -1191,5 +1266,76 @@ namespace render2
 			}
 			offset += uniform.byte_size;
 		}
-	}
+	} // common_setup_uniforms
+
+	void query_program_info_log(gemini::Allocator& allocator, GLuint program_id)
+	{
+		int log_length = 0;
+		char* logbuffer = 0;
+
+		char buffer[128] = { 0 };
+
+		gl.GetProgramiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
+		if (log_length == 0)
+		{
+			log_length = 128;
+			logbuffer = buffer;
+		}
+		else
+		{
+			logbuffer = static_cast<char*>(MEMORY2_ALLOC(allocator, static_cast<size_t>(log_length + 1)));
+		}
+
+		memset(logbuffer, 0, static_cast<size_t>(log_length));
+
+		gl.GetProgramInfoLog(program_id, log_length, &log_length, logbuffer);
+		gl.CheckError("GetProgramInfoLog");
+
+		if (log_length > 0)
+		{
+			LOGW("program info log:\n");
+			LOGW("%s\n", logbuffer);
+		}
+		else
+		{
+			MEMORY2_DEALLOC(allocator, logbuffer);
+		}
+	} // query_program_info_log
+
+	void query_shader_info_log(gemini::Allocator& allocator, GLuint program_id, GLuint handle)
+	{
+		GLint log_length = 0;
+		char* logbuffer = 0;
+
+		// due to log_length returning 0 even when there's data;
+		// this will be used as a fallback
+		char buffer[128] = { 0 };
+
+		gl.GetShaderiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
+		if (log_length == 0)
+		{
+			log_length = 128;
+			logbuffer = buffer;
+		}
+		else
+		{
+			logbuffer = static_cast<char*>(MEMORY2_ALLOC(allocator, static_cast<size_t>(log_length + 1)));
+		}
+
+		memset(logbuffer, 0, static_cast<size_t>(log_length));
+
+		gl.GetShaderInfoLog(handle, log_length, &log_length, logbuffer);
+		gl.CheckError("GetShaderInfoLog");
+
+		if (log_length > 0)
+		{
+			LOGW("shader info log:\n");
+			LOGW("%s\n", logbuffer);
+		}
+
+		if (logbuffer != buffer)
+		{
+			MEMORY2_DEALLOC(allocator, logbuffer);
+		}
+	} // query_shader_info_log
 } // namespace render2

@@ -111,7 +111,7 @@ namespace render2
 	// ---------------------------------------------------------------------
 	Shader* GLES2Device::create_shader(const char* name, Shader* reuse_shader)
 	{
-		return common_create_shader(allocator, "100", name, static_cast<GLShader*>(reuse_shader), "\n", "#version 100\n");
+		return common_create_shader(allocator, "100", name, static_cast<GLShader*>(reuse_shader), "", "");
 	}
 
 	// ---------------------------------------------------------------------

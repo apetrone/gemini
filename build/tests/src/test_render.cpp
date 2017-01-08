@@ -369,9 +369,31 @@ Options:
 
 		window_frame = platform::window::get_frame(state.native_window);
 
+		// create shaders
+		Array<unsigned char> vertex_shader_source(render_allocator);
+		core::filesystem::instance()->virtual_load_file(vertex_shader_source, "shaders/150/vertexcolor.vert");
+		assert(!vertex_shader_source.empty());
+
+		render2::ShaderSource vertex_source;
+		vertex_source.data = &vertex_shader_source[0];
+		vertex_source.data_size = vertex_shader_source.size();
+		vertex_source.stage_type = render2::SHADER_STAGE_VERTEX;
+
+		Array<unsigned char> fragment_shader_source(render_allocator);
+		core::filesystem::instance()->virtual_load_file(fragment_shader_source, "shaders/150/vertexcolor.frag");
+		assert(!fragment_shader_source.empty());
+
+		render2::ShaderSource frag_source;
+		frag_source.data = &fragment_shader_source[0];
+		frag_source.data_size = fragment_shader_source.size();
+		frag_source.stage_type = render2::SHADER_STAGE_FRAGMENT;
+
+		render2::ShaderSource* sources[] = { &vertex_source, &frag_source };
+
+
 		// setup the pipeline
 		render2::PipelineDescriptor desc;
-		desc.shader = state.device->create_shader("vertexcolor");
+		desc.shader = state.device->create_shader(sources, 2);
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = state.device->create_input_layout(desc.vertex_description, desc.shader);

@@ -4,7 +4,13 @@ Roadmap - 2017
 Priorities for future developments. Listed in order of descending
 priority.
 
-
+- runtime: Hot loading of shaders (render system v2)
+	- ability to load in-place
+		* shaders
+		* models
+		* textures
+	- ability to detect changes
+	- perhaps pub/sub for asset loading between editor and engine?
 - editor: Asset Pipeline / Processing framework
 - editor/engine separation
 	Pros of separation:
@@ -14,8 +20,7 @@ priority.
 		and want an integrated one later, but that's the point. I want to
 		run into all of these problems so I can intelligently reason
 		one way or the other.
-- runtime: Hot loading shaders (render system v2)
-	- pub/sub for asset loading?
+
 
 - runtime: Oriented Bounding Boxes
 - engine: Joint-specific hit boxes
@@ -32,3 +37,12 @@ Ideas or nice to haves I want to learn or integrate.
 - deployment system
 	- Use itch.io? or Steam? Leverage precache code?
 	- How are updates rolled out?
+
+
+---------------------------
+Assets
+---------------------------
+- have assets in a centralized system
+- cache assets to avoid loading resources multiple times
+- update assets in place
+- different assets per platform as needed

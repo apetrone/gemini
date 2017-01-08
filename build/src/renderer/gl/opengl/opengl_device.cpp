@@ -143,7 +143,13 @@ namespace render2
 			name,
 			static_cast<GLShader*>(reuse_shader),
 			"",
-			"#version 150 core\n"
-			"#extension GL_ARB_explicit_attrib_location : enable\n");
-	}
+			"");
+	} // create_shader
+
+	Shader* OpenGLDevice::create_shader(ShaderSource** sources, uint32_t total_sources)
+	{
+		GLShader* shader = MEMORY2_NEW(allocator, GLShader)(allocator);
+		shader->build_from_sources(allocator, sources, total_sources);
+		return shader;
+	} // create_shader
 } // namespace render2

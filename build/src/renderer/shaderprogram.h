@@ -97,5 +97,13 @@ namespace render2
 	struct Shader
 	{
 		virtual ~Shader();
-	};
+	}; // Shader
+
+	// ShaderSource wrapper to be compiled (and linked)
+	struct ShaderSource
+	{
+		uint32_t stage_type;
+		uint32_t data_size;
+		unsigned char* data;
+	}; // ShaderSource
 } // namespace render2
