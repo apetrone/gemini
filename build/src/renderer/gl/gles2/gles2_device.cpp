@@ -114,6 +114,13 @@ namespace render2
 		return common_create_shader(allocator, "100", name, static_cast<GLShader*>(reuse_shader), "", "");
 	}
 
+	Shader* GLES2Device::create_shader(ShaderSource** sources, uint32_t total_sources)
+	{
+		GLShader* shader = MEMORY2_NEW(allocator, GLShader)(allocator);
+		shader->build_from_sources(allocator, sources, total_sources);
+		return shader;
+	} // create_shader
+
 	// ---------------------------------------------------------------------
 	// texture
 	// ---------------------------------------------------------------------
