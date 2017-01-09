@@ -106,6 +106,10 @@ namespace gemini
 
 	bool runtime_load_application_config(Settings& config);
 
+	// set the render device on the runtime -- this allows the asset system to use it.
+	void runtime_render_device(render2::Device* device);
+	render2::Device* runtime_render_device();
+
 
 	template <class T>
 	class Test

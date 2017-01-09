@@ -57,7 +57,7 @@ namespace gemini
 			size_t get_total_frames() const;
 		}; // Sound
 
-		AssetLoadStatus sound_load_callback(gemini::Allocator& allocator, const char* path, AssetLoadState<Sound>& load_state, const AssetParameters& parameters);
+		AssetLoadStatus sound_load_callback(const char* path, AssetLoadState<Sound>& load_state, const AssetParameters& parameters);
 		void sound_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Sound, AssetParameters, sounds);

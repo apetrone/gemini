@@ -82,16 +82,16 @@ namespace gemini
 	} // namespace assets
 } // namespace gemini
 
-#define IMPLEMENT_ASSET_LIBRARY_ACCESSOR( type, name )\
-	type * _##name = 0;\
-	type * name()\
+#define IMPLEMENT_ASSET_LIBRARY_ACCESSOR( name )\
+	name##AssetLibrary* _##name = 0;\
+	name##AssetLibrary* name()\
 	{\
 		return _##name;\
 	}
 
 #define DECLARE_ASSET_LIBRARY_ACCESSOR( type, parameter_class, name )\
-	typedef AssetLibrary<type, parameter_class> type##AssetLibrary;\
-	type##AssetLibrary * name()
+	typedef AssetLibrary<type, parameter_class> name##AssetLibrary;\
+	name##AssetLibrary * name()
 
 
 #include <runtime/assetlibrary.h>

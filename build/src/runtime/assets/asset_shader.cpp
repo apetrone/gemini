@@ -23,6 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include <runtime/filesystem.h>
+#include <runtime/runtime.h>
 #include <core/stackstring.h>
 
 
@@ -39,13 +40,13 @@ namespace gemini
 		// -------------------------------------------------------------
 		// Shader
 
-		void Shader::release()
-		{
-			if (program)
-			{
-				driver()->shaderprogram_destroy( program );
-			}
-		}
+		//void Shader::release()
+		//{
+		//	if (program)
+		//	{
+		//		driver()->shaderprogram_destroy( program );
+		//	}
+		//}
 
 
 
@@ -111,12 +112,36 @@ namespace gemini
 		} // font_load_callback
 	#endif
 
+#if 0
+		const platform::PathString& shader_prefix_path = gemini::assets::shaders()->get_prefix_path();
 
-		AssetLoadStatus shader_load_callback(gemini::Allocator& allocator, const char* path, AssetLoadState<Shader>& load_state, const AssetParameters& parameters)
+		// create shaders
+		Array<unsigned char> vertex_shader_source(render_allocator);
+		core::filesystem::instance()->virtual_load_file(vertex_shader_source, "shaders/150/vertexcolor.vert");
+		assert(!vertex_shader_source.empty());
+
+		render2::ShaderSource vertex_source;
+		vertex_source.data = &vertex_shader_source[0];
+		vertex_source.data_size = vertex_shader_source.size();
+		vertex_source.stage_type = render2::SHADER_STAGE_VERTEX;
+
+		Array<unsigned char> fragment_shader_source(render_allocator);
+		core::filesystem::instance()->virtual_load_file(fragment_shader_source, "shaders/150/vertexcolor.frag");
+		assert(!fragment_shader_source.empty());
+
+		render2::ShaderSource frag_source;
+		frag_source.data = &fragment_shader_source[0];
+		frag_source.data_size = fragment_shader_source.size();
+		frag_source.stage_type = render2::SHADER_STAGE_FRAGMENT;
+
+		render2::ShaderSource* sources[] = { &vertex_source, &frag_source };
+#endif
+
+		AssetLoadStatus shader_load_callback(const char* path, AssetLoadState<render2::Shader>& load_state, const AssetParameters& parameters)
 		{
-			Shader* shader = load_state.asset;
-			create_shaderprogram_from_file(allocator, path, &shader->program);
-			if (!shader->program)
+			//render2::Shader* shader = load_state.asset;
+			//create_shaderprogram_from_file(allocator, path, &shader->program);
+			//if (!shader->program)
 			{
 				return AssetLoad_Failure;
 			}
@@ -127,5 +152,62 @@ namespace gemini
 		void shader_construct_extension(core::StackString<MAX_PATH_SIZE>& extension)
 		{
 		} // shader_construct_extension
+
+		AssetLoadStatus shader_create_function(const char* path, AssetLoadState<render2::Shader>& load_state, const AssetParameters& parameters)
+		{
+			render2::Device* device = runtime_render_device();
+			assert(device);
+
+			LOGV("create shader \"%s\"\n", path);
+
+			if (load_state.asset)
+			{
+				// re-load a shader
+				assert(0); // not yet implemented!
+			}
+			else
+			{
+				// We could determine here how many stages we need to load.
+				// I'll leave that as a TODO for now...
+
+				platform::PathString asset_uri = path;
+				asset_uri.append(".vert");
+
+				// create shaders
+				Array<unsigned char> vertex_shader_source(*load_state.allocator);
+				core::filesystem::instance()->virtual_load_file(vertex_shader_source, asset_uri());
+				assert(!vertex_shader_source.empty());
+
+				render2::ShaderSource vertex_source;
+				vertex_source.data = &vertex_shader_source[0];
+				vertex_source.data_size = vertex_shader_source.size();
+				vertex_source.stage_type = render2::SHADER_STAGE_VERTEX;
+
+				asset_uri = path;
+				asset_uri.append(".frag");
+				Array<unsigned char> fragment_shader_source(*load_state.allocator);
+				core::filesystem::instance()->virtual_load_file(fragment_shader_source, asset_uri());
+				assert(!fragment_shader_source.empty());
+
+				render2::ShaderSource frag_source;
+				frag_source.data = &fragment_shader_source[0];
+				frag_source.data_size = fragment_shader_source.size();
+				frag_source.stage_type = render2::SHADER_STAGE_FRAGMENT;
+
+				render2::ShaderSource* sources[] = { &vertex_source, &frag_source };
+
+				load_state.asset = device->create_shader(sources, 2);
+			}
+
+			return AssetLoad_Success;
+		} // shader_create_function
+
+		void shader_destroy_function(AssetLoadState<render2::Shader>& load_state)
+		{
+			render2::Device* device = runtime_render_device();
+			assert(device);
+
+			device->destroy_shader(load_state.asset);
+		} // shader_destroy_function
 	} // namespace assets
 } // namespace gemini

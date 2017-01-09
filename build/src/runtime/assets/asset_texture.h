@@ -65,7 +65,7 @@ namespace gemini
 	//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
 		::renderer::Texture* load_texture_from_file(gemini::Allocator& allocator, const char * filename, const TextureParameters& parameters, image::Image& image);
 
-		AssetLoadStatus texture_load_callback(gemini::Allocator& allocator, const char* path, AssetLoadState<Texture>& load_state, const TextureParameters& parameters);
+		AssetLoadStatus texture_load_callback(const char* path, AssetLoadState<Texture>& load_state, const TextureParameters& parameters);
 		void texture_construct_extension(core::StackString<MAX_PATH_SIZE> & extension);
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Texture, TextureParameters, textures);

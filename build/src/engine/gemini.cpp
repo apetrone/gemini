@@ -1303,6 +1303,8 @@ Options:
 		engine_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		renderer_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
 
+		assets::startup();
+
 		// initialize rendering subsystems
 		{
 			render2::RenderParameters render_params(renderer_allocator);
@@ -1331,7 +1333,7 @@ Options:
 			}
 		}
 
-		assets::startup();
+
 
 		if (device)
 		{

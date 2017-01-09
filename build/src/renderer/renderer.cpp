@@ -28,6 +28,8 @@
 #include "gemgl.h"
 #include "gl/opengl_common.h"
 
+#include <runtime/assets.h>
+
 // compile-time selection of these classes starts here.
 
 #if PLATFORM_GLES2_SUPPORT
@@ -376,14 +378,25 @@ namespace render2
 		const param_string& renderer = params["rendering_backend"];
 		LOGV("create device for rendering_backend '%s'\n", renderer());
 
+		Device* device = nullptr;
+
+		platform::PathString shader_root = "shaders";
+		shader_root.append(PATH_SEPARATOR_STRING);
+
 #if defined(PLATFORM_OPENGL_SUPPORT)
-		return MEMORY2_NEW(allocator, OpenGLDevice)(allocator);
+		device = MEMORY2_NEW(allocator, OpenGLDevice)(allocator);
+		shader_root.append("150");
+		gemini::assets::shaders()->set_prefix_path(shader_root);
 #elif defined(PLATFORM_GLES2_SUPPORT)
-		return MEMORY2_NEW(allocator, GLES2Device)(allocator);
+		shader_root.append("100");
+		gemini::assets::shaders()->set_prefix_path(shader_root);
+		device = MEMORY2_NEW(allocator, GLES2Device)(allocator);
 #else
 		#error Unknown renderer!
 		return nullptr;
 #endif
+
+		return device;
 	}
 
 	void destroy_device(gemini::Allocator& allocator, Device* device)

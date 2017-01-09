@@ -29,6 +29,8 @@
 
 #include <core/logging.h>
 #include <core/typedefs.h>
+#include <core/stackstring.h>
+#include <platform/platform.h>
 
 #include "assets.h"
 
@@ -43,10 +45,24 @@ namespace gemini
 			T* asset;
 		}; // AssetLoadState
 
+		template <class AssetClass, class AssetParameterClass>
+		AssetLoadStatus asset_default_create(const char* path, AssetLoadState<AssetClass>& load_state, const AssetParameterClass& parameters)
+		{
+			load_state.asset = MEMORY2_NEW(*load_state.allocator, AssetClass)(load_state.allocator);
+			return AssetLoad_Success;
+		}
+
+		template <class AssetClass>
+		void asset_default_destroy(AssetLoadState<AssetClass>& load_state)
+		{
+			MEMORY2_DELETE(*load_state.allocator, load_state.asset);
+		}
+
 		template <class AssetClass, class AssetParameterClass = AssetParameters>
 		class AssetLibrary
 		{
-			typedef AssetLoadStatus (*AssetLoadCallback)(gemini::Allocator& allocator, const char * path, AssetLoadState<AssetClass>& load_state, const AssetParameterClass & parameters );
+			typedef AssetLoadStatus (*asset_create_fn)(const char* path, AssetLoadState<AssetClass>& load_state, const AssetParameterClass& parameters);
+			typedef void (*asset_destroy_fn) (AssetLoadState<AssetClass>& load_state);
 			typedef void (*AssetConstructExtension)( core::StackString<MAX_PATH_SIZE> & path );
 			typedef void (*AssetIterator)( AssetClass * asset, void * userdata );
 
@@ -55,20 +71,32 @@ namespace gemini
 			typedef std::list<AssetClass*> AssetList;
 
 			unsigned int total_assets;
-			AssetLoadCallback load_callback;
+			asset_create_fn asset_create;
+			asset_destroy_fn asset_destroy;
 			AssetConstructExtension construct_extension_callback;
 			AssetHashTable asset_by_name;
 			AssetList asset_list;
 			AssetClass * default_asset;
 
+
 			gemini::Allocator& allocator;
+
+			platform::PathString prefix_path;
+
 		public:
 
-			AssetLibrary(gemini::Allocator& allocator, AssetLoadCallback callback, AssetConstructExtension extension_callback)
+			AssetLibrary(gemini::Allocator& allocator,
+							AssetConstructExtension extension_callback,
+							asset_create_fn create_asset = asset_default_create<AssetClass, AssetParameterClass>,
+							asset_destroy_fn destroy_asset = asset_default_destroy<AssetClass>)
 				: allocator(allocator)
+				, asset_create(create_asset)
+				, asset_destroy(destroy_asset)
 			{
-				load_callback = callback;
-				assert( load_callback != 0 );
+				// If you hit either of these, assets lifecycle cannot be
+				// managed properly.
+				assert(asset_create != nullptr);
+				assert(asset_destroy != nullptr);
 
 				construct_extension_callback = extension_callback;
 				assert( construct_extension_callback != 0 );
@@ -82,8 +110,6 @@ namespace gemini
 				release_and_purge();
 			}
 
-			AssetClass* allocate_asset() { return MEMORY2_NEW(allocator, AssetClass)(allocator); }
-			void deallocate_asset(AssetClass* asset) { MEMORY2_DELETE(allocator, asset); }
 			unsigned int total_asset_count() const { return total_assets; }
 
 			void for_each( AssetIterator iterator, void * userdata )
@@ -99,17 +125,21 @@ namespace gemini
 				}
 			} // for_each
 
-			// providing stubs for these functions
-			AssetLoadStatus load_with_callback( const char * path, AssetLoadState<AssetClass>& load_state, const AssetParameterClass & parameters )
+			void set_prefix_path(const platform::PathString& prefix)
 			{
-				if ( !load_callback )
-				{
-					return AssetLoad_Failure;
-				}
+				prefix_path = prefix;
 
-				return load_callback(allocator, path, load_state, parameters );
-			} // load_with_callback
+				// ensure prefix_path has a trailing slash
+				prefix_path.strip_trailing(PATH_SEPARATOR);
+				prefix_path.append(PATH_SEPARATOR_STRING);
+			} // set_prefix_path
 
+			const platform::PathString& get_prefix_path() const
+			{
+				return prefix_path;
+			} // get_prefix_path
+
+			// providing stubs for these functions
 			void construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 			{
 				construct_extension_callback(extension);
@@ -128,8 +158,9 @@ namespace gemini
 				// 1) Asset is loaded, obey cache and return loaded asset
 				// 2) Asset is loaded. User requests a reload of asset by ignoring the cache.
 				// 3) Asset is not loaded yet. Load it.
-				AssetClass * asset = 0;
-				core::StackString<MAX_PATH_SIZE> fullpath = path;
+				AssetClass* asset = 0;
+				core::StackString<MAX_PATH_SIZE> fullpath = prefix_path;
+				fullpath.append(path);
 				int load_result = 0;
 				int asset_is_new = 0;
 
@@ -154,7 +185,6 @@ namespace gemini
 				if (!asset)
 				{
 					// case 3
-					asset = allocate_asset();
 					asset_is_new = 1;
 				}
 
@@ -162,24 +192,19 @@ namespace gemini
 				AssetLoadState<AssetClass> load_state;
 				load_state.asset = asset;
 				load_state.allocator = &allocator;
-				load_result = load_with_callback(fullpath(), load_state, parameters);
+				load_result = asset_create(fullpath(), load_state, parameters);
 				if (load_result != AssetLoad_Failure)
 				{
 					if (asset_is_new)
 					{
-						core::StackString<MAX_PATH_SIZE> store_path = path;
-						take_ownership(store_path(), asset);
+						take_ownership(path, load_state.asset);
 					}
 
-					LOGV("loaded asset \"%s\", asset_id = %i\n", fullpath(), asset->Id());
-					return asset;
+					//LOGV("loaded asset \"%s\", asset_id = %i\n", fullpath(), asset->Id());
+					return load_state.asset;
 				}
 				else
 				{
-					if ( asset_is_new )
-					{
-						deallocate_asset( asset );
-					}
 					LOGV( "asset (%s) loading failed!\n", path );
 				}
 
@@ -192,7 +217,8 @@ namespace gemini
 			{
 				if (!this->find_with_path(path))
 				{
-					asset->asset_id = total_assets++;
+					//assert(0); // TODO@apetrone (assets) fix asset ids
+					//asset->asset_id = total_assets++;
 					asset_list.push_back(asset);
 
 					asset_by_name[path] = asset;
@@ -241,8 +267,10 @@ namespace gemini
 				for( ; it != end; ++it )
 				{
 					asset = (*it);
-					asset->release();
-					deallocate_asset( asset );
+					AssetLoadState<AssetClass> load_state;
+					load_state.asset = asset;
+					load_state.allocator = &allocator;
+					asset_destroy(load_state);
 				}
 
 				total_assets = 0;

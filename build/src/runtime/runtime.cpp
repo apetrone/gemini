@@ -53,6 +53,7 @@ namespace gemini
 		struct RuntimeState
 		{
 			gemini::Allocator allocator;
+			render2::Device* render_device;
 		}; // RuntimeState
 
 		RuntimeState _runtime_state;
@@ -111,6 +112,7 @@ namespace gemini
 		uint32_t runtime_flags)
 	{
 		detail::_state->allocator = memory_allocator_default(MEMORY_ZONE_RUNTIME);
+		detail::_state->render_device = nullptr;
 
 		platform::PathString root_path = platform::get_program_directory();
 		LOGV("root_path: %s\n", root_path());
@@ -131,7 +133,7 @@ namespace gemini
 		}
 		else
 		{
-			// default path setu
+			// default path setup
 			platform::PathString application_path = platform::get_user_application_directory(application_data_path);
 			core::filesystem::instance()->root_directory(root_path);
 			core::filesystem::instance()->content_directory(content_path);
@@ -184,11 +186,15 @@ namespace gemini
 			platform::window::startup(platform::window::RenderingBackend_Default);
 		}
 
+		// asset startup
+
 		return platform::Result::success();
 	}
 
 	void runtime_shutdown()
 	{
+		// asset shutdown
+
 		core::filesystem::instance()->shutdown();
 
 		core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
@@ -385,4 +391,14 @@ namespace gemini
 
 		return success;
 	} // runtime_load_application_config
+
+	void runtime_render_device(render2::Device* active_device)
+	{
+		detail::_state->render_device = active_device;
+	} // runtime_render_device
+
+	render2::Device* runtime_render_device()
+	{
+		return detail::_state->render_device;
+	} // runtime_render_device
 } // namespace gemini

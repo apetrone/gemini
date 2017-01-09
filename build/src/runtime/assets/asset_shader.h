@@ -27,7 +27,9 @@
 #include <core/stackstring.h>
 
 #include "assets.h"
-#include "renderer/renderer.h"
+
+#include <renderer/shaderprogram.h>
+
 
 namespace gemini
 {
@@ -36,18 +38,21 @@ namespace gemini
 		// -------------------------------------------------------------
 		// Shader
 
-		struct Shader : public Asset
-		{
-			::renderer::ShaderProgram* program;
+		//struct Shader : public Asset
+		//{
+		//	::renderer::ShaderProgram* program;
 
-			Shader(gemini::Allocator& allocator) : program(nullptr) {}
-			virtual void release();
-		}; // Shader
+		//	Shader(gemini::Allocator& allocator) : program(nullptr) {}
+		//	virtual void release();
+		//}; // Shader
 
-		AssetLoadStatus shader_load_callback(gemini::Allocator& allocator, const char* path, AssetLoadState<Shader>& load_state, const AssetParameters& parameters);
+		AssetLoadStatus shader_load_callback(const char* path, AssetLoadState<render2::Shader>& load_state, const AssetParameters& parameters);
 		void shader_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
 
-		DECLARE_ASSET_LIBRARY_ACCESSOR(Shader, AssetParameters, shaders);
+		DECLARE_ASSET_LIBRARY_ACCESSOR(render2::Shader, AssetParameters, shaders);
+
+		AssetLoadStatus shader_create_function(const char* path, AssetLoadState<render2::Shader>& load_state, const AssetParameters& parameters);
+		void shader_destroy_function(AssetLoadState<render2::Shader>& load_state);
 
 	} // namespace assets
 } // namespace gemini

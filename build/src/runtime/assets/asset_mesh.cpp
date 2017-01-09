@@ -195,8 +195,9 @@ namespace gemini
 					shader_path = "shaders/animation";
 				}
 
-				assets::Shader* shader = assets::shaders()->load_from_path(shader_path.c_str());
-				geo->shader_id = shader->Id();
+				assert(0); // TODO@apetrone (assets) hookup shader handles when loading meshes
+				//assets::Shader* shader = assets::shaders()->load_from_path(shader_path.c_str());
+				//geo->shader_id = shader->Id();
 				geo->draw_type = DRAW_INDEXED_TRIANGLES;
 				geo->name = node["name"].asString().c_str();
 
@@ -629,7 +630,7 @@ namespace gemini
 			return 0;
 		} // find_bone_named
 
-		AssetLoadStatus mesh_load_callback(gemini::Allocator& allocator, const char* path, AssetLoadState<Mesh>& load_state, const AssetParameters& parameters)
+		AssetLoadStatus mesh_load_callback(const char* path, AssetLoadState<Mesh>& load_state, const AssetParameters& parameters)
 		{
 			load_state.asset->path = path;
 			if (core::util::json_load_with_callback(path, /*mesh_load_from_json*/load_json_model, &load_state, true) == core::util::ConfigLoad_Success)

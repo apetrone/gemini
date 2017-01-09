@@ -68,15 +68,17 @@ namespace gemini
 		gemini::Allocator asset_allocator;
 
 		// 1. Implement asset library
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(TextureAssetLibrary, textures)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MeshAssetLibrary, meshes)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MaterialAssetLibrary, materials)
-		//IMPLEMENT_ASSET_LIBRARY_ACCESSOR(EmitterConfigAssetLibrary, emitters)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(ShaderAssetLibrary, shaders)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(SoundAssetLibrary, sounds);
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(textures)
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(meshes)
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(materials)
+		//IMPLEMENT_ASSET_LIBRARY_ACCESSOR(emitters)
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(shaders)
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(sounds);
 
 		void load_default_texture_and_material()
 		{
+			assert(0); // TODO@apetrone (assets) fix this function
+#if 0
 			// setup default texture
 			Texture* default_texture = textures()->allocate_asset();
 			default_texture->texture = image::load_default_texture(default_texture->image);
@@ -100,7 +102,7 @@ namespace gemini
 			materials()->take_ownership( "materials/default", default_material );
 			materials()->set_default(default_material);
 			LOGV( "Loaded default materials; asset_id = %i\n", default_material->asset_id );
-
+#endif
 		} // load_default_texture_and_material
 
 
@@ -109,14 +111,14 @@ namespace gemini
 			asset_allocator = memory_allocator_default(MEMORY_ZONE_ASSETS);
 
 			// 2. allocate asset libraries
-			_textures =		MEMORY2_NEW(asset_allocator, TextureAssetLibrary)			(asset_allocator, texture_load_callback, texture_construct_extension);
-			_meshes =		MEMORY2_NEW(asset_allocator, MeshAssetLibrary)				(asset_allocator, mesh_load_callback, mesh_construct_extension);
-			_materials =	MEMORY2_NEW(asset_allocator, MaterialAssetLibrary)			(asset_allocator, material_load_callback, material_construct_extension);
-			//_emitters =		MEMORY2_NEW(asset_allocator, EmitterConfigAssetLibrary)		(asset_allocator, emitterconfig_load_callback, emitterconfig_construct_extension);
-			_shaders =		MEMORY2_NEW(asset_allocator, ShaderAssetLibrary)			(asset_allocator, shader_load_callback, shader_construct_extension);
-			_sounds =		MEMORY2_NEW(asset_allocator, SoundAssetLibrary)				(asset_allocator, sound_load_callback, sound_construct_extension);
+			_textures =		MEMORY2_NEW(asset_allocator, texturesAssetLibrary)			(asset_allocator, texture_construct_extension, texture_load_callback);
+			_meshes =		MEMORY2_NEW(asset_allocator, meshesAssetLibrary)				(asset_allocator, mesh_construct_extension, mesh_load_callback);
+			_materials =	MEMORY2_NEW(asset_allocator, materialsAssetLibrary)			(asset_allocator, material_construct_extension, material_load_callback);
+			//_emitters =		MEMORY2_NEW(asset_allocator, emitterConfigAssetLibrary)		(asset_allocator, emitterconfig_load_callback, emitterconfig_construct_extension);
+			_shaders =		MEMORY2_NEW(asset_allocator, shadersAssetLibrary)			(asset_allocator, shader_construct_extension, shader_create_function, shader_destroy_function);
+			_sounds =		MEMORY2_NEW(asset_allocator, soundsAssetLibrary)				(asset_allocator, sound_construct_extension, sound_load_callback);
 
-			load_default_texture_and_material();
+			//load_default_texture_and_material();
 		} // startup
 
 		void shutdown()

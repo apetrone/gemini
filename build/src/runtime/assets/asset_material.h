@@ -51,7 +51,7 @@ namespace gemini
 		unsigned int material_type_to_parameter_type(const char* name);
 
 
-		AssetLoadStatus material_load_callback(gemini::Allocator& allocator, const char* path, AssetLoadState<Material>& load_state, const AssetParameters& parameters);
+		AssetLoadStatus material_load_callback(const char* path, AssetLoadState<Material>& load_state, const AssetParameters& parameters);
 		void material_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Material, AssetParameters, materials);
