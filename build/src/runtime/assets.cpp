@@ -38,6 +38,10 @@ namespace gemini
 {
 	namespace assets
 	{
+		AssetParameters::~AssetParameters()
+		{
+		}
+
 		unsigned int find_parameter_mask( ShaderString & name )
 		{
 			// TODO: need to validate the name here against the
@@ -72,8 +76,8 @@ namespace gemini
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(meshes)
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(materials)
 		//IMPLEMENT_ASSET_LIBRARY_ACCESSOR(emitters)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(shaders)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(sounds);
+
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(sounds)
 
 		void load_default_texture_and_material()
 		{
@@ -115,7 +119,7 @@ namespace gemini
 			_meshes =		MEMORY2_NEW(asset_allocator, meshesAssetLibrary)				(asset_allocator, mesh_construct_extension, mesh_load_callback);
 			_materials =	MEMORY2_NEW(asset_allocator, materialsAssetLibrary)			(asset_allocator, material_construct_extension, material_load_callback);
 			//_emitters =		MEMORY2_NEW(asset_allocator, emitterConfigAssetLibrary)		(asset_allocator, emitterconfig_load_callback, emitterconfig_construct_extension);
-			_shaders =		MEMORY2_NEW(asset_allocator, shadersAssetLibrary)			(asset_allocator, shader_construct_extension, shader_create_function, shader_destroy_function);
+
 			_sounds =		MEMORY2_NEW(asset_allocator, soundsAssetLibrary)				(asset_allocator, sound_construct_extension, sound_load_callback);
 
 			//load_default_texture_and_material();
@@ -128,7 +132,7 @@ namespace gemini
 			MEMORY2_DELETE(asset_allocator, _meshes);
 			MEMORY2_DELETE(asset_allocator, _materials);
 			//MEMORY2_DELETE(asset_allocator, _emitters);
-			MEMORY2_DELETE(asset_allocator, _shaders);
+			//MEMORY2_DELETE(asset_allocator, _shaders);
 			MEMORY2_DELETE(asset_allocator, _sounds);
 		} // shutdown
 

@@ -446,7 +446,6 @@ namespace render2
 		virtual void destroy_pipeline(Pipeline* pipeline)
 		{
 			GLPipeline* glp = static_cast<GLPipeline*>(pipeline);
-			destroy_shader(glp->program);
 			destroy_input_layout(glp->input_layout);
 
 			MEMORY2_DELETE(allocator, glp);

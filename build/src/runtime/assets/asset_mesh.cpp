@@ -29,6 +29,7 @@
 #include "assets.h"
 #include "assets/asset_mesh.h"
 #include "assets/asset_material.h"
+#include <runtime/assets/asset_shader.h>
 #include "renderer/renderer.h"
 
 #include <runtime/geometry.h>
@@ -195,9 +196,7 @@ namespace gemini
 					shader_path = "shaders/animation";
 				}
 
-				assert(0); // TODO@apetrone (assets) hookup shader handles when loading meshes
-				//assets::Shader* shader = assets::shaders()->load_from_path(shader_path.c_str());
-				//geo->shader_id = shader->Id();
+				//geo->shader_id = assets::shaders()->load_from_path(shader_path.c_str());
 				geo->draw_type = DRAW_INDEXED_TRIANGLES;
 				geo->name = node["name"].asString().c_str();
 

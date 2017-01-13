@@ -32,7 +32,7 @@
 #include <core/stackstring.h>
 #include <platform/platform.h>
 
-#include "assets.h"
+#include <runtime/assets_common.h>
 
 namespace gemini
 {
@@ -112,6 +112,7 @@ namespace gemini
 
 			unsigned int total_asset_count() const { return total_assets; }
 
+			/*
 			void for_each( AssetIterator iterator, void * userdata )
 			{
 				AssetClass * asset = 0;
@@ -124,6 +125,7 @@ namespace gemini
 					iterator( asset, userdata );
 				}
 			} // for_each
+			*/
 
 			void set_prefix_path(const platform::PathString& prefix)
 			{

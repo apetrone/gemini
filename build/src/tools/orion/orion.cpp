@@ -366,6 +366,11 @@ public:
 				device->render_target_read_pixels(render_target, image);
 				image::save_image_to_file(image, "test.png");
 			}
+
+			if (event.key == BUTTON_F5)
+			{
+
+			}
 		}
 	}
 

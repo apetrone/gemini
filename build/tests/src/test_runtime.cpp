@@ -227,6 +227,240 @@ UNITTEST(logging)
 	LOGW("Warning, %i parameters missing!\n", 3);
 }
 
+#if 0
+// load asset via path
+// asset should be cached
+// assets should be re-loadable
+// assets live in runtime, so anything at runtime or above can access them.
+// assets should have external create/destroy callbacks
+//	- this allows a subsystem to customize that
+// assets should be returned as handles.
+//	- this allows handles to be invalid, but not return raw pointers.
+//	- this also allows handles to be lazily loaded or streamed
+// should allow a default asset of sorts -- optional. If a named asset cannot be found.
+// lookup asset pointer by asset handle (id)
+// purge all assets
+// allow insertion of arbitrary assets (creating default material/texture, for example)
+// allow a prefix-path to be prepended to the search path
+// allow asset parameters (only texture uses this)
+// specify an allocator which can be passed in to create/destroy functions
+#endif
+
+namespace gemini
+{
+	enum AssetLoadStatus
+	{
+		// The asset is loaded and ready to use.
+		AssetLoad_Success,
+
+		// The asset could not be loaded.
+		AssetLoad_Failure
+	};
+
+	template <class T, class Y>
+	class AssetLibrary2
+	{
+	public:
+		struct Handle
+		{
+			uint32_t index;
+		};
+
+	protected:
+		typedef uint16_t HandleIndex;
+		typedef HashSet<platform::PathString, HandleIndex> HandleIndexByName;
+
+		struct LoadState
+		{
+			Allocator* allocator;
+			T* asset;
+		}; // AssetLoadState
+
+		Allocator& allocator;
+		Array<T*> assets;
+		T* default_asset;
+		HandleIndexByName handle_by_name;
+		platform::PathString prefix_uri;
+
+	private:
+		Y* instance()
+		{
+			return reinterpret_cast<Y*>(this);
+		}
+
+		Y& instance_reference()
+		{
+			return *instance();
+		}
+
+	public:
+
+		AssetLibrary2(gemini::Allocator& asset_allocator)
+			: allocator(asset_allocator)
+			, assets(asset_allocator)
+			, default_asset(nullptr)
+			, handle_by_name(asset_allocator)
+		{
+		}
+
+		virtual ~AssetLibrary2()
+		{
+			purge();
+		}
+
+		void default(T* asset)
+		{
+			default_asset = asset;
+		}
+
+		T* default() const
+		{
+			return default_asset;
+		}
+
+		bool handle_is_valid(Handle handle)
+		{
+			return (handle.index > 0) && (handle.index <= assets.size());
+		} // handle_is_valid
+
+		Handle load(const char* relative_path, bool ignore_cache = false)
+		{
+			// 1. Check to see if the asset is already loaded...
+			platform::PathString fullpath = prefix_uri;
+			fullpath.append(relative_path);
+			uint8_t asset_is_new = 1;
+			HandleIndex handle_index;
+			if (handle_by_name.has_key(fullpath()))
+			{
+				asset_is_new = 0;
+				handle_index = handle_by_name[fullpath()];
+
+				// An entry exists for it: return it.
+				if (!ignore_cache)
+				{
+					Handle handle;
+					handle.index = handle_index;
+					return handle;
+				}
+			}
+
+			LoadState load_state;
+			load_state.asset = nullptr;
+			load_state.allocator = &allocator;
+			if (handle_index > 0)
+			{
+				// Populate with the loaded asset if exists.
+				load_state.asset = assets[handle_index - 1];
+			}
+
+			AssetLoadStatus load_result = instance_reference().create(load_state, fullpath);
+			if (load_result != AssetLoad_Failure)
+			{
+				Handle handle;
+				if (asset_is_new)
+				{
+					handle = take_ownership(fullpath, load_state.asset, false);
+				}
+
+				return handle;
+			}
+			else
+			{
+				LOGW("FAILED to load asset [%s]\n", relative_path);
+			}
+
+			Handle handle;
+			handle.index = 0;
+			return handle;
+		} // load
+
+		T* lookup(Handle handle)
+		{
+			if (!handle_is_valid(handle))
+			{
+				return default_asset;
+			}
+
+			return assets[handle.index - 1];
+		} // lookup
+
+		void purge()
+		{
+			for (size_t index = 0; index < assets.size(); ++index)
+			{
+				LoadState load_state;
+				load_state.allocator = &allocator;
+				load_state.asset = assets[index];
+				instance_reference().destroy(load_state);
+			}
+			assets.clear();
+			handle_by_name.clear();
+		} // purge
+
+		void prefix_path(const platform::PathString& prefix)
+		{
+			prefix_uri = prefix;
+
+			// ensure prefix_path has a trailing slash
+			prefix_uri.strip_trailing(PATH_SEPARATOR);
+			prefix_uri.append(PATH_SEPARATOR_STRING);
+		} // prefix_path
+
+		const platform::PathString& prefix_path() const
+		{
+			return prefix_uri;
+		} // prefix_path
+
+		Handle take_ownership(const platform::PathString& path, T* asset, bool verify_unique = true)
+		{
+			Handle handle;
+
+			if (!verify_unique || !handle_by_name.has_key(path))
+			{
+				assert(assets.size() < USHRT_MAX);
+				uint16_t index = static_cast<uint16_t>(assets.size());
+				handle_by_name[path] = index + 1;
+				assets.push_back(asset);
+
+				handle.index = (index + 1);
+				return handle;
+			}
+
+			handle.index = 0;
+			return handle;
+		} // take_ownership
+	};
+
+	struct Shader
+	{
+		int object_id;
+	};
+
+	class ShaderLibrary : public AssetLibrary2<Shader, ShaderLibrary>
+	{
+	public:
+
+		ShaderLibrary(gemini::Allocator& allocator)
+			: AssetLibrary2(allocator)
+		{
+		}
+
+		AssetLoadStatus create(LoadState& state, platform::PathString& fullpath)
+		{
+			state.asset = MEMORY2_NEW(*state.allocator, Shader);
+			state.asset->object_id = 37;
+
+			return AssetLoad_Failure;
+		}
+
+		void destroy(LoadState& state)
+		{
+			MEMORY2_DELETE(*state.allocator, state.asset);
+		}
+	};
+} // namespace gemini
+
+
 int main(int, char**)
 {
 	gemini::core_startup();
@@ -234,7 +468,32 @@ int main(int, char**)
 
 	using namespace gemini;
 
-	unittest::UnitTest::execute();
+	//unittest::UnitTest::execute();
+
+	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_ASSETS);
+	{
+		ShaderLibrary sl(allocator);
+		sl.prefix_path("shaders/150");
+
+		Shader def_shader;
+		def_shader.object_id = 42;
+		sl.default(&def_shader);
+
+		ShaderLibrary::Handle handle = sl.load("test");
+		handle = sl.load("test2");
+		handle = sl.load("test3");
+		handle = sl.load("test4");
+		handle = sl.load("test5");
+		handle = sl.load("test6");
+
+		Shader* shader_ptr = sl.lookup(handle);
+
+
+		handle = sl.load("test6");
+		Shader* second_request = sl.lookup(handle);
+
+		assert(shader_ptr == second_request);
+	}
 
 	gemini::runtime_shutdown();
 	gemini::core_shutdown();

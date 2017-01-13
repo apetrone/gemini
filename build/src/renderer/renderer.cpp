@@ -28,7 +28,9 @@
 #include "gemgl.h"
 #include "gl/opengl_common.h"
 
-#include <runtime/assets.h>
+//#include <runtime/assets.h>
+
+#include <runtime/assets/asset_shader.h>
 
 // compile-time selection of these classes starts here.
 
@@ -363,6 +365,15 @@ namespace render2
 	#error Unknown renderer!
 #endif
 
+namespace gemini
+{
+	namespace assets
+	{
+		gemini::Allocator shader_allocator;
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(shaders)
+	}
+}
+
 namespace render2
 {
 	namespace detail
@@ -370,8 +381,14 @@ namespace render2
 		ResourceProvider* resource_provider = nullptr;
 	}
 
+
+
 	Device* create_device(gemini::Allocator& allocator, const RenderParameters& params)
 	{
+		using namespace gemini::assets;
+		gemini::assets::shader_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_ASSETS);
+		_shaders =		MEMORY2_NEW(gemini::assets::shader_allocator, shadersAssetLibrary)			(shader_allocator, shader_construct_extension, shader_create_function, shader_destroy_function);
+
 		// determine the renderer
 		assert(params.has_key("rendering_backend"));
 
@@ -401,6 +418,8 @@ namespace render2
 
 	void destroy_device(gemini::Allocator& allocator, Device* device)
 	{
+		MEMORY2_DELETE(gemini::assets::shader_allocator, gemini::assets::_shaders);
+		gemini::assets::_shaders = nullptr;
 		MEMORY2_DELETE(allocator, device);
 	}
 

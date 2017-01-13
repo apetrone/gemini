@@ -28,6 +28,7 @@
 #include <core/logging.h>
 
 #include <runtime/assets.h>
+#include <runtime/assets/asset_shader.h>
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
 
