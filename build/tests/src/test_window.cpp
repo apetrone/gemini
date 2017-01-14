@@ -26,6 +26,7 @@
 #include <renderer/debug_draw.h>
 #include <renderer/font.h>
 #include <renderer/renderer.h>
+#include <renderer/shader_library.h>
 
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
@@ -280,7 +281,7 @@ Options:
 
 			// setup shaders
 			render2::PipelineDescriptor desc;
-			desc.shader = device->create_shader("vertexcolor");
+			desc.shader = render2::shaders()->load("vertexcolor");
 			render2::VertexDescriptor& vertex_format = desc.vertex_description;
 			vertex_format.add("in_position", render2::VD_FLOAT, 3);
 			vertex_format.add("in_color", render2::VD_FLOAT, 4);

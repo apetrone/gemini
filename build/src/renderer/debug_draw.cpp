@@ -649,8 +649,7 @@ namespace debugdraw
 		// line pipeline
 		{
 			render2::PipelineDescriptor descriptor;
-			gemini::AssetHandle handle = render2::shaders()->load("debug");
-			descriptor.shader = render2::shaders()->lookup(handle);
+			descriptor.shader = render2::shaders()->load("debug");
 			descriptor.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 			descriptor.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 			descriptor.input_layout = device->create_input_layout(descriptor.vertex_description, descriptor.shader);
@@ -664,8 +663,7 @@ namespace debugdraw
 		// triangle pipeline
 		{
 			render2::PipelineDescriptor descriptor;
-			gemini::AssetHandle handle = render2::shaders()->load("vertexcolortexture");
-			descriptor.shader = render2::shaders()->lookup(handle);
+			descriptor.shader = render2::shaders()->load("vertexcolortexture");
 			descriptor.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 			descriptor.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 			descriptor.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
@@ -687,8 +685,7 @@ namespace debugdraw
 		// font pipeline
 		{
 			render2::PipelineDescriptor descriptor;
-			gemini::AssetHandle handle = render2::shaders()->load("font");
-			descriptor.shader = render2::shaders()->lookup(handle);
+			descriptor.shader = render2::shaders()->load("font");
 			descriptor.vertex_description.add("in_position", render2::VD_FLOAT, 2);
 			descriptor.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 			descriptor.vertex_description.add("in_uv", render2::VD_FLOAT, 2);

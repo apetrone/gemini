@@ -124,7 +124,7 @@ namespace render2
 
 	struct GLPipeline : public Pipeline
 	{
-		GLShader* program;
+		gemini::AssetHandle shader;
 		VertexDescriptor vertex_description;
 		GLInputLayout* input_layout;
 

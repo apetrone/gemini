@@ -27,6 +27,8 @@
 #include "commandbuffer.h"
 #include "r2_opengl_common.h"
 
+#include <renderer/shader_library.h>
+
 namespace render2
 {
 	// ---------------------------------------------------------------------
@@ -114,6 +116,94 @@ namespace render2
 	}
 
 
+	// ---------------------------------------------------------------------
+	// input layout
+	// ---------------------------------------------------------------------
+	InputLayout* OpenGLDevice::create_input_layout(const VertexDescriptor& descriptor, gemini::AssetHandle shader_handle)
+	{
+		GLInputLayout* gllayout = MEMORY2_NEW(allocator, GLInputLayout)(allocator);
+
+		GLShader* shader = static_cast<GLShader*>(shaders()->lookup(shader_handle));
+		assert(shader);
+		setup_input_layout(gllayout, descriptor, shader);
+
+		return gllayout;
+	}
+
+
+	// ---------------------------------------------------------------------
+	// pipeline
+	// ---------------------------------------------------------------------
+	void OpenGLDevice::activate_pipeline(GLPipeline* pipeline, GLBuffer* vertex_buffer)
+	{
+		GLShader* shader = static_cast<GLShader*>(render2::shaders()->lookup(pipeline->shader));
+		assert(shader);
+		gl.UseProgram(shader->id);
+		gl.CheckError("activate_pipeline - UseProgram");
+
+		// bind uniforms
+		common_setup_uniforms(shader, pipeline->constants());
+
+		// determine if the VAO for the vertex_buffer needs to be built
+		if (!vertex_buffer->is_vao_valid())
+		{
+			vertex_buffer->create_vao();
+
+			vertex_buffer->bind_vao();
+
+			vertex_buffer->bind();
+
+			GLInputLayout* layout = static_cast<GLInputLayout*>(pipeline->input_layout);
+			for (size_t index = 0; index < layout->items.size(); ++index)
+			{
+				const GLInputLayout::Description& item = layout->items[index];
+
+				assert(item.type != GL_INVALID_ENUM);
+
+				assert(item.element_count >= 1 && item.element_count <= 4);
+
+				gl.EnableVertexAttribArray(static_cast<GLuint>(index));
+				gl.CheckError("EnableVertexAttribArray");
+
+				gl.VertexAttribPointer(static_cast<GLuint>(index),
+					item.element_count,
+					static_cast<GLenum>(item.type),
+					item.normalized,
+					static_cast<GLsizei>(layout->vertex_stride),
+					(void*)item.offset
+				);
+				gl.CheckError("VertexAttribPointer");
+			}
+
+			vertex_buffer->unbind_vao();
+
+			vertex_buffer->unbind();
+		}
+
+
+		// see if we need to enable blending
+		if (pipeline->enable_blending)
+		{
+			gl.Enable(GL_BLEND);
+			gl.CheckError("Enable GL_BLEND");
+
+			gl.BlendFunc(pipeline->blend_source, pipeline->blend_destination);
+			gl.CheckError("BlendFunc");
+		}
+	} // activate_pipeline
+
+	void OpenGLDevice::deactivate_pipeline(GLPipeline* pipeline)
+	{
+		gl.UseProgram(0);
+		gl.CheckError("UseProgram(0)");
+
+		if (pipeline->enable_blending)
+		{
+			gl.Disable(GL_BLEND);
+			gl.CheckError("Disable GL_BLEND");
+		}
+	} // deactivate_pipeline
+
 
 	// ---------------------------------------------------------------------
 	// texture
@@ -140,7 +230,12 @@ namespace render2
 	Shader* OpenGLDevice::create_shader(ShaderSource** sources, uint32_t total_sources)
 	{
 		GLShader* shader = MEMORY2_NEW(allocator, GLShader)(allocator);
-		shader->build_from_sources(allocator, sources, total_sources);
-		return shader;
+		if (0 == shader->build_from_sources(allocator, sources, total_sources))
+		{
+			return shader;
+		}
+
+		MEMORY2_DELETE(allocator, shader);
+		return nullptr;
 	} // create_shader
 } // namespace render2

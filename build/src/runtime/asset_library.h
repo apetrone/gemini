@@ -169,6 +169,13 @@ namespace gemini
 				{
 					handle = take_ownership(fullpath, load_state.asset, false);
 				}
+				else
+				{
+					// swap out the old with the new.
+					assert(handle_index > 0);
+
+					assets[handle_index - 1] = load_state.asset;
+				}
 
 				return handle;
 			}

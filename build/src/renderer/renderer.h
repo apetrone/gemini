@@ -37,6 +37,8 @@
 #include <core/str.h>
 #include <core/hashset.h>
 
+#include <runtime/asset_handle.h>
+
 namespace renderer
 {
 	typedef String ShaderString;
@@ -441,7 +443,7 @@ namespace render2
 		{
 		}
 
-		Shader* shader;
+		gemini::AssetHandle shader;
 		uint32_t attachments[ MAX_PIPELINE_ATTACHMENTS ];
 		VertexDescriptor vertex_description;
 		InputLayout* input_layout;

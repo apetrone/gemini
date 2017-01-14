@@ -70,7 +70,7 @@ namespace render2
 		// ---------------------------------------------------------------------
 		// input layout
 		// ---------------------------------------------------------------------
-		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader) = 0;
+		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, gemini::AssetHandle shader_handle) = 0;
 		virtual void destroy_input_layout(InputLayout* layout) = 0;
 
 		// ---------------------------------------------------------------------

@@ -31,6 +31,8 @@
 
 #include <core/array.h>
 
+#include <runtime/asset_handle.h>
+
 namespace render2
 {
 	using namespace renderer;
@@ -205,76 +207,8 @@ namespace render2
 
 	public:
 
-		void activate_pipeline(GLPipeline* pipeline, GLBuffer* vertex_buffer)
-		{
-			GLShader* shader = pipeline->program;
-			gl.UseProgram(shader->id);
-			gl.CheckError("activate_pipeline - UseProgram");
-
-			// bind uniforms
-			common_setup_uniforms(shader, pipeline->constants());
-
-			// determine if the VAO for the vertex_buffer needs to be built
-			if (!vertex_buffer->is_vao_valid())
-			{
-				vertex_buffer->create_vao();
-
-				vertex_buffer->bind_vao();
-
-				vertex_buffer->bind();
-
-				GLInputLayout* layout = static_cast<GLInputLayout*>(pipeline->input_layout);
-				for (size_t index = 0; index < layout->items.size(); ++index)
-				{
-					const GLInputLayout::Description& item = layout->items[index];
-
-					assert(item.type != GL_INVALID_ENUM);
-
-					assert(item.element_count >= 1 && item.element_count <= 4);
-
-					gl.EnableVertexAttribArray(static_cast<GLuint>(index));
-					gl.CheckError("EnableVertexAttribArray");
-
-					gl.VertexAttribPointer(static_cast<GLuint>(index),
-						item.element_count,
-						static_cast<GLenum>(item.type),
-						item.normalized,
-						static_cast<GLsizei>(layout->vertex_stride),
-						(void*)item.offset
-					);
-					gl.CheckError("VertexAttribPointer");
-				}
-
-				vertex_buffer->unbind_vao();
-
-				vertex_buffer->unbind();
-			}
-
-
-			// see if we need to enable blending
-			if (pipeline->enable_blending)
-			{
-				gl.Enable(GL_BLEND);
-				gl.CheckError("Enable GL_BLEND");
-
-				gl.BlendFunc(pipeline->blend_source, pipeline->blend_destination);
-				gl.CheckError("BlendFunc");
-			}
-		}
-
-		void deactivate_pipeline(GLPipeline* pipeline)
-		{
-			gl.UseProgram(0);
-			gl.CheckError("UseProgram(0)");
-
-			if (pipeline->enable_blending)
-			{
-				gl.Disable(GL_BLEND);
-				gl.CheckError("Disable GL_BLEND");
-			}
-		}
-
-
+		void activate_pipeline(GLPipeline* pipeline, GLBuffer* vertex_buffer);
+		void deactivate_pipeline(GLPipeline* pipeline);
 
 		// submit queue command buffers to GPU
 		virtual void submit()
@@ -418,15 +352,7 @@ namespace render2
 		// ---------------------------------------------------------------------
 		// input layout
 		// ---------------------------------------------------------------------
-		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader)
-		{
-			GLInputLayout* gllayout = MEMORY2_NEW(allocator, GLInputLayout)(allocator);
-			GLShader* glshader = static_cast<GLShader*>(shader);
-
-			setup_input_layout(gllayout, descriptor, glshader);
-
-			return gllayout;
-		}
+		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, gemini::AssetHandle shader_handle);
 
 		virtual void destroy_input_layout(InputLayout* layout)
 		{

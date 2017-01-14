@@ -27,6 +27,8 @@
 #include <renderer/gl/gemgl.h>
 #include "r2_opengl_common.h"
 
+#include <runtime/asset_handle.h>
+
 namespace render2
 {
 	using namespace renderer;
@@ -341,7 +343,7 @@ namespace render2
 			glb->resize(data_size);
 		}
 
-		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader)
+		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, gemini::AssetHandle shader)
 		{
 			GLInputLayout* gllayout = MEMORY2_NEW(allocator, GLInputLayout)(allocator);
 			GLShader* glshader = static_cast<GLShader*>(shader);

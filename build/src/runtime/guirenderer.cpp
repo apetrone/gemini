@@ -71,8 +71,7 @@ void GUIRenderer::startup(gui::Compositor* target_compositor)
 
 	// standard gui pipeline
 	render2::PipelineDescriptor desc;
-	gemini::AssetHandle handle = render2::shaders()->load("gui");
-	desc.shader = render2::shaders()->lookup(handle);
+	desc.shader = render2::shaders()->load("gui");
 	desc.vertex_description.add("in_position", render2::VD_FLOAT, 2);
 	desc.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 	desc.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
@@ -86,8 +85,7 @@ void GUIRenderer::startup(gui::Compositor* target_compositor)
 
 	// font pipeline
 	render2::PipelineDescriptor fontdesc;
-	handle = render2::shaders()->load("font");
-	fontdesc.shader = render2::shaders()->lookup(handle);
+	fontdesc.shader = render2::shaders()->load("font");
 	fontdesc.vertex_description.add("in_position", render2::VD_FLOAT, 2);
 	fontdesc.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 	fontdesc.vertex_description.add("in_uv", render2::VD_FLOAT, 2);

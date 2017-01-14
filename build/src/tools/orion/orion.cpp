@@ -370,7 +370,7 @@ public:
 
 			if (event.key == BUTTON_F5)
 			{
-
+				render2::shaders()->load("gui", true);
 			}
 		}
 	}
@@ -770,8 +770,7 @@ Options:
 
 			// setup shaders
 			render2::PipelineDescriptor desc;
-			AssetHandle handle = render2::shaders()->load("vertexcolor");
-			desc.shader = render2::shaders()->lookup(handle);
+			desc.shader = render2::shaders()->load("vertexcolor");
 			render2::VertexDescriptor& vertex_format = desc.vertex_description;
 			vertex_format.add("in_position", render2::VD_FLOAT, 3);
 			vertex_format.add("in_color", render2::VD_FLOAT, 4);
@@ -782,8 +781,7 @@ Options:
 
 			{
 				render2::PipelineDescriptor desc;
-				AssetHandle handle = render2::shaders()->load("vertexcolor");
-				desc.shader = render2::shaders()->lookup(handle);
+				desc.shader = render2::shaders()->load("vertexcolor");
 				render2::VertexDescriptor& vertex_format = desc.vertex_description;
 				vertex_format.add("in_position", render2::VD_FLOAT, 3);
 				vertex_format.add("in_color", render2::VD_FLOAT, 4);

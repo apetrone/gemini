@@ -242,9 +242,8 @@ namespace render2
 		if (!is_linked)
 		{
 			query_program_info_log(allocator, id);
+			return -1;
 		}
-
-		assert(is_linked == 1);
 
 
 		// activate program
@@ -345,9 +344,8 @@ namespace render2
 		, enable_blending(false)
 		, blend_source(GL_ONE)
 		, blend_destination(GL_ZERO)
+		, shader(descriptor.shader)
 	{
-		program = (GLShader*)descriptor.shader;
-
 		GLenum primitive_enum[] = {
 			GL_LINES,
 			GL_TRIANGLES
@@ -925,8 +923,6 @@ namespace render2
 		{
 			query_shader_info_log(allocator, program, shader);
 		}
-
-		assert(is_compiled);
 
 		return (is_compiled == 1);
 	} // common_compile_source

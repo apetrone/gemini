@@ -43,6 +43,7 @@
 #include <renderer/renderer.h>
 #include <renderer/vertexbuffer.h>
 #include <renderer/font.h>
+#include <renderer/shader_library.h>
 
 #include <ui/ui.h>
 #include <ui/compositor.h>
@@ -812,7 +813,7 @@ Options:
 
 		// setup the pipeline
 		render2::PipelineDescriptor desc;
-		desc.shader = device->create_shader("vertexcolor");
+		desc.shader = render2::shaders()->load("vertexcolor");
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);

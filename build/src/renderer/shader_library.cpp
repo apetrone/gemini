@@ -43,46 +43,49 @@ namespace gemini
 	{
 		LOGV("create shader \"%s\"\n", fullpath());
 
-		if (state.asset)
+		render2::Shader* old_asset = state.asset;
+		// We could determine here how many stages we need to load.
+		// I'll leave that as a TODO for now...
+
+		platform::PathString asset_uri = fullpath;
+		asset_uri.append(".vert");
+
+		// create shaders
+		Array<unsigned char> vertex_shader_source(*state.allocator);
+		core::filesystem::instance()->virtual_load_file(vertex_shader_source, asset_uri());
+		assert(!vertex_shader_source.empty());
+
+		render2::ShaderSource vertex_source;
+		vertex_source.data = &vertex_shader_source[0];
+		vertex_source.data_size = vertex_shader_source.size();
+		vertex_source.stage_type = render2::SHADER_STAGE_VERTEX;
+
+		asset_uri = fullpath;
+		asset_uri.append(".frag");
+		Array<unsigned char> fragment_shader_source(*state.allocator);
+		core::filesystem::instance()->virtual_load_file(fragment_shader_source, asset_uri());
+		assert(!fragment_shader_source.empty());
+
+		render2::ShaderSource frag_source;
+		frag_source.data = &fragment_shader_source[0];
+		frag_source.data_size = fragment_shader_source.size();
+		frag_source.stage_type = render2::SHADER_STAGE_FRAGMENT;
+
+		render2::ShaderSource* sources[] = { &vertex_source, &frag_source };
+
+		render2::Shader* new_shader = device->create_shader(sources, 2);
+		if (new_shader)
 		{
-			// re-load a shader
-			assert(0); // not yet implemented!
-		}
-		else
-		{
-			// We could determine here how many stages we need to load.
-			// I'll leave that as a TODO for now...
+			if (old_asset)
+			{
+				destroy(state);
+			}
 
-			platform::PathString asset_uri = fullpath;
-			asset_uri.append(".vert");
-
-			// create shaders
-			Array<unsigned char> vertex_shader_source(*state.allocator);
-			core::filesystem::instance()->virtual_load_file(vertex_shader_source, asset_uri());
-			assert(!vertex_shader_source.empty());
-
-			render2::ShaderSource vertex_source;
-			vertex_source.data = &vertex_shader_source[0];
-			vertex_source.data_size = vertex_shader_source.size();
-			vertex_source.stage_type = render2::SHADER_STAGE_VERTEX;
-
-			asset_uri = fullpath;
-			asset_uri.append(".frag");
-			Array<unsigned char> fragment_shader_source(*state.allocator);
-			core::filesystem::instance()->virtual_load_file(fragment_shader_source, asset_uri());
-			assert(!fragment_shader_source.empty());
-
-			render2::ShaderSource frag_source;
-			frag_source.data = &fragment_shader_source[0];
-			frag_source.data_size = fragment_shader_source.size();
-			frag_source.stage_type = render2::SHADER_STAGE_FRAGMENT;
-
-			render2::ShaderSource* sources[] = { &vertex_source, &frag_source };
-
-			state.asset = device->create_shader(sources, 2);
+			state.asset = new_shader;
+			return AssetLoad_Success;
 		}
 
-		return AssetLoad_Success;
+		return AssetLoad_Failure;
 	}
 
 	void ShaderLibrary::destroy(LoadState& state)
