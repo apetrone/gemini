@@ -34,6 +34,26 @@
 
 #include <runtime/asset_handle.h>
 
+#if 0
+// Design Goals
+// load asset via path
+// asset should be cached
+// assets should be re-loadable
+// assets live in runtime, so anything at runtime or above can access them.
+// assets should have external create/destroy callbacks
+//	- this allows a subsystem to customize that
+// assets should be returned as handles.
+//	- this allows handles to be invalid, but not return raw pointers.
+//	- this also allows handles to be lazily loaded or streamed
+// should allow a default asset of sorts -- optional. If a named asset cannot be found.
+// lookup asset pointer by asset handle (id)
+// purge all assets
+// allow insertion of arbitrary assets (creating default material/texture, for example)
+// allow a prefix-path to be prepended to the search path
+// allow asset parameters (only texture uses this)
+// specify an allocator which can be passed in to create/destroy functions
+#endif
+
 namespace gemini
 {
 	enum AssetLoadStatus
@@ -115,6 +135,9 @@ namespace gemini
 			fullpath.append(relative_path);
 			uint8_t asset_is_new = 1;
 			HandleIndex handle_index;
+			handle_index = 0;
+
+			platform::path::normalize(&fullpath[0]);
 			if (handle_by_name.has_key(fullpath()))
 			{
 				asset_is_new = 0;

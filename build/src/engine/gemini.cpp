@@ -58,7 +58,6 @@
 #include "input.h"
 
 #include "assets/asset_font.h"
-#include "assets/asset_shader.h"
 #include "assets/asset_mesh.h"
 #include "scenelink.h"
 #include "audio.h"

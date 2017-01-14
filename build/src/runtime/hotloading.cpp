@@ -28,6 +28,8 @@
 #include <threadsafequeue.h>
 #include <core/stackstring.h>
 
+#include <renderer/shader_library.h>
+
 #include <json/json.h>
 
 #include "hotloading.h"
@@ -301,8 +303,7 @@ namespace gemini
 					// TODO: replace this with a better mechanism
 					if (dirname == "shaders")
 					{
-						//assets::shaders()->load_from_path(item.c_str(), assets::AssetParameters(), true);
-						LOGE("TODO: re-implement shader reloading\n");
+						render2::shaders()->load(item.c_str(), true);
 					}
 					else if (dirname == "models")
 					{

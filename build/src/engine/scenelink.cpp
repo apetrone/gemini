@@ -30,7 +30,6 @@
 #include <renderer/debug_draw.h>
 
 
-#include <assets/asset_shader.h>
 #include <assets/asset_material.h>
 
 #include <sdk/engine_api.h>
@@ -39,6 +38,8 @@
 
 // for MAX_BONES
 #include <shared/shared_constants.h>
+
+#include <renderer/shader_library.h>
 
 namespace gemini
 {
@@ -68,7 +69,13 @@ namespace gemini
 		// finally, draw from the queue
 		for(::renderer::RenderBlock& block : queue->render_list)
 		{
-			assets::Shader* shader = assets::shaders()->find_with_id(block.shader_id);
+			render2::Shader* shader = render2::shaders()->lookup(block.shader_id);
+			assert(shader);
+
+			// Must implement the new renderer!
+			assert(0);
+			//assets::Shader* shader = assets::shaders()->find_with_id(block.shader_id);
+
 			assets::Material* material = assets::materials()->find_with_id(block.material_id);
 
 			stream.add_shader(shader->program);
