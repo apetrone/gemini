@@ -32,7 +32,6 @@
 
 #include "hotloading.h"
 #include "assets/asset_material.h"
-#include "assets/asset_shader.h"
 
 #include "civetweb.h"
 #include "CivetServer.h"
@@ -302,7 +301,8 @@ namespace gemini
 					// TODO: replace this with a better mechanism
 					if (dirname == "shaders")
 					{
-						assets::shaders()->load_from_path(item.c_str(), assets::AssetParameters(), true);
+						//assets::shaders()->load_from_path(item.c_str(), assets::AssetParameters(), true);
+						LOGE("TODO: re-implement shader reloading\n");
 					}
 					else if (dirname == "models")
 					{

@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2016- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -23,41 +23,52 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #pragma once
-#include <runtime/assets_common.h>
 
-#include <runtime/assetlibrary.h>
+#include <core/stackstring.h>
+#include <core/mathlib.h> // for glm
 
-#include <runtime/assets/asset_texture.h>
-//#include <runtime/assets/asset_shader.h>
-#include <runtime/assets/asset_material.h>
-#include <runtime/assets/asset_mesh.h>
-//#include <runtime/assets/asset_emitter.h>
-#include <runtime/assets/asset_sound.h>
+#include <platform/platform.h>
+
+#include <renderer/color.h>
 
 namespace gemini
 {
 	namespace assets
 	{
-		// Asset utils
-		enum class AssetType
+		typedef unsigned int AssetID;
+
+		struct Asset
 		{
-			Shader,
-			Sound
-		}; // AssetType
+			assets::AssetID asset_id;
+			virtual ~Asset() {}
+			virtual void release() = 0;
 
-		// called to initialize default textures and other required resources.
-		void startup();
+			inline unsigned int Id() const
+			{
+				return asset_id;
+			} // Id
+		}; // Asset
 
-		// purge all assets
-		void purge();
+		struct AssetParameters
+		{
+			virtual ~AssetParameters();
+		}; // AssetParameters
 
-		// purge all assets and reclaim unused memory
-		void shutdown();
-
-		// Given a relative path to an asset, tack on a platform-specific file extension
-		void append_asset_extension(AssetType type, core::StackString< MAX_PATH_SIZE > & path);
-
-		// do we still need this?
-		unsigned int find_parameter_mask(::renderer::ShaderString& name);
+		enum AssetLoadStatus
+		{
+			AssetLoad_Success = 0,
+			AssetLoad_Failure = 1
+		};
 	} // namespace assets
 } // namespace gemini
+
+#define IMPLEMENT_ASSET_LIBRARY_ACCESSOR( name )\
+	name##AssetLibrary* _##name = 0;\
+	name##AssetLibrary* name()\
+	{\
+		return _##name;\
+	}
+
+#define DECLARE_ASSET_LIBRARY_ACCESSOR( type, parameter_class, name )\
+	typedef AssetLibrary<type, parameter_class> name##AssetLibrary;\
+	name##AssetLibrary * name()

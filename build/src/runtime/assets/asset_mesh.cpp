@@ -29,13 +29,15 @@
 #include "assets.h"
 #include "assets/asset_mesh.h"
 #include "assets/asset_material.h"
-#include <runtime/assets/asset_shader.h>
+
 #include "renderer/renderer.h"
 
 #include <runtime/geometry.h>
 
 // for MAX_INFLUENCES_PER_VERTEX
 #include <shared/shared_constants.h>
+
+#include <renderer/shader_library.h>
 
 using namespace renderer;
 
@@ -196,7 +198,7 @@ namespace gemini
 					shader_path = "shaders/animation";
 				}
 
-				//geo->shader_id = assets::shaders()->load_from_path(shader_path.c_str());
+				geo->shader_id = render2::shaders()->load(shader_path.c_str());
 				geo->draw_type = DRAW_INDEXED_TRIANGLES;
 				geo->name = node["name"].asString().c_str();
 

@@ -391,14 +391,4 @@ namespace gemini
 
 		return success;
 	} // runtime_load_application_config
-
-	void runtime_render_device(render2::Device* active_device)
-	{
-		detail::_state->render_device = active_device;
-	} // runtime_render_device
-
-	render2::Device* runtime_render_device()
-	{
-		return detail::_state->render_device;
-	} // runtime_render_device
 } // namespace gemini

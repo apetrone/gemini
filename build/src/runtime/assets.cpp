@@ -145,7 +145,7 @@ namespace gemini
 
 			switch( type )
 			{
-				case SoundAsset:
+				case AssetType::Sound:
 				{
 #if defined(PLATFORM_IPHONEOS)
 					if ( (device_flags & kernel::DeviceiPad) || (device_flags & kernel::DeviceiPhone) )
@@ -156,7 +156,7 @@ namespace gemini
 					extension = "ogg";
 #endif
 					break;
-				} // SoundAsset
+				} // Sound
 
 
 				default: LOGW( "AssetType %i is NOT supported!\n" ); break;
@@ -166,6 +166,5 @@ namespace gemini
 			path.append( extension );
 
 		} // append_asset_extension
-
 	} // namespace assets
 } // namespace gemini

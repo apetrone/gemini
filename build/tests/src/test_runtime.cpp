@@ -468,32 +468,7 @@ int main(int, char**)
 
 	using namespace gemini;
 
-	//unittest::UnitTest::execute();
-
-	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_ASSETS);
-	{
-		ShaderLibrary sl(allocator);
-		sl.prefix_path("shaders/150");
-
-		Shader def_shader;
-		def_shader.object_id = 42;
-		sl.default(&def_shader);
-
-		ShaderLibrary::Handle handle = sl.load("test");
-		handle = sl.load("test2");
-		handle = sl.load("test3");
-		handle = sl.load("test4");
-		handle = sl.load("test5");
-		handle = sl.load("test6");
-
-		Shader* shader_ptr = sl.lookup(handle);
-
-
-		handle = sl.load("test6");
-		Shader* second_request = sl.lookup(handle);
-
-		assert(shader_ptr == second_request);
-	}
+	unittest::UnitTest::execute();
 
 	gemini::runtime_shutdown();
 	gemini::core_shutdown();

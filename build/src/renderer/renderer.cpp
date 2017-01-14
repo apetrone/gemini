@@ -30,7 +30,7 @@
 
 //#include <runtime/assets.h>
 
-#include <runtime/assets/asset_shader.h>
+#include <runtime/asset_library.h>
 
 // compile-time selection of these classes starts here.
 
@@ -365,32 +365,27 @@ namespace render2
 	#error Unknown renderer!
 #endif
 
-namespace gemini
-{
-	namespace assets
-	{
-		gemini::Allocator shader_allocator;
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(shaders)
-	}
-}
+
+#include <renderer/shader_library.h>
 
 namespace render2
 {
+
+
 	namespace detail
 	{
 		ResourceProvider* resource_provider = nullptr;
-	}
-
+		gemini::ShaderLibrary* shader_library = nullptr;
+		gemini::Allocator shader_allocator;
+	} // namespace detail
 
 
 	Device* create_device(gemini::Allocator& allocator, const RenderParameters& params)
 	{
-		using namespace gemini::assets;
-		gemini::assets::shader_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_ASSETS);
-		_shaders =		MEMORY2_NEW(gemini::assets::shader_allocator, shadersAssetLibrary)			(shader_allocator, shader_construct_extension, shader_create_function, shader_destroy_function);
-
 		// determine the renderer
 		assert(params.has_key("rendering_backend"));
+
+		detail::shader_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_ASSETS);
 
 		const param_string& renderer = params["rendering_backend"];
 		LOGV("create device for rendering_backend '%s'\n", renderer());
@@ -403,23 +398,26 @@ namespace render2
 #if defined(PLATFORM_OPENGL_SUPPORT)
 		device = MEMORY2_NEW(allocator, OpenGLDevice)(allocator);
 		shader_root.append("150");
-		gemini::assets::shaders()->set_prefix_path(shader_root);
 #elif defined(PLATFORM_GLES2_SUPPORT)
-		shader_root.append("100");
-		gemini::assets::shaders()->set_prefix_path(shader_root);
 		device = MEMORY2_NEW(allocator, GLES2Device)(allocator);
+		shader_root.append("100");
 #else
 		#error Unknown renderer!
 		return nullptr;
 #endif
+
+		assert(detail::shader_library == nullptr);
+		detail::shader_library = MEMORY2_NEW(detail::shader_allocator, gemini::ShaderLibrary)(detail::shader_allocator, device);
+		detail::shader_library->prefix_path(shader_root);
 
 		return device;
 	}
 
 	void destroy_device(gemini::Allocator& allocator, Device* device)
 	{
-		MEMORY2_DELETE(gemini::assets::shader_allocator, gemini::assets::_shaders);
-		gemini::assets::_shaders = nullptr;
+		MEMORY2_DELETE(detail::shader_allocator, detail::shader_library);
+		detail::shader_library = nullptr;
+
 		MEMORY2_DELETE(allocator, device);
 	}
 
@@ -435,4 +433,8 @@ namespace render2
 		return detail::resource_provider;
 	}
 
+	gemini::ShaderLibrary* shaders()
+	{
+		return detail::shader_library;
+	}
 } // namespace render2

@@ -40,6 +40,8 @@
 
 #include <json/json.h>
 
+#include <runtime/asset_handle.h>
+
 namespace gemini
 {
 	namespace assets
@@ -67,7 +69,7 @@ namespace gemini
 		{
 			core::StackString<128> name;
 			unsigned int material_id;
-			unsigned int shader_id;
+			AssetHandle shader_id;
 
 			glm::vec3 mins;
 			glm::vec3 maxs;

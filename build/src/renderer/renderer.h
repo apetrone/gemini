@@ -487,6 +487,12 @@ namespace render2
 
 #include "device.h"
 
+namespace gemini
+{
+	class ShaderLibrary;
+} // namespace gemini
+
+
 namespace render2
 {
 	// ---------------------------------------------------------------------
@@ -496,7 +502,7 @@ namespace render2
 	typedef HashSet<param_string, param_string> RenderParameters;
 
 
-	// This allows custom implementations of resource loading to be exopsed
+	// This allows custom implementations of resource loading to be exposed
 	// to the renderer.
 	class ResourceProvider
 	{
@@ -530,5 +536,7 @@ namespace render2
 
 	void set_resource_provider(ResourceProvider* provider);
 	ResourceProvider* get_resource_provider();
+
+	gemini::ShaderLibrary* shaders();
 } // namespace render2
 

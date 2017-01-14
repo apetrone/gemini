@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2016- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -23,41 +23,27 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #pragma once
-#include <runtime/assets_common.h>
 
-#include <runtime/assetlibrary.h>
+#include <runtime/asset_library.h>
+#include <renderer/shaderprogram.h>
 
-#include <runtime/assets/asset_texture.h>
-//#include <runtime/assets/asset_shader.h>
-#include <runtime/assets/asset_material.h>
-#include <runtime/assets/asset_mesh.h>
-//#include <runtime/assets/asset_emitter.h>
-#include <runtime/assets/asset_sound.h>
+namespace render2
+{
+	class Device;
+}
 
 namespace gemini
 {
-	namespace assets
+	class ShaderLibrary : public AssetLibrary2<render2::Shader, ShaderLibrary>
 	{
-		// Asset utils
-		enum class AssetType
-		{
-			Shader,
-			Sound
-		}; // AssetType
+	public:
 
-		// called to initialize default textures and other required resources.
-		void startup();
+		ShaderLibrary(Allocator& allocator, render2::Device* render_device);
 
-		// purge all assets
-		void purge();
+		AssetLoadStatus create(LoadState& state, platform::PathString& fullpath);
+		void destroy(LoadState& state);
 
-		// purge all assets and reclaim unused memory
-		void shutdown();
-
-		// Given a relative path to an asset, tack on a platform-specific file extension
-		void append_asset_extension(AssetType type, core::StackString< MAX_PATH_SIZE > & path);
-
-		// do we still need this?
-		unsigned int find_parameter_mask(::renderer::ShaderString& name);
-	} // namespace assets
+	private:
+		render2::Device* device;
+	}; // ShaderLibrary
 } // namespace gemini

@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2016- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -24,23 +24,13 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/stackstring.h>
-
-#include <runtime/assetlibrary.h>
-#include <runtime/assets_common.h>
-
-#include <renderer/shaderprogram.h>
+#include <core/typedefs.h>
 
 
 namespace gemini
 {
-	namespace assets
+	struct AssetHandle
 	{
-		void shader_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
-
-		DECLARE_ASSET_LIBRARY_ACCESSOR(render2::Shader, AssetParameters, shaders);
-
-		AssetLoadStatus shader_create_function(const char* path, AssetLoadState<render2::Shader>& load_state, const AssetParameters& parameters);
-		void shader_destroy_function(AssetLoadState<render2::Shader>& load_state);
-	} // namespace assets
+		uint32_t index;
+	};
 } // namespace gemini

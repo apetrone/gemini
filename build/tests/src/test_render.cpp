@@ -28,9 +28,9 @@
 #include <core/logging.h>
 
 #include <runtime/assets.h>
-#include <runtime/assets/asset_shader.h>
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
+#include <runtime/asset_library.h>
 
 #include <platform/input.h>
 #include <platform/kernel.h>
@@ -41,11 +41,11 @@
 #include <renderer/vertexbuffer.h>
 #include <renderer/font.h>
 #include <renderer/color.h>
+#include <renderer/shader_library.h>
 
 
 #include <assert.h>
 
-using namespace renderer;
 using namespace gemini;
 
 
@@ -372,12 +372,13 @@ Options:
 		state.device = render2::create_device(render_allocator, render_parameters);
 		assert(state.device != nullptr);
 
-		runtime_render_device(state.device);
 		window_frame = platform::window::get_frame(state.native_window);
 
 		// setup the pipeline
 		render2::PipelineDescriptor desc;
-		desc.shader = assets::shaders()->load_from_path("vertexcolor");
+		gemini::AssetHandle shader_handle = render2::shaders()->load("vertexcolor");
+		desc.shader = render2::shaders()->lookup(shader_handle);
+
 
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
@@ -404,7 +405,8 @@ Options:
 
 		// setup texture pipeline
 		render2::PipelineDescriptor td;
-		td.shader = state.device->create_shader("vertexcolortexture");
+		shader_handle = render2::shaders()->load("vertexcolortexture");
+		td.shader = render2::shaders()->lookup(shader_handle);
 		td.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 		td.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		td.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
@@ -413,7 +415,8 @@ Options:
 
 		// setup font pipeline
 		render2::PipelineDescriptor fd;
-		fd.shader = state.device->create_shader("font");
+		shader_handle = render2::shaders()->load("font");
+		fd.shader = render2::shaders()->lookup(shader_handle);
 		fd.vertex_description.add("in_position", render2::VD_FLOAT, 2);
 		fd.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		fd.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
@@ -422,7 +425,8 @@ Options:
 
 		// setup line pipeline
 		render2::PipelineDescriptor ld;
-		ld.shader = state.device->create_shader("lines");
+		shader_handle = render2::shaders()->load("lines");
+		ld.shader = render2::shaders()->lookup(shader_handle);
 		ld.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 		ld.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		ld.input_layout = state.device->create_input_layout(ld.vertex_description, ld.shader);
