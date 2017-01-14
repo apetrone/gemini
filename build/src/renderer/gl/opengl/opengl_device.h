@@ -454,8 +454,6 @@ namespace render2
 		// ---------------------------------------------------------------------
 		// shader
 		// ---------------------------------------------------------------------
-		virtual Shader* create_shader(const char* name, Shader* reuse_shader);
-
 		virtual Shader* create_shader(ShaderSource** sources, uint32_t total_sources);
 
 		virtual void destroy_shader(Shader* shader)

@@ -82,15 +82,8 @@ namespace render2
 		// ---------------------------------------------------------------------
 		// shader
 		// ---------------------------------------------------------------------
-		/// @brief Create a new shader
-		/// @param name Public name of the shader
-		/// @param reuse_shader If non-NULL, reload name into this shader
-		/// @returns A valid shader created from the name parameter
-		virtual Shader* create_shader(const char* name, Shader* reuse_shader = nullptr) = 0;
-
 		virtual Shader* create_shader(ShaderSource** sources, uint32_t total_sources) = 0;
 		virtual void destroy_shader(Shader* shader) = 0;
-
 
 
 		// ---------------------------------------------------------------------

@@ -371,8 +371,6 @@ namespace render2
 			MEMORY2_DELETE(allocator, glp);
 		}
 
-		virtual Shader* create_shader(const char* name, Shader* reuse_shader);
-
 		virtual Shader* create_shader(ShaderSource** sources, uint32_t total_sources);
 
 		virtual void destroy_shader(Shader* shader)

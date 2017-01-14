@@ -137,15 +137,6 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// shader
 	// ---------------------------------------------------------------------
-	Shader* OpenGLDevice::create_shader(const char* name, Shader* reuse_shader)
-	{
-		return common_create_shader(allocator, "150",
-			name,
-			static_cast<GLShader*>(reuse_shader),
-			"",
-			"");
-	} // create_shader
-
 	Shader* OpenGLDevice::create_shader(ShaderSource** sources, uint32_t total_sources)
 	{
 		GLShader* shader = MEMORY2_NEW(allocator, GLShader)(allocator);

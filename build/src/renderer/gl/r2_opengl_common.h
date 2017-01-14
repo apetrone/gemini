@@ -215,7 +215,6 @@ namespace render2
 	void common_pass_setup(const Pass* pass);
 
 	bool common_compile_source(gemini::Allocator& allocator, GLuint program_id, GLuint shader, ShaderSource* source);
-	GLShader* common_create_shader(gemini::Allocator& allocator, const char* subfolder, const char* name, GLShader* reuse_shader, const char* preprocessor, const char* version);
 
 	// for use with glTexImage
 	GLenum image_to_source_format(const Image& image);

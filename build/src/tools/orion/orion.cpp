@@ -25,6 +25,7 @@
 
 #include <renderer/renderer.h>
 #include <renderer/font.h>
+#include <renderer/shader_library.h>
 
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
@@ -769,7 +770,8 @@ Options:
 
 			// setup shaders
 			render2::PipelineDescriptor desc;
-			desc.shader = device->create_shader("vertexcolor");
+			AssetHandle handle = render2::shaders()->load("vertexcolor");
+			desc.shader = render2::shaders()->lookup(handle);
 			render2::VertexDescriptor& vertex_format = desc.vertex_description;
 			vertex_format.add("in_position", render2::VD_FLOAT, 3);
 			vertex_format.add("in_color", render2::VD_FLOAT, 4);
@@ -780,7 +782,8 @@ Options:
 
 			{
 				render2::PipelineDescriptor desc;
-				desc.shader = device->create_shader("vertexcolor");
+				AssetHandle handle = render2::shaders()->load("vertexcolor");
+				desc.shader = render2::shaders()->lookup(handle);
 				render2::VertexDescriptor& vertex_format = desc.vertex_description;
 				vertex_format.add("in_position", render2::VD_FLOAT, 3);
 				vertex_format.add("in_color", render2::VD_FLOAT, 4);
@@ -903,7 +906,7 @@ Options:
 				graph->set_origin(window_frame.width - 250, origin);
 				graph->set_size(250, 100);
 				origin += 108;
-				graph->set_maximum_size(gui::Size(250, 100));
+				graph->set_maximum_size(gui::Sizes(250, 100));
 				graph->set_font(dev_font, dev_font_size);
 				graph->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
 				graph->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));

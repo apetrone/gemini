@@ -931,59 +931,6 @@ namespace render2
 		return (is_compiled == 1);
 	} // common_compile_source
 
-	GLShader* common_create_shader(gemini::Allocator& allocator, const char* subfolder, const char* name, GLShader* reuse_shader, const char* preprocessor, const char* version)
-	{
-		// I haven't re-implemented hot loading of shaders; do that if you
-		// hit this assert :)
-		assert(reuse_shader == nullptr);
-
-		// the path to shaders resembles this:
-		// 'shaders/<GLSL version>/<name>.[vert|frag]'
-
-		core::StackString<64> vertex_shader_path = "shaders";
-		vertex_shader_path.append(PATH_SEPARATOR_STRING);
-		vertex_shader_path.append(subfolder);
-		vertex_shader_path.append(PATH_SEPARATOR_STRING);
-		vertex_shader_path.append(name);
-		vertex_shader_path.append(".vert");
-
-		Array<unsigned char> vertex_shader_source(allocator);
-
-		const ResourceProvider* resource_provider = get_resource_provider();
-
-		resource_provider->load_file(vertex_shader_source, vertex_shader_path());
-		assert(!vertex_shader_source.empty());
-
-		core::StackString<64> fragment_shader_path = "shaders";
-		fragment_shader_path.append(PATH_SEPARATOR_STRING);
-		fragment_shader_path.append(subfolder);
-		fragment_shader_path.append(PATH_SEPARATOR_STRING);
-		fragment_shader_path.append(name);
-		fragment_shader_path.append(".frag");
-
-		LOGV("create shader \"%s\"\n", name);
-
-		Array<unsigned char> fragment_shader_source(allocator);
-		resource_provider->load_file(fragment_shader_source, fragment_shader_path());
-		assert(!fragment_shader_source.empty());
-
-		// Tack on a terminator since we're passing these to GL functions
-		// which expect a proper C-string.
-		vertex_shader_source.push_back('\0');
-		fragment_shader_source.push_back('\0');
-
-		GLShader* shader = MEMORY2_NEW(allocator, GLShader)(allocator);
-		shader->build_from_source(
-			allocator,
-			(char*)&vertex_shader_source[0],
-			(char*)&fragment_shader_source[0],
-			preprocessor,
-			version
-		);
-
-		return shader;
-	}
-
 	// ---------------------------------------------------------------------
 	// image
 	// ---------------------------------------------------------------------
