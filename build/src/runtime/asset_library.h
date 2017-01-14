@@ -83,7 +83,7 @@ namespace gemini
 
 		Allocator& allocator;
 		Array<T*> assets;
-		T* default_asset;
+		T* default_asset_pointer;
 		HandleIndexByName handle_by_name;
 		platform::PathString prefix_uri;
 
@@ -103,7 +103,7 @@ namespace gemini
 		AssetLibrary2(gemini::Allocator& asset_allocator)
 			: allocator(asset_allocator)
 			, assets(asset_allocator)
-			, default_asset(nullptr)
+			, default_asset_pointer(nullptr)
 			, handle_by_name(asset_allocator)
 		{
 		}
@@ -113,14 +113,14 @@ namespace gemini
 			purge();
 		}
 
-		void default(T* asset)
+		void default_asset(T* asset)
 		{
-			default_asset = asset;
+			default_asset_pointer = asset;
 		}
 
-		T* default() const
+		T* default_asset() const
 		{
-			return default_asset;
+			return default_asset_pointer;
 		}
 
 		bool handle_is_valid(AssetHandle handle)
@@ -200,7 +200,7 @@ namespace gemini
 		{
 			if (!handle_is_valid(handle))
 			{
-				return default_asset;
+				return default_asset();
 			}
 
 			return assets[handle.index - 1];

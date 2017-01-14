@@ -158,6 +158,10 @@ def setup_driver(arguments, product, target_platform):
 	#macosx.driver.macosx_deployment_target = "10.8"
 	#macosx.driver.sdkroot = "macosx10.9"
 
+	product.defines += [
+		"JSON_IS_AMALGAMATION"
+	]
+
 	product.excludes += [
 		"*.DS_Store"
 	]
@@ -657,7 +661,11 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 		"src/runtime/audio_mixer.h",
 
 		# assets
+		"src/runtime/assets_common.h",
+		"src/runtime/asset_library.h",
 		"src/runtime/assetlibrary.h",
+		"src/runtime/asset_handle.h",
+
 		# "src/runtime/assets/asset_emitter.cpp",
 		# "src/runtime/assets/asset_emitter.h",
 		# "src/runtime/assets/asset_font.cpp",
@@ -666,8 +674,6 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 		"src/runtime/assets/asset_material.h",
 		"src/runtime/assets/asset_mesh.cpp",
 		"src/runtime/assets/asset_mesh.h",
-		"src/runtime/assets/asset_shader.cpp",
-		"src/runtime/assets/asset_shader.h",
 		"src/runtime/assets/asset_sound.cpp",
 		"src/runtime/assets/asset_sound.h",
 		"src/runtime/assets/asset_texture.cpp",

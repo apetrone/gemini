@@ -81,8 +81,8 @@ UNITTEST(asset_library)
 	// check default asset
 	CustomAsset default_asset;
 	default_asset.id = 42;
-	lib.default(&default_asset);
-	TEST_ASSERT_EQUALS(default_asset.id, lib.default()->id);
+	lib.default_asset(&default_asset);
+	TEST_ASSERT_EQUALS(default_asset.id, lib.default_asset()->id);
 
 	lib.prefix_path("shaders/120");
 
