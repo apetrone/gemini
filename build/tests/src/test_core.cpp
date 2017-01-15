@@ -375,14 +375,14 @@ UNITTEST(directory_monitor)
 
 	MonitorDelegate delegate;
 	delegate.bind<monitor_triggered>();
-	MonitorHandle handle0 = directory_monitor_add("e:\\", delegate);
+	MonitorHandle handle0 = directory_monitor_add("/home/apetrone", delegate);
 
 	TEST_ASSERT_TRUE(handle0 > 0);
 
 	size_t index = 0;
 	LOGV("waiting for file changes...\n");
 
-	while (index < 0xFFFFF)
+	while (index < 0xFFFFFF)
 	{
 		directory_monitor_update();
 		++index;

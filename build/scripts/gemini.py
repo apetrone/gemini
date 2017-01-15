@@ -466,6 +466,9 @@ def get_libcore(arguments, target_platform):
 		"src/core/platform/backend/linux/linux_backend.cpp",
 		"src/core/platform/backend/linux/linux_backend.h",
 
+		# directory monitor
+		"src/core/platform/directory_monitor/linux/linux_directory_monitor.cpp",
+
 		# dylib
 		"src/core/platform/dylib/posix/posix_dylib.cpp",
 		"src/core/platform/dylib/posix/posix_dlopen.cpp",
