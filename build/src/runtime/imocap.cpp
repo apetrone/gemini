@@ -27,6 +27,7 @@
 #include <core/logging.h>
 #include <core/mem.h>
 #include <platform/platform.h>
+#include <platform/network.h>
 
 using namespace platform;
 

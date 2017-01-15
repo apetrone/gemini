@@ -25,7 +25,7 @@
 #pragma once
 
 #include <core/typedefs.h>
-#include <platform/platform.h>
+#include <platform/network.h>
 
 namespace gemini
 {

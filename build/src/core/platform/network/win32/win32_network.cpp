@@ -23,10 +23,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
+#include <platform/network.h>
 #include <platform/platform_internal.h>
 
 #include <core/str.h>
-
 #include <core/logging.h>
 
 // Ignore these warnings in Microsoft's headers.

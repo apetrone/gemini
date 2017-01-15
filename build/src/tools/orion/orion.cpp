@@ -34,10 +34,11 @@
 #include <runtime/hotloading.h>
 #include <runtime/standaloneresourcecache.h>
 
-#include <platform/platform.h>
-#include <platform/window.h>
-#include <platform/kernel.h>
 #include <platform/input.h>
+#include <platform/kernel.h>
+#include <platform/platform.h>
+#include <platform/network.h>
+#include <platform/window.h>
 
 #include <core/hashset.h>
 #include <core/stackstring.h>
