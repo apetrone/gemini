@@ -69,6 +69,7 @@ namespace gemini
 		// finally, draw from the queue
 		for(::renderer::RenderBlock& block : queue->render_list)
 		{
+#if 0
 			render2::Shader* shader = render2::shaders()->lookup(block.shader_id);
 			assert(shader);
 
@@ -115,6 +116,7 @@ namespace gemini
 			stream.add_material(material, shader->program);
 
 			stream.add_draw_call(block.object->vertexbuffer);
+#endif
 		}
 
 		stream.run_commands();
