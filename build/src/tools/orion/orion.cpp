@@ -31,6 +31,7 @@
 #include <runtime/filesystem.h>
 #include <runtime/geometry.h>
 #include <runtime/guirenderer.h>
+#include <runtime/hotloading.h>
 #include <runtime/standaloneresourcecache.h>
 
 #include <platform/platform.h>
@@ -697,6 +698,8 @@ Options:
 
 		gemini::runtime_startup("arcfusion.net/orion", custom_path_setup);
 
+		hotloading::startup(render_allocator);
+
 		// create a platform window
 		{
 			platform::window::startup(platform::window::RenderingBackend_Default);
@@ -1092,6 +1095,8 @@ Options:
 			return;
 		}
 
+		hotloading::tick();
+
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
 
@@ -1363,6 +1368,8 @@ Options:
 		destroy_device(render_allocator, device);
 
 //		glDeleteSync(fence);
+
+		hotloading::shutdown();
 
 		platform::window::destroy(main_window);
 		platform::window::shutdown();

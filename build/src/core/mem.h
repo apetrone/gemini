@@ -224,6 +224,8 @@ namespace gemini
 	#define MEMORY2_ALLOC(allocator, size) (allocator).allocate((allocator), size, alignof(void*), __FILE__, __LINE__)
 	#define MEMORY2_DEALLOC(allocator, pointer) (allocator).deallocate((allocator), pointer, __FILE__, __LINE__)
 
+	#define MEMORY2_ALLOC_ALIGNED(allocator, alignment, size) (allocator).allocate((allocator), size, alignment, __FILE__, __LINE__)
+
 	#define MEMORY2_NEW(allocator, type) new ((allocator).allocate((allocator), sizeof(type), alignof(type), __FILE__, __LINE__)) type
 	#define MEMORY2_DELETE(allocator, pointer) memory_destroy((allocator), pointer, __FILE__, __LINE__)
 

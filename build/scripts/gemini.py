@@ -339,6 +339,8 @@ def get_libcore(arguments, target_platform):
 		"src/core/*.cpp",
 		"src/core/*.h",
 
+		"src/core/platform/directory_monitor.h",
+
 		"src/core/platform/graphics_provider.cpp",
 		"src/core/platform/graphics_provider.h",
 		"src/core/platform/kernel.cpp",
@@ -536,6 +538,9 @@ def get_libcore(arguments, target_platform):
 	windows.sources += [
 		# backend
 		"src/core/platform/backend/windows/win32_backend.cpp",
+
+		# directory monitor
+		"src/core/platform/directory_monitor/windows/win32_directory_monitor.cpp",
 
 		# dylib
 		"src/core/platform/dylib/windows/win32_dylib.cpp",

@@ -41,6 +41,7 @@
 #include <core/util.h>
 
 #include <platform/platform.h>
+#include <platform/directory_monitor.h>
 
 #include <vector>
 #include <string>
@@ -356,6 +357,41 @@ UNITTEST(Delegate)
 	Delegate<int(int)> z = MAKE_MEMBER_DELEGATE(int(int), SomeType, &SomeType::ii_foo, &st);
 }
 
+// ---------------------------------------------------------------------
+// directory monitor
+// ---------------------------------------------------------------------
+static uint32_t _monitor_notified = 0;
+
+void monitor_triggered(const platform::PathString& path)
+{
+	LOGV("monitor_triggered with: %s\n", path());
+}
+
+UNITTEST(directory_monitor)
+{
+	Allocator allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+	int32_t startup_result = directory_monitor_startup(allocator);
+	TEST_ASSERT_EQUALS(startup_result, 0);
+
+	MonitorDelegate delegate;
+	delegate.bind<monitor_triggered>();
+	MonitorHandle handle0 = directory_monitor_add("e:\\", delegate);
+
+	TEST_ASSERT_TRUE(handle0 > 0);
+
+	size_t index = 0;
+	LOGV("waiting for file changes...\n");
+
+	while (index < 0xFFFFF)
+	{
+		directory_monitor_update();
+		++index;
+	}
+
+
+	directory_monitor_shutdown();
+}
+
 
 // ---------------------------------------------------------------------
 // FixedArray
@@ -483,6 +519,16 @@ UNITTEST(HashSet)
 	test.insert(HashSet<int, int>::value_type(30, 72));
 	int z = test[30];
 	TEST_ASSERT_EQUALS(z, 72);
+
+
+	// test insertion
+	test[42] = 67;
+	TEST_ASSERT_EQUALS(test[42], 67);
+	TEST_ASSERT_TRUE(test.has_key(42));
+
+	// test removal
+	test.remove(42);
+	TEST_ASSERT_FALSE(test.has_key(42));
 }
 
 
