@@ -229,7 +229,7 @@ public:
 	{
 		HashType hash = get_hash(key);
 		int32_t bucket_index;
-		return (find_bucket(hash, bucket_index, true) != -1);
+		return (find_bucket(hash, bucket_index, false) != -1);
 	} // has_key
 
 	void insert(const value_type& vt)
@@ -241,7 +241,8 @@ public:
 	void remove(const K& key)
 	{
 		HashType hash = get_hash(key);
-		int32_t index = find_bucket(hash);
+		int32_t bucket_index;
+		int32_t index = find_bucket(hash, bucket_index);
 		if (index != -1)
 		{
 			table[index].hash = REMOVED_SLOT;
