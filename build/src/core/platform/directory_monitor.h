@@ -30,7 +30,22 @@
 namespace gemini
 {
 	typedef uint32_t MonitorHandle;
-	typedef Delegate<void(const platform::PathString&)> MonitorDelegate;
+
+	enum class MonitorAction
+	{
+		Invalid,
+
+		// the file was added to the watched directory
+		Added,
+
+		// the file was removed from the watched directory
+		Removed,
+
+		// the file was modified
+		Modified
+	};
+
+	typedef Delegate<void(MonitorHandle, MonitorAction, const platform::PathString&)> MonitorDelegate;
 
 	// returns 0 on success; non-zero on failure
 	int32_t directory_monitor_startup(gemini::Allocator& allocator);

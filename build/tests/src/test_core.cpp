@@ -362,7 +362,7 @@ UNITTEST(Delegate)
 // ---------------------------------------------------------------------
 static uint32_t _monitor_notified = 0;
 
-void monitor_triggered(const platform::PathString& path)
+void monitor_triggered(MonitorHandle handle, MonitorAction action, const platform::PathString& path)
 {
 	LOGV("monitor_triggered with: %s\n", path());
 }
@@ -375,19 +375,22 @@ UNITTEST(directory_monitor)
 
 	MonitorDelegate delegate;
 	delegate.bind<monitor_triggered>();
-	MonitorHandle handle0 = directory_monitor_add("/home/apetrone", delegate);
+
+	MonitorHandle handle0 = directory_monitor_add(platform::get_program_directory()(), delegate);
 
 	TEST_ASSERT_TRUE(handle0 > 0);
 
-	size_t index = 0;
-	LOGV("waiting for file changes...\n");
+	// TODO: Figure out a good way to test this.
+	// size_t index = 0;
+	// LOGV("waiting for file changes...\n");
 
-	while (index < 0xFFFFFF)
-	{
-		directory_monitor_update();
-		++index;
-	}
+	// while (index < 0xFFFFFF)
+	// {
+	// 	directory_monitor_update();
+	// 	++index;
+	// }
 
+	directory_monitor_remove(handle0);
 
 	directory_monitor_shutdown();
 }

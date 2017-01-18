@@ -29,6 +29,7 @@
 
 const size_t HASHSET_INITIAL_SIZE	= 16;
 const size_t HASHSET_GROWTH_FACTOR	= 2;
+const uint32_t HASHSET_REMOVED_SLOT = UINT32_MAX;
 
 template <class K, class T, class H = typename core::util::hash<K>>
 class HashSet
@@ -38,7 +39,6 @@ private:
 
 	const float MAX_LOAD_FACTOR = 0.7f;
 	typedef uint32_t HashType;
-	const HashType REMOVED_SLOT = UINT32_MAX;
 
 	struct Bucket
 	{
@@ -65,13 +65,13 @@ private:
 		for( ; ; )
 		{
 			bucket_index = static_cast<int32_t>(current_index++ % table_size);
-			if (table[bucket_index].hash == 0)
+			if (table[bucket_index].hash == 0 || table[bucket_index].hash == HASHSET_REMOVED_SLOT)
 			{
 				return -1;
 			}
 
 			if ((table[bucket_index].hash == hash) ||
-				(inserting && (table[bucket_index].hash == REMOVED_SLOT))) // this bucket has been removed, so we can use it
+				(inserting && (table[bucket_index].hash == HASHSET_REMOVED_SLOT))) // this bucket has been removed, so we can use it
 			{
 				return bucket_index;
 			}
@@ -86,7 +86,7 @@ private:
 		{
 			int32_t bucket_index = static_cast<int32_t>(current_index % table_size);
 			Bucket* bucket = &table[bucket_index];
-			if (bucket->hash != 0 && bucket->hash != REMOVED_SLOT)
+			if (bucket->hash != 0 && bucket->hash != HASHSET_REMOVED_SLOT)
 			{
 				return bucket_index;
 			}
@@ -197,6 +197,13 @@ private:
 		MEMORY2_DEALLOC(allocator, pointer);
 	} // deallocate
 
+	void remove_at_index(int32_t index)
+	{
+		assert(index != -1);
+		table[index].hash = HASHSET_REMOVED_SLOT;
+		--used_items;
+	} // remove_at_index
+
 public:
 	typedef std::pair<K, T> value_type;
 
@@ -245,8 +252,7 @@ public:
 		int32_t index = find_bucket(hash, bucket_index);
 		if (index != -1)
 		{
-			table[index].hash = REMOVED_SLOT;
-			--used_items;
+			remove_at_index(index);
 		}
 	} // remove
 
@@ -301,6 +307,8 @@ public:
 	{
 		typedef HashSet<K, T, H> container_type;
 
+		friend class HashSet;
+
 	private:
 		typename container_type::Bucket* table;
 		size_t index;
@@ -335,7 +343,7 @@ public:
 			while(index < table_size)
 			{
 				container_type::Bucket* bucket = &table[++index];
-				if (bucket->hash != 0)
+				if (bucket->hash != 0 && bucket->hash != HASHSET_REMOVED_SLOT)
 					return *this;
 			}
 			return *this;
@@ -377,4 +385,10 @@ public:
 	{
 		return Iterator(table, table_size, table_size);
 	} // end
+
+	Iterator remove(const Iterator& iterator)
+	{
+		remove_at_index(iterator.index);
+		return Iterator(table, iterator.index + 1, table_size);
+	} // remove
 }; // HashSet

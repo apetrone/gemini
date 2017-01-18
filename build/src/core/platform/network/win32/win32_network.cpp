@@ -40,6 +40,13 @@
 
 namespace platform
 {
+	struct Win32NetworkState
+	{
+		WSAData wsdata;
+	};
+
+	Win32NetworkState* _network_state = nullptr;
+
 	void net_address_init(net_address* address)
 	{
 		memset(address, 0, sizeof(net_address));
@@ -89,6 +96,9 @@ namespace platform
 
 	void net_shutdown()
 	{
+		assert(_network_state != nullptr);
+		MEMORY2_DELETE(get_platform_allocator2(), _network_state);
+		_network_state = nullptr;
 	} // net_shutdown
 
 	// socket functions
@@ -96,6 +106,9 @@ namespace platform
 	/// @returns 0 on success; -1 on failure
 	net_socket net_socket_open(net_socket_type type)
 	{
+		// If you hit this, it means net_startup was not called before opening a socket.
+		assert(_network_state != nullptr);
+
 		int sock_type = (type == net_socket_type::UDP) ? SOCK_DGRAM : SOCK_STREAM;
 		int protocol = (type == net_socket_type::UDP) ? IPPROTO_UDP : IPPROTO_TCP;
 		return socket(AF_INET, sock_type, protocol);
@@ -111,10 +124,26 @@ namespace platform
 		closesocket(sock);
 	} // net_socket_close
 
+	net_socket net_socket_accept(net_socket sock, net_address* source)
+	{
+		int32_t net_address_len = sizeof(net_address);
+		return accept(sock, (struct sockaddr*)source, &net_address_len);
+	} // net_socket_accept
+
 	int32_t net_socket_bind(net_socket sock, net_address* address)
 	{
 		return bind(sock, (const struct sockaddr*)address, sizeof(net_address));
 	} // net_sock_bind
+
+	int32_t net_socket_connect(net_socket sock, net_address* to)
+	{
+		return connect(sock, (sockaddr*)to, sizeof(net_address));
+	} // net_socket_connect
+
+	int32_t net_socket_listen(net_socket sock, int32_t queued_connections)
+	{
+		return listen(sock, queued_connections);
+	} // net_socket_listen
 
 	/// @brief Send data (TCP-only)
 	/// @returns bytes written.
@@ -154,11 +183,21 @@ namespace platform
 		return ioctlsocket(sock, FIONBIO, &non_blocking);
 	} // net_socket_set_blocking
 
+	int32_t net_socket_set_broadcast(net_socket sock, int32_t enable_broadcast)
+	{
+		return setsockopt(sock,
+			SOL_SOCKET,
+			SO_BROADCAST,
+			reinterpret_cast<const char*>(&enable_broadcast),
+			sizeof(int32_t));
+	} // net_socket_set_broadcast
+
 	int32_t net_startup()
 	{
-		struct WSAData wsdata;
+		assert(_network_state == nullptr);
+		_network_state = MEMORY2_NEW(get_platform_allocator2(), Win32NetworkState);
 		WORD version = MAKEWORD(2, 2);
-		return WSAStartup(version, &wsdata);
+		return WSAStartup(version, &_network_state->wsdata);
 	} // net_startup
 
 	int32_t net_ipv4_by_hostname(const char* hostname, const char* service, char ip_address[16])
@@ -197,9 +236,4 @@ namespace platform
 
 		return 0;
 	} // net_ipv4_by_hostname
-
-	int32_t net_socket_connect(net_socket sock, net_address& to)
-	{
-		return connect(sock, (sockaddr*)&to, sizeof(net_address));
-	} // net_socket_connect
 } // namespace platform

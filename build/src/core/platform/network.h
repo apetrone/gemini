@@ -24,13 +24,9 @@
 // -------------------------------------------------------------
 #pragma once
 
-//#include "config.h"
 #include <core/platform/platform_internal.h>
 #include <core/typedefs.h>
-//#include "window.h"
-
 #include <core/mem.h>
-
 
 #if defined(PLATFORM_WINDOWS)
 #	define WIN32_LEAN_AND_MEAN 1
@@ -51,11 +47,14 @@ namespace platform
 	// ---------------------------------------------------------------------
 #if defined(PLATFORM_WINDOWS)
 	typedef SOCKET net_socket;
+	const net_socket NET_SOCKET_INVALID = 0;
 #elif defined(PLATFORM_POSIX)
 	typedef int net_socket;
+	const net_socket NET_SOCKET_INVALID = 0;
 #else
 #error net_socket not defined for this platform!
 #endif
+
 	enum class net_socket_type
 	{
 		UDP,
@@ -83,8 +82,19 @@ namespace platform
 
 	void net_socket_close(net_socket sock);
 
+	/// @brief Accept a connection (TCP-only)
+	/// @returns non-zero on success: file descriptor for the accepted socket.
+	net_socket net_socket_accept(net_socket sock, net_address* source);
+
 	/// @returns 0 on success
 	int32_t net_socket_bind(net_socket sock, net_address* interface);
+
+	// Connect to a remote server (TCP only)
+	int32_t net_socket_connect(net_socket sock, net_address* to);
+
+	/// @brief causes the socket to enter listening state (TCP-only)
+	/// @returns 0 on success
+	int32_t net_socket_listen(net_socket sock, int32_t queued_connections);
 
 	/// @brief Send data (TCP-only)
 	/// @returns bytes written.
@@ -93,7 +103,6 @@ namespace platform
 	/// @brief Send data (UDP-only)
 	/// @returns bytes read if > 0; otherwise an error code.
 	int32_t net_socket_sendto(net_socket sock, net_address* destination, const char* data, size_t data_size);
-
 
 	/// @brief Receive data (TCP-only)
 	/// @returns bytes read if > 0; otherwise an error code.
@@ -111,11 +120,11 @@ namespace platform
 	// enable/disable blocking i/o
 	int32_t net_socket_set_blocking(net_socket sock, int32_t value);
 
+	// enable/disable broadcast permission on this socket
+	int32_t net_socket_set_broadcast(net_socket sock, int32_t enable_broadcast);
+
 	// returns 0 on success
 	int32_t net_startup();
 
 	int32_t net_ipv4_by_hostname(const char* hostname, const char* service, char ip_address[16]);
-
-	// Connect to a remote server (TCP only)
-	int32_t net_socket_connect(net_socket sock, net_address& to);
 } // namespace platform

@@ -1216,31 +1216,18 @@ namespace render2
 		int log_length = 0;
 		char* logbuffer = 0;
 
-		char buffer[128] = { 0 };
-
+		// log length CAN return 0 even if there's warning output; but for now
+		// I'd rather have simpler code.
 		gl.GetProgramiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
-		if (log_length == 0)
-		{
-			log_length = 128;
-			logbuffer = buffer;
-		}
-		else
-		{
-			logbuffer = static_cast<char*>(MEMORY2_ALLOC(allocator, static_cast<size_t>(log_length + 1)));
-		}
-
-		memset(logbuffer, 0, static_cast<size_t>(log_length));
-
-		gl.GetProgramInfoLog(program_id, log_length, &log_length, logbuffer);
-		gl.CheckError("GetProgramInfoLog");
-
 		if (log_length > 0)
 		{
+			logbuffer = static_cast<char*>(MEMORY2_ALLOC(allocator, static_cast<size_t>(log_length + 1)));
+
+			gl.GetProgramInfoLog(program_id, log_length, &log_length, logbuffer);
+			gl.CheckError("GetProgramInfoLog");
+
 			LOGW("program info log:\n");
 			LOGW("%s\n", logbuffer);
-		}
-		else
-		{
 			MEMORY2_DEALLOC(allocator, logbuffer);
 		}
 	} // query_program_info_log
@@ -1250,34 +1237,18 @@ namespace render2
 		GLint log_length = 0;
 		char* logbuffer = 0;
 
-		// due to log_length returning 0 even when there's data;
-		// this will be used as a fallback
-		char buffer[128] = { 0 };
-
+		// log length CAN return 0 even if there's warning output; but for now
+		// I'd rather have simpler code.
 		gl.GetShaderiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
-		if (log_length == 0)
-		{
-			log_length = 128;
-			logbuffer = buffer;
-		}
-		else
-		{
-			logbuffer = static_cast<char*>(MEMORY2_ALLOC(allocator, static_cast<size_t>(log_length + 1)));
-		}
-
-		memset(logbuffer, 0, static_cast<size_t>(log_length));
-
-		gl.GetShaderInfoLog(handle, log_length, &log_length, logbuffer);
-		gl.CheckError("GetShaderInfoLog");
-
 		if (log_length > 0)
 		{
+			logbuffer = static_cast<char*>(MEMORY2_ALLOC(allocator, static_cast<size_t>(log_length + 1)));
+
+			gl.GetShaderInfoLog(handle, log_length, &log_length, logbuffer);
+			gl.CheckError("GetShaderInfoLog");
+
 			LOGW("shader info log:\n");
 			LOGW("%s\n", logbuffer);
-		}
-
-		if (logbuffer != buffer)
-		{
 			MEMORY2_DEALLOC(allocator, logbuffer);
 		}
 	} // query_shader_info_log

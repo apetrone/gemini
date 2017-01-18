@@ -86,6 +86,18 @@ namespace gemini
 		_monitor_state = nullptr;
 	} // directory_monitor_shutdown
 
+	DirectoryMonitorRecord* record_from_watch_descriptor(int watch_descriptor)
+	{
+		for (size_t index = 0; index < _monitor_state->records.size(); ++index)
+		{
+			if (_monitor_state->records[index]->notify_handle == watch_descriptor)
+			{
+				return _monitor_state->records[index];
+			}
+		}
+		return nullptr;
+	}
+
 	void directory_monitor_update()
 	{
 		struct inotify_event* event;
@@ -98,9 +110,32 @@ namespace gemini
 			event = reinterpret_cast<struct inotify_event*>(buffer);
 			if (event)
 			{
-				if (event->mask & IN_MODIFY)
+				DirectoryMonitorRecord* record = record_from_watch_descriptor(event->wd);
+				if (!record)
 				{
-					LOGV("watch descriptor: %i, name: %s\n", event->wd, event->name);
+					return;
+				}
+
+				MonitorAction action = MonitorAction::Invalid;
+				if (event->mask & IN_CREATE)
+				{
+					action = MonitorAction::Added;
+				}
+				else if (event->mask & IN_DELETE)
+				{
+					action = MonitorAction::Removed;
+				}
+				else if (event->mask & IN_MODIFY)
+				{
+					action = MonitorAction::Modified;
+				}
+
+				if (action != MonitorAction::Invalid)
+				{
+					platform::PathString absolute_path = record->path;
+					absolute_path.append(PATH_SEPARATOR_STRING);
+					absolute_path.append(event->name);
+					record->callback(event->wd, action, absolute_path);
 				}
 			}
 		}

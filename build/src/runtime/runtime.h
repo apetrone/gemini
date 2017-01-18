@@ -157,7 +157,7 @@ namespace gemini
 		{
 			current_time = 0.0f;
 		}
-	};
+	}; // Test
 
 
 	// quaternion
@@ -211,7 +211,155 @@ namespace gemini
 		{
 			current_time = 0.0f;
 		}
+	}; // Test
+} // namespace gemini
+
+#include <platform/network.h>
+namespace gemini
+{
+	const uint16_t NOTIFY_BROADCAST_PORT = 9100;
+	const uint16_t NOTIFY_COMMUNICATION_PORT = 9101;
+
+	const uint32_t NOTIFY_BROADCAST_DELAY_MSEC = 3000;
+
+	const uint32_t NOTIFY_HEARTBEAT_MSEC = 1000;
+
+	// number of missed heartbeats client can have before it will be dropped.
+	const uint32_t NOTIFY_CLIENT_TIMEOUT_MAX = 3;
+
+	const uint32_t NOTIFY_MAX_CHANNELS = 8;
+
+	enum NotifyClientState
+	{
+		// broadcasting for servers
+		NCS_BROADCASTING,
+
+		// handshaking with a server
+		NCS_HANDSHAKE,
+
+		// connected with a server
+		NCS_CONNECTED,
+
+		// should disconnect from a server
+		NCS_DISCONNECTING
 	};
 
 
+	enum NotifyMessageType
+	{
+		// clients will send this message to find a server
+		NMT_BROADCAST_REQUEST,
+
+		// server will reply to clients with this upon receiving REQUEST
+		NMT_BROADCAST_CONFIRM,
+
+		// heartbeat to signal the other side is still alive
+		NMT_HEARTBEAT,
+
+		// subscribe to a channel
+		NMT_SUBSCRIBE,
+
+		// un-subscribe to a channel
+		NMT_UNSUBSCRIBE,
+
+		NMT_STRING,
+	};
+
+	struct NotifyMessage
+	{
+		NotifyMessageType type;
+		uint32_t channel;
+		uint32_t data_size;
+		void* data;
+	};
+
+	typedef Delegate<void(uint32_t, void*, uint32_t)> NotifyMessageDelegate;
+
+	struct NotificationClient
+	{
+		platform::net_socket broadcast_socket;
+		platform::net_socket communication_socket;
+		NotifyClientState state;
+		uint8_t subscribe_flags;
+
+		// last time we performed a broadcast
+		uint64_t last_broadcast_msec;
+
+		// last time we received a heartbeat from the server
+		uint64_t last_server_heartbeat_msec;
+
+		// last time we dispatched a heartbeat to the server
+		uint64_t last_heartbeat_msec;
+
+		NotifyMessageDelegate channel_delegate;
+
+		Allocator scratch_allocator;
+		char scratch_memory[256];
+	};
+
+	enum NotifyServerClientFlags
+	{
+		NSCF_DELETE_NEXT_TICK = 1
+	};
+
+	struct NotificationServerSideClient
+	{
+		// address for this client
+		platform::net_address address;
+		platform::net_socket csock;
+
+		uint8_t flags;
+		uint8_t subscribed_channels;
+
+		// last heartbeat received from this client
+		uint64_t last_heartbeat_msec;
+
+		// next client in list
+		NotificationServerSideClient* next;
+	};
+
+	struct NotificationServer
+	{
+		NotificationServerSideClient* clients;
+
+		// only valid when there is data to publish
+		uint8_t* publish_data;
+		uint32_t publish_data_size;
+
+		// next heartbeat dispatch in msec
+		uint64_t next_heartbeat_msec;
+
+		// used for receiving broadcast requests
+		platform::net_socket broadcast_socket;
+
+		// used for client communication
+		platform::net_socket communication_socket;
+
+		char scratch_memory[256];
+	};
+
+	void notify_client_create(NotificationClient* client);
+	void notify_client_destroy(NotificationClient* client);
+	void notify_client_tick(NotificationClient* client);
+
+	void notify_client_subscribe(NotificationClient* client, uint32_t channel, NotifyMessageDelegate delegate);
+
+	int32_t notify_message_read(Allocator& allocator, platform::net_socket source, NotifyMessage* message);
+
+	// return bytes sent
+	int32_t notify_message_send(platform::net_socket destination, const NotifyMessage* message);
+
+	void notify_message_string(NotifyMessage& message, const platform::PathString& path);
+	void notify_message_subscribe(Allocator& allocator, NotifyMessage& message, uint8_t flags);
+
+	void notify_server_create(NotificationServer* server);
+	void notify_server_destroy(NotificationServer* server);
+	void notify_server_handle_broadcast_event(NotificationServer* server);
+	void notify_server_tick(NotificationServer* server);
+
+	void notify_server_publish(NotificationServer* server, const NotifyMessage* message);
+
+	// Returns true if timeout_msec has passed since target_msec.
+	// If true, sets target_msec to the current time.
+	bool runtime_msec_assign_if_timedout(uint64_t& target_msec, uint32_t timeout_msec);
 } // namespace gemini

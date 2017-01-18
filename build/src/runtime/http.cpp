@@ -234,7 +234,7 @@ namespace gemini
 		net_address target_address;
 		net_address_set(&target_address, ip_address, port);
 
-		if (net_socket_connect(state->socket, target_address) < 0)
+		if (net_socket_connect(state->socket, &target_address) < 0)
 		{
 			LOGW("Failed to connect to server '%s:%i'\n",
 				ip_address, port);

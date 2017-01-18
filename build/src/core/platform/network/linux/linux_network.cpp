@@ -103,14 +103,31 @@ namespace platform
 		close(sock);
 	} // net_socket_close
 
+	net_socket net_socket_accept(net_socket sock, net_address* source)
+	{
+		socklen_t address_length = sizeof(net_address);
+		return accept(sock, (struct sockaddr*)source, &address_length);
+	} // net_socket_accept
+
 	int32_t net_socket_bind(net_socket sock, net_address* interface)
 	{
 		return bind(sock, (const struct sockaddr*)interface, sizeof(net_address));
 	} // net_sock_bind
 
+	int32_t net_socket_connect(net_socket sock, net_address* to)
+	{
+		return connect(sock, (sockaddr*)to, sizeof(net_address));
+	} // net_socket_connect
+
+	int32_t net_socket_listen(net_socket sock, int32_t queued_connections)
+	{
+		return listen(sock, queued_connections);
+	} // net_socket_listen
+
 	int32_t net_socket_send(net_socket sock, const char* data, size_t data_size)
 	{
-		return send(sock, data, static_cast<int>(data_size), 0);
+		// MSG_NOSIGNAL to prevent SIGPIPE from killing the application.
+		return send(sock, data, static_cast<int>(data_size), MSG_NOSIGNAL);
 	} // net_socket_send
 
 	int32_t net_socket_sendto(net_socket sock, net_address* destination, const char* data, size_t data_size)
@@ -142,6 +159,11 @@ namespace platform
 		return fcntl(sock, F_SETFL, O_NONBLOCK, non_blocking);
 	} // net_socket_set_blocking
 
+	int32_t net_socket_set_broadcast(net_socket sock, int32_t enable_broadcast)
+	{
+		return setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &enable_broadcast, sizeof(int32_t));
+	} // net_socket_set_broadcast
+
 	int32_t net_startup()
 	{
 		return 0;
@@ -170,9 +192,4 @@ namespace platform
 
 		return 0;
 	} // net_ipv4_by_hostname
-
-	int32_t net_socket_connect(net_socket sock, net_address& to)
-	{
-		return connect(sock, (sockaddr*)&to, sizeof(net_address));
-	} // net_socket_connect
 } // namespace platform

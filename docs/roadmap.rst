@@ -39,10 +39,24 @@ Ideas or nice to haves I want to learn or integrate.
 	- How are updates rolled out?
 
 
+
 ---------------------------
-Assets
+Editor
 ---------------------------
-- have assets in a centralized system
-- cache assets to avoid loading resources multiple times
-- update assets in place
-- different assets per platform as needed
+- needs renderbuffer support for render targets
+
+---------------------------
+Asset Compiler
+---------------------------
+- bakes assets down to specific platforms
+- should support platform-specific formats and configurations
+- embedded in the editor
+- multi-threaded work queue
+
+---------------------------
+Asset Server
+---------------------------
+- invokes asset compiler
+- caches assets locally?
+- serves over network to connected clients
+- embedded in the editor

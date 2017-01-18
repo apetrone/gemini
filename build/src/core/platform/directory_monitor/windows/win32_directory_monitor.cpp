@@ -50,6 +50,7 @@ namespace gemini
 	struct DirectoryMonitorRecord
 	{
 		MonitorDelegate callback;
+		MonitorHandle monitor_handle;
 		platform::PathString path;
 		uint32_t buffer_index;
 		HANDLE handle;
@@ -121,9 +122,39 @@ namespace gemini
 					NULL,
 					NULL);
 				path[count] = '\0';
+				path.recompute_size();
+
+				// The path returned above is a relative path to the directory
+				// referenced in the record. Concatenate that path to make the
+				// absolute path that we can pass to the callback.
+				platform::PathString absolute_path = record->path;
+				absolute_path.append(PATH_SEPARATOR_STRING);
+				absolute_path.append(path);
 
 				// TODO: dispatch the action type?
-				record->callback(path);
+				MonitorAction action;
+				switch (notify_info->Action)
+				{
+				case FILE_ACTION_ADDED:
+					action = MonitorAction::Added;
+					break;
+
+				case FILE_ACTION_REMOVED:
+					action = MonitorAction::Removed;
+					break;
+
+				case FILE_ACTION_MODIFIED:
+					action = MonitorAction::Modified;
+					break;
+
+				case FILE_ACTION_RENAMED_OLD_NAME:
+					// file was renamed and this is the old name
+				case FILE_ACTION_RENAMED_NEW_NAME:
+					// file was renamed and this is the new name
+					break;
+				}
+
+				record->callback(record->monitor_handle, action, absolute_path);
 			}
 
 			++index;
@@ -213,6 +244,7 @@ namespace gemini
 		DirectoryMonitorRecord* record = MEMORY2_NEW(_monitor_state->allocator, DirectoryMonitorRecord);
 		_monitor_state->records.push_back(record);
 		record->callback = delegate;
+		record->monitor_handle = handle;
 		record->path = path;
 		record->buffer_index = 0;
 

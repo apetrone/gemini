@@ -39,6 +39,7 @@
 #include <platform/platform.h>
 #include <platform/network.h>
 #include <platform/window.h>
+#include <platform/directory_monitor.h>
 
 #include <core/hashset.h>
 #include <core/stackstring.h>
@@ -194,9 +195,15 @@ public:
 }; // AssetProcessingPanel
 
 
+// The quiet period required before an asset change is dispatched to subscribers.
+const float ASSET_CHANGE_NOTIFICATION_QUIET_SECONDS = 0.250f;
+struct ModifiedAssetData
+{
+	float quiet_time_left;
+	MonitorHandle monitor_handle;
+};
 
-
-
+typedef HashSet<platform::PathString, ModifiedAssetData> PathDelayHashSet;
 
 size_t total_bytes = sizeof(MyVertex) * 4;
 
@@ -274,12 +281,21 @@ private:
 	RapidInterface rapid;
 	platform::DynamicLibrary* rapid_library;
 
+	gemini::MonitorHandle monitor_zero;
+	gemini::MonitorHandle monitor_one;
+
+	gemini::Allocator asset_allocator;
+	MonitorDelegate monitor_delegate;
 	gemini::Allocator sensor_allocator;
 	gemini::Allocator render_allocator;
 	gemini::Allocator debugdraw_allocator;
 
 	glm::vec3* lines;
 	size_t current_line_index;
+
+	NotificationServer notify_server;
+	NotificationClient notify_client;
+	PathDelayHashSet* queued_asset_changes;
 
 public:
 	EditorKernel()
@@ -369,14 +385,38 @@ public:
 				device->render_target_read_pixels(render_target, image);
 				image::save_image_to_file(image, "test.png");
 			}
-
-			if (event.key == BUTTON_F5)
-			{
-				render2::shaders()->load("gui", true);
-			}
 		}
 	}
 
+	void on_asset_reload(uint32_t channel, void* data, uint32_t data_size)
+	{
+		platform::PathString path = (const char*)data;
+		path.recompute_size();
+		assert(data_size == path.size());
+
+		path = path.basename();
+		path = path.remove_extension();
+		if (channel == 1)
+		{
+			LOGV("reloading SHADER asset: %s\n", path());
+			render2::shaders()->load(path(), true);
+		}
+		else if (channel == 2)
+		{
+			LOGV("reloading TEXTURE asset: %s\n", path());
+		}
+	}
+
+	void on_file_updated(MonitorHandle monitor_handle, MonitorAction action, const platform::PathString& path)
+	{
+		if (action == MonitorAction::Modified)
+		{
+			ModifiedAssetData mod;
+			mod.quiet_time_left = ASSET_CHANGE_NOTIFICATION_QUIET_SECONDS;
+			mod.monitor_handle = monitor_handle;
+			(*queued_asset_changes)[path] = mod;
+		}
+	}
 
 	virtual void event(kernel::SystemEvent& event)
 	{
@@ -699,8 +739,6 @@ Options:
 
 		gemini::runtime_startup("arcfusion.net/orion", custom_path_setup);
 
-		hotloading::startup(render_allocator);
-
 		// create a platform window
 		{
 			platform::window::startup(platform::window::RenderingBackend_Default);
@@ -748,9 +786,32 @@ Options:
 
 		platform::window::Frame window_frame;
 
+		asset_allocator = memory_allocator_default(MEMORY_ZONE_ASSETS);
+		assert(directory_monitor_startup(asset_allocator) == 0);
+
+		queued_asset_changes = MEMORY2_NEW(asset_allocator, PathDelayHashSet)(asset_allocator);
+
+		monitor_delegate.bind<EditorKernel, &EditorKernel::on_file_updated>(this);
+
+		platform::PathString watch_path = core::filesystem::instance()->content_directory();
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("shaders");
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("150");
+
+		monitor_zero = directory_monitor_add(watch_path(), monitor_delegate);
+
+		watch_path = core::filesystem::instance()->content_directory();
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("textures");
+		monitor_one = directory_monitor_add(watch_path(), monitor_delegate);
+
 		// initialize the renderer
 		{
 			render_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
+
+
+			hotloading::startup(render_allocator);
 
 			debugdraw_allocator = memory_allocator_default(MEMORY_ZONE_DEBUGDRAW);
 
@@ -1037,6 +1098,15 @@ Options:
 		load_rapid_interface();
 
 
+		notify_server_create(&notify_server);
+		notify_client_create(&notify_client);
+
+		NotifyMessageDelegate channel_delegate;
+		channel_delegate.bind<EditorKernel, &EditorKernel::on_asset_reload>(this);
+		notify_client_subscribe(&notify_client, 1, channel_delegate);
+		notify_client_subscribe(&notify_client, 2, channel_delegate);
+
+
 		lines = new glm::vec3[TOTAL_LINES];
 
 		return kernel::NoError;
@@ -1086,17 +1156,49 @@ Options:
 		}
 	}
 
+	void tick_queued_asset_changes(PathDelayHashSet& hashset, float tick_seconds)
+	{
+		uint32_t handle_to_channel[] = {
+			1,
+			2
+		};
+		PathDelayHashSet::Iterator it = hashset.begin();
+		for (; it != hashset.end(); ++it)
+		{
+			ModifiedAssetData& data = it.value();
+			assert(data.monitor_handle > 0 && data.monitor_handle < 3);
+
+			data.quiet_time_left -= tick_seconds;
+			if (data.quiet_time_left <= 0.0f)
+			{
+				NotifyMessage message;
+				platform::PathString asset_path = it.key();
+				notify_message_string(message, asset_path);
+				message.channel = handle_to_channel[data.monitor_handle - 1];
+				notify_server_publish(&notify_server, &message);
+
+				it = hashset.remove(it);
+				continue;
+			}
+		}
+	} // tick_queued_asset_changes
+
 	virtual void tick()
 	{
 		uint64_t current_time = platform::microseconds();
 		platform::update(kernel::parameters().framedelta_milliseconds);
 
-		if (!app_in_focus)
-		{
-			return;
-		}
+		// while i debug network stuff; don't do this...
+		//if (!app_in_focus)
+		//{
+		//	return;
+		//}
 
 		hotloading::tick();
+		directory_monitor_update();
+		notify_server_tick(&notify_server);
+		notify_client_tick(&notify_client);
+		tick_queued_asset_changes(*queued_asset_changes, kernel::parameters().framedelta_seconds);
 
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
@@ -1337,6 +1439,14 @@ Options:
 		imocap::device_destroy(mocap_device);
 		mocap_device = nullptr;
 		imocap::shutdown();
+
+		directory_monitor_shutdown();
+
+		notify_client_destroy(&notify_client);
+		notify_server_destroy(&notify_server);
+
+		MEMORY2_DELETE(asset_allocator, queued_asset_changes);
+		queued_asset_changes = nullptr;
 
 		net_shutdown();
 		debugdraw::shutdown();
