@@ -70,6 +70,10 @@ namespace gemini
 			, records_by_path(_allocator)
 		{
 		}
+
+		DirectoryMonitorState(const DirectoryMonitorState& state) = delete;
+		DirectoryMonitorState& operator=(const DirectoryMonitorState& other) = delete;
+		DirectoryMonitorState& operator=(const DirectoryMonitorState&& other) = delete;
 	}; // DirectoryMonitorState
 
 	DirectoryMonitorState* _monitor_state = nullptr;
@@ -113,7 +117,7 @@ namespace gemini
 			platform::PathString path;
 			if (notify_info->FileNameLength > 0)
 			{
-				size_t count = WideCharToMultiByte(CP_ACP,
+				int count = WideCharToMultiByte(CP_ACP,
 					0,
 					notify_info->FileName,
 					notify_info->FileNameLength / sizeof(WCHAR),
