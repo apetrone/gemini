@@ -363,7 +363,7 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// GLTexture
 	// ---------------------------------------------------------------------
-	GLTexture::GLTexture(const Image& image) :
+	GLTexture::GLTexture(const Image& image, GLRenderParameters& render_parameters) :
 		texture_id(0),
 		texture_type(0),
 		unpack_alignment(4),
@@ -371,7 +371,7 @@ namespace render2
 		height(0)
 	{
 		// set GL internal texture type based on the image
-		texture_type = texture_type_from_image(image);
+		texture_type = texture_type_from_image(image, render_parameters);
 
 		glGenTextures(1, &texture_id);
 		gl.CheckError("GenTextures");
@@ -585,6 +585,18 @@ namespace render2
 			{
 				LOGV("Unknown texture type %i\n", attached_texture->texture_type);
 			}
+		}
+	}
+
+	void GLRenderTarget::framebuffer_srgb(bool enable)
+	{
+		if (enable)
+		{
+			gl.Enable(GL_FRAMEBUFFER_SRGB);
+		}
+		else
+		{
+			gl.Disable(GL_FRAMEBUFFER_SRGB);
 		}
 	}
 
@@ -955,7 +967,7 @@ namespace render2
 	// image
 	// ---------------------------------------------------------------------
 	// utility functions
-	GLenum image_to_source_format(const Image& image)
+	GLenum image_to_source_format(const Image& image, GLRenderParameters& render_parameters)
 	{
 		uint32_t num_channels = image.channels;
 
@@ -982,16 +994,30 @@ namespace render2
 		return GL_RGBA;
 	} // image_source_format
 
-	GLint image_to_internal_format(const Image& image)
+	GLint image_to_internal_format(const Image& image, GLRenderParameters& render_parameters)
 	{
 		//GLenum internalFormat = GL_SRGB8;
 		if (image.channels == 3)
 		{
-			return GL_RGB;
+			if (render_parameters.flags & RF_GAMMA_CORRECT)
+			{
+				return GL_SRGB;
+			}
+			else
+			{
+				return GL_RGB;
+			}
 		}
 		else if (image.channels == 4)
 		{
-			return GL_RGBA;
+			if (render_parameters.flags & RF_GAMMA_CORRECT)
+			{
+				return GL_SRGB_ALPHA;
+			}
+			else
+			{
+				return GL_RGBA;
+			}
 		}
 		else if ((image.channels == 1) || (image.flags & image::F_ALPHA))
 		{
@@ -1009,7 +1035,7 @@ namespace render2
 		return GL_INVALID_ENUM;
 	} // image_to_internal_format
 
-	GLenum texture_type_from_image(const Image& image)
+	GLenum texture_type_from_image(const Image& image, GLRenderParameters& render_parameters)
 	{
 		if (image.type == image::TEX_2D)
 		{
@@ -1029,12 +1055,12 @@ namespace render2
 		return GL_INVALID_ENUM;
 	} // texture_type_from_image
 
-	GLTexture* common_create_texture(gemini::Allocator& allocator, const Image& image)
+	GLTexture* common_create_texture(gemini::Allocator& allocator, const Image& image, GLRenderParameters& render_parameters)
 	{
-		GLenum source_format = image_to_source_format(image);
-		GLint internal_format = image_to_internal_format(image);
+		GLenum source_format = image_to_source_format(image, render_parameters);
+		GLint internal_format = image_to_internal_format(image, render_parameters);
 
-		GLTexture* texture = MEMORY2_NEW(allocator, GLTexture)(image);
+		GLTexture* texture = MEMORY2_NEW(allocator, GLTexture)(image, render_parameters);
 
 #if defined(PLATFORM_GLES2_SUPPORT)
 		// GL_INVALID_OPERATION is generated if <source_format> does not match <internal_format>
@@ -1103,7 +1129,7 @@ namespace render2
 	}
 
 
-	void common_update_texture(GLTexture* texture, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions)
+	void common_update_texture(GLTexture* texture, const Image& image, GLRenderParameters& render_parameters, const glm::vec2& origin, const glm::vec2& dimensions)
 	{
 		// In ES 2 implementations; we can use GL_EXT_unpack_subimage for GL_UNPACK_ROW_LENGTH
 		// If that isn't available; the new image has to be uploaded one row at a time.
@@ -1115,7 +1141,7 @@ namespace render2
 		// dimensions should be positive
 		assert(dimensions.x > 0 && dimensions.y > 0);
 
-		GLenum internal_format = static_cast<GLenum>(image_to_internal_format(image));
+		GLenum internal_format = static_cast<GLenum>(image_to_internal_format(image, render_parameters));
 
 		texture->bind();
 

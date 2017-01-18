@@ -141,7 +141,6 @@ namespace render2
 	public:
 		OpenGLDevice(gemini::Allocator& allocator)
 			: allocator(allocator)
-			, default_target(0, 0, true)
 			, queue(allocator, CommandQueue(allocator))
 			, queued_buffers(allocator)
 		{
@@ -149,15 +148,21 @@ namespace render2
 
 			populate_vertexdata_table();
 			load_gl_symbols();
+
+			memset(&parameters, 0, sizeof(GLRenderParameters));
+
+			default_target = MEMORY2_NEW(allocator, GLRenderTarget)(0, 0, true);
 		}
 
 		~OpenGLDevice()
 		{
+			MEMORY2_DELETE(allocator, default_target);
 			unload_gl_symbols();
 		}
 
 	private:
 		gemini::Allocator& allocator;
+		GLRenderParameters parameters;
 
 		void reset()
 		{
@@ -424,8 +429,13 @@ namespace render2
 		virtual void update_texture(Texture* texture, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions);
 		virtual void destroy_texture(Texture* texture);
 
+		// ---------------------------------------------------------------------
+		//
+		// ---------------------------------------------------------------------
+		virtual void update_parameters(const RenderParameters& render_params);
+
 	private:
-		GLRenderTarget default_target;
+		GLRenderTarget* default_target;
 
 		// rotating list of command queues
 		CircularBuffer<CommandQueue, RENDERER_MAX_COMMAND_QUEUES> queue;

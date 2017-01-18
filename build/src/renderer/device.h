@@ -131,5 +131,9 @@ namespace render2
 		virtual void update_texture(Texture* texture, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions) = 0;
 		virtual void destroy_texture(Texture* texture) = 0;
 
+		// ---------------------------------------------------------------------
+		//
+		// ---------------------------------------------------------------------
+		virtual void update_parameters(const RenderParameters& render_params) = 0;
 	}; // class Device
 } // namespace render2

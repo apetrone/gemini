@@ -485,6 +485,12 @@ namespace render2
 			Texture* texture,
 			uint32_t index) = 0;
 	}; // CommandSerializer
+
+	// ---------------------------------------------------------------------
+	// types
+	// ---------------------------------------------------------------------
+	typedef core::StackString<128> param_string;
+	typedef HashSet<param_string, param_string> RenderParameters;
 } // namespace render2
 
 #include "device.h"
@@ -497,13 +503,6 @@ namespace gemini
 
 namespace render2
 {
-	// ---------------------------------------------------------------------
-	// types
-	// ---------------------------------------------------------------------
-	typedef core::StackString<128> param_string;
-	typedef HashSet<param_string, param_string> RenderParameters;
-
-
 	// This allows custom implementations of resource loading to be exposed
 	// to the renderer.
 	class ResourceProvider

@@ -46,7 +46,7 @@ namespace render2
 
 	RenderTarget* OpenGLDevice::default_render_target()
 	{
-		return &default_target;
+		return default_target;
 	}
 
 	RenderTarget* OpenGLDevice::create_render_target(Texture* texture)
@@ -74,8 +74,8 @@ namespace render2
 	// ---------------------------------------------------------------------
 	void OpenGLDevice::init(int backbuffer_width, int backbuffer_height)
 	{
-		default_target.width = static_cast<uint32_t>(backbuffer_width);
-		default_target.height = static_cast<uint32_t>(backbuffer_height);
+		default_target->width = static_cast<uint32_t>(backbuffer_width);
+		default_target->height = static_cast<uint32_t>(backbuffer_height);
 
 #if defined(PLATFORM_WINDOWS)
 		gl.SwapInterval(1);
@@ -112,7 +112,7 @@ namespace render2
 
 	void OpenGLDevice::backbuffer_resized(int backbuffer_width, int backbuffer_height)
 	{
-		common_resize_backbuffer(backbuffer_width, backbuffer_height, &default_target);
+		common_resize_backbuffer(backbuffer_width, backbuffer_height, default_target);
 	}
 
 
@@ -210,18 +210,35 @@ namespace render2
 	// ---------------------------------------------------------------------
 	Texture* OpenGLDevice::create_texture(const Image& image)
 	{
-		return common_create_texture(allocator, image);
+		return common_create_texture(allocator, image, parameters);
 	}
 
 	void OpenGLDevice::update_texture(Texture* tex, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions)
 	{
 		GLTexture* texture = static_cast<GLTexture*>(tex);
-		common_update_texture(texture, image, origin, dimensions);
+		common_update_texture(texture, image, parameters, origin, dimensions);
 	}
 
 	void OpenGLDevice::destroy_texture(Texture* tex)
 	{
 		common_destroy_texture(allocator, tex);
+	}
+
+	// ---------------------------------------------------------------------
+	//
+	// ---------------------------------------------------------------------
+	void OpenGLDevice::update_parameters(const RenderParameters& render_params)
+	{
+		if (render_params.has_key("gamma_correct"))
+		{
+			param_string value = render_params["gamma_correct"];
+			if (value == "true")
+			{
+				parameters.flags |= RF_GAMMA_CORRECT;
+			}
+		}
+
+		default_target->framebuffer_srgb(parameters.flags & RF_GAMMA_CORRECT);
 	}
 
 	// ---------------------------------------------------------------------

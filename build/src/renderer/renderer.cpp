@@ -406,6 +406,9 @@ namespace render2
 		return nullptr;
 #endif
 
+		// set render parameters
+		device->update_parameters(params);
+
 		assert(detail::shader_library == nullptr);
 		detail::shader_library = MEMORY2_NEW(detail::shader_allocator, gemini::ShaderLibrary)(detail::shader_allocator, device);
 		detail::shader_library->prefix_path(shader_root);

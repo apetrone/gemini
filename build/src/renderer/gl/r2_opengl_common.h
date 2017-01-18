@@ -83,6 +83,16 @@ namespace render2
 		}
 	};
 
+	enum GLRenderFlags
+	{
+		RF_GAMMA_CORRECT = 1
+	};
+
+	struct GLRenderParameters
+	{
+		uint8_t flags;
+	};
+
 	class GLInputLayout : public InputLayout
 	{
 	public:
@@ -139,7 +149,7 @@ namespace render2
 
 	struct GLTexture : public Texture
 	{
-		GLTexture(const Image& image);
+		GLTexture(const Image& image, GLRenderParameters& render_parameters);
 		virtual ~GLTexture();
 
 		void bind(bool activate = true);
@@ -168,6 +178,7 @@ namespace render2
 		bool is_complete() const;
 		void attach_texture(GLTexture* texture);
 		void resize(uint32_t width, uint32_t height);
+		void framebuffer_srgb(bool enable);
 
 	private:
 		GLuint framebuffer;
@@ -217,11 +228,11 @@ namespace render2
 	bool common_compile_source(gemini::Allocator& allocator, GLuint program_id, GLuint shader, ShaderSource* source);
 
 	// for use with glTexImage
-	GLenum image_to_source_format(const Image& image);
-	GLint image_to_internal_format(const Image& image);
-	GLenum texture_type_from_image(const Image& image);
-	GLTexture* common_create_texture(gemini::Allocator& allocator, const Image& image);
-	void common_update_texture(GLTexture* texture, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions);
+	GLenum image_to_source_format(const Image& image, GLRenderParameters& render_parameters);
+	GLint image_to_internal_format(const Image& image, GLRenderParameters& render_parameters);
+	GLenum texture_type_from_image(const Image& image, GLRenderParameters& render_parameters);
+	GLTexture* common_create_texture(gemini::Allocator& allocator, const Image& image, GLRenderParameters& render_parameters);
+	void common_update_texture(GLTexture* texture, const Image& image, GLRenderParameters& render_parameters, const glm::vec2& origin, const glm::vec2& dimensions);
 	void common_destroy_texture(gemini::Allocator& allocator, Texture* texture);
 
 	void common_setup_uniforms(GLShader* shader, ConstantBuffer& constants);

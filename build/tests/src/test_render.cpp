@@ -645,6 +645,14 @@ Options:
 
 	virtual void shutdown()
 	{
+		// snap a screenshot
+		render2::Image image(render_allocator);
+		render2::RenderTarget* render_target = state.device->default_render_target();
+		image.create(render_target->width, render_target->height, 4);
+		state.device->render_target_read_pixels(render_target, image);
+		image::flip_image_vertically(render_target->width, render_target->height, 4, &image.pixels[0]);
+		image::save_image_to_file(image, "test.png");
+
 		font::shutdown();
 
 #if TEST_RENDER_GRAPHICS

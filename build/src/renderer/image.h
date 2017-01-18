@@ -50,6 +50,13 @@ namespace image
 		TEX_CUBE = 1
 	}; // ImageType
 
+	enum ImagePixelFormat
+	{
+		IPF_RGB,				// 3-component, RGB
+		IPF_RGBA,				// 4-component, RGBA
+		IPF_SRGB,				// 3-component, sRGB
+	}; // ImagePixelFormat
+
 	enum ImageFlags
 	{
 		F_RGB = 1,
@@ -91,6 +98,7 @@ namespace image
 	{
 		ImageType type;
 		FilterType filter;
+		ImagePixelFormat pixel_format;
 		uint32_t flags;
 
 		uint32_t width;
