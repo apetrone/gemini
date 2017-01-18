@@ -43,7 +43,7 @@ Ideas or nice to haves I want to learn or integrate.
 ---------------------------
 Editor
 ---------------------------
-- needs renderbuffer support for render targets
+
 
 ---------------------------
 Asset Compiler
@@ -112,7 +112,6 @@ gl function logger stack
 
 -------------------------
 missing from render2
-- renderbuffers from render targets
 - cube map support
 - uniform blocks
 - vertex descriptor types

@@ -171,7 +171,7 @@ namespace render2
 
 	private:
 		GLuint framebuffer;
-//		GLuint renderbuffer;
+		GLuint renderbuffer;
 
 		GLTexture* attached_texture;
 	};	// GLRenderTarget

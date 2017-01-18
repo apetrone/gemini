@@ -474,6 +474,7 @@ namespace render2
 		if (!_is_default)
 		{
 			gl.GenFramebuffers(1, &framebuffer);
+			gl.GenRenderbuffers(1, &renderbuffer);
 		}
 	}
 
@@ -482,6 +483,7 @@ namespace render2
 		if (framebuffer > 0)
 		{
 			gl.DeleteFramebuffers(1, &framebuffer);
+			gl.DeleteRenderbuffers(1, &renderbuffer);
 		}
 	}
 
@@ -521,6 +523,18 @@ namespace render2
 		gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+index, texture->texture_type, texture->texture_id, 0);
 		gl.CheckError("FramebufferTexture2D");
 
+		gl.BindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+		gl.CheckError("BindRenderbuffer");
+
+		gl.RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+		gl.CheckError("RenderbufferStorage");
+
+		gl.FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+		gl.CheckError("FramebufferRenderbuffer");
+
+		gl.BindRenderbuffer(GL_RENDERBUFFER, 0);
+		gl.CheckError("BindRenderbuffer");
+
 		attached_texture = texture;
 
 		assert(is_complete());
@@ -554,6 +568,16 @@ namespace render2
 					nullptr
 				);
 				gl.CheckError("TexImage2D");
+
+				// resize the render buffer
+				gl.BindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+				gl.CheckError("BindRenderbuffer");
+
+				gl.RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+				gl.CheckError("RenderbufferStorage");
+
+				gl.BindRenderbuffer(GL_RENDERBUFFER, 0);
+				gl.CheckError("BindRenderbuffer");
 
 				attached_texture->unbind();
 			}
