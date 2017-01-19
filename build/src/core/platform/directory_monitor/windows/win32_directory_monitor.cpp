@@ -80,6 +80,23 @@ namespace gemini
 
 	bool directory_monitor_read_changes(DirectoryMonitorRecord* record);
 
+	void win32_directory_monitor_destroy_record(DirectoryMonitorRecord* record)
+	{
+		// This is invoked because it forces all completion notifications
+		// to happen one last time.
+		CancelIo(record->handle);
+
+		// Wait for i/o operations to finish up.
+		if (!HasOverlappedIoCompleted(&record->async_data))
+		{
+			SleepEx(5, TRUE);
+		}
+
+		MEMORY2_DEALLOC(_monitor_state->allocator, record->buffer);
+		CloseHandle(record->handle);
+		MEMORY2_DELETE(_monitor_state->allocator, record);
+	}
+
 	void WINAPI directory_monitor_completion_routine(DWORD error_code,
 												DWORD bytes_transferred,
 												OVERLAPPED* async_data)
@@ -208,20 +225,7 @@ namespace gemini
 		for (size_t index = 0; index < _monitor_state->records.size(); ++index)
 		{
 			DirectoryMonitorRecord* record = _monitor_state->records[index];
-
-			// This is invoked because it forces all completion notifications
-			// to happen one last time.
-			CancelIo(record->handle);
-
-			// Wait for i/o operations to finish up.
-			if (!HasOverlappedIoCompleted(&record->async_data))
-			{
-				SleepEx(5, TRUE);
-			}
-
-			MEMORY2_DEALLOC(_monitor_state->allocator, record->buffer);
-			CloseHandle(record->handle);
-			MEMORY2_DELETE(_monitor_state->allocator, record);
+			win32_directory_monitor_destroy_record(record);
 		}
 
 		MEMORY2_DELETE(_monitor_state->allocator, _monitor_state);
@@ -283,5 +287,6 @@ namespace gemini
 		DirectoryMonitorRecord* record = _monitor_state->records[handle - 1];
 		_monitor_state->records_by_path.remove(record->path);
 		_monitor_state->records.erase(record);
+		win32_directory_monitor_destroy_record(record);
 	} // directory_monitor_remove
 } // namespace platform
