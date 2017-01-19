@@ -390,8 +390,7 @@ namespace render2
 	{
 		assert(gl.IsTexture(texture_id));
 		glDeleteTextures(1, &texture_id);
-		GLenum err = gl.CheckError("DeleteTextures");
-		assert(err == GL_NO_ERROR);
+		gl.CheckError("DeleteTextures");
 	}
 
 	void GLTexture::bind(bool activate)
@@ -838,9 +837,15 @@ namespace render2
 
 		// This is not supported on GLES2. GLES3 supports it.
 #if !defined(PLATFORM_GLES2_SUPPORT)
-		glReadBuffer(GL_COLOR_ATTACHMENT0);
+		// This only matters if the render target is not default -- otherwise
+		// it only makes sense to read the front or back buffer.
+		//glReadBuffer(GL_COLOR_ATTACHMENT0);
+		//glReadBuffer(GL_BACK);
 #endif
+
 		glReadPixels(0, 0, rt->width, rt->height, GL_RGBA, GL_UNSIGNED_BYTE, &image.pixels[0]);
+		GLenum err = gl.CheckError("glReadPixels");
+		assert(err == GL_NO_ERROR);
 
 		rt->bind(false);
 	}
