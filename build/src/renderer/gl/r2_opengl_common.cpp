@@ -388,15 +388,16 @@ namespace render2
 
 	GLTexture::~GLTexture()
 	{
+		assert(gl.IsTexture(texture_id));
 		glDeleteTextures(1, &texture_id);
-		gl.CheckError("DeleteTextures");
+		GLenum err = gl.CheckError("DeleteTextures");
+		assert(err == GL_NO_ERROR);
 	}
 
 	void GLTexture::bind(bool activate)
 	{
 		GLuint id = activate ? texture_id : 0;
 		gl.BindTexture(texture_type, id);
-		gl.CheckError("BindTexture");
 	}
 
 	void GLTexture::unbind()
@@ -482,7 +483,13 @@ namespace render2
 	{
 		if (framebuffer > 0)
 		{
+			gl.BindRenderbuffer(GL_FRAMEBUFFER, 0);
 			gl.DeleteFramebuffers(1, &framebuffer);
+		}
+
+		if (renderbuffer > 0)
+		{
+			gl.BindRenderbuffer(GL_RENDERBUFFER, 0);
 			gl.DeleteRenderbuffers(1, &renderbuffer);
 		}
 	}

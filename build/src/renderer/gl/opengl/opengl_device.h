@@ -264,11 +264,6 @@ namespace render2
 					}
 					else if (command->type == COMMAND_TEXTURE)
 					{
-						if (texture)
-						{
-							texture->unbind();
-						}
-
 						texture = static_cast<GLTexture*>(command->data[0]);
 						gl.ActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + command->params[0]));
 						gl.CheckError("ActiveTexture");

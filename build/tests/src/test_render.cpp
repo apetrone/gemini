@@ -48,6 +48,7 @@
 
 using namespace gemini;
 
+const float RENDER_TEST_WAIT_SECONDS = 2.0f;
 
 // ---------------------------------------------------------------------
 // Color
@@ -94,6 +95,7 @@ class TestRender : public kernel::IKernel,
 		glm::mat4 modelview_matrix;
 		glm::mat4 projection_matrix;
 		unsigned int diffuse;
+		unsigned int mask_texture;
 
 		font::Handle handle;
 		platform::window::NativeWindow* native_window;
@@ -105,6 +107,7 @@ class TestRender : public kernel::IKernel,
 		render2::Pipeline* texture_pipeline; 	// pipeline for textured geometry
 		render2::Pipeline* font_pipeline; 		// pipeline for font rendering
 		render2::Pipeline* line_pipeline; 		// pipeline for rendering lines
+		render2::Pipeline* multi_pipeline;		// pipeline for multi-texturing
 
 		render2::Buffer* vertex_buffer;
 		render2::Buffer* textured_buffer;
@@ -124,6 +127,7 @@ class TestRender : public kernel::IKernel,
 			texture_pipeline(nullptr),
 			font_pipeline(nullptr),
 			line_pipeline(nullptr),
+			multi_pipeline(nullptr),
 			vertex_buffer(nullptr),
 			textured_buffer(nullptr),
 			font_buffer(nullptr),
@@ -136,6 +140,11 @@ class TestRender : public kernel::IKernel,
 	};
 
 	typedef void (*test_state_callback)(TestRenderState& state);
+	struct RenderTest
+	{
+		core::StackString<128> name;
+		test_state_callback render_callback;
+	};
 
 public:
 	virtual void event(kernel::KeyboardEvent& event)
@@ -242,6 +251,48 @@ public:
 		}
 	}
 
+	static void render_stage2(TestRenderState& state)
+	{
+		// sanity check
+		assert(state.device);
+		assert(state.pipeline);
+		assert(state.vertex_buffer);
+
+		render2::Pass render_pass;
+		render_pass.target = state.device->default_render_target();
+		render_pass.color(0.0f, 0.0f, 0.0f, 1.0f);
+		render_pass.clear_color = true;
+		render_pass.clear_depth = true;
+		render_pass.depth_test = false;
+
+		// create a command queue
+		render2::CommandQueue* queue = state.device->create_queue(render_pass);
+
+		// create a command serializer for the queue
+		render2::CommandSerializer* serializer = state.device->create_serializer(queue);
+		assert(serializer);
+
+		// procedurally-generated textured triangle
+		serializer->pipeline(state.multi_pipeline);
+		serializer->vertex_buffer(state.textured_buffer);
+		serializer->texture(state.checker, 0);
+		serializer->texture(state.notexture, 1);
+		serializer->draw(0, 3);
+
+		// quad; texture loaded from disk (notexture.png)
+
+		//serializer->draw(3, 6);
+
+		// queue the buffer with our device
+		state.device->destroy_serializer(serializer);
+		state.device->queue_buffers(queue, 1);
+
+		// submit the queues to the GPU
+		platform::window::activate_context(state.native_window);
+		state.device->submit();
+		platform::window::swap_buffers(state.native_window);
+	} // render_stage2
+
 
 	TestRender()
 		: render_callbacks(render_allocator, 0)
@@ -323,7 +374,7 @@ Options:
 		}
 
 		// automatically shutdown after 3 seconds
-		countdown = 3.0f;
+		countdown = RENDER_TEST_WAIT_SECONDS;
 
 		// create a test window
 		platform::window::Parameters params;
@@ -358,7 +409,6 @@ Options:
 			platform::window::set_cursor(center.x, center.y);
 		}
 
-
 		assets::startup();
 
 #if TEST_RENDER_GRAPHICS
@@ -367,7 +417,7 @@ Options:
 		// initialize render device
 		render2::RenderParameters render_parameters(render_allocator);
 		render_parameters["rendering_backend"] = "default";
-		render_parameters["gamma_correct"] = "true";
+		render_parameters["gamma_correct"] = "false";
 
 		state.device = render2::create_device(render_allocator, render_parameters);
 		assert(state.device != nullptr);
@@ -409,6 +459,15 @@ Options:
 		td.input_layout = state.device->create_input_layout(td.vertex_description, td.shader);
 		state.texture_pipeline = state.device->create_pipeline(td);
 
+		// setup multi-texture pipeline
+		render2::PipelineDescriptor md;
+		md.shader = render2::shaders()->load("multitexture");
+		md.vertex_description.add("in_position", render2::VD_FLOAT, 3);
+		md.vertex_description.add("in_color", render2::VD_FLOAT, 4);
+		md.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
+		md.input_layout = state.device->create_input_layout(md.vertex_description, md.shader);
+		state.multi_pipeline = state.device->create_pipeline(md);
+
 		// setup font pipeline
 		render2::PipelineDescriptor fd;
 		fd.shader = render2::shaders()->load("font");
@@ -441,6 +500,7 @@ Options:
 		state.modelview_matrix = glm::mat4(1.0f);
 		state.projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
 		state.diffuse = 0;
+		state.mask_texture = 1;
 		state.pipeline->constants().set("modelview_matrix", &state.modelview_matrix);
 		state.pipeline->constants().set("projection_matrix", &state.projection_matrix);
 
@@ -454,6 +514,11 @@ Options:
 
 		state.line_pipeline->constants().set("modelview_matrix", &state.modelview_matrix);
 		state.line_pipeline->constants().set("projection_matrix", &state.projection_matrix);
+
+		state.multi_pipeline->constants().set("modelview_matrix", &state.modelview_matrix);
+		state.multi_pipeline->constants().set("projection_matrix", &state.projection_matrix);
+		state.multi_pipeline->constants().set("diffuse", &state.diffuse);
+		state.multi_pipeline->constants().set("mask_texture", &state.mask_texture);
 
 //		platform::window::show_cursor(true);
 		const size_t TOTAL_FONT_VERTICES = 1024;
@@ -477,7 +542,7 @@ Options:
 			checker_pattern.width = 32;
 			checker_pattern.height = 32;
 			checker_pattern.channels = 3;
-			image::generate_checker_pattern(checker_pattern, gemini::Color(1.0f, 0, 1.0f), gemini::Color(0, 1.0f, 0));
+			image::generate_checker_pattern(checker_pattern, gemini::Color(1.0f, 0.0f, 1.0f), gemini::Color(0.0f, 1.0f, 0.0f));
 			state.checker = state.device->create_texture(checker_pattern);
 			assert(state.checker);
 			LOGV("created checker_pattern texture procedurally\n");
@@ -572,7 +637,8 @@ Options:
 		// additional setup
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 
-		render_callbacks.push_back(render_stage1);
+		//render_callbacks.push_back(RenderTest({ "stage1", render_stage1 }));
+		render_callbacks.push_back(RenderTest({ "stage2", render_stage2 }));
 
 		test_state = 0;
 		return kernel::NoError;
@@ -624,35 +690,31 @@ Options:
 
 		platform::update(kernel::parameters().framedelta_milliseconds);
 
+		RenderTest* render_test = &render_callbacks[test_state];
+		render_test->render_callback(state);
+
 		if (countdown <= 0)
 		{
+			// snap a screenshot
+			render2::Image image(render_allocator);
+			render2::RenderTarget* render_target = state.device->default_render_target();
+			image.create(render_target->width, render_target->height, 4);
+			state.device->render_target_read_pixels(render_target, image);
+			image::flip_image_vertically(render_target->width, render_target->height, 4, &image.pixels[0]);
+			image::save_image_to_file(image, core::str::format("%s.png", render_test->name()));
+
 			++test_state;
+			countdown = RENDER_TEST_WAIT_SECONDS;
 			if (test_state >= render_callbacks.size())
 			{
 				kernel::instance()->set_active(false);
 			}
-		}
-
-		test_state_callback render_callback = nullptr;
-		if (!render_callbacks.empty() && test_state < render_callbacks.size())
-		{
-			render_callback = render_callbacks[test_state];
-			if (render_callback)
-				render_callback(state);
 		}
 	}
 
 
 	virtual void shutdown()
 	{
-		// snap a screenshot
-		render2::Image image(render_allocator);
-		render2::RenderTarget* render_target = state.device->default_render_target();
-		image.create(render_target->width, render_target->height, 4);
-		state.device->render_target_read_pixels(render_target, image);
-		image::flip_image_vertically(render_target->width, render_target->height, 4, &image.pixels[0]);
-		image::save_image_to_file(image, "test.png");
-
 		font::shutdown();
 
 #if TEST_RENDER_GRAPHICS
@@ -667,6 +729,7 @@ Options:
 		state.device->destroy_pipeline(state.texture_pipeline);
 		state.device->destroy_pipeline(state.font_pipeline);
 		state.device->destroy_pipeline(state.line_pipeline);
+		state.device->destroy_pipeline(state.multi_pipeline);
 
 		state.device->destroy_buffer(state.vertex_buffer);
 		state.device->destroy_buffer(state.textured_buffer);
@@ -791,7 +854,7 @@ private:
 	gemini::Allocator render_allocator;
 	gemini::Allocator font_allocator;
 
-	Array<test_state_callback> render_callbacks;
+	Array<RenderTest> render_callbacks;
 	TestRenderState state;
 	bool active;
 };
