@@ -821,6 +821,7 @@ Options:
 			// set some options
 			params["vsync"] = "true";
 			params["double_buffer"] = "true";
+			params["gamma_correct"] = "true";
 			params["depth_size"] = "24";
 //			params["multisample"] = "4";
 
