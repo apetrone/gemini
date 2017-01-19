@@ -99,14 +99,6 @@ void render_scene_from_camera(::renderer::RenderStream& stream, gemini::IEngineE
 	scenelink.draw(stream, &view.modelview, &view.projection);
 }
 
-void render_viewmodel(::renderer::RenderStream& stream, gemini::IEngineEntity* entity, View& view, SceneLink& scenelink)
-{
-	scenelink.clear();
-	scenelink.queue_entities(&entity, 1, RENDER_VIEWMODEL);
-	scenelink.draw(stream, &view.modelview, &view.projection);
-}
-
-
 class EntityManager : public IEntityManager
 {
 	gemini::IEngineEntity* entity_list[MAX_ENTITIES];
@@ -789,39 +781,6 @@ public:
 	{
 		return engine_allocator;
 	}
-
-	virtual void render_viewmodel(IEngineEntity* entity, const View& view)
-	{
-//		render_method->render_viewmodel(entity, main_window, origin, view_angles);
-		::renderer::RenderStream rs((char*)&render_stream_data[0], GEMINI_MAX_RENDERSTREAM_BYTES, (::renderer::RenderState*)&render_commands[0], GEMINI_MAX_RENDER_STREAM_COMMANDS);
-		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
-		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
-		rs.add_state(::renderer::STATE_DEPTH_TEST, 0);
-//		rs.add_clear(::renderer::CLEAR_DEPTH_BUFFER);
-		rs.run_commands();
-
-//		Camera camera;
-//		camera.type = Camera::FIRST_PERSON;
-//
-//		camera.perspective(35.0f, window->render_width, window->render_height, 0.01f, 32.0f);
-//
-//		camera.set_absolute_position(glm::vec3(-1.0f, 0.6f, 2.5f));
-//		camera.eye_position = origin;
-//		camera.view = glm::vec3(0, 0, -1);
-//		camera.pitch = 0;
-//		camera.yaw = 0;
-//		camera.update_view();
-//
-//		render_entity_from_camera(entity, camera, scenelink);
-
-		View newview = view;
-		platform::window::Frame frame = platform::window::get_render_frame(main_window);
-		newview.width = frame.width;
-		newview.height = frame.height;
-
-		::render_viewmodel(rs, entity, newview, scenelink);
-	}
-
 
 	virtual void render_debug(const View& view) override
 	{

@@ -33,10 +33,7 @@ namespace gemini
 	{
 		RENDER_NONE,
 
-		RENDER_VISIBLE = 1,
-
-		// clear z buffer before rendering
-		RENDER_VIEWMODEL = 2
+		RENDER_VISIBLE = 1
 	};
 
 	class IBone
