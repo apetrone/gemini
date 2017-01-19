@@ -474,7 +474,9 @@ namespace render2
 		if (!_is_default)
 		{
 			gl.GenFramebuffers(1, &framebuffer);
+			gl.CheckError("GenFramebuffers");
 			gl.GenRenderbuffers(1, &renderbuffer);
+			gl.CheckError("GenRenderbuffers");
 		}
 	}
 
@@ -482,14 +484,18 @@ namespace render2
 	{
 		if (framebuffer > 0)
 		{
-			gl.BindRenderbuffer(GL_FRAMEBUFFER, 0);
+			gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
+			gl.CheckError("BindFramebuffer");
 			gl.DeleteFramebuffers(1, &framebuffer);
+			gl.CheckError("DeleteFramebuffers");
 		}
 
 		if (renderbuffer > 0)
 		{
 			gl.BindRenderbuffer(GL_RENDERBUFFER, 0);
+			gl.CheckError("BindRenderBuffer");
 			gl.DeleteRenderbuffers(1, &renderbuffer);
+			gl.CheckError("DeleteRenderbuffers");
 		}
 	}
 

@@ -48,7 +48,7 @@
 
 using namespace gemini;
 
-const float RENDER_TEST_WAIT_SECONDS = 2.0f;
+const float RENDER_TEST_WAIT_SECONDS = 1.0f;
 
 // ---------------------------------------------------------------------
 // Color
@@ -637,7 +637,7 @@ Options:
 		// additional setup
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 
-		//render_callbacks.push_back(RenderTest({ "stage1", render_stage1 }));
+		render_callbacks.push_back(RenderTest({ "stage1", render_stage1 }));
 		render_callbacks.push_back(RenderTest({ "stage2", render_stage2 }));
 
 		test_state = 0;
