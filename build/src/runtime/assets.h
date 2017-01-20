@@ -27,11 +27,12 @@
 
 #include <runtime/assetlibrary.h>
 
-#include <runtime/assets/asset_texture.h>
+//#include <runtime/assets/asset_texture.h>
 //#include <runtime/assets/asset_shader.h>
 //#include <runtime/assets/asset_emitter.h>
 #include <runtime/assets/asset_sound.h>
 
+#include <renderer/renderer.h> // for ShaderString
 
 namespace gemini
 {
@@ -63,4 +64,5 @@ namespace gemini
 
 	class MaterialLibrary* materials();
 	class MeshLibrary* meshes();
+	class TextureLibrary* textures();
 } // namespace gemini

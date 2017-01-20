@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2017- Adam Petrone
+// Copyright (C) 2013- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,38 +22,31 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
-
-#include <vector>
-
-#include <core/stackstring.h>
+#include <runtime/configloader.h>
+#include <core/str.h>
 
 #include "assets.h"
 
-#include <renderer/material.h>
-#include <runtime/asset_handle.h>
+#include <runtime/texture.h>
+
+//#include <renderer/renderer.h>
+
+using namespace renderer;
 
 namespace gemini
 {
-	//namespace assets
-	//{
-		//struct Shader;
+	Texture::Texture(gemini::Allocator& allocator)
+		: texture(0)
+		, image(allocator)
+	{
+	}
+	Texture::~Texture() {}
 
-		struct Material : public ::renderer::Material
-		{
-			//Shader* shader;
-			AssetHandle shader_handle;
-
-			Material(Allocator& allocator);
-		}; // Material
-
-		unsigned int texture_unit_for_map(const std::string& name);
-		unsigned int material_type_to_parameter_type(const char* name);
+	void Texture::release()
+	{
+		//driver()->texture_destroy(this->texture);
+	} // release
 
 
-		//AssetLoadStatus material_load_callback(const char* path, AssetLoadState<Material>& load_state, const AssetParameters& parameters);
-		//void material_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
 
-		//DECLARE_ASSET_LIBRARY_ACCESSOR(Material, AssetParameters, materials);
-	//} // namespace assets
 } // namespace gemini

@@ -181,6 +181,8 @@ namespace gemini
 
 						if ( param_flags & PF_VALUE )
 						{
+							assert(0); // TODO: 01-19-17: fix this (textures)
+#if 0
 							assets::TextureParameters texparams;
 
 							if (!filter.isNull())
@@ -195,12 +197,12 @@ namespace gemini
 									texparams.filter_type = image::FILTER_LINEAR_MIPMAP;
 								}
 							}
+#endif
 
-
-							assets::Texture * tex = assets::textures()->load_from_path(texture_param.asString().c_str(), texparams);
-	//						parameter->int_value = tex->Id();
-
-							parameter->texture = tex->texture;
+							assert(0); // TODO: 01-19-17: fix this (textures)
+							Texture* tex = nullptr;
+							//assets::Texture * tex = assets::textures()->load_from_path(texture_param.asString().c_str(), texparams);
+							//parameter->texture = tex->texture;
 							//						LOGV( "param value: %i\n", parameter->intValue );
 
 							parameter->texture_unit = texture_unit_for_map( parameter->name );

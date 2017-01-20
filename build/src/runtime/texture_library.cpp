@@ -22,38 +22,49 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include <vector>
+#include <runtime/texture_library.h>
 
-#include <core/stackstring.h>
+#include <core/logging.h>
+#include <core/mem.h>
 
-#include "assets.h"
-
-#include <renderer/material.h>
-#include <runtime/asset_handle.h>
 
 namespace gemini
 {
-	//namespace assets
-	//{
-		//struct Shader;
+	TextureLibrary::TextureLibrary(Allocator& allocator, render2::Device* render_device)
+		: AssetLibrary2(allocator)
+		, device(render_device)
+	{
+	}
 
-		struct Material : public ::renderer::Material
-		{
-			//Shader* shader;
-			AssetHandle shader_handle;
+	AssetLoadStatus TextureLibrary::create(LoadState& state, platform::PathString& fullpath)
+	{
+		LOGV("loading material \"%s\"\n", fullpath());
 
-			Material(Allocator& allocator);
-		}; // Material
+		//platform::PathString asset_uri = fullpath;
+		//asset_uri.append(".material");
 
-		unsigned int texture_unit_for_map(const std::string& name);
-		unsigned int material_type_to_parameter_type(const char* name);
+		//bool is_new_asset = state.asset == nullptr;
+		//if (is_new_asset)
+		//{
+		//	state.asset = MEMORY2_NEW(*state.allocator, Mesh)(*state.allocator);
+		//}
 
+		//if (core::util::json_load_with_callback(asset_uri(), load_json_model, &state, true) == core::util::ConfigLoad_Success)
+		//{
+		//	return AssetLoad_Success;
+		//}
 
-		//AssetLoadStatus material_load_callback(const char* path, AssetLoadState<Material>& load_state, const AssetParameters& parameters);
-		//void material_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
+		//if (is_new_asset)
+		//{
+		//	MEMORY2_DELETE(*state.allocator, state.asset);
+		//}
 
-		//DECLARE_ASSET_LIBRARY_ACCESSOR(Material, AssetParameters, materials);
-	//} // namespace assets
+		return AssetLoad_Failure;
+	}
+
+	void TextureLibrary::destroy(LoadState& state)
+	{
+		MEMORY2_DELETE(*state.allocator, state.asset);
+	}
 } // namespace gemini

@@ -681,8 +681,8 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 		# "src/runtime/assets/asset_font.h",
 		"src/runtime/assets/asset_sound.cpp",
 		"src/runtime/assets/asset_sound.h",
-		"src/runtime/assets/asset_texture.cpp",
-		"src/runtime/assets/asset_texture.h",
+		# "src/runtime/assets/asset_texture.cpp",
+		# "src/runtime/assets/asset_texture.h",
 		"src/runtime/assets.cpp",
 		"src/runtime/assets.h",
 
@@ -701,6 +701,11 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 		"src/runtime/mesh.h",
 		"src/runtime/mesh_library.cpp",
 		"src/runtime/mesh_library.h",
+
+		"src/runtime/texture.cpp",
+		"src/runtime/texture.h",
+		"src/runtime/texture_library.cpp",
+		"src/runtime/texture_library.h",
 
 		"src/ui/**.c*",
 		"src/ui/**.h",

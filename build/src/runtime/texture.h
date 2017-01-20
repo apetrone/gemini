@@ -24,36 +24,26 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <vector>
+//#include <vector>
 
-#include <core/stackstring.h>
+//#include <core/stackstring.h>
 
-#include "assets.h"
+//#include "assets.h"
 
-#include <renderer/material.h>
+#include <renderer/texture.h>
+#include <renderer/image.h>
+
 #include <runtime/asset_handle.h>
 
 namespace gemini
 {
-	//namespace assets
-	//{
-		//struct Shader;
+	struct Texture
+	{
+		image::Image image;
+		::renderer::Texture* texture;
 
-		struct Material : public ::renderer::Material
-		{
-			//Shader* shader;
-			AssetHandle shader_handle;
-
-			Material(Allocator& allocator);
-		}; // Material
-
-		unsigned int texture_unit_for_map(const std::string& name);
-		unsigned int material_type_to_parameter_type(const char* name);
-
-
-		//AssetLoadStatus material_load_callback(const char* path, AssetLoadState<Material>& load_state, const AssetParameters& parameters);
-		//void material_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
-
-		//DECLARE_ASSET_LIBRARY_ACCESSOR(Material, AssetParameters, materials);
-	//} // namespace assets
+		Texture(Allocator& allocator);
+		virtual ~Texture();
+		virtual void release();
+	};
 } // namespace gemini
