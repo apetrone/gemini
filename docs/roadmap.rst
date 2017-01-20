@@ -60,3 +60,9 @@ Asset Server
 - caches assets locally?
 - serves over network to connected clients
 - embedded in the editor
+
+
+Extract, Prepare, and Submit phases.
+- Extract individual render nodes (per frame, per view)
+- ALL elements of the same type
+- Frame Global operations
