@@ -23,11 +23,14 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
+#include <runtime/filesystem.h>
 #include <runtime/texture_library.h>
 
+#include <core/array.h>
 #include <core/logging.h>
 #include <core/mem.h>
 
+#include <renderer/image.h>
 
 namespace gemini
 {
@@ -39,26 +42,59 @@ namespace gemini
 
 	AssetLoadStatus TextureLibrary::create(LoadState& state, platform::PathString& fullpath)
 	{
-		LOGV("loading material \"%s\"\n", fullpath());
+		LOGV("loading texture \"%s\"\n", fullpath());
 
-		//platform::PathString asset_uri = fullpath;
-		//asset_uri.append(".material");
+		platform::PathString asset_uri = fullpath;
 
-		//bool is_new_asset = state.asset == nullptr;
-		//if (is_new_asset)
-		//{
-		//	state.asset = MEMORY2_NEW(*state.allocator, Mesh)(*state.allocator);
-		//}
+		// TODO: upgrade this when we want to support other formats; for now,
+		// png is default.
+		asset_uri.append(".png");
 
-		//if (core::util::json_load_with_callback(asset_uri(), load_json_model, &state, true) == core::util::ConfigLoad_Success)
-		//{
-		//	return AssetLoad_Success;
-		//}
+		bool is_new_asset = state.asset == nullptr;
+		if (is_new_asset)
+		{
+			state.asset = MEMORY2_NEW(*state.allocator, gemini::Texture)(*state.allocator);
+		}
 
-		//if (is_new_asset)
-		//{
-		//	MEMORY2_DELETE(*state.allocator, state.asset);
-		//}
+		Array<unsigned char> buffer(*state.allocator);
+		::renderer::Texture* render_texture = nullptr;
+		core::filesystem::instance()->virtual_load_file(buffer, asset_uri());
+		if (!buffer.empty())
+		{
+			image::Image& image = state.asset->image;
+			unsigned char* pixels = image::load_image_from_memory(&buffer[0], buffer.size(), &image.width, &image.height, &image.channels);
+			if (pixels)
+			{
+				//				may need to actually flip the image vertically here
+				//				flip_image_vertically( width, height, components, pixels );
+
+				image.pixels = pixels;
+				//image.filter = parameters.filter_type;
+				image.filter = image::FILTER_LINEAR;
+
+				assert(0); // TODO: 01-19-17: fix this (textures)
+				//render_texture = ::renderer::driver()->texture_create(image);
+
+				LOGV("Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", asset_uri(), image.width, image.height, image.channels);
+
+				image::free_image(pixels);
+				image.pixels = 0;
+				return AssetLoad_Success;
+			}
+			else
+			{
+				LOGE("Unable to load image %s\n", asset_uri());
+			}
+		}
+		else
+		{
+			LOGE("Couldn't load file: %s\n", asset_uri());
+		}
+
+		if (is_new_asset)
+		{
+			MEMORY2_DELETE(*state.allocator, state.asset);
+		}
 
 		return AssetLoad_Failure;
 	}

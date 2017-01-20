@@ -90,6 +90,11 @@ namespace gemini
 		void load_default_texture_and_material()
 		{
 			assert(0); // TODO@apetrone (assets) fix this function
+
+			image::Image default_image;
+			renderer::Texture* texture = image:load_default_texture(default_image);
+
+
 #if 0
 			// setup default texture
 			Texture* default_texture = textures()->allocate_asset();
