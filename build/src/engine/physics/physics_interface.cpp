@@ -32,7 +32,7 @@
 #include "bullet/bullet_staticbody.h"
 #include "bullet/bullet_motionstate.h"
 
-#include "assets/asset_mesh.h"
+//#include "assets/asset_mesh.h"
 
 #include "physics_common.h"
 
@@ -110,6 +110,8 @@ namespace gemini
 			return rigidbody;
 		}
 
+		// TODO: 01-19-17: fix this (meshes)
+#if 0
 		btCompoundShape* compound_shape_from_geometry(assets::Mesh* mesh, bool is_dynamic, float mass)
 		{
 			bool use_quantized_bvh_tree = true;
@@ -163,6 +165,7 @@ namespace gemini
 
 			return compound;
 		}
+#endif
 
 		physics::ICollisionObject* PhysicsInterface::create_physics_model(int32_t model_index, ObjectProperties& properties)
 		{
@@ -172,7 +175,8 @@ namespace gemini
 			btScalar mass(properties.mass_kg);
 			btVector3 local_inertia(0, 0, 0);
 
-
+			assert(0); // TODO: 01-19-17: fix this (meshes)
+#if 0
 			IModelInstanceData* model_interface = engine::instance()->models()->get_instance_data(model_index);
 			assets::Mesh* mesh = assets::meshes()->find_with_id(model_interface->asset_index());
 			if (!mesh)
@@ -186,6 +190,7 @@ namespace gemini
 				LOGE("Unable to add physics for mesh; invalid physics state\n");
 				return nullptr;
 			}
+#endif
 
 			ICollisionObject* object = 0;
 			BulletStaticBody* static_body = 0;
@@ -206,7 +211,8 @@ namespace gemini
 
 			// create a compound shape and add geometries to it
 
-			btCompoundShape* compound = compound_shape_from_geometry(mesh, dynamic_body, mass);
+			assert(0); // TODO: 01-19-17: fix this (meshes)
+			btCompoundShape* compound = nullptr; // compound_shape_from_geometry(mesh, dynamic_body, mass);
 			btRigidBody* body = 0;
 
 			// The rigid body world transform is the center of mass. This is at the origin.

@@ -25,6 +25,7 @@
 #pragma once
 
 #include <core/mathlib.h>
+#include <runtime/asset_handle.h>
 
 namespace gemini
 {
@@ -35,7 +36,7 @@ namespace gemini
 	public:
 		virtual ~IModelInstanceData() {};
 
-		virtual unsigned int asset_index() const = 0;
+		virtual AssetHandle asset_index() const = 0;
 		virtual glm::mat4& get_local_transform() = 0;
 		virtual void set_local_transform(const glm::mat4& transform) = 0;
 //		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const = 0;

@@ -69,9 +69,6 @@ namespace gemini
 	class AssetLibrary2
 	{
 	public:
-
-
-	protected:
 		typedef uint16_t HandleIndex;
 		typedef HashSet<platform::PathString, HandleIndex> HandleIndexByName;
 
@@ -107,6 +104,10 @@ namespace gemini
 			, handle_by_name(asset_allocator)
 		{
 		}
+
+		AssetLibrary2 operator=(const AssetLibrary2& other) = delete;
+		AssetLibrary2 operator=(const AssetLibrary2&& other) = delete;
+		AssetLibrary2(const AssetLibrary2& other) = delete;
 
 		virtual ~AssetLibrary2()
 		{

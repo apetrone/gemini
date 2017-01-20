@@ -32,6 +32,9 @@
 #include <renderer/image.h>
 #include <renderer/renderer.h>
 
+#include <runtime/material_library.h>
+#include <runtime/mesh_library.h>
+
 using namespace renderer;
 
 namespace gemini
@@ -73,11 +76,14 @@ namespace gemini
 
 		// 1. Implement asset library
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(textures)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(meshes)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(materials)
-		//IMPLEMENT_ASSET_LIBRARY_ACCESSOR(emitters)
+			//IMPLEMENT_ASSET_LIBRARY_ACCESSOR(meshes)
+			//IMPLEMENT_ASSET_LIBRARY_ACCESSOR(materials)
+			//IMPLEMENT_ASSET_LIBRARY_ACCESSOR(emitters)
 
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(sounds)
+			IMPLEMENT_ASSET_LIBRARY_ACCESSOR(sounds)
+
+			MaterialLibrary* _material_library = nullptr;
+			MeshLibrary* _mesh_library = nullptr;
 
 		void load_default_texture_and_material()
 		{
@@ -116,24 +122,30 @@ namespace gemini
 
 			// 2. allocate asset libraries
 			_textures =		MEMORY2_NEW(asset_allocator, texturesAssetLibrary)			(asset_allocator, texture_construct_extension, texture_load_callback);
-			_meshes =		MEMORY2_NEW(asset_allocator, meshesAssetLibrary)				(asset_allocator, mesh_construct_extension, mesh_load_callback);
-			_materials =	MEMORY2_NEW(asset_allocator, materialsAssetLibrary)			(asset_allocator, material_construct_extension, material_load_callback);
+			//_meshes =		MEMORY2_NEW(asset_allocator, meshesAssetLibrary)				(asset_allocator, mesh_construct_extension, mesh_load_callback);
+			//_materials =	MEMORY2_NEW(asset_allocator, materialsAssetLibrary)			(asset_allocator, material_construct_extension, material_load_callback);
 			//_emitters =		MEMORY2_NEW(asset_allocator, emitterConfigAssetLibrary)		(asset_allocator, emitterconfig_load_callback, emitterconfig_construct_extension);
 
 			_sounds =		MEMORY2_NEW(asset_allocator, soundsAssetLibrary)				(asset_allocator, sound_construct_extension, sound_load_callback);
 
-			//load_default_texture_and_material();
+			_material_library = MEMORY2_NEW(asset_allocator, gemini::MaterialLibrary)(asset_allocator, nullptr);
+			_mesh_library = MEMORY2_NEW(asset_allocator, gemini::MeshLibrary)(asset_allocator, nullptr);
+
+			load_default_texture_and_material();
 		} // startup
 
 		void shutdown()
 		{
 			// 4. Delete asset library
 			MEMORY2_DELETE(asset_allocator, _textures);
-			MEMORY2_DELETE(asset_allocator, _meshes);
-			MEMORY2_DELETE(asset_allocator, _materials);
+			//MEMORY2_DELETE(asset_allocator, _meshes);
+			//MEMORY2_DELETE(asset_allocator, _materials);
 			//MEMORY2_DELETE(asset_allocator, _emitters);
 			//MEMORY2_DELETE(asset_allocator, _shaders);
 			MEMORY2_DELETE(asset_allocator, _sounds);
+
+			MEMORY2_DELETE(asset_allocator, _material_library);
+			MEMORY2_DELETE(asset_allocator, _mesh_library);
 		} // shutdown
 
 		void append_asset_extension( AssetType type, core::StackString<MAX_PATH_SIZE> & path )
@@ -167,4 +179,14 @@ namespace gemini
 
 		} // append_asset_extension
 	} // namespace assets
+
+	MaterialLibrary* materials()
+	{
+		return assets::_material_library;
+	}
+
+	MeshLibrary* meshes()
+	{
+		return assets::_mesh_library;
+	} // meshes
 } // namespace gemini

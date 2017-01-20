@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include "animation.h"
 
-#include <assets/asset_mesh.h>
+//#include <assets/asset_mesh.h>
 
 #include <core/mem.h>
 #include <core/logging.h>
@@ -32,13 +32,13 @@
 #include <core/mathlib.h>
 #include <core/stackstring.h>
 
+#include <platform/platform.h>
+
 #include <hashset.h>
 
 #include <runtime/configloader.h>
 
 #include <vector>
-
-using namespace gemini::assets;
 
 using gemini::animation::Keyframe;
 
@@ -317,11 +317,12 @@ namespace gemini
 
 				core::util::ConfigLoadStatus result = core::util::ConfigLoad_Failure;
 
-				if (!mesh->has_skeletal_animation)
-				{
-					LOGW("Tried to attach an animation to a non-animated model!\n");
-					return result;
-				}
+				assert(0); // TODO: 01-19-17: fix this (meshes)
+				//if (!mesh->has_skeletal_animation)
+				//{
+				//	LOGW("Tried to attach an animation to a non-animated model!\n");
+				//	return result;
+				//}
 
 				if (root.isNull())
 				{
@@ -335,15 +336,16 @@ namespace gemini
 					return result;
 				}
 
-				LOGV("bones_array.size() == %i, mesh->skeleton.size() == %i\n",
-					 bones_array.size(), mesh->skeleton.size());
-				assert(bones_array.size() == mesh->skeleton.size());
+				assert(0); // TODO: 01-19-17: fix this (meshes)
+				//LOGV("bones_array.size() == %i, mesh->skeleton.size() == %i\n",
+				//	 bones_array.size(), mesh->skeleton.size());
+				//assert(bones_array.size() == mesh->skeleton.size());
 
-				if (bones_array.size() != mesh->skeleton.size())
-				{
-					LOGV("# animated bones does not match model's skeleton!\n");
-					return result;
-				}
+				//if (bones_array.size() != mesh->skeleton.size())
+				//{
+				//	LOGV("# animated bones does not match model's skeleton!\n");
+				//	return result;
+				//}
 
 				const Json::Value& frames_per_second = root["frames_per_second"];
 				if (!validate_node(frames_per_second, "frames_per_second"))
@@ -388,6 +390,8 @@ namespace gemini
 					const Json::Value& translation_keys = jnode["translation"];
 					assert(!scale_keys.isNull() && !rotation_keys.isNull() && !translation_keys.isNull());
 
+					assert(0); // TODO: 01-19-17: fix this (meshes)
+#if 0
 					Joint* joint = mesh->find_bone_named(node_name.c_str());
 					assert(joint != 0);
 
@@ -472,7 +476,7 @@ namespace gemini
 //							LOGV("t=%2.2f, %g %g %g %g\n", t, x, y, z, w);
 						}
 					}
-
+#endif
 					++node_index;
 				}
 
@@ -490,7 +494,7 @@ namespace gemini
 				}
 
 				Sequence* sequence = MEMORY2_NEW(allocator, Sequence)(allocator);
-				core::StackString<MAX_PATH_SIZE> filepath = name;
+				platform::PathString filepath = name;
 				filepath.append(".animation");
 				AnimationSequenceLoadData data;
 				data.mesh = mesh;

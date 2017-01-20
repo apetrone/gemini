@@ -679,10 +679,6 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 		# "src/runtime/assets/asset_emitter.h",
 		# "src/runtime/assets/asset_font.cpp",
 		# "src/runtime/assets/asset_font.h",
-		"src/runtime/assets/asset_material.cpp",
-		"src/runtime/assets/asset_material.h",
-		"src/runtime/assets/asset_mesh.cpp",
-		"src/runtime/assets/asset_mesh.h",
 		"src/runtime/assets/asset_sound.cpp",
 		"src/runtime/assets/asset_sound.h",
 		"src/runtime/assets/asset_texture.cpp",
@@ -695,6 +691,16 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 
 		"src/runtime/keyframechannel.cpp",
 		"src/runtime/keyframechannel.h",
+
+		"src/runtime/material.cpp",
+		"src/runtime/material.h",
+		"src/runtime/material_library.cpp",
+		"src/runtime/material_library.h",
+
+		"src/runtime/mesh.cpp",
+		"src/runtime/mesh.h",
+		"src/runtime/mesh_library.cpp",
+		"src/runtime/mesh_library.h",
 
 		"src/ui/**.c*",
 		"src/ui/**.h",

@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2017- Adam Petrone
+// Copyright (C) 2013- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -24,26 +24,36 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <runtime/asset_library.h>
-#include <renderer/shaderprogram.h>
+#include <vector>
 
-namespace render2
-{
-	class Device;
-}
+#include <core/stackstring.h>
+
+#include "assets.h"
+
+#include <renderer/material.h>
+#include <runtime/asset_handle.h>
 
 namespace gemini
 {
-	class ShaderLibrary : public AssetLibrary2<render2::Shader, ShaderLibrary>
-	{
-	public:
+	//namespace assets
+	//{
+		//struct Shader;
 
-		ShaderLibrary(Allocator& allocator, render2::Device* render_device);
+		struct Material : public ::renderer::Material
+		{
+			//Shader* shader;
+			AssetHandle shader_handle;
 
-		AssetLoadStatus create(LoadState& state, platform::PathString& fullpath);
-		void destroy(LoadState& state);
+			Material(Allocator& allocator);
+		}; // Material
 
-	private:
-		render2::Device* device;
-	}; // ShaderLibrary
+		unsigned int texture_unit_for_map(const std::string& name);
+		unsigned int material_type_to_parameter_type(const char* name);
+
+
+		//AssetLoadStatus material_load_callback(const char* path, AssetLoadState<Material>& load_state, const AssetParameters& parameters);
+		//void material_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
+
+		//DECLARE_ASSET_LIBRARY_ACCESSOR(Material, AssetParameters, materials);
+	//} // namespace assets
 } // namespace gemini

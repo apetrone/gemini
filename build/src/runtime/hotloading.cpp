@@ -23,17 +23,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <core/typedefs.h>
-#include <core/mathlib.h>
-#include <threadsafequeue.h>
-#include <core/stackstring.h>
-
-#include <renderer/shader_library.h>
 
 #include <json/json.h>
 
-#include "hotloading.h"
-#include "assets/asset_material.h"
+#include <runtime/hotloading.h>
+#include <runtime/material_library.h>
+#include <runtime/mesh_library.h>
+
+#include <renderer/shader_library.h>
+
+#include <core/mathlib.h>
+#include <core/stackstring.h>
+#include <threadsafequeue.h>
+#include <core/typedefs.h>
 
 #include "civetweb.h"
 #include "CivetServer.h"
@@ -318,7 +320,7 @@ namespace gemini
 					}
 					else if (dirname == "materials")
 					{
-						assets::materials()->load_from_path(item.c_str(), assets::AssetParameters(), true);
+						materials()->load(item.c_str(), true);
 					}
 					else
 					{

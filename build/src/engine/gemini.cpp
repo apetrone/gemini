@@ -44,6 +44,10 @@
 #include <renderer/constantbuffer.h>
 #include <renderer/debug_draw.h>
 
+#include <runtime/keyframechannel.h>
+#include <runtime/mesh.h>
+#include <runtime/mesh_library.h>
+
 // SDK
 #include <sdk/audio_api.h>
 #include <sdk/entity_api.h>
@@ -58,7 +62,7 @@
 #include "input.h"
 
 #include "assets/asset_font.h"
-#include "assets/asset_mesh.h"
+//#include "assets/asset_mesh.h"
 #include "scenelink.h"
 #include "audio.h"
 #include "animation.h"
@@ -155,8 +159,8 @@ class ModelInterface : public gemini::IModelInterface
 	// will have a model instance data allocated.
 	class ModelInstanceData : public IModelInstanceData
 	{
-		unsigned int mesh_asset_index;
-		assets::Mesh* mesh;
+		AssetHandle mesh_handle;
+		Mesh* mesh;
 		glm::mat4 transform;
 
 		// parent-local bone transforms
@@ -181,8 +185,7 @@ class ModelInterface : public gemini::IModelInterface
 	public:
 
 		ModelInstanceData(gemini::Allocator& allocator)
-			: mesh_asset_index(0)
-			, mesh(0)
+			: mesh(nullptr)
 			, local_bone_transforms(0)
 			, model_bone_transforms(0)
 			, inverse_bind_transforms(0)
@@ -193,24 +196,25 @@ class ModelInterface : public gemini::IModelInterface
 		{
 		}
 
-		void set_mesh_index(unsigned int mesh_asset_id)
+		void set_mesh_index(AssetHandle in_mesh_handle)
 		{
-			mesh_asset_index = mesh_asset_id;
-			mesh = assets::meshes()->find_with_id(mesh_asset_index);
+			mesh_handle = in_mesh_handle;
+			mesh = meshes()->lookup(mesh_handle);
 		}
 
 		void create_bones()
 		{
 			assert(mesh != 0);
 
+			assert(0); // TODO: 01-19-17: fix this (meshes)
 			// does this have an animation?
-			if (mesh->has_skeletal_animation)
-			{
-				size_t total_elements = (mesh->geometry.size() * mesh->skeleton.size());
-				local_bone_transforms = new glm::mat4[total_elements];
-				model_bone_transforms = new glm::mat4[total_elements];
-				inverse_bind_transforms = new glm::mat4[total_elements];
-			}
+			//if (mesh->has_skeletal_animation)
+			//{
+			//	size_t total_elements = (mesh->geometry.size() * mesh->skeleton.size());
+			//	local_bone_transforms = new glm::mat4[total_elements];
+			//	model_bone_transforms = new glm::mat4[total_elements];
+			//	inverse_bind_transforms = new glm::mat4[total_elements];
+			//}
 		}
 
 		void destroy_bones()
@@ -234,7 +238,7 @@ class ModelInterface : public gemini::IModelInterface
 			}
 		}
 
-		virtual unsigned int asset_index() const { return mesh_asset_index; }
+		virtual AssetHandle asset_index() const { return mesh_handle; }
 		virtual glm::mat4& get_local_transform() { return transform; }
 		virtual void set_local_transform(const glm::mat4& _transform) { transform = _transform; }
 		virtual glm::mat4* get_model_bone_transforms(uint32_t geometry_index) const
@@ -243,7 +247,8 @@ class ModelInterface : public gemini::IModelInterface
 			{
 				return nullptr;
 			}
-			return &model_bone_transforms[mesh->skeleton.size() * geometry_index];
+			assert(0); // TODO: 01-19-17: fix this (meshes)
+			return nullptr; // &model_bone_transforms[mesh->skeleton.size() * geometry_index];
 		}
 
 		virtual const Hitbox* get_hitboxes() const
@@ -253,7 +258,9 @@ class ModelInterface : public gemini::IModelInterface
 				return nullptr;
 			}
 
-			return &mesh->hitboxes[0];
+			assert(0); // TODO: 01-19-17: fix this (meshes)
+			return nullptr;
+			//return &mesh->hitboxes[0];
 		}
 
 		virtual glm::mat4* get_inverse_bind_transforms(uint32_t geometry_index) const
@@ -262,12 +269,16 @@ class ModelInterface : public gemini::IModelInterface
 			{
 				return nullptr;
 			}
-			return &inverse_bind_transforms[mesh->skeleton.size() * geometry_index];
+			assert(0); // TODO: 01-19-17: fix this (meshes)
+			return nullptr;
+			//return &inverse_bind_transforms[mesh->skeleton.size() * geometry_index];
 		}
 
 		virtual uint32_t get_total_transforms() const
 		{
-			return mesh->skeleton.size();
+			assert(0); // TODO: 01-19-17: fix this (meshes)
+			return 0;
+			//return mesh->skeleton.size();
 		}
 
 		virtual void set_animation_enabled(int32_t index, bool enabled)
@@ -325,6 +336,8 @@ class ModelInterface : public gemini::IModelInterface
 
 		virtual void set_pose(glm::vec3* positions, glm::quat* rotations)
 		{
+			assert(0); // TODO: 01-19-17: fix this (meshes)
+#if 0
 			if (mesh->skeleton.empty())
 			{
 				return;
@@ -386,6 +399,7 @@ class ModelInterface : public gemini::IModelInterface
 
 				++geometry_index;
 			}
+#endif
 		}
 
 		virtual int32_t get_animation_index(const char* name)
@@ -463,11 +477,12 @@ class ModelInterface : public gemini::IModelInterface
 
 		virtual int32_t find_bone_named(const char* bone)
 		{
-			for (const assets::Joint& joint : mesh->skeleton)
-			{
-				if (joint.name == bone)
-					return joint.index;
-			}
+			assert(0); // TODO: 01-19-17: fix this (meshes)
+			//for (const assets::Joint& joint : mesh->skeleton)
+			//{
+			//	if (joint.name == bone)
+			//		return joint.index;
+			//}
 
 			return -1;
 		}
@@ -492,17 +507,23 @@ class ModelInterface : public gemini::IModelInterface
 
 		virtual const glm::vec3& get_mins() const
 		{
-			return mesh->aabb_mins;
+			assert(0); // TODO: 01-19-17: fix this (meshes)
+			return glm::vec3();
+			//return mesh->aabb_mins;
 		}
 
 		virtual const glm::vec3& get_maxs() const
 		{
-			return mesh->aabb_maxs;
+			assert(0); // TODO: 01-19-17: fix this (meshes)
+			return glm::vec3();
+			//return mesh->aabb_maxs;
 		}
 
 		virtual const glm::vec3& get_center_offset() const
 		{
-			return mesh->mass_center_offset;
+			assert(0); // TODO: 01-19-17: fix this (meshes)
+			//return mesh->mass_center_offset;
+			return glm::vec3();
 		}
 	};
 
@@ -521,7 +542,8 @@ public:
 
 	virtual int32_t create_instance_data(const char* model_path)
 	{
-		assets::Mesh* mesh = assets::meshes()->load_from_path(model_path);
+		AssetHandle mesh_handle = meshes()->load(model_path);
+		Mesh* mesh = meshes()->lookup(mesh_handle);
 		if (mesh)
 		{
 			if (mesh->is_dirty)
@@ -529,7 +551,7 @@ public:
 				mesh->prepare_geometry();
 			}
 			ModelInstanceData data(allocator);
-			data.set_mesh_index(mesh->Id());
+			data.set_mesh_index(mesh_handle);
 			data.create_bones();
 			int32_t index = (int32_t)id_to_instance.size();
 			id_to_instance.insert(ModelInstanceMap::value_type(index, data));
@@ -613,9 +635,10 @@ public:
 
 	virtual void navmesh_generate_from_model(const char* path)
 	{
-		assets::Mesh* mesh = assets::meshes()->load_from_path(path);
-		assets::Geometry* geom = mesh->geometry[0];
-		navigation::create_from_geometry(geom->vertices, geom->indices, geom->mins, geom->maxs);
+		assert(0); // TODO: 01-19-17: fix this (meshes)
+		//assets::Mesh* mesh = assets::meshes()->load_from_path(path);
+		//assets::Geometry* geom = mesh->geometry[0];
+		//navigation::create_from_geometry(geom->vertices, geom->indices, geom->mins, geom->maxs);
 	}
 
 	virtual void navmesh_find_straight_path(NavMeshPath* path, glm::vec3* positions, uint32_t* total_positions)

@@ -35,10 +35,8 @@ namespace gemini
 
 	const size_t ANIMATION_KEYFRAME_VALUES_MAX = 7;
 
-	namespace assets
-	{
-		struct Mesh;
-	}
+	struct Mesh;
+
 
 	namespace animation
 	{
@@ -148,7 +146,7 @@ namespace gemini
 		void shutdown();
 		void update(float delta_seconds);
 
-		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, assets::Mesh* mesh);
+		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, Mesh* mesh);
 		SequenceId find_sequence(const char* name);
 		Sequence* get_sequence_by_index(SequenceId index);
 

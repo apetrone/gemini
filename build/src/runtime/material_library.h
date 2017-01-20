@@ -25,25 +25,25 @@
 #pragma once
 
 #include <runtime/asset_library.h>
-#include <renderer/shaderprogram.h>
+#include <runtime/material.h>
 
 namespace render2
 {
 	class Device;
-}
+} // namespace render2
 
 namespace gemini
 {
-	class ShaderLibrary : public AssetLibrary2<render2::Shader, ShaderLibrary>
+	class MaterialLibrary : public AssetLibrary2<gemini::Material, MaterialLibrary>
 	{
 	public:
 
-		ShaderLibrary(Allocator& allocator, render2::Device* render_device);
+		MaterialLibrary(Allocator& allocator, render2::Device* render_device);
 
 		AssetLoadStatus create(LoadState& state, platform::PathString& fullpath);
 		void destroy(LoadState& state);
 
 	private:
 		render2::Device* device;
-	}; // ShaderLibrary
+	}; // MaterialLibrary
 } // namespace gemini

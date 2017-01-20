@@ -29,9 +29,6 @@
 #include <renderer/renderstream.h>
 #include <renderer/debug_draw.h>
 
-
-#include <assets/asset_material.h>
-
 #include <sdk/engine_api.h>
 #include <sdk/iengineentity.h>
 #include <sdk/model_api.h>
@@ -40,6 +37,9 @@
 #include <shared/shared_constants.h>
 
 #include <renderer/shader_library.h>
+
+#include <runtime/material_library.h>
+#include <runtime/mesh_library.h>
 
 namespace gemini
 {
@@ -66,10 +66,14 @@ namespace gemini
 
 	void SceneLink::draw(::renderer::RenderStream& stream, glm::mat4* modelview_matrix, glm::mat4* projection_matrix)
 	{
+
+
+
+#if 0
 		// finally, draw from the queue
 		for(::renderer::RenderBlock& block : queue->render_list)
 		{
-#if 0
+
 			render2::Shader* shader = render2::shaders()->lookup(block.shader_id);
 			assert(shader);
 
@@ -116,10 +120,10 @@ namespace gemini
 			stream.add_material(material, shader->program);
 
 			stream.add_draw_call(block.object->vertexbuffer);
-#endif
 		}
 
 		stream.run_commands();
+#endif
 	}
 
 	void SceneLink::queue_entities(gemini::IEngineEntity** entity_list, uint32_t max_entities, uint32_t render_flags)
@@ -149,7 +153,8 @@ namespace gemini
 					if (model_instance)
 					{
 						// TODO: determine if this is a static or animated mesh.
-
+						assert(0); // TODO: 01-19-17: fix this (meshes)
+#if 0
 //						LOGV("model_instance: %i\n", model_instance->asset_index());
 						assets::Mesh* mesh = assets::meshes()->find_with_id(model_instance->asset_index());
 						if (mesh)
@@ -236,6 +241,7 @@ namespace gemini
 							}
 
 						}
+#endif
 					}
 				}
 			}

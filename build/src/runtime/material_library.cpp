@@ -22,28 +22,49 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include <runtime/asset_library.h>
-#include <renderer/shaderprogram.h>
+#include <runtime/material_library.h>
 
-namespace render2
-{
-	class Device;
-}
+#include <core/logging.h>
+#include <core/mem.h>
+
 
 namespace gemini
 {
-	class ShaderLibrary : public AssetLibrary2<render2::Shader, ShaderLibrary>
+	MaterialLibrary::MaterialLibrary(Allocator& allocator, render2::Device* render_device)
+		: AssetLibrary2(allocator)
+		, device(render_device)
 	{
-	public:
+	}
 
-		ShaderLibrary(Allocator& allocator, render2::Device* render_device);
+	AssetLoadStatus MaterialLibrary::create(LoadState& state, platform::PathString& fullpath)
+	{
+		LOGV("loading material \"%s\"\n", fullpath());
 
-		AssetLoadStatus create(LoadState& state, platform::PathString& fullpath);
-		void destroy(LoadState& state);
+		//platform::PathString asset_uri = fullpath;
+		//asset_uri.append(".material");
 
-	private:
-		render2::Device* device;
-	}; // ShaderLibrary
+		//bool is_new_asset = state.asset == nullptr;
+		//if (is_new_asset)
+		//{
+		//	state.asset = MEMORY2_NEW(*state.allocator, Mesh)(*state.allocator);
+		//}
+
+		//if (core::util::json_load_with_callback(asset_uri(), load_json_model, &state, true) == core::util::ConfigLoad_Success)
+		//{
+		//	return AssetLoad_Success;
+		//}
+
+		//if (is_new_asset)
+		//{
+		//	MEMORY2_DELETE(*state.allocator, state.asset);
+		//}
+
+		return AssetLoad_Failure;
+	}
+
+	void MaterialLibrary::destroy(LoadState& state)
+	{
+		MEMORY2_DELETE(*state.allocator, state.asset);
+	}
 } // namespace gemini

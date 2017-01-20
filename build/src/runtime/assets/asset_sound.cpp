@@ -279,6 +279,11 @@ namespace gemini
 		{
 			Sound* sound = load_state.asset;
 
+			if (!sound)
+			{
+				sound = MEMORY2_NEW(*load_state.allocator, Sound)(*load_state.allocator);
+			}
+
 			// load the file into a memory buffer
 			if (load_wave(*load_state.allocator, sound->pcmdata, sound->channels, path) != 0)
 			{
@@ -290,6 +295,7 @@ namespace gemini
 			// TODO: determine which callback it should use here based on
 			// file extension.
 			sound->get_frame_callback = &get_frame_wave;
+			load_state.asset = sound;
 
 			return AssetLoad_Success;
 		} // font_load_callback

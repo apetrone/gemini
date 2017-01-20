@@ -26,26 +26,23 @@
 #include <core/str.h>
 
 #include "assets.h"
-#include "assets/asset_material.h"
-#include "renderer/renderer.h"
+
+#include <runtime/material.h>
+
+#include <renderer/renderer.h>
 
 using namespace renderer;
 
 namespace gemini
 {
-	namespace assets
-	{
+	//namespace assets
+	//{
 		// -------------------------------------------------------------
 		// Material
 
-		Material::Material(gemini::Allocator& allocator)
+		Material::Material(Allocator& allocator)
 		{
 		}
-
-		void Material::release()
-		{
-		} // release
-
 
 
 		enum ParamFlags
@@ -355,19 +352,19 @@ namespace gemini
 			return 0;
 		} // texture_unit_for_map
 
-		AssetLoadStatus material_load_callback(const char* path, AssetLoadState<Material>& load_state, const AssetParameters& parameters )
-		{
-			if (core::util::json_load_with_callback(path, material_load_from_json, load_state.asset, true) == core::util::ConfigLoad_Success)
-			{
-				return AssetLoad_Success;
-			}
+		//AssetLoadStatus material_load_callback(const char* path, AssetLoadState<Material>& load_state, const AssetParameters& parameters )
+		//{
+		//	if (core::util::json_load_with_callback(path, material_load_from_json, load_state.asset, true) == core::util::ConfigLoad_Success)
+		//	{
+		//		return AssetLoad_Success;
+		//	}
 
-			return AssetLoad_Failure;
-		} // material_load_callback
+		//	return AssetLoad_Failure;
+		//} // material_load_callback
 
-		void material_construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
-		{
-			extension = ".material";
-		} // material_construct_extension
-	} // namespace assets
+		//void material_construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
+		//{
+		//	extension = ".material";
+		//} // material_construct_extension
+	//} // namespace assets
 } // namespace gemini

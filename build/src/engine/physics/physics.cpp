@@ -33,7 +33,7 @@
 #include <renderer/debug_draw.h>
 #include <renderer/color.h>
 
-#include "assets/asset_mesh.h"
+//#include "assets/asset_mesh.h"
 
 #include "physics/bullet/bullet_collisionobject.h"
 #include "physics/bullet/bullet_constraint.h"

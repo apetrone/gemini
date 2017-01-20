@@ -29,10 +29,9 @@
 
 #include <runtime/assets/asset_texture.h>
 //#include <runtime/assets/asset_shader.h>
-#include <runtime/assets/asset_material.h>
-#include <runtime/assets/asset_mesh.h>
 //#include <runtime/assets/asset_emitter.h>
 #include <runtime/assets/asset_sound.h>
+
 
 namespace gemini
 {
@@ -59,5 +58,9 @@ namespace gemini
 
 		// do we still need this?
 		unsigned int find_parameter_mask(::renderer::ShaderString& name);
+
 	} // namespace assets
+
+	class MaterialLibrary* materials();
+	class MeshLibrary* meshes();
 } // namespace gemini
