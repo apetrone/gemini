@@ -121,7 +121,7 @@ namespace gemini
 	Mesh::Mesh(gemini::Allocator& _allocator)
 		: allocator(_allocator)
 		, geometry(_allocator)
-		, geometry_vn(_allocator)
+		//, geometry_vn(_allocator)
 		, skeleton(_allocator)
 		, hitboxes(_allocator)
 	{

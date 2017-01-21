@@ -179,7 +179,7 @@ namespace gemini
 			AssetLoadStatus load_result = instance_reference().load_asset(load_state, fullpath, parameters);
 			if (load_result == AssetLoad_Success)
 			{
-				AssetHandle handle;
+				AssetHandle handle = InvalidAssetHandle;
 				if (asset_is_new)
 				{
 					handle = take_ownership(fullpath, load_state.asset, false);
@@ -206,7 +206,7 @@ namespace gemini
 				LOGW("FAILED to load asset [%s]\n", relative_path);
 			}
 
-			AssetHandle handle;
+			AssetHandle handle = InvalidAssetHandle;
 			handle.index = 0;
 			return handle;
 		} // load
@@ -252,11 +252,14 @@ namespace gemini
 		{
 			AssetHandle handle;
 
-			if (!verify_unique || !handle_by_name.has_key(path))
+			platform::PathString normalized_path = path;
+			normalized_path.normalize(PATH_SEPARATOR);
+
+			if (!verify_unique || !handle_by_name.has_key(normalized_path))
 			{
 				assert(assets.size() < USHRT_MAX);
 				uint16_t index = static_cast<uint16_t>(assets.size());
-				handle_by_name[path] = index + 1;
+				handle_by_name[normalized_path] = index + 1;
 				assets.push_back(asset);
 
 				handle.index = (index + 1);

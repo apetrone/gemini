@@ -1306,12 +1306,6 @@ Options:
 			device->init(config.window_width, config.window_height);
 
 			scenelink = MEMORY2_NEW(renderer_allocator, SceneLink)(renderer_allocator);
-			int render_result = ::renderer::startup(renderer_allocator, ::renderer::Default, config.render_settings);
-			if (render_result == 0)
-			{
-				LOGE("renderer initialization failed!\n");
-				return kernel::RendererFailed;
-			}
 		}
 
 
@@ -1538,7 +1532,6 @@ Options:
 		audio::set_instance(nullptr);
 
 		// must shutdown the renderer before our window
-		::renderer::shutdown(renderer_allocator);
 		render2::destroy_device(renderer_allocator, device);
 
 		platform::window::destroy(main_window);

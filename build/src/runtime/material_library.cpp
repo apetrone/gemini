@@ -46,7 +46,8 @@ namespace gemini
 
 	core::util::ConfigLoadStatus material_load_from_json(const Json::Value & root, void * data)
 	{
-		Material * material = (Material*)data;
+		MaterialLibrary::LoadState* state = reinterpret_cast<MaterialLibrary::LoadState*>(data);
+		Material * material = state->asset;
 		Json::Value name = root["name"];
 		Json::Value texture = root["texture"];
 		Json::Value type = root["type"];
@@ -193,8 +194,9 @@ namespace gemini
 
 						//parameter->texture_unit = texture_unit_for_map(parameter->name);
 						////						LOGV( "texture unit: %i\n", parameter->texture_unit );
+
 						LOGV("TODO: support texture parameters when loading from materials\n");
-						texture_load(texture_param.asString().c_str());
+						parameter->texture_handle = texture_load(texture_param.asString().c_str());
 					}
 					else
 					{
@@ -359,6 +361,9 @@ namespace gemini
 	void MaterialLibrary::create_asset(LoadState& state, void* parameters)
 	{
 		state.asset = MEMORY2_NEW(*state.allocator, Material)(*state.allocator);
+		state.asset->shader_handle = InvalidAssetHandle;
+		state.asset->flags = 0;
+		state.asset->requirements = 0;
 	}
 
 	AssetLoadStatus MaterialLibrary::load_asset(LoadState& state, platform::PathString& fullpath, void* parameters)
@@ -366,7 +371,7 @@ namespace gemini
 		LOGV("loading material \"%s\"\n", fullpath());
 
 		platform::PathString asset_uri = fullpath;
-		//asset_uri.append(".material");
+		asset_uri.append(".material");
 
 		if (core::util::json_load_with_callback(asset_uri(), material_load_from_json, &state, true) == core::util::ConfigLoad_Success)
 		{

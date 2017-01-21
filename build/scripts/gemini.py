@@ -592,7 +592,44 @@ def get_librenderer(arguments, target_platform):
 	librenderer.project_root = COMMON_PROJECT_ROOT
 	librenderer.root = "../"
 	librenderer.sources += [
-		"src/renderer/*.*",
+		"src/renderer/color.cpp",
+		"src/renderer/color.h",
+		"src/renderer/commandbuffer.cpp",
+		"src/renderer/commandbuffer.h",
+		"src/renderer/constantbuffer.cpp",
+		"src/renderer/constantbuffer.h",
+		"src/renderer/constants.h",
+		"src/renderer/debug_draw.cpp",
+		"src/renderer/debug_draw.h",
+		"src/renderer/device.h",
+		"src/renderer/font.cpp",
+		"src/renderer/font.h",
+		"src/renderer/image.cpp",
+		"src/renderer/image.h",
+		"src/renderer/material.cpp",
+		"src/renderer/material.h",
+		"src/renderer/pipeline.cpp",
+		"src/renderer/pipeline.h",
+		"src/renderer/render_utilities.cpp",
+		"src/renderer/render_utilities.h",
+		"src/renderer/renderer.cpp",
+		"src/renderer/renderer.h",
+		"src/renderer/renderstream.cpp",
+		"src/renderer/renderstream.h",
+		"src/renderer/rendertarget.h",
+		"src/renderer/rqueue.cpp",
+		"src/renderer/rqueue.h",
+		"src/renderer/shader_library.cpp",
+		"src/renderer/shader_library.h",
+		"src/renderer/shaderconfig.cpp",
+		"src/renderer/shaderconfig.h",
+		"src/renderer/shaderprogram.cpp",
+		"src/renderer/shaderprogram.h",
+		"src/renderer/texture.cpp",
+		"src/renderer/texture.h",
+		"src/renderer/vertexbuffer.h",
+		"src/renderer/vertexdescriptor.cpp",
+		"src/renderer/vertexdescriptor.h",
 
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_image.h"),
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_truetype.h"),
@@ -619,22 +656,26 @@ def get_librenderer(arguments, target_platform):
 
 	if arguments.opengl:
 		librenderer.sources += [
-			"src/renderer/gl/*.cpp",
-			"src/renderer/gl/*.h",
-			"src/renderer/gl/opengl/*.cpp",
-			"src/renderer/gl/opengl/*.h"
-		]
-		librenderer.excludes += [
-			"src/renderer/gl/opengl/opengl_21.*",
+			"src/renderer/gl/gemgl.cpp",
+			"src/renderer/gl/gemgl.h",
+			"src/renderer/gl/opengl/opengl_device.cpp",
+			"src/renderer/gl/opengl/opengl_device.h",
+			"src/renderer/gl/glcommandserializer.cpp",
+			"src/renderer/gl/glcommandserializer.h",
+			"src/renderer/gl/r2_opengl_common.cpp",
+			"src/renderer/gl/r2_opengl_common.h"
+
 		]
 	elif arguments.gles:
 		librenderer.sources += [
-			"src/renderer/gl/*.cpp",
-			"src/renderer/gl/*.h",
-			# "src/renderer/gl/gles2/*.cpp",
-			# "src/renderer/gl/gles2/*.h"
-			"src/renderer/gl/gles2/*.cpp",
-			"src/renderer/gl/gles2/*.h"
+			"src/renderer/gl/gemgl.cpp",
+			"src/renderer/gl/gemgl.h",
+			"src/renderer/gl/gles2/gles2_device.cpp",
+			"src/renderer/gl/r2_gles2_device.h",
+			"src/renderer/gl/glcommandserializer.cpp",
+			"src/renderer/gl/glcommandserializer.h",
+			"src/renderer/gl/r2_opengl_common.cpp",
+			"src/renderer/gl/r2_opengl_common.h"
 		]
 		librenderer.excludes += [
 			"src/renderer/gl/gles2/opengl_glesv2.*"

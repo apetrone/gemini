@@ -77,9 +77,6 @@ namespace gemini
 				//image.filter = parameters.filter_type;
 				image.filter = image::FILTER_LINEAR;
 
-				assert(0); // TODO: 01-19-17: fix this (textures)
-				//render_texture = ::renderer::driver()->texture_create(image);
-
 				render2::Texture* texture = device->create_texture(image);
 				state.asset = texture;
 

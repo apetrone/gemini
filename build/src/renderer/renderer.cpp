@@ -32,18 +32,6 @@
 
 #include <runtime/asset_library.h>
 
-// compile-time selection of these classes starts here.
-
-#if PLATFORM_GLES2_SUPPORT
-	// force use of OpenGL ES v2
-//	#include "gl/gles2/opengl_glesv2.h"
-#elif PLATFORM_OPENGL_SUPPORT
-	#include "gl/opengl/opengl_core32.h"
-//	#include "gl/opengl/opengl_21.h"
-#else
-	#error Unknown renderer for this platform!
-#endif
-
 #include <core/typedefs.h>
 #include <core/logging.h>
 
@@ -58,8 +46,10 @@ namespace renderer
 		shader_config::load_shaderprogram_from_file(allocator, path, program);
 	}
 
-	int startup(gemini::Allocator& allocator, DriverType /*driver_type*/, const RenderSettings& settings)
+	int startup(gemini::Allocator& /*allocator*/, DriverType /*driver_type*/, const RenderSettings& /*settings*/)
 	{
+		assert(0);
+#if 0
 		// setup vertex descriptor
 		VertexDescriptor::startup();
 
@@ -106,7 +96,7 @@ namespace renderer
 
 			return 1;
 		}
-
+#endif
 		return 0;
 	} // startup
 

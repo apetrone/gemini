@@ -98,7 +98,7 @@ namespace gemini
 	struct Mesh
 	{
 		FixedArray<Geometry*> geometry;
-		FixedArray<Geometry*> geometry_vn;
+		//FixedArray<Geometry*> geometry_vn;
 		glm::mat4 world_matrix;
 
 		// if this is true, it needs to be re-uploaded to the gpu

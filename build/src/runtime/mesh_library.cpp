@@ -182,14 +182,10 @@ namespace gemini
 			}
 
 			// TODO: Remove this hack in the rewrite
-			std::string shader_path = "shaders/objects";
-	/*				if (is_world)
+			std::string shader_path = "objects";
+			if (!bind_data.empty())
 			{
-				shader_path = "shaders/world";
-			}
-			else */if (!bind_data.empty())
-			{
-				shader_path = "shaders/animation";
+				shader_path = "animation";
 			}
 
 			geo->shader_id = shader_load(shader_path.c_str());
@@ -500,8 +496,18 @@ namespace gemini
 
 		if (core::util::json_load_with_callback(asset_uri(), load_json_model, &state, true) == core::util::ConfigLoad_Success)
 		{
+			for (size_t index = 0; index < state.asset->geometry.size(); ++index)
+			{
+				Geometry* geo = state.asset->geometry[index];
+				LOGV("geo [%i] vertices: %i\n", index, geo->vertex_count);
+				geo->render_setup();
+
+
+			}
 			return AssetLoad_Success;
 		}
+
+
 
 		return AssetLoad_Failure;
 	}
