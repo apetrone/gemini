@@ -700,8 +700,6 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 		"src/runtime/mesh_library.cpp",
 		"src/runtime/mesh_library.h",
 
-		"src/runtime/texture.cpp",
-		"src/runtime/texture.h",
 		"src/runtime/texture_library.cpp",
 		"src/runtime/texture_library.h",
 
