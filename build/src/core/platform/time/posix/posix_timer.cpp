@@ -57,7 +57,7 @@ namespace platform
 	{
 		// determine if this kernel has a monotonic clock
 		struct timespec ts;
-		bool has_monotonic = (clock_gettime(CLOCK_MONOTONIC, &ts) != 0);
+		bool has_monotonic = (clock_gettime(CLOCK_MONOTONIC, &ts) == 0);
 
 		get_microseconds = get_microseconds_gettimeofday;
 
