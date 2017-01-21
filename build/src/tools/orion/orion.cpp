@@ -25,8 +25,8 @@
 
 #include <renderer/renderer.h>
 #include <renderer/font.h>
-#include <renderer/shader_library.h>
 
+#include <runtime/assets.h>
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
 #include <runtime/geometry.h>
@@ -399,7 +399,7 @@ public:
 		if (channel == 1)
 		{
 			LOGV("reloading SHADER asset: %s\n", path());
-			render2::shaders()->load(path(), true);
+			shader_load(path(), true);
 		}
 		else if (channel == 2)
 		{
@@ -830,13 +830,16 @@ Options:
 
 
 			device = create_device(render_allocator, params);
+			assert(device != nullptr);
+
+			assets::startup(device, true);
 
 			window_frame = platform::window::get_frame(main_window);
 			device->init(window_frame.width, window_frame.height);
 
 			// setup shaders
 			render2::PipelineDescriptor desc;
-			desc.shader = render2::shaders()->load("vertexcolor");
+			desc.shader = shader_load("vertexcolor");
 			render2::VertexDescriptor& vertex_format = desc.vertex_description;
 			vertex_format.add("in_position", render2::VD_FLOAT, 3);
 			vertex_format.add("in_color", render2::VD_FLOAT, 4);
@@ -847,7 +850,7 @@ Options:
 
 			{
 				render2::PipelineDescriptor desc;
-				desc.shader = render2::shaders()->load("vertexcolor");
+				desc.shader = shader_load("vertexcolor");
 				render2::VertexDescriptor& vertex_format = desc.vertex_description;
 				vertex_format.add("in_position", render2::VD_FLOAT, 3);
 				vertex_format.add("in_color", render2::VD_FLOAT, 4);
@@ -1470,6 +1473,8 @@ Options:
 		MEMORY2_DELETE(render_allocator, resource_cache);
 
 		font::shutdown();
+
+		assets::shutdown();
 
 		// shutdown the render device
 		device->destroy_buffer(vertex_buffer);

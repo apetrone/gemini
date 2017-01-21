@@ -127,7 +127,6 @@ namespace image
 	void generate_checker_pattern(Image& image, const gemini::Color& color1, const gemini::Color& color2);
 	void generate_checker_image(unsigned char* pixels, int width, int height, const gemini::Color& color1, const gemini::Color& color2);
 	void flip_image_vertically(int width, int height, int components, unsigned char* pixels);
-	renderer::Texture* load_default_texture(Image& image);
 
 	//
 	// image manipulation functions

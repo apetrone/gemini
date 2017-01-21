@@ -55,9 +55,6 @@ using namespace core;
 
 namespace image
 {
-	const unsigned int ERROR_TEXTURE_WIDTH = 128;
-	const unsigned int ERROR_TEXTURE_HEIGHT = 128;
-
 	Image::Image(gemini::Allocator& allocator)
 		: pixels(allocator)
 	{
@@ -300,19 +297,6 @@ namespace image
 
 		MEMORY2_DEALLOC(allocator, copy);
 	} // flip_image_vertically
-
-
-	renderer::Texture* load_default_texture(Image& image)
-	{
-		image.width = ERROR_TEXTURE_WIDTH;
-		image.height = ERROR_TEXTURE_HEIGHT;
-		image.channels = 3;
-		generate_checker_pattern(image, gemini::Color(1.0f, 0, 1.0f), gemini::Color(0, 1.0f, 0));
-
-		renderer::Texture* texture = renderer::driver()->texture_create(image);
-
-		return texture;
-	} // load_default_texture
 
 	Image load_from_memory(gemini::Allocator& allocator, unsigned char* data, unsigned int data_size)
 	{

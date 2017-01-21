@@ -65,6 +65,7 @@ namespace gemini
 		AssetLoad_Failure
 	}; // AssetLoadStatus
 
+
 	template <class T, class D>
 	class AssetLibrary2
 	{
@@ -114,6 +115,23 @@ namespace gemini
 			purge();
 		}
 
+		T* create(Allocator& allocator, void* parameters)
+		{
+			LoadState state;
+			state.allocator = &allocator;
+			state.asset = nullptr;
+			instance_reference().create_asset(state, parameters);
+			return state.asset;
+		}
+
+		void destroy(T* asset)
+		{
+			LoadState state;
+			state.allocator = &allocator;
+			state.asset = asset;
+			instance_reference().destroy_asset(state);
+		}
+
 		void default_asset(T* asset)
 		{
 			default_asset_pointer = asset;
@@ -129,7 +147,7 @@ namespace gemini
 			return (handle.index > 0) && (handle.index <= assets.size());
 		} // handle_is_valid
 
-		AssetHandle load(const char* relative_path, bool ignore_cache = false)
+		AssetHandle load(const char* relative_path, bool ignore_cache = false, void* parameters = nullptr)
 		{
 			// 1. Check to see if the asset is already loaded...
 			platform::PathString fullpath = prefix_uri;
@@ -156,14 +174,10 @@ namespace gemini
 			LoadState load_state;
 			load_state.asset = nullptr;
 			load_state.allocator = &allocator;
-			if (handle_index > 0)
-			{
-				// Populate with the loaded asset if exists.
-				load_state.asset = assets[handle_index - 1];
-			}
 
-			AssetLoadStatus load_result = instance_reference().create(load_state, fullpath);
-			if (load_result != AssetLoad_Failure)
+			instance_reference().create_asset(load_state, parameters);
+			AssetLoadStatus load_result = instance_reference().load_asset(load_state, fullpath, parameters);
+			if (load_result == AssetLoad_Success)
 			{
 				AssetHandle handle;
 				if (asset_is_new)
@@ -175,20 +189,20 @@ namespace gemini
 					// swap out the old with the new.
 					assert(handle_index > 0);
 
+					T* old_asset = assets[handle_index - 1];
 					assets[handle_index - 1] = load_state.asset;
+
+					// delete the old asset
+					load_state.asset = old_asset;
+					instance_reference().destroy_asset(load_state);
 				}
 
 				return handle;
 			}
 			else
 			{
-				if (asset_is_new)
-				{
-					// If you hit this assert, the loader was supposed to have
-					// free'd the memory it allocated and placed into asset.
-					// As this load officially failed, this will be discarded.
-					assert(load_state.asset == nullptr);
-				}
+				// free created asset
+				instance_reference().destroy_asset(load_state);
 				LOGW("FAILED to load asset [%s]\n", relative_path);
 			}
 
@@ -214,7 +228,7 @@ namespace gemini
 				LoadState load_state;
 				load_state.allocator = &allocator;
 				load_state.asset = assets[index];
-				instance_reference().destroy(load_state);
+				instance_reference().destroy_asset(load_state);
 			}
 			assets.clear();
 			handle_by_name.clear();

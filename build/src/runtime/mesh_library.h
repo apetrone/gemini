@@ -40,8 +40,9 @@ namespace gemini
 
 		MeshLibrary(Allocator& allocator, render2::Device* render_device);
 
-		AssetLoadStatus create(LoadState& state, platform::PathString& fullpath);
-		void destroy(LoadState& state);
+		void create_asset(LoadState& state, void* parameters);
+		AssetLoadStatus load_asset(LoadState& state, platform::PathString& fullpath, void* parameters);
+		void destroy_asset(LoadState& state);
 
 	private:
 		render2::Device* device;

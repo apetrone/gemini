@@ -495,11 +495,6 @@ namespace render2
 
 #include "device.h"
 
-namespace gemini
-{
-	class ShaderLibrary;
-} // namespace gemini
-
 
 namespace render2
 {
@@ -537,7 +532,5 @@ namespace render2
 
 	void set_resource_provider(ResourceProvider* provider);
 	ResourceProvider* get_resource_provider();
-
-	gemini::ShaderLibrary* shaders();
 } // namespace render2
 

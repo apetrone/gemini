@@ -29,6 +29,7 @@
 #include <core/argumentparser.h>
 #include <core/typespec.h>
 
+#include <runtime/assets.h>
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
 #include <runtime/guirenderer.h>
@@ -43,7 +44,6 @@
 #include <renderer/renderer.h>
 #include <renderer/vertexbuffer.h>
 #include <renderer/font.h>
-#include <renderer/shader_library.h>
 
 #include <ui/ui.h>
 #include <ui/compositor.h>
@@ -57,6 +57,7 @@
 
 #include <assert.h>
 
+using namespace gemini;
 using namespace renderer;
 
 // The simplest of all tests -- see what happens when we create a new panel
@@ -807,13 +808,15 @@ Options:
 		device = render2::create_device(render_allocator, render_parameters);
 		assert(device != nullptr);
 
+		assets::startup(device, false);
+
 		window_frame = platform::window::get_frame(native_window);
 
 		device->init(static_cast<int>(window_frame.width), static_cast<int>(window_frame.height));
 
 		// setup the pipeline
 		render2::PipelineDescriptor desc;
-		desc.shader = render2::shaders()->load("vertexcolor");
+		desc.shader = shader_load("vertexcolor");
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
@@ -1018,6 +1021,8 @@ Options:
 
 		// shutdown the fonts
 		font::shutdown();
+
+		assets::shutdown();
 
 		device->destroy_buffer(vertex_buffer);
 		device->destroy_pipeline(pipeline);

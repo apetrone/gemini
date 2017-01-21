@@ -27,17 +27,19 @@
 #include <core/logging.h>
 
 #include <runtime/asset_handle.h>
+#include <runtime/assets.h>
 
 #include <renderer/debug_draw.h>
 #include <renderer/renderer.h>
 #include <renderer/renderstream.h>
 #include <renderer/font.h>
 #include <renderer/color.h>
-#include <renderer/shader_library.h>
 
 
 // Enable this to temporarily make all debug draw functions a no-op.
 //#define DISABLE_DEBUG_DRAW 1
+
+using namespace gemini;
 
 namespace debugdraw
 {
@@ -649,7 +651,7 @@ namespace debugdraw
 		// line pipeline
 		{
 			render2::PipelineDescriptor descriptor;
-			descriptor.shader = render2::shaders()->load("debug");
+			descriptor.shader = shader_load("debug");
 			descriptor.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 			descriptor.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 			descriptor.input_layout = device->create_input_layout(descriptor.vertex_description, descriptor.shader);
@@ -663,7 +665,7 @@ namespace debugdraw
 		// triangle pipeline
 		{
 			render2::PipelineDescriptor descriptor;
-			descriptor.shader = render2::shaders()->load("vertexcolortexture");
+			descriptor.shader = shader_load("vertexcolortexture");
 			descriptor.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 			descriptor.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 			descriptor.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
@@ -685,7 +687,7 @@ namespace debugdraw
 		// font pipeline
 		{
 			render2::PipelineDescriptor descriptor;
-			descriptor.shader = render2::shaders()->load("font");
+			descriptor.shader = shader_load("font");
 			descriptor.vertex_description.add("in_position", render2::VD_FLOAT, 2);
 			descriptor.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 			descriptor.vertex_description.add("in_uv", render2::VD_FLOAT, 2);

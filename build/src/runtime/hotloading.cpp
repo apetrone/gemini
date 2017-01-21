@@ -30,8 +30,6 @@
 #include <runtime/material_library.h>
 #include <runtime/mesh_library.h>
 
-#include <renderer/shader_library.h>
-
 #include <core/mathlib.h>
 #include <core/stackstring.h>
 #include <threadsafequeue.h>
@@ -305,7 +303,7 @@ namespace gemini
 					// TODO: replace this with a better mechanism
 					if (dirname == "shaders")
 					{
-						render2::shaders()->load(item.c_str(), true);
+						shader_load(item.c_str(), true);
 					}
 					else if (dirname == "models")
 					{
@@ -320,7 +318,7 @@ namespace gemini
 					}
 					else if (dirname == "materials")
 					{
-						materials()->load(item.c_str(), true);
+						material_load(item.c_str(), true);
 					}
 					else
 					{

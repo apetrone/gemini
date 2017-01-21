@@ -36,8 +36,6 @@
 // for MAX_BONES
 #include <shared/shared_constants.h>
 
-#include <renderer/shader_library.h>
-
 #include <runtime/material_library.h>
 #include <runtime/mesh_library.h>
 

@@ -366,8 +366,6 @@ namespace render2
 #endif
 
 
-#include <renderer/shader_library.h>
-
 namespace render2
 {
 
@@ -375,7 +373,7 @@ namespace render2
 	namespace detail
 	{
 		ResourceProvider* resource_provider = nullptr;
-		gemini::ShaderLibrary* shader_library = nullptr;
+
 		gemini::Allocator shader_allocator;
 	} // namespace detail
 
@@ -392,15 +390,10 @@ namespace render2
 
 		Device* device = nullptr;
 
-		platform::PathString shader_root = "shaders";
-		shader_root.append(PATH_SEPARATOR_STRING);
-
 #if defined(PLATFORM_OPENGL_SUPPORT)
 		device = MEMORY2_NEW(allocator, OpenGLDevice)(allocator);
-		shader_root.append("150");
 #elif defined(PLATFORM_GLES2_SUPPORT)
 		device = MEMORY2_NEW(allocator, GLES2Device)(allocator);
-		shader_root.append("100");
 #else
 		#error Unknown renderer!
 		return nullptr;
@@ -409,18 +402,11 @@ namespace render2
 		// set render parameters
 		device->update_parameters(params);
 
-		assert(detail::shader_library == nullptr);
-		detail::shader_library = MEMORY2_NEW(detail::shader_allocator, gemini::ShaderLibrary)(detail::shader_allocator, device);
-		detail::shader_library->prefix_path(shader_root);
-
 		return device;
 	}
 
 	void destroy_device(gemini::Allocator& allocator, Device* device)
 	{
-		MEMORY2_DELETE(detail::shader_allocator, detail::shader_library);
-		detail::shader_library = nullptr;
-
 		MEMORY2_DELETE(allocator, device);
 	}
 
@@ -434,10 +420,5 @@ namespace render2
 		// If you hit this, there was no valid resource_provider set.
 		assert(detail::resource_provider != nullptr);
 		return detail::resource_provider;
-	}
-
-	gemini::ShaderLibrary* shaders()
-	{
-		return detail::shader_library;
 	}
 } // namespace render2

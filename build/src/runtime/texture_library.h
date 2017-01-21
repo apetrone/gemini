@@ -25,25 +25,33 @@
 #pragma once
 
 #include <runtime/asset_library.h>
-#include <runtime/texture.h>
+#include <renderer/image.h>
 
 namespace render2
 {
 	class Device;
+	struct Texture;
 } // namespace render2
 
 namespace gemini
 {
-	class TextureLibrary : public AssetLibrary2<gemini::Texture, TextureLibrary>
+	struct TextureCreateParams
+	{
+		render2::Device* device;
+		image::FilterType filter;
+		//uint32_t flags;
+	};
+
+	class TextureLibrary : public AssetLibrary2<render2::Texture, TextureLibrary>
 	{
 	public:
-
 		TextureLibrary(Allocator& allocator, render2::Device* render_device);
 
-		AssetLoadStatus create(LoadState& state, platform::PathString& fullpath);
-		void destroy(LoadState& state);
+		void create_asset(LoadState& state, void* parameters);
+		AssetLoadStatus load_asset(LoadState& state, platform::PathString& fullpath, void* parameters);
+		void destroy_asset(LoadState& state);
 
-	private:
+	protected:
 		render2::Device* device;
 	}; // TextureLibrary
 } // namespace gemini

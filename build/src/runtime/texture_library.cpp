@@ -31,6 +31,7 @@
 #include <core/mem.h>
 
 #include <renderer/image.h>
+#include <renderer/renderer.h>
 
 namespace gemini
 {
@@ -40,7 +41,17 @@ namespace gemini
 	{
 	}
 
-	AssetLoadStatus TextureLibrary::create(LoadState& state, platform::PathString& fullpath)
+	void TextureLibrary::create_asset(LoadState& state, void* parameters)
+	{
+		image::Image image(*state.allocator);
+		image.width = 4;
+		image.height = 4;
+
+		state.asset = device->create_texture(image);
+		assert(state.asset);
+	}
+
+	AssetLoadStatus TextureLibrary::load_asset(LoadState& state, platform::PathString& fullpath, void* parameters)
 	{
 		LOGV("loading texture \"%s\"\n", fullpath());
 
@@ -50,18 +61,12 @@ namespace gemini
 		// png is default.
 		asset_uri.append(".png");
 
-		bool is_new_asset = state.asset == nullptr;
-		if (is_new_asset)
-		{
-			state.asset = MEMORY2_NEW(*state.allocator, gemini::Texture)(*state.allocator);
-		}
-
 		Array<unsigned char> buffer(*state.allocator);
 		::renderer::Texture* render_texture = nullptr;
 		core::filesystem::instance()->virtual_load_file(buffer, asset_uri());
 		if (!buffer.empty())
 		{
-			image::Image& image = state.asset->image;
+			image::Image image(*state.allocator);
 			unsigned char* pixels = image::load_image_from_memory(&buffer[0], buffer.size(), &image.width, &image.height, &image.channels);
 			if (pixels)
 			{
@@ -74,6 +79,9 @@ namespace gemini
 
 				assert(0); // TODO: 01-19-17: fix this (textures)
 				//render_texture = ::renderer::driver()->texture_create(image);
+
+				render2::Texture* texture = device->create_texture(image);
+				state.asset = texture;
 
 				LOGV("Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", asset_uri(), image.width, image.height, image.channels);
 
@@ -91,16 +99,11 @@ namespace gemini
 			LOGE("Couldn't load file: %s\n", asset_uri());
 		}
 
-		if (is_new_asset)
-		{
-			MEMORY2_DELETE(*state.allocator, state.asset);
-		}
-
 		return AssetLoad_Failure;
 	}
 
-	void TextureLibrary::destroy(LoadState& state)
+	void TextureLibrary::destroy_asset(LoadState& state)
 	{
-		MEMORY2_DELETE(*state.allocator, state.asset);
+		device->destroy_texture(state.asset);
 	}
 } // namespace gemini

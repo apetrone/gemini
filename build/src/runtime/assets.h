@@ -27,15 +27,22 @@
 
 #include <runtime/assetlibrary.h>
 
-//#include <runtime/assets/asset_texture.h>
-//#include <runtime/assets/asset_shader.h>
-//#include <runtime/assets/asset_emitter.h>
 #include <runtime/assets/asset_sound.h>
 
 #include <renderer/renderer.h> // for ShaderString
 
+namespace render2
+{
+	struct Texture;
+	struct Shader;
+} // namespace render2
+
 namespace gemini
 {
+	struct Material;
+	struct Mesh;
+
+
 	namespace assets
 	{
 		// Asset utils
@@ -46,7 +53,7 @@ namespace gemini
 		}; // AssetType
 
 		// called to initialize default textures and other required resources.
-		void startup();
+		void startup(render2::Device* device, bool load_default_assets = true);
 
 		// purge all assets
 		void purge();
@@ -62,7 +69,15 @@ namespace gemini
 
 	} // namespace assets
 
-	class MaterialLibrary* materials();
-	class MeshLibrary* meshes();
-	class TextureLibrary* textures();
+	AssetHandle mesh_load(const char* path, bool ignore_cache = false, void* parameters = nullptr);
+	Mesh* mesh_from_handle(AssetHandle handle);
+
+	AssetHandle shader_load(const char* path, bool ignore_cache = false, void* parameters = nullptr);
+	render2::Shader* shader_from_handle(AssetHandle handle);
+
+	AssetHandle texture_load(const char* path, bool ignore_cache = false, void* parameters = nullptr);
+	render2::Texture* texture_from_handle(AssetHandle handle);
+
+	AssetHandle material_load(const char* path, bool ignore_cache = false, void* parameters = nullptr);
+	Material* material_from_handle(AssetHandle handle);
 } // namespace gemini

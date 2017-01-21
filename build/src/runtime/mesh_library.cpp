@@ -25,11 +25,10 @@
 #include <runtime/configloader.h>
 #include <runtime/filesystem.h>
 #include <runtime/geometry.h>
-#include <runtime/material_library.h>
 #include <runtime/mesh_library.h>
+#include <runtime/assets.h>
 
 #include <renderer/renderer.h>
-#include <renderer/shader_library.h>
 
 #include <core/logging.h>
 #include <core/mem.h>
@@ -156,14 +155,12 @@ namespace gemini
 
 
 			// setup materials
-			Material* default_material = gemini::materials()->default_asset();
 
 			Geometry* geo = MEMORY2_NEW(state.allocator, Geometry)(state.allocator);
 			//assets::Geometry* geo = state.mesh->geometry[state.current_geometry++];
 			state.mesh->geometry[state.current_geometry++] = geo;
 
-			assert(0); // fix this (materials) -- should be default material id
-			//geo->material_id = 0;
+			geo->material_id = material_load("materials/default");
 
 			Json::Value material_id = node["material_id"];
 			if (!material_id.isNull())
@@ -179,7 +176,7 @@ namespace gemini
 					//}
 
 					std::string material_path = "materials/" + material_name;
-					AssetHandle material_handle = gemini::materials()->load(material_path.c_str());
+					AssetHandle material_handle = material_load(material_path.c_str());
 					geo->material_id = material_handle;
 				}
 			}
@@ -195,7 +192,7 @@ namespace gemini
 				shader_path = "shaders/animation";
 			}
 
-			geo->shader_id = render2::shaders()->load(shader_path.c_str());
+			geo->shader_id = shader_load(shader_path.c_str());
 			geo->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
 			geo->name = node["name"].asString().c_str();
 
@@ -416,12 +413,12 @@ namespace gemini
 		//bool is_world = fullpath.startswith("maps");
 
 		// make sure we can load the default material
-		Material* default_mat = materials()->default_asset();
-		if (!default_mat)
-		{
-			LOGE("Could not load the default material!\n");
-			return core::util::ConfigLoad_Failure;
-		}
+		//Material* default_mat = materials()->default_asset();
+		//if (!default_mat)
+		//{
+		//	LOGE("Could not load the default material!\n");
+		//	return core::util::ConfigLoad_Failure;
+		//}
 
 		// n-meshes
 		// skeleton (should this be separate?)
@@ -489,35 +486,28 @@ namespace gemini
 	{
 	}
 
-	AssetLoadStatus MeshLibrary::create(LoadState& state, platform::PathString& fullpath)
+	void MeshLibrary::create_asset(LoadState& state, void* parameters)
+	{
+		state.asset = MEMORY2_NEW(*state.allocator, Mesh)(*state.allocator);
+	}
+
+	AssetLoadStatus MeshLibrary::load_asset(LoadState& state, platform::PathString& fullpath, void* parameters)
 	{
 		LOGV("loading mesh \"%s\"\n", fullpath());
 
 		platform::PathString asset_uri = fullpath;
 		asset_uri.append(".model");
 
-		bool is_new_asset = state.asset == nullptr;
-		if (is_new_asset)
-		{
-			state.asset = MEMORY2_NEW(*state.allocator, Mesh)(*state.allocator);
-		}
-
 		if (core::util::json_load_with_callback(asset_uri(), load_json_model, &state, true) == core::util::ConfigLoad_Success)
 		{
 			return AssetLoad_Success;
 		}
 
-		if (is_new_asset)
-		{
-			MEMORY2_DELETE(*state.allocator, state.asset);
-		}
-
 		return AssetLoad_Failure;
 	}
 
-	void MeshLibrary::destroy(LoadState& state)
+	void MeshLibrary::destroy_asset(LoadState& state)
 	{
 		MEMORY2_DELETE(*state.allocator, state.asset);
-		//device->destroy_shader(state.asset);
 	}
 } // namespace gemini

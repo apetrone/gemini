@@ -35,6 +35,7 @@
 #include <runtime/material_library.h>
 #include <runtime/mesh_library.h>
 #include <runtime/texture_library.h>
+#include <renderer/shader_library.h>
 
 using namespace renderer;
 
@@ -71,90 +72,107 @@ namespace gemini
 	} // namespace assets
 
 
+	struct AssetState
+	{
+		gemini::ShaderLibrary* shaders;
+		MaterialLibrary* materials;
+		MeshLibrary* meshes;
+		TextureLibrary* textures;
+		render2::Device* device;
+	};
+
+	AssetState* _asset_state = nullptr;
+
 	namespace assets
 	{
 		gemini::Allocator asset_allocator;
 
 		// 1. Implement asset library
-		//IMPLEMENT_ASSET_LIBRARY_ACCESSOR(textures)
-			//IMPLEMENT_ASSET_LIBRARY_ACCESSOR(meshes)
-			//IMPLEMENT_ASSET_LIBRARY_ACCESSOR(materials)
-			//IMPLEMENT_ASSET_LIBRARY_ACCESSOR(emitters)
-
-			IMPLEMENT_ASSET_LIBRARY_ACCESSOR(sounds)
-
-			MaterialLibrary* _material_library = nullptr;
-			MeshLibrary* _mesh_library = nullptr;
-			TextureLibrary* _texture_library = nullptr;
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(sounds)
 
 		void load_default_texture_and_material()
 		{
-			assert(0); // TODO@apetrone (assets) fix this function
+			image::Image default_image(asset_allocator);
+			default_image.width = 128;
+			default_image.height = 128;
+			default_image.channels = 3;
+			generate_checker_pattern(default_image, gemini::Color(1.0f, 0.0f, 1.0f), gemini::Color(0.0f, 1.0f, 0.0f));
 
-			image::Image default_image;
-			renderer::Texture* texture = image:load_default_texture(default_image);
-
-
-#if 0
-			// setup default texture
-			Texture* default_texture = textures()->allocate_asset();
-			default_texture->texture = image::load_default_texture(default_texture->image);
-
-			textures()->take_ownership("textures/default", default_texture);
-			textures()->set_default(default_texture);
-			LOGV( "Loaded default texture; asset_id = %i\n", default_texture->asset_id );
+			TextureCreateParams params;
+			params.device = _asset_state->device;
+			params.filter = image::FILTER_NONE;
+			render2::Texture* default_texture = _asset_state->textures->create(asset_allocator, &params);
+			_asset_state->textures->default_asset(default_texture);
+			_asset_state->textures->take_ownership("default", default_texture, false);
 
 			// setup default material
-			Material * default_material = materials()->allocate_asset();
+			Material* default_material = _asset_state->materials->create(asset_allocator, nullptr);
 			default_material->name = "default";
 
 			MaterialParameter diffusemap;
 			diffusemap.name = "diffusemap";
 			diffusemap.type = MP_SAMPLER_2D;
 			diffusemap.texture_unit = texture_unit_for_map(diffusemap.name);
-			diffusemap.texture = default_texture->texture;
+			diffusemap.texture_handle = texture_load("default");
 
 			default_material->add_parameter(diffusemap);
 
-			materials()->take_ownership( "materials/default", default_material );
-			materials()->set_default(default_material);
-			LOGV( "Loaded default materials; asset_id = %i\n", default_material->asset_id );
-#endif
+			_asset_state->materials->take_ownership("materials/default", default_material);
+			_asset_state->materials->default_asset(default_material);
 		} // load_default_texture_and_material
 
 
-		void startup()
+		void startup(render2::Device* device, bool load_default_assets)
 		{
+			assert(_asset_state == nullptr);
+
+			assert(device != nullptr);
+
+			platform::PathString shader_root = "shaders";
+			shader_root.append(PATH_SEPARATOR_STRING);
+
+			// TODO: Determine this by checking the renderer type
+#if defined(PLATFORM_OPENGL_SUPPORT)
+			shader_root.append("150");
+#elif defined(PLATFORM_GLES2_SUPPORT)
+			shader_root.append("100");
+#endif
+			// create the allocator
 			asset_allocator = memory_allocator_default(MEMORY_ZONE_ASSETS);
 
-			// 2. allocate asset libraries
-			//_textures =		MEMORY2_NEW(asset_allocator, texturesAssetLibrary)			(asset_allocator, texture_construct_extension, texture_load_callback);
-			//_meshes =		MEMORY2_NEW(asset_allocator, meshesAssetLibrary)				(asset_allocator, mesh_construct_extension, mesh_load_callback);
-			//_materials =	MEMORY2_NEW(asset_allocator, materialsAssetLibrary)			(asset_allocator, material_construct_extension, material_load_callback);
-			//_emitters =		MEMORY2_NEW(asset_allocator, emitterConfigAssetLibrary)		(asset_allocator, emitterconfig_load_callback, emitterconfig_construct_extension);
+			// allocate the base state
+			_asset_state = MEMORY2_NEW(asset_allocator, AssetState)();
+			_asset_state->device = device;
 
-			_sounds =		MEMORY2_NEW(asset_allocator, soundsAssetLibrary)				(asset_allocator, sound_construct_extension, sound_load_callback);
+			// allocate each asset library
+			_asset_state->materials		= MEMORY2_NEW(asset_allocator, gemini::MaterialLibrary)(asset_allocator, device);
+			_asset_state->meshes		= MEMORY2_NEW(asset_allocator, gemini::MeshLibrary)(asset_allocator, device);
+			_asset_state->shaders		= MEMORY2_NEW(asset_allocator, gemini::ShaderLibrary)(asset_allocator, device);
+			_asset_state->textures		= MEMORY2_NEW(asset_allocator, gemini::TextureLibrary)(asset_allocator, device);
 
-			_material_library = MEMORY2_NEW(asset_allocator, gemini::MaterialLibrary)(asset_allocator, nullptr);
-			_mesh_library = MEMORY2_NEW(asset_allocator, gemini::MeshLibrary)(asset_allocator, nullptr);
-			_texture_library = MEMORY2_NEW(asset_allocator, gemini::TextureLibrary)(asset_allocator, nullptr);
+			_sounds						= MEMORY2_NEW(asset_allocator, soundsAssetLibrary)				(asset_allocator, sound_construct_extension, sound_load_callback);
 
-			load_default_texture_and_material();
+			_asset_state->shaders->prefix_path(shader_root);
+
+			if (load_default_assets)
+			{
+				load_default_texture_and_material();
+			}
 		} // startup
 
 		void shutdown()
 		{
-			// 4. Delete asset library
-			//MEMORY2_DELETE(asset_allocator, _textures);
-			//MEMORY2_DELETE(asset_allocator, _meshes);
-			//MEMORY2_DELETE(asset_allocator, _materials);
-			//MEMORY2_DELETE(asset_allocator, _emitters);
-			//MEMORY2_DELETE(asset_allocator, _shaders);
+			// Delete asset libraries
 			MEMORY2_DELETE(asset_allocator, _sounds);
 
-			MEMORY2_DELETE(asset_allocator, _material_library);
-			MEMORY2_DELETE(asset_allocator, _mesh_library);
-			MEMORY2_DELETE(asset_allocator, _texture_library);
+			MEMORY2_DELETE(asset_allocator, _asset_state->materials);
+			MEMORY2_DELETE(asset_allocator, _asset_state->meshes);
+			MEMORY2_DELETE(asset_allocator, _asset_state->shaders);
+			MEMORY2_DELETE(asset_allocator, _asset_state->textures);
+
+			// Delete base asset state
+			MEMORY2_DELETE(asset_allocator, _asset_state);
+			_asset_state = nullptr;
 		} // shutdown
 
 		void append_asset_extension( AssetType type, core::StackString<MAX_PATH_SIZE> & path )
@@ -189,18 +207,43 @@ namespace gemini
 		} // append_asset_extension
 	} // namespace assets
 
-	MaterialLibrary* materials()
+	AssetHandle mesh_load(const char* path, bool ignore_cache, void* parameters)
 	{
-		return assets::_material_library;
-	} // materials
+		return _asset_state->meshes->load(path, ignore_cache, parameters);
+	}
 
-	MeshLibrary* meshes()
+	Mesh* mesh_from_handle(AssetHandle handle)
 	{
-		return assets::_mesh_library;
-	} // meshes
+		return _asset_state->meshes->lookup(handle);
+	}
 
-	TextureLibrary* textures()
+	AssetHandle shader_load(const char* path, bool ignore_cache, void* parameters)
 	{
-		return assets::_texture_library;
-	} // textures
+		return _asset_state->shaders->load(path, ignore_cache, parameters);
+	}
+
+	render2::Shader* shader_from_handle(AssetHandle handle)
+	{
+		return _asset_state->shaders->lookup(handle);
+	}
+
+	AssetHandle texture_load(const char* path, bool ignore_cache, void* parameters)
+	{
+		return _asset_state->textures->load(path, ignore_cache, parameters);
+	}
+
+	render2::Texture* texture_from_handle(AssetHandle handle)
+	{
+		return _asset_state->textures->lookup(handle);
+	}
+
+	AssetHandle material_load(const char* path, bool ignore_cache, void* parameters)
+	{
+		return _asset_state->materials->load(path, ignore_cache, parameters);
+	}
+
+	Material* material_from_handle(AssetHandle handle)
+	{
+		return _asset_state->materials->lookup(handle);
+	}
 } // namespace gemini

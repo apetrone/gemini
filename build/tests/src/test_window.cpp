@@ -26,8 +26,8 @@
 #include <renderer/debug_draw.h>
 #include <renderer/font.h>
 #include <renderer/renderer.h>
-#include <renderer/shader_library.h>
 
+#include <runtime/assets.h>
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
 
@@ -42,6 +42,7 @@
 #include <core/stackstring.h>
 #include <core/fixedarray.h>
 
+using namespace gemini;
 using namespace platform;
 using namespace renderer;
 
@@ -273,6 +274,8 @@ Options:
 			device = create_device(render_allocator, params);
 			assert(device);
 
+			assets::startup(device, false);
+
 			platform::window::Frame window_frame = platform::window::get_frame(main_window);
 			LOGV("initializing render device...\n");
 			device->init(static_cast<int>(window_frame.width), static_cast<int>(window_frame.height));
@@ -281,7 +284,7 @@ Options:
 
 			// setup shaders
 			render2::PipelineDescriptor desc;
-			desc.shader = render2::shaders()->load("vertexcolor");
+			desc.shader = shader_load("vertexcolor");
 			render2::VertexDescriptor& vertex_format = desc.vertex_description;
 			vertex_format.add("in_position", render2::VD_FLOAT, 3);
 			vertex_format.add("in_color", render2::VD_FLOAT, 4);
@@ -402,6 +405,8 @@ Options:
 	virtual void shutdown()
 	{
 		font::shutdown();
+
+		assets::shutdown();
 
 		// shutdown the render device
 		device->destroy_buffer(vertex_buffer);

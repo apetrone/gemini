@@ -33,4 +33,6 @@ namespace gemini
 	{
 		uint32_t index;
 	};
+
+	const AssetHandle InvalidAssetHandle = { UINT32_MAX };
 } // namespace gemini

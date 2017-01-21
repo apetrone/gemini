@@ -41,8 +41,6 @@
 #include <renderer/vertexbuffer.h>
 #include <renderer/font.h>
 #include <renderer/color.h>
-#include <renderer/shader_library.h>
-
 
 #include <assert.h>
 
@@ -409,8 +407,6 @@ Options:
 			platform::window::set_cursor(center.x, center.y);
 		}
 
-		assets::startup();
-
 #if TEST_RENDER_GRAPHICS
 		render_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
 
@@ -422,11 +418,13 @@ Options:
 		state.device = render2::create_device(render_allocator, render_parameters);
 		assert(state.device != nullptr);
 
+		assets::startup(state.device, false);
+
 		window_frame = platform::window::get_frame(state.native_window);
 
 		// setup the pipeline
 		render2::PipelineDescriptor desc;
-		desc.shader = render2::shaders()->load("vertexcolor");
+		desc.shader = shader_load("vertexcolor");
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = state.device->create_input_layout(desc.vertex_description, desc.shader);
@@ -449,10 +447,9 @@ Options:
 		generate_triangle(0, vertices, glm::vec2(width, height), glm::vec2(0, 0));
 		state.device->buffer_upload(state.vertex_buffer, vertices, total_bytes);
 
-
 		// setup texture pipeline
 		render2::PipelineDescriptor td;
-		td.shader = render2::shaders()->load("vertexcolortexture");
+		td.shader = shader_load("vertexcolortexture");
 		td.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 		td.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		td.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
@@ -461,7 +458,7 @@ Options:
 
 		// setup multi-texture pipeline
 		render2::PipelineDescriptor md;
-		md.shader = render2::shaders()->load("multitexture");
+		md.shader = shader_load("multitexture");
 		md.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 		md.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		md.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
@@ -470,7 +467,7 @@ Options:
 
 		// setup font pipeline
 		render2::PipelineDescriptor fd;
-		fd.shader = render2::shaders()->load("font");
+		fd.shader = shader_load("font");
 		fd.vertex_description.add("in_position", render2::VD_FLOAT, 2);
 		fd.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		fd.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
@@ -479,7 +476,7 @@ Options:
 
 		// setup line pipeline
 		render2::PipelineDescriptor ld;
-		ld.shader = render2::shaders()->load("lines");
+		ld.shader = shader_load("lines");
 		ld.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 		ld.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		ld.input_layout = state.device->create_input_layout(ld.vertex_description, ld.shader);
@@ -717,6 +714,8 @@ Options:
 	{
 		font::shutdown();
 
+		assets::shutdown();
+
 #if TEST_RENDER_GRAPHICS
 		if (state.checker)
 		{
@@ -747,8 +746,6 @@ Options:
 			platform::window::destroy(state.other_window);
 		}
 		platform::window::shutdown();
-
-		assets::shutdown();
 
 		gemini::runtime_shutdown();
 	}

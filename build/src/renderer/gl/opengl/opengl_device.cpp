@@ -27,7 +27,7 @@
 #include "commandbuffer.h"
 #include "r2_opengl_common.h"
 
-#include <renderer/shader_library.h>
+#include <runtime/assets.h>
 
 namespace render2
 {
@@ -123,7 +123,7 @@ namespace render2
 	{
 		GLInputLayout* gllayout = MEMORY2_NEW(allocator, GLInputLayout)(allocator);
 
-		GLShader* shader = static_cast<GLShader*>(shaders()->lookup(shader_handle));
+		GLShader* shader = static_cast<GLShader*>(shader_from_handle(shader_handle));
 		assert(shader);
 		setup_input_layout(gllayout, descriptor, shader);
 
@@ -136,7 +136,7 @@ namespace render2
 	// ---------------------------------------------------------------------
 	void OpenGLDevice::activate_pipeline(GLPipeline* pipeline, GLBuffer* vertex_buffer)
 	{
-		GLShader* shader = static_cast<GLShader*>(render2::shaders()->lookup(pipeline->shader));
+		GLShader* shader = static_cast<GLShader*>(shader_from_handle(pipeline->shader));
 		assert(shader);
 		gl.UseProgram(shader->id);
 		gl.CheckError("activate_pipeline - UseProgram");

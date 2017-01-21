@@ -35,25 +35,12 @@
 
 namespace gemini
 {
-	//namespace assets
-	//{
-		//struct Shader;
-
 		struct Material : public ::renderer::Material
 		{
-			//Shader* shader;
 			AssetHandle shader_handle;
 
 			Material(Allocator& allocator);
 		}; // Material
 
 		unsigned int texture_unit_for_map(const std::string& name);
-		unsigned int material_type_to_parameter_type(const char* name);
-
-
-		//AssetLoadStatus material_load_callback(const char* path, AssetLoadState<Material>& load_state, const AssetParameters& parameters);
-		//void material_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
-
-		//DECLARE_ASSET_LIBRARY_ACCESSOR(Material, AssetParameters, materials);
-	//} // namespace assets
 } // namespace gemini

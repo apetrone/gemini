@@ -199,7 +199,7 @@ class ModelInterface : public gemini::IModelInterface
 		void set_mesh_index(AssetHandle in_mesh_handle)
 		{
 			mesh_handle = in_mesh_handle;
-			mesh = meshes()->lookup(mesh_handle);
+			mesh = mesh_from_handle(mesh_handle);
 		}
 
 		void create_bones()
@@ -542,8 +542,8 @@ public:
 
 	virtual int32_t create_instance_data(const char* model_path)
 	{
-		AssetHandle mesh_handle = meshes()->load(model_path);
-		Mesh* mesh = meshes()->lookup(mesh_handle);
+		AssetHandle mesh_handle = mesh_load(model_path);
+		Mesh* mesh = mesh_from_handle(mesh_handle);
 		if (mesh)
 		{
 			if (mesh->is_dirty)
@@ -1284,8 +1284,6 @@ Options:
 		engine_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		renderer_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
 
-		assets::startup();
-
 		// initialize rendering subsystems
 		{
 			render2::RenderParameters render_params(renderer_allocator);
@@ -1303,6 +1301,8 @@ Options:
 			render_params["opengl.share_context"] = "true";
 
 			device = render2::create_device(renderer_allocator, render_params);
+			assert(device != nullptr);
+
 			device->init(config.window_width, config.window_height);
 
 			scenelink = MEMORY2_NEW(renderer_allocator, SceneLink)(renderer_allocator);
@@ -1318,6 +1318,8 @@ Options:
 
 		if (device)
 		{
+			assets::startup(device);
+
 			// initialize fonts
 			font::startup(renderer_allocator, device);
 

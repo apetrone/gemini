@@ -60,14 +60,18 @@ public:
 	{
 	}
 
-	AssetLoadStatus create(LoadState& state, const platform::PathString& fullpath)
+	void create_asset(LoadState& state, void* parameters)
 	{
 		state.asset = new CustomAsset();
+	}
+
+	AssetLoadStatus load_asset(LoadState& state, const platform::PathString& fullpath, void* parameters)
+	{
 		state.asset->uri = fullpath;
 		return AssetLoad_Success;
 	}
 
-	void destroy(LoadState& state)
+	void destroy_asset(LoadState& state)
 	{
 		delete state.asset;
 	}

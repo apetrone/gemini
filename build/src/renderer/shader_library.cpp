@@ -39,11 +39,15 @@ namespace gemini
 	{
 	}
 
-	AssetLoadStatus ShaderLibrary::create(LoadState& state, platform::PathString& fullpath)
+	void ShaderLibrary::create_asset(LoadState& state, void* parameters)
+	{
+		// our shaders are only loaded from disk...
+	}
+
+	AssetLoadStatus ShaderLibrary::load_asset(LoadState& state, platform::PathString& fullpath, void* parameters)
 	{
 		LOGV("create shader \"%s\"\n", fullpath());
 
-		render2::Shader* old_asset = state.asset;
 		// We could determine here how many stages we need to load.
 		// I'll leave that as a TODO for now...
 
@@ -73,22 +77,12 @@ namespace gemini
 
 		render2::ShaderSource* sources[] = { &vertex_source, &frag_source };
 
-		render2::Shader* new_shader = device->create_shader(sources, 2);
-		if (new_shader)
-		{
-			if (old_asset)
-			{
-				destroy(state);
-			}
+		state.asset = device->create_shader(sources, 2);
 
-			state.asset = new_shader;
-			return AssetLoad_Success;
-		}
-
-		return AssetLoad_Failure;
+		return AssetLoad_Success;
 	}
 
-	void ShaderLibrary::destroy(LoadState& state)
+	void ShaderLibrary::destroy_asset(LoadState& state)
 	{
 		device->destroy_shader(state.asset);
 	}
