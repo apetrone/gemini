@@ -271,8 +271,6 @@ namespace renderer
 namespace renderer
 {
 	struct RenderStream;
-
-	void create_shaderprogram_from_file(gemini::Allocator& allocator, const char* path, renderer::ShaderProgram** program);
 }
 
 

@@ -23,7 +23,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "renderer.h"
-#include "shaderconfig.h"
 
 #include "gemgl.h"
 #include "gl/opengl_common.h"
@@ -40,11 +39,6 @@ namespace renderer
 	IRenderDriver * _render_driver = 0;
 
 	IRenderDriver * driver() { return _render_driver; }
-
-	void create_shaderprogram_from_file(gemini::Allocator& allocator, const char* path, renderer::ShaderProgram** program)
-	{
-		shader_config::load_shaderprogram_from_file(allocator, path, program);
-	}
 
 	int startup(gemini::Allocator& /*allocator*/, DriverType /*driver_type*/, const RenderSettings& /*settings*/)
 	{
@@ -102,8 +96,6 @@ namespace renderer
 
 	void shutdown(gemini::Allocator& allocator)
 	{
-		shader_config::shutdown();
-
 		if ( _render_driver )
 		{
 			MEMORY2_DELETE(allocator, _render_driver);
