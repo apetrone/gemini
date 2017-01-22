@@ -921,9 +921,6 @@ private:
 
 	::renderer::StandaloneResourceCache* resource_cache;
 
-	assets::Sound* test_sound;
-	audio::SoundHandle_t background_music;
-
 	gemini::Allocator audio_allocator;
 	gemini::Allocator renderer_allocator;
 	gemini::Allocator animation_allocator;
@@ -1322,12 +1319,6 @@ Options:
 		IAudioInterface* audio_instance = MEMORY2_NEW(audio_allocator, AudioInterface);
 		audio::set_instance(audio_instance);
 
-		test_sound = gemini::assets::sounds()->load_from_path("sounds/select");
-		assert(test_sound);
-
-		assets::Sound* canond = gemini::assets::sounds()->load_from_path("sounds/canond");
-		//background_music = audio::play_sound(canond, 0);
-
 		animation_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 
 		gemini::physics::startup();
@@ -1354,7 +1345,7 @@ Options:
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		setup_gui(device, renderer_allocator, frame.width, frame.height);
 
-		open_gamelibrary();
+		// open_gamelibrary();
 
 		//navigation::startup();
 
@@ -1364,11 +1355,7 @@ Options:
 			game_interface->level_load();
 		}
 
-
-
-
 		// TODO: post_application_startup
-
 
 		uint64_t current_time = platform::microseconds();
 		LOGV("startup in %2.2fms\n", (current_time-last_time) * MillisecondsPerMicrosecond);
@@ -1502,7 +1489,7 @@ Options:
 
 		// since the game can create gui elements, we need to shutdown
 		// the gui before shutting down the game library.
-		close_gamelibrary();
+		// close_gamelibrary();
 
 		// we need to explicitly shut this down so it cleans up before
 		// our memory detects any leaks.
