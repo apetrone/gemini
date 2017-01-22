@@ -137,11 +137,11 @@ namespace gemini
 				int count = WideCharToMultiByte(CP_ACP,
 					0,
 					notify_info->FileName,
-					notify_info->FileNameLength / sizeof(WCHAR),
+					static_cast<int>(notify_info->FileNameLength / sizeof(WCHAR)),
 					&path[0],
 					(MAX_PATH_SIZE - 1),
 					NULL,
-					NULL);
+					FALSE);
 				path[count] = '\0';
 				path.recompute_size();
 
@@ -153,7 +153,7 @@ namespace gemini
 				absolute_path.append(path);
 
 				// TODO: dispatch the action type?
-				MonitorAction action;
+				MonitorAction action = MonitorAction::Invalid;
 				switch (notify_info->Action)
 				{
 				case FILE_ACTION_ADDED:
@@ -208,7 +208,7 @@ namespace gemini
 			LOGV("ReadyDirectoryChangesW failed with error = %i\n", GetLastError());
 		}
 
-		return result;
+		return (result > 0);
 	} // directory_monitor_read_changes
 
 	int32_t directory_monitor_startup(Allocator& allocator)
@@ -247,7 +247,7 @@ namespace gemini
 
 	MonitorHandle directory_monitor_add(const char* path, MonitorDelegate delegate)
 	{
-		MonitorHandle handle = _monitor_state->records.size() + 1;
+		MonitorHandle handle = static_cast<MonitorHandle>(_monitor_state->records.size() + 1);
 
 		DirectoryMonitorRecord* record = MEMORY2_NEW(_monitor_state->allocator, DirectoryMonitorRecord);
 		_monitor_state->records.push_back(record);
