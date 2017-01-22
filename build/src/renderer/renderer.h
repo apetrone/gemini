@@ -496,17 +496,6 @@ namespace render2
 
 namespace render2
 {
-	// This allows custom implementations of resource loading to be exposed
-	// to the renderer.
-	class ResourceProvider
-	{
-	public:
-		virtual ~ResourceProvider();
-
-		virtual bool load_file(Array<unsigned char>& data, const char* filename) const = 0;
-		virtual bool file_exists(const char* filename) const = 0;
-	}; // class ResourceProvider
-
 	// ---------------------------------------------------------------------
 	// table of render parameters
 	// <variable>: [<options/type>]
@@ -527,8 +516,5 @@ namespace render2
 
 	/// @brief Destroy an existing render device
 	void destroy_device(gemini::Allocator& allocator, Device* device);
-
-	void set_resource_provider(ResourceProvider* provider);
-	ResourceProvider* get_resource_provider();
 } // namespace render2
 

@@ -273,10 +273,6 @@ namespace renderer
 
 namespace render2
 {
-	ResourceProvider::~ResourceProvider()
-	{
-	}
-
 	// ---------------------------------------------------------------------
 	// Shader
 	// ---------------------------------------------------------------------
@@ -354,8 +350,6 @@ namespace render2
 
 	namespace detail
 	{
-		ResourceProvider* resource_provider = nullptr;
-
 		gemini::Allocator shader_allocator;
 	} // namespace detail
 
@@ -390,17 +384,5 @@ namespace render2
 	void destroy_device(gemini::Allocator& allocator, Device* device)
 	{
 		MEMORY2_DELETE(allocator, device);
-	}
-
-	void set_resource_provider(ResourceProvider* provider)
-	{
-		detail::resource_provider = provider;
-	}
-
-	ResourceProvider* get_resource_provider()
-	{
-		// If you hit this, there was no valid resource_provider set.
-		assert(detail::resource_provider != nullptr);
-		return detail::resource_provider;
 	}
 } // namespace render2
