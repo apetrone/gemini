@@ -79,11 +79,6 @@ namespace gemini
 		return glm::make_mat4(m);
 	}
 
-
-
-
-
-
 	struct MeshLoaderState
 	{
 		size_t current_geometry;
@@ -97,7 +92,6 @@ namespace gemini
 		{
 		}
 	}; // MeshLoaderState
-
 
 	void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, const bool is_world)
 	{

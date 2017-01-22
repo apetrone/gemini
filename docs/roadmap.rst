@@ -66,3 +66,10 @@ Extract, Prepare, and Submit phases.
 - Extract individual render nodes (per frame, per view)
 - ALL elements of the same type
 - Frame Global operations
+
+
+RenderNode
+- shader handle
+- material handle
+- vertex buffer
+- index buffer

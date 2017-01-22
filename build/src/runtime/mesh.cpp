@@ -54,6 +54,7 @@ namespace gemini
 		}
 	}
 
+	// TODO: 01-21-17: This should be moved to the asset compiler.
 	void Geometry::render_setup()
 	{
 		VertexDescriptor descriptor;

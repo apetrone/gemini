@@ -327,6 +327,9 @@ def get_tools(arguments, libruntime, librenderer, libcore, libsdk, **kwargs):
 	orion = get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs)
 	tools.append(orion)
 
+	asset_compiler = get_asset_compiler(arguments, [libruntime, libcore], **kwargs)
+	tools.append(asset_compiler)
+
 	return tools
 
 
@@ -977,6 +980,26 @@ def get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs):
 	]
 
 	return orion
+
+
+def get_asset_compiler(arguments, links, **kwargs):
+	asset_compiler = Product(name="asset_compiler", output=ProductType.Application)
+	asset_compiler.project_root = COMMON_PROJECT_ROOT
+	asset_compiler.product_root = COMMON_PRODUCT_ROOT
+	asset_compiler.root = "../"
+	target_platform = kwargs.get("target_platform", None)
+
+	setup_driver(arguments, asset_compiler, target_platform)
+	setup_common_tool(asset_compiler)
+
+	asset_compiler.dependencies.extend(links)
+
+	asset_compiler.sources += [
+		"src/tools/asset_compiler/asset_compiler.cpp"
+	]
+
+	return asset_compiler
+
 
 def arguments(parser):
 	parser.add_argument("--with-gles", dest="gles", action="store_true", help="Build with GLES support", default=False)

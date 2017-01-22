@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2016- Adam Petrone
+// Copyright (C) 2017- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,25 +22,64 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
+#include <core/argumentparser.h>
+#include <core/core.h>
+#include <core/logging.h>
+#include <core/stackstring.h>
+#include <core/typedefs.h>
 
-#include <core/mathlib.h>
-#include <platform/platform.h>
-#include "typedefs.h"
+#include <runtime/runtime.h>
 
-namespace gemini
+enum AssetCompilerError
 {
-	struct RapidInterface
+	AssetCompilerError_None = 0,
+	AssetCompilerError_Generic = 1
+};
+
+#include <vector>
+
+using namespace gemini;
+
+int main(int argc, char** argv)
+{
+	// parse command line values
+	std::vector<std::string> arguments;
+	core::argparse::ArgumentParser parser;
+	core::StackString<MAX_PATH_SIZE> content_path;
+
+	runtime_load_arguments(arguments, parser);
+
+	core::argparse::VariableMap vm;
+	const char* docstring = R"(
+Usage:
+	--assets=<content_path>
+
+Options:
+	-h, --help  Show this help screen
+	--version  Display the version number
+	--assets=<content_path>  The path to load content from
+	)";
+
+	if (parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
 	{
-		void(*compute_pose)(glm::mat4& world_pose, glm::mat4* world_poses, glm::quat* local_rotations, glm::mat4* joint_offsets, size_t index);
+		std::string path = vm["--assets"];
+		content_path = platform::make_absolute_path(path.c_str());
+	}
+	else
+	{
+		return AssetCompilerError_Generic;
+	}
 
-	};
-} // namespace gemini
 
-extern "C"
-{
-	typedef void(*populate_interface_fn)(gemini::RapidInterface&);
+	platform::Result result = core_startup();
+	if (result.failed())
+	{
+		LOGE("Error loading core library. Exiting.\n");
+		return AssetCompilerError_Generic;
+	}
 
-	GEMINI_EXPORT void populate_interface(gemini::RapidInterface& interface);
+	LOGV("asset compiler\n");
+
+	core_shutdown();
+	return AssetCompilerError_None;
 }
-
