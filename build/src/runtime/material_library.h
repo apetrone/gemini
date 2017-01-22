@@ -41,6 +41,7 @@ namespace gemini
 		MaterialLibrary(Allocator& allocator, render2::Device* render_device);
 
 		void create_asset(LoadState& state, void* parameters);
+		inline bool is_same_asset(AssetClass*, void*) { return true; }
 		AssetLoadStatus load_asset(LoadState& state, platform::PathString& fullpath, void* parameters);
 		void destroy_asset(LoadState& state);
 

@@ -51,7 +51,7 @@ namespace gemini
 		assert(state.asset);
 	}
 
-	AssetLoadStatus TextureLibrary::load_asset(LoadState& state, platform::PathString& fullpath, void* parameters)
+	AssetLoadStatus TextureLibrary::load_asset(LoadState& state, platform::PathString& fullpath, void* /*parameters*/)
 	{
 		LOGV("loading texture \"%s\"\n", fullpath());
 
@@ -62,7 +62,6 @@ namespace gemini
 		asset_uri.append(".png");
 
 		Array<unsigned char> buffer(*state.allocator);
-		::renderer::Texture* render_texture = nullptr;
 		core::filesystem::instance()->virtual_load_file(buffer, asset_uri());
 		if (!buffer.empty())
 		{

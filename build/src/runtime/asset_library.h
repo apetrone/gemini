@@ -72,6 +72,7 @@ namespace gemini
 	public:
 		typedef uint16_t HandleIndex;
 		typedef HashSet<platform::PathString, HandleIndex> HandleIndexByName;
+		typedef T AssetClass;
 
 		struct LoadState
 		{
@@ -88,7 +89,7 @@ namespace gemini
 	private:
 		D* instance()
 		{
-			return reinterpret_cast<D*>(this);
+			return static_cast<D*>(this);
 		}
 
 		D& instance_reference()
@@ -159,15 +160,25 @@ namespace gemini
 			platform::path::normalize(&fullpath[0]);
 			if (handle_by_name.has_key(fullpath()))
 			{
-				asset_is_new = 0;
-				handle_index = handle_by_name[fullpath()];
+				HandleIndex index_to_check = handle_by_name[fullpath()];
+				AssetHandle asset_handle;
+				asset_handle.index = index_to_check;
+				T* asset = lookup(asset_handle);
 
-				// An entry exists for it: return it.
-				if (!ignore_cache)
+				// Some asset types require parameters to validate that they
+				// are indeed the same asset.
+				if (instance_reference().is_same_asset(asset, parameters))
 				{
-					AssetHandle handle;
-					handle.index = handle_index;
-					return handle;
+					asset_is_new = 0;
+					handle_index = index_to_check;
+
+					// An entry exists for it: return it.
+					if (!ignore_cache)
+					{
+						AssetHandle handle;
+						handle.index = handle_index;
+						return handle;
+					}
 				}
 			}
 
@@ -189,7 +200,7 @@ namespace gemini
 					// swap out the old with the new.
 					assert(handle_index > 0);
 
-					T* old_asset = assets[handle_index - 1];
+					T* old_asset = assets[static_cast<int>(handle_index - 1)];
 					assets[handle_index - 1] = load_state.asset;
 
 					// delete the old asset

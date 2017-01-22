@@ -65,6 +65,11 @@ public:
 		state.asset = new CustomAsset();
 	}
 
+	bool is_same_asset(CustomAsset* asset, void* parameters)
+	{
+		return true;
+	}
+
 	AssetLoadStatus load_asset(LoadState& state, const platform::PathString& fullpath, void* parameters)
 	{
 		state.asset->uri = fullpath;

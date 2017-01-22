@@ -85,22 +85,7 @@ namespace gemini
 			}
 		}
 
-		class RuntimeResourceProvider : public render2::ResourceProvider
-		{
-		public:
-			virtual bool load_file(Array<unsigned char>& data, const char* filename) const override
-			{
-				core::filesystem::instance()->virtual_load_file(data, filename);
-				return true;
-			}
 
-			virtual bool file_exists(const char* filename) const override
-			{
-				return core::filesystem::instance()->file_exists(filename);
-			}
-		}; // RuntimeResourceProvider
-
-		static RuntimeResourceProvider resource_provider;
 	}
 
 	// initialize filesystem
@@ -178,9 +163,6 @@ namespace gemini
 			core::logging::instance()->add_handler(&filelogger);
 		}
 #endif
-
-		// install the resource provider to the renderer?
-		render2::set_resource_provider(&detail::resource_provider);
 
 		if (runtime_flags & RF_WINDOW_SYSTEM)
 		{

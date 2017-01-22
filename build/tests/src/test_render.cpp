@@ -37,9 +37,10 @@
 #include <platform/platform.h>
 #include <platform/window.h>
 
+#include <renderer/font_library.h>
 #include <renderer/renderer.h>
 #include <renderer/vertexbuffer.h>
-#include <renderer/font.h>
+
 #include <renderer/color.h>
 
 #include <assert.h>
@@ -95,7 +96,7 @@ class TestRender : public kernel::IKernel,
 		unsigned int diffuse;
 		unsigned int mask_texture;
 
-		font::Handle handle;
+		AssetHandle font_handle;
 		platform::window::NativeWindow* native_window;
 		platform::window::NativeWindow* other_window;
 
@@ -220,12 +221,12 @@ public:
 		serializer->draw(3, 6);
 
 		// quad; font texture
-//		serializer->texture(font::get_font_texture(state.handle), 0);
+//		serializer->texture(font_texture(state.font_handle), 0);
 //		serializer->draw(9, 6);
 
 		serializer->pipeline(state.font_pipeline);
 		serializer->vertex_buffer(state.font_buffer);
-		serializer->texture(font::get_font_texture(state.handle), 0);
+		serializer->texture(font_texture(state.font_handle), 0);
 		serializer->draw(0, state.total_font_vertices);
 
 		// horizontal line test
@@ -572,21 +573,19 @@ Options:
 		// ---------------------------------------------------------------------
 		// font
 		// ---------------------------------------------------------------------
-		font_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
-		font::startup(font_allocator, state.device);
-
-		Array<unsigned char> fontdata(render_allocator);
-		core::filesystem::instance()->virtual_load_file(fontdata, "fonts/debug.ttf");
-		state.handle = font::load_from_memory(&fontdata[0], fontdata.size(), 16);
+		FontCreateParameters font_params;
+		font_params.size_pixels = 16;
+		state.font_handle = font_load("debug", false, &font_params);
 
 		const char* text = "The quick brown fox jumps over the lazy dog.";
-		Array<font::FontVertex> temp_vertices(render_allocator);
+		Array<FontVertex> temp_vertices(render_allocator);
 		const size_t text_size = core::str::len(text);
-		temp_vertices.resize(font::count_vertices(state.handle, text_size));
-		font::draw_string(state.handle, &temp_vertices[0], text, text_size, gemini::Color(1.0f, 1.0f, 1.0f));
 
-		font::Metrics metrics;
-		font::get_font_metrics(state.handle, metrics);
+		temp_vertices.resize(font_count_vertices(text_size));
+		font_draw_string(state.font_handle, &temp_vertices[0], text, text_size, gemini::Color(1.0f, 1.0f, 1.0f));
+
+		FontMetrics metrics;
+		font_metrics(state.font_handle, metrics);
 
 		float offset[2] = {window_frame.width/2, window_frame.height/2 + metrics.max_height};
 
@@ -595,7 +594,7 @@ Options:
 		for (size_t index = 0; index < temp_vertices.size(); ++index)
 		{
 			TexturedVertex* tv = &tvf[index];
-			font::FontVertex* fv = &temp_vertices[index];
+			FontVertex* fv = &temp_vertices[index];
 			tv->position[0] = fv->position.x + offset[0];
 			tv->position[1] = fv->position.y + offset[1];
 			tv->position[2] = 0;
@@ -607,7 +606,7 @@ Options:
 
 
 		// hit this assert if we couldn't load the font
-		assert(state.handle.is_valid());
+		assert(state.font_handle != InvalidAssetHandle);
 
 
 		// ---------------------------------------------------------------------
@@ -712,8 +711,6 @@ Options:
 
 	virtual void shutdown()
 	{
-		font::shutdown();
-
 		assets::shutdown();
 
 #if TEST_RENDER_GRAPHICS
@@ -849,8 +846,6 @@ private:
 	glm::vec2 center;
 
 	gemini::Allocator render_allocator;
-	gemini::Allocator font_allocator;
-
 	Array<RenderTest> render_callbacks;
 	TestRenderState state;
 	bool active;

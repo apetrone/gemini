@@ -29,12 +29,11 @@
 #include <runtime/asset_handle.h>
 #include <runtime/assets.h>
 
+#include <renderer/color.h>
 #include <renderer/debug_draw.h>
+#include <renderer/font_library.h>
 #include <renderer/renderer.h>
 #include <renderer/renderstream.h>
-#include <renderer/font.h>
-#include <renderer/color.h>
-
 
 // Enable this to temporarily make all debug draw functions a no-op.
 //#define DISABLE_DEBUG_DRAW 1
@@ -273,9 +272,9 @@ namespace debugdraw
 
 	render2::Pipeline* text_pipeline = nullptr;
 	render2::Buffer* text_buffer = nullptr;
-	Array<font::FontVertex>* text_vertex_cache;
+	Array<FontVertex>* text_vertex_cache;
 
-	font::Handle text_handle;
+	AssetHandle text_handle;
 	glm::mat4 orthographic_projection;
 
 	glm::mat4 modelview_matrix;
@@ -633,15 +632,14 @@ namespace debugdraw
 
 		line_vertex_cache = MEMORY2_NEW(allocator, Array<DebugDrawVertex>)(allocator);
 		tris_vertex_cache = MEMORY2_NEW(allocator, Array<TexturedVertex>)(allocator);
-		text_vertex_cache = MEMORY2_NEW(allocator, Array<font::FontVertex>)(allocator);
+		text_vertex_cache = MEMORY2_NEW(allocator, Array<FontVertex>)(allocator);
 
 		device = render_device;
 
-		Array<unsigned char> fontdata(allocator);
-		const render2::ResourceProvider* resource_provider = render2::get_resource_provider();
-		resource_provider->load_file(fontdata, "fonts/debug.ttf");
-		text_handle = font::load_from_memory(&fontdata[0], fontdata.size(), 16);
-		assert(text_handle.is_valid());
+		FontCreateParameters font_params;
+		font_params.size_pixels = 16;
+		text_handle = font_load("debug", false, &font_params);
+		assert(text_handle != InvalidAssetHandle);
 
 		// create buffers for line, triangles, and font
 		line_buffer = device->create_vertex_buffer(0);
@@ -992,11 +990,11 @@ namespace debugdraw
 				if (primitive->type == TYPE_TEXT)
 				{
 					size_t prev_offset = offset_index;
-					offset_index += font::draw_string(text_handle, &(*text_vertex_cache)[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
+					offset_index += font_draw_string(text_handle, &(*text_vertex_cache)[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
 
 					for (size_t vertex_index = prev_offset; vertex_index < offset_index; ++vertex_index)
 					{
-						font::FontVertex* vertex = &(*text_vertex_cache)[vertex_index];
+						FontVertex* vertex = &(*text_vertex_cache)[vertex_index];
 						vertex->position.x += primitive->start.x;
 						vertex->position.y += primitive->start.y;
 					}
@@ -1009,11 +1007,11 @@ namespace debugdraw
 				if (primitive->type == TYPE_TEXT)
 				{
 					size_t prev_offset = offset_index;
-					offset_index += font::draw_string(text_handle, &(*text_vertex_cache)[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
+					offset_index += font_draw_string(text_handle, &(*text_vertex_cache)[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
 
 					for (size_t vertex_index = prev_offset; vertex_index < offset_index; ++vertex_index)
 					{
-						font::FontVertex* vertex = &(*text_vertex_cache)[vertex_index];
+						FontVertex* vertex = &(*text_vertex_cache)[vertex_index];
 						vertex->position.x += primitive->start.x;
 						vertex->position.y += primitive->start.y;
 					}
@@ -1022,7 +1020,7 @@ namespace debugdraw
 		}
 
 		assert(total_vertices_required % 3 == 0);
-		const size_t new_vertexbuffer_size = sizeof(font::FontVertex) * total_vertices_required;
+		const size_t new_vertexbuffer_size = sizeof(FontVertex) * total_vertices_required;
 		if (new_vertexbuffer_size > 0)
 		{
 			device->buffer_resize(text_buffer, new_vertexbuffer_size);
@@ -1033,7 +1031,7 @@ namespace debugdraw
 
 			serializer->pipeline(text_pipeline);
 			serializer->vertex_buffer(text_buffer);
-			render2::Texture* texture = font::get_font_texture(text_handle);
+			render2::Texture* texture = font_texture(text_handle);
 			assert(texture);
 			serializer->texture(texture, 0);
 			serializer->draw(0, total_vertices_required);

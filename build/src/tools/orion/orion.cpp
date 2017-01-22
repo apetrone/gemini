@@ -22,10 +22,6 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-
-#include <renderer/renderer.h>
-#include <renderer/font.h>
-
 #include <runtime/assets.h>
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
@@ -58,13 +54,17 @@
 #include <ui/timeline.h>
 #include <ui/ui.h>
 
+#include <rapid/rapid.h>
+
+#include <renderer/debug_draw.h>
+#include <renderer/font_library.h>
+#include <renderer/renderer.h>
+
 #include <sdk/camera.h>
 #include <sdk/game_api.h>
 #include <sdk/utils.h>
 
-#include <renderer/debug_draw.h>
 
-#include <rapid/rapid.h>
 
 
 #include "project.h"
@@ -906,8 +906,6 @@ Options:
 //			fs->add_virtual_path("editor/assets");
 		}
 
-		font::startup(render_allocator, device);
-
 		// initialize debug draw
 		debugdraw::startup(debugdraw_allocator, device);
 
@@ -959,7 +957,7 @@ Options:
 #endif
 
 
-			const char dev_font[] = "fonts/debug.ttf";
+			const char dev_font[] = "debug";
 			const size_t dev_font_size = 16;
 #if DRAW_SENSOR_GRAPHS
 			// Create a graph for each sensor
@@ -1067,7 +1065,7 @@ Options:
 			log_window = new gui::Label(compositor);
 			log_window->set_origin(0.0f, 450);
 			log_window->set_size(500, 250);
-			log_window->set_font("fonts/debug.ttf", 16);
+			log_window->set_font("debug", 16);
 			log_window->set_name("log_window");
 			log_window->set_foreground_color(gemini::Color(0.85f, 0.85f, 0.85f));
 			log_window->set_background_color(gemini::Color(0.10f, 0.10f, 0.10f));
@@ -1471,8 +1469,6 @@ Options:
 		// detect leaks.
 		resource_cache->clear();
 		MEMORY2_DELETE(render_allocator, resource_cache);
-
-		font::shutdown();
 
 		assets::shutdown();
 

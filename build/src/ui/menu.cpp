@@ -57,7 +57,7 @@ namespace gui
 		flags |= Flag_CursorEnabled;
 		set_name(label);
 
-		font_handle = get_compositor()->get_resource_cache()->create_font("fonts/debug.ttf", 16);
+		font_handle = get_compositor()->get_resource_cache()->create_font("debug", 16);
 
 		int ascender, descender;
 		size_t height;
@@ -271,7 +271,7 @@ namespace gui
 	{
 		MenuButton* button = new MenuButton(this, menu);
 		button->set_name(menu->get_text());
-		button->set_font("fonts/debug.ttf", 16);
+		button->set_font("debug", 16);
 		button->set_origin(next_origin, 0.0f);
 		button->set_size(menu->get_size());
 		button->set_text(menu->get_text());

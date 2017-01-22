@@ -48,7 +48,7 @@ namespace gui
 
 		bootun = new ScrollButton(this, direction);
 		bootun->set_origin(0, 0);
-		bootun->set_font("fonts/debug.ttf", 16);
+		bootun->set_font("debug", 16);
 		bootun->set_background_color(gemini::Color::from_rgba(120, 120, 120, 255));
 		bootun->set_hover_color(gemini::Color(0, 0, 0));
 		bootun->set_flags(0);

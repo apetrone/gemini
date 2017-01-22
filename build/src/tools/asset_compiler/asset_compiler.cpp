@@ -40,37 +40,16 @@ enum AssetCompilerError
 
 using namespace gemini;
 
-int main(int argc, char** argv)
+
+void asset_compiler_convert(const char* source, const char* destination)
 {
-	// parse command line values
-	std::vector<std::string> arguments;
-	core::argparse::ArgumentParser parser;
-	core::StackString<MAX_PATH_SIZE> content_path;
-
-	runtime_load_arguments(arguments, parser);
-
-	core::argparse::VariableMap vm;
-	const char* docstring = R"(
-Usage:
-	--assets=<content_path>
-
-Options:
-	-h, --help  Show this help screen
-	--version  Display the version number
-	--assets=<content_path>  The path to load content from
-	)";
-
-	if (parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
-	{
-		std::string path = vm["--assets"];
-		content_path = platform::make_absolute_path(path.c_str());
-	}
-	else
-	{
-		return AssetCompilerError_Generic;
-	}
+	LOGV("source_asset_path = %s\n", source);
+	LOGV("destination_asset_path = %s\n", destination);
+}
 
 
+int asset_compiler_main()
+{
 	platform::Result result = core_startup();
 	if (result.failed())
 	{
@@ -78,8 +57,39 @@ Options:
 		return AssetCompilerError_Generic;
 	}
 
-	LOGV("asset compiler\n");
+	// parse command line values
+	std::vector<std::string> arguments;
+	core::argparse::ArgumentParser parser;
+
+	runtime_load_arguments(arguments, parser);
+
+	core::argparse::VariableMap vm;
+	const char* docstring = R"(
+Usage:
+	<source_asset_path> <destination_asset_path>
+
+
+Options:
+	-h, --help  Show this help screen
+	--version  Display the version number
+	)";
+
+	if (!parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
+	{
+		return AssetCompilerError_Generic;
+	}
+
+	std::string source_asset_path = vm["source_asset_path"];
+	std::string destination_asset_path = vm["destination_asset_path"];
+	asset_compiler_convert(source_asset_path.c_str(), destination_asset_path.c_str());
 
 	core_shutdown();
 	return AssetCompilerError_None;
+}
+
+PLATFORM_MAIN
+{
+	PLATFORM_IMPLEMENT_PARAMETERS();
+
+	PLATFORM_RETURN(asset_compiler_main());
 }

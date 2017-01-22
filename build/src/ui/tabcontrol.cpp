@@ -75,7 +75,7 @@ namespace gui
 		tab_size.width = 40;
 		tab_size.height = 20;
 
-		font = get_compositor()->get_resource_cache()->create_font("fonts/debug.ttf", 16);
+		font = get_compositor()->get_resource_cache()->create_font("debug", 16);
 
 		flags |= Flag_CanDrop;
 
@@ -178,7 +178,7 @@ namespace gui
 		//new_tab->on_click.bind<TabControl, &TabControl::tab_clicked>(this);
 
 		// TODO: should get this from style
-		new_tab->set_font("fonts/debug.ttf", 16);
+		new_tab->set_font("debug", 16);
 
 		// TODO: handle vertical tabs?
 

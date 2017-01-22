@@ -24,35 +24,93 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <renderer/font_library.h>
 #include <runtime/asset_library.h>
-#include <renderer/image.h>
 
 namespace render2
 {
 	class Device;
 	struct Texture;
-} // namespace render2
+}
 
 namespace gemini
 {
-	struct TextureCreateParameters
+	// the font system can handle two types of fonts:
+	// - classic bitmap fonts
+	// - signed distance field fonts
+	enum FontType
 	{
-		render2::Device* device;
-		image::FilterType filter;
-		//uint32_t flags;
+		FONT_TYPE_INVALID,
+		FONT_TYPE_BITMAP,	// standard bitmap font
+		FONT_TYPE_SDF		// signed distance field font
 	};
 
-	class TextureLibrary : public AssetLibrary2<render2::Texture, TextureLibrary>
+	struct FontVertex
+	{
+		glm::vec2 position;
+		gemini::Color color;
+		glm::vec2 uv;
+	};
+
+	struct FontMetrics
+	{
+		// scaled font metrics in pixels
+		int32_t height;
+		int32_t ascender;
+		int32_t descender;
+		int32_t max_height;
+	};
+
+	struct FontCreateParameters
+	{
+		// font size in pixels
+		uint32_t size_pixels;
+	};
+
+	struct FontLibraryData;
+	struct FontData;
+
+
+
+
+
+
+
+
+
+	class FontLibrary : public AssetLibrary2<FontData, FontLibrary>
 	{
 	public:
-		TextureLibrary(Allocator& allocator, render2::Device* render_device);
+
+		FontLibrary(Allocator& allocator, render2::Device* render_device);
+		virtual ~FontLibrary();
 
 		void create_asset(LoadState& state, void* parameters);
-		inline bool is_same_asset(AssetClass*, void*) { return true; }
+		bool is_same_asset(AssetClass* asset, void* parameters);
 		AssetLoadStatus load_asset(LoadState& state, platform::PathString& fullpath, void* parameters);
 		void destroy_asset(LoadState& state);
 
-	protected:
-		render2::Device* device;
-	}; // TextureLibrary
+
+	public:
+
+		// additional font functionality
+
+		// populate vertices with the transformed vertices for drawing a string to the screen
+		// returns the number of vertices used
+		size_t draw_string(AssetHandle handle, FontVertex* vertices, const char* utf8, size_t string_length, const Color& color);
+
+		// retrieve metrics for this font
+		void font_metrics(AssetHandle handle, FontMetrics& out_metrics);
+
+		// retrieve the font texture used by a font
+		render2::Texture* font_texture(AssetHandle handle);
+
+		// fetch metrics for a string
+		int32_t string_metrics(AssetHandle handle, const char* utf8, size_t string_length, glm::vec2& mins, glm::vec2& maxs);
+	private:
+
+		int32_t uvs_for_codepoint(FontData* font, int32_t codepoint, glm::vec2* uvs);
+
+		FontLibraryData* private_state;
+	}; // FontLibrary
 } // namespace gemini

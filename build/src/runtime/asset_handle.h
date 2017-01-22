@@ -32,6 +32,16 @@ namespace gemini
 	struct AssetHandle
 	{
 		uint32_t index;
+
+		bool operator==(const AssetHandle& other) const
+		{
+			return index == other.index;
+		}
+
+		bool operator!=(const AssetHandle& other) const
+		{
+			return index != other.index;
+		}
 	};
 
 	const AssetHandle InvalidAssetHandle = { UINT32_MAX };

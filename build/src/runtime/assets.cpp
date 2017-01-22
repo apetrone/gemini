@@ -32,6 +32,7 @@
 #include <renderer/image.h>
 #include <renderer/renderer.h>
 
+#include <renderer/font_library.h>
 #include <runtime/material_library.h>
 #include <runtime/mesh_library.h>
 #include <runtime/texture_library.h>
@@ -74,9 +75,10 @@ namespace gemini
 
 	struct AssetState
 	{
-		gemini::ShaderLibrary* shaders;
+		FontLibrary* fonts;
 		MaterialLibrary* materials;
 		MeshLibrary* meshes;
+		gemini::ShaderLibrary* shaders;
 		TextureLibrary* textures;
 		render2::Device* device;
 	};
@@ -98,7 +100,7 @@ namespace gemini
 			default_image.channels = 3;
 			generate_checker_pattern(default_image, gemini::Color(1.0f, 0.0f, 1.0f), gemini::Color(0.0f, 1.0f, 0.0f));
 
-			TextureCreateParams params;
+			TextureCreateParameters params;
 			params.device = _asset_state->device;
 			params.filter = image::FILTER_NONE;
 			render2::Texture* default_texture = _asset_state->textures->create(asset_allocator, &params);
@@ -145,6 +147,7 @@ namespace gemini
 			_asset_state->device = device;
 
 			// allocate each asset library
+			_asset_state->fonts			= MEMORY2_NEW(asset_allocator, gemini::FontLibrary)(asset_allocator, device);
 			_asset_state->materials		= MEMORY2_NEW(asset_allocator, gemini::MaterialLibrary)(asset_allocator, device);
 			_asset_state->meshes		= MEMORY2_NEW(asset_allocator, gemini::MeshLibrary)(asset_allocator, device);
 			_asset_state->shaders		= MEMORY2_NEW(asset_allocator, gemini::ShaderLibrary)(asset_allocator, device);
@@ -152,6 +155,7 @@ namespace gemini
 
 			_sounds						= MEMORY2_NEW(asset_allocator, soundsAssetLibrary)				(asset_allocator, sound_construct_extension, sound_load_callback);
 
+			_asset_state->fonts->prefix_path("fonts");
 			_asset_state->shaders->prefix_path(shader_root);
 
 			if (load_default_assets)
@@ -165,6 +169,7 @@ namespace gemini
 			// Delete asset libraries
 			MEMORY2_DELETE(asset_allocator, _sounds);
 
+			MEMORY2_DELETE(asset_allocator, _asset_state->fonts);
 			MEMORY2_DELETE(asset_allocator, _asset_state->materials);
 			MEMORY2_DELETE(asset_allocator, _asset_state->meshes);
 			MEMORY2_DELETE(asset_allocator, _asset_state->shaders);
@@ -210,40 +215,76 @@ namespace gemini
 	AssetHandle mesh_load(const char* path, bool ignore_cache, void* parameters)
 	{
 		return _asset_state->meshes->load(path, ignore_cache, parameters);
-	}
+	} // mesh_load
 
 	Mesh* mesh_from_handle(AssetHandle handle)
 	{
 		return _asset_state->meshes->lookup(handle);
-	}
+	} // mesh_from_handle
 
 	AssetHandle shader_load(const char* path, bool ignore_cache, void* parameters)
 	{
 		return _asset_state->shaders->load(path, ignore_cache, parameters);
-	}
+	} // shader_load
 
 	render2::Shader* shader_from_handle(AssetHandle handle)
 	{
 		return _asset_state->shaders->lookup(handle);
-	}
+	} // shader_from_handle
 
 	AssetHandle texture_load(const char* path, bool ignore_cache, void* parameters)
 	{
 		return _asset_state->textures->load(path, ignore_cache, parameters);
-	}
+	} // texture_load
 
 	render2::Texture* texture_from_handle(AssetHandle handle)
 	{
 		return _asset_state->textures->lookup(handle);
-	}
+	} // texture_from_handle
 
 	AssetHandle material_load(const char* path, bool ignore_cache, void* parameters)
 	{
 		return _asset_state->materials->load(path, ignore_cache, parameters);
-	}
+	} // material_load
 
 	Material* material_from_handle(AssetHandle handle)
 	{
 		return _asset_state->materials->lookup(handle);
-	}
+	} // material_from_handle
+
+	size_t font_count_vertices(size_t string_length)
+	{
+		return string_length * 6;
+	} // font_count_vertices
+
+	size_t font_draw_string(AssetHandle handle, FontVertex* vertices, const char* utf8, size_t string_length, const Color& color)
+	{
+		return _asset_state->fonts->draw_string(handle, vertices, utf8, string_length, color);
+	} // font_draw_string
+
+	AssetHandle font_load(const char* path, bool ignore_cache, FontCreateParameters* parameters)
+	{
+		return _asset_state->fonts->load(path, ignore_cache, parameters);
+	} // font_load
+
+	void font_metrics(AssetHandle handle, FontMetrics& out_metrics)
+	{
+		return _asset_state->fonts->font_metrics(handle, out_metrics);
+	} // font_metrics
+
+	FontData* font_from_handle(AssetHandle handle)
+	{
+		return _asset_state->fonts->lookup(handle);
+	} // font_from_handle
+
+	render2::Texture* font_texture(AssetHandle handle)
+	{
+		return _asset_state->fonts->font_texture(handle);
+	} // font_texture
+
+	int32_t font_string_metrics(AssetHandle handle, const char* utf8, size_t string_length, glm::vec2& mins, glm::vec2& maxs)
+	{
+		return _asset_state->fonts->string_metrics(handle, utf8, string_length, mins, maxs);
+	} // font_string_metrics
+
 } // namespace gemini

@@ -41,6 +41,10 @@ namespace gemini
 {
 	struct Material;
 	struct Mesh;
+	struct FontData;
+	struct FontMetrics;
+	struct FontVertex;
+	struct FontCreateParameters;
 
 
 	namespace assets
@@ -80,4 +84,22 @@ namespace gemini
 
 	AssetHandle material_load(const char* path, bool ignore_cache = false, void* parameters = nullptr);
 	Material* material_from_handle(AssetHandle handle);
+
+	/// @returns The number of vertices required to render string with
+	/// string_length in characters.
+	size_t font_count_vertices(size_t string_length);
+	size_t font_draw_string(AssetHandle handle, FontVertex* vertices, const char* utf8, size_t string_length, const Color& color);
+
+	AssetHandle font_load(const char* path, bool ignore_cache, FontCreateParameters* parameters);
+
+	// retrieve metrics for this font
+	void font_metrics(AssetHandle handle, FontMetrics& out_metrics);
+	FontData* font_from_handle(AssetHandle handle);
+
+	// retrieve the font texture used by a font
+	render2::Texture* font_texture(AssetHandle handle);
+
+	// fetch metrics for a string
+	int32_t font_string_metrics(AssetHandle handle, const char* utf8, size_t string_length, glm::vec2& mins, glm::vec2& maxs);
+
 } // namespace gemini

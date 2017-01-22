@@ -921,9 +921,6 @@ private:
 
 	::renderer::StandaloneResourceCache* resource_cache;
 
-	// used by debug draw
-	font::Handle debug_font;
-
 	assets::Sound* test_sound;
 	audio::SoundHandle_t background_music;
 
@@ -1153,7 +1150,7 @@ public:
 		graph->set_name("frametime_graph");
 		graph->set_origin(width - 250, 0);
 		graph->set_size(250, 100);
-		graph->set_font("fonts/debug.ttf", 16);
+		graph->set_font("debug", 16);
 		graph->set_background_color(Color::from_rgba(10, 10, 10, 210));
 		graph->set_foreground_color(Color::from_rgba(255, 255, 255, 255));
 		graph->create_samples(100, 1);
@@ -1313,9 +1310,6 @@ Options:
 		if (device)
 		{
 			assets::startup(device);
-
-			// initialize fonts
-			font::startup(renderer_allocator, device);
 
 			// initialize debug draw
 			debugdraw::startup(renderer_allocator, device);
@@ -1516,8 +1510,6 @@ Options:
 		{
 			MEMORY2_DELETE(renderer_allocator, resource_cache);
 		}
-
-		font::shutdown();
 
 		// shutdown subsystems
 		hotloading::shutdown();
