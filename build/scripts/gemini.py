@@ -408,7 +408,7 @@ def get_libcore(arguments, target_platform):
 		"src/core/platform/filesystem/posix/posix_filesystem_common.cpp",
 
 		# network
-		"src/core/platform/network/linux/linux_network.cpp",
+		"src/core/platform/network/osx/osx_network.cpp",
 
 		# serial
 		"src/core/platform/serial/posix/posix_serial.cpp",
