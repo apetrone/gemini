@@ -1161,7 +1161,7 @@ def products(arguments, **kwargs):
 		game.root = "../"
 		game.product_root = COMMON_PRODUCT_ROOT
 		game.includes += [
-			"src/include/sdk/*.h",
+			"src/include/sdk",
 			"src/engine/game",
 			"src/include"
 		]
@@ -1177,8 +1177,42 @@ def products(arguments, **kwargs):
 		# No need to whitelist; just glob everything for the game.
 		game.sources += [
 			"src/include/sdk/*.h",
-			os.path.join(GAME_ROOT_PATH, "src/*.h"),
-			os.path.join(GAME_ROOT_PATH, "src/*.cpp")
+			os.path.join(GAME_ROOT_PATH, "src/ai_behaviors.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/ai_behaviors.h"),
+			os.path.join(GAME_ROOT_PATH, "src/animated.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/animated.h"),
+			os.path.join(GAME_ROOT_PATH, "src/charactercontroller.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/charactercontroller.h"),
+			os.path.join(GAME_ROOT_PATH, "src/game_ui.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/game_ui.h"),
+			os.path.join(GAME_ROOT_PATH, "src/gameinterface.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/gameinterface.h"),
+			os.path.join(GAME_ROOT_PATH, "src/gamma_rays.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/gamma_rays.h"),
+			os.path.join(GAME_ROOT_PATH, "src/npc.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/npc.h"),
+			os.path.join(GAME_ROOT_PATH, "src/player.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/player.h"),
+			# os.path.join(GAME_ROOT_PATH, "src/project_helium.cpp"),
+			# os.path.join(GAME_ROOT_PATH, "src/project_helium.h"),
+			# os.path.join(GAME_ROOT_PATH, "src/project_hydrogen.cpp"),
+			# os.path.join(GAME_ROOT_PATH, "src/project_hydrogen.h"),
+			os.path.join(GAME_ROOT_PATH, "src/renderable.h"),
+			os.path.join(GAME_ROOT_PATH, "src/rotationsnap.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/rotationsnap.h"),
+			os.path.join(GAME_ROOT_PATH, "src/simplegame.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/simplegame.h"),
+			os.path.join(GAME_ROOT_PATH, "src/staticmesh.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/staticmesh.h"),
+			os.path.join(GAME_ROOT_PATH, "src/test.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/testgame.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/testgame.h"),
+			os.path.join(GAME_ROOT_PATH, "src/trigger.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/trigger.h"),
+			os.path.join(GAME_ROOT_PATH, "src/weapon.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/weapon.h"),
+			os.path.join(GAME_ROOT_PATH, "src/world.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/world.h")
 		]
 
 		gemini.dependencies += [ game ]
