@@ -23,9 +23,20 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #pragma once
-#include <runtime/assets_common.h>
 
 #include <renderer/renderer.h> // for ShaderString
+
+
+#define IMPLEMENT_ASSET_LIBRARY_ACCESSOR( name )\
+	name##AssetLibrary* _##name = 0;\
+	name##AssetLibrary* name()\
+	{\
+		return _##name;\
+	}
+
+#define DECLARE_ASSET_LIBRARY_ACCESSOR( type, parameter_class, name )\
+	typedef AssetLibrary<type, parameter_class> name##AssetLibrary;\
+	name##AssetLibrary * name()
 
 namespace render2
 {
@@ -42,7 +53,6 @@ namespace gemini
 	struct FontVertex;
 	struct FontCreateParameters;
 	struct Sound;
-
 
 	namespace assets
 	{

@@ -43,14 +43,6 @@ using namespace renderer;
 
 namespace gemini
 {
-	namespace assets
-	{
-		AssetParameters::~AssetParameters()
-		{
-		}
-	} // namespace assets
-
-
 	struct AssetState
 	{
 		FontLibrary* fonts;

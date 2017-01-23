@@ -714,9 +714,7 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 		"src/runtime/audio_mixer.h",
 
 		# assets
-		"src/runtime/assets_common.h",
 		"src/runtime/asset_library.h",
-		"src/runtime/assetlibrary.h",
 		"src/runtime/asset_handle.h",
 
 		"src/runtime/assets.cpp",
