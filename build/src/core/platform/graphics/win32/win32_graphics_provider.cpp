@@ -78,10 +78,13 @@ namespace platform
 		const uint32_t WGL_CONTEXT_MINOR_VERSION_ARB				= 0x2092;
 		const uint32_t WGL_CONTEXT_LAYER_PLANE_ARB					= 0x2093;
 		const uint32_t WGL_CONTEXT_FLAGS_ARB						= 0x2094;
-		const uint32_t WGL_PROFILE_MASK_ARB							= 0x9126;
+		const uint32_t WGL_CONTEXT_PROFILE_MASK_ARB					= 0x9126;
 
+		// accepted as flags
 		const uint32_t WGL_CONTEXT_DEBUG_BIT_ARB					= 0x0001;
 		const uint32_t WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB		= 0x0002;
+
+		// accepted as profile mask
 		const uint32_t WGL_CONTEXT_CORE_PROFILE_BIT_ARB				= 0x00000001;
 		const uint32_t WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB	= 0x00000002;
 
@@ -217,7 +220,7 @@ namespace platform
 
 				// choose attributes
 				int context_attributes[] = {
-					WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+					WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 					WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
 					WGL_CONTEXT_MINOR_VERSION_ARB, 2,
 					0
