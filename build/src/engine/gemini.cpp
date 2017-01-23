@@ -954,7 +954,12 @@ private:
 
 		PathString relative_library_path;
 		relative_library_path = "bin";
-		relative_library_path.append(PATH_SEPARATOR_STRING).append("game").append(platform::dylib_extension());
+		relative_library_path.append(PATH_SEPARATOR_STRING);
+#if defined(PLATFORM_LINUX)
+		relative_library_path.append("lib");
+#endif
+		relative_library_path.append("game");
+		relative_library_path.append(platform::dylib_extension());
 //		fs->get_absolute_path_for_content(game_library_path, relative_library_path());
 		core::filesystem::absolute_path_from_relative(game_library_path, relative_library_path(), fs->content_directory());
 
