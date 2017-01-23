@@ -937,17 +937,17 @@ namespace render2
 			gl.Disable(GL_DEPTH_TEST);
 		}
 
-		if (pass->cull_mode == CullMode::Frontface)
-		{
-			gl.Enable(GL_CULL_FACE);
-			gl.CullFace(GL_FRONT);
-		}
-		else if (pass->cull_mode == CullMode::Backface)
-		{
-			gl.Enable(GL_CULL_FACE);
-			gl.CullFace(GL_BACK);
-		}
-		else
+		//if (pass->cull_mode == CullMode::Frontface)
+		//{
+		//	gl.Enable(GL_CULL_FACE);
+		//	gl.CullFace(GL_FRONT);
+		//}
+		//else if (pass->cull_mode == CullMode::Backface)
+		//{
+		//	gl.Enable(GL_CULL_FACE);
+		//	gl.CullFace(GL_BACK);
+		//}
+		//else
 		{
 			gl.Disable(GL_CULL_FACE);
 		}

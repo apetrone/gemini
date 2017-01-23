@@ -521,11 +521,11 @@ namespace gemini
 					vertex->position = geo->vertices[v];
 					vertex->normal = geo->normals[v];
 					vertex->uvs = geo->uvs[v];
-					if (geo->blend_indices.size() > 0)
-					{
-						vertex->blend_indices = geo->blend_indices[v];
-						vertex->blend_weights = geo->blend_weights[v];
-					}
+					//if (geo->blend_indices.size() > 0)
+					//{
+					//	vertex->blend_indices = geo->blend_indices[v];
+					//	vertex->blend_weights = geo->blend_weights[v];
+					//}
 				}
 
 				device->buffer_upload(geo->vertex_buffer, data, vertex_buffer_size);

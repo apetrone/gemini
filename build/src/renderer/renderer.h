@@ -238,8 +238,8 @@ namespace renderer
 		glm::vec3 position;
 		glm::vec3 normal;
 		glm::vec2 uvs;
-		glm::vec4 blend_indices;
-		glm::vec4 blend_weights;
+		//glm::vec4 blend_indices;
+		//glm::vec4 blend_weights;
 	};
 
 	struct Geometry

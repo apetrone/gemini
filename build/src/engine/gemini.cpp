@@ -823,7 +823,7 @@ public:
 
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
-		render_pass.color(0.05f, 0.05f, 0.05f, 1.0f);
+		render_pass.color(clear_color.red, clear_color.blue, clear_color.green, clear_color.alpha);
 		render_pass.clear_color = true;
 		render_pass.clear_depth = true;
 		render_pass.depth_test = false;
@@ -838,7 +838,6 @@ public:
 		pipeline->constants().set("modelview_matrix", &view.modelview);
 		pipeline->constants().set("projection_matrix", &view.projection);
 
-
 		pipeline->constants().set("diffuse", &diffuse_unit);
 		if (mesh)
 		{
@@ -850,7 +849,6 @@ public:
 		device->destroy_serializer(serializer);
 
 		device->queue_buffers(queue, 1);
-
 	}
 
 	virtual void render_gui()
