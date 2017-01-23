@@ -719,8 +719,6 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 		"src/runtime/assetlibrary.h",
 		"src/runtime/asset_handle.h",
 
-		"src/runtime/assets/asset_sound.cpp",
-		"src/runtime/assets/asset_sound.h",
 		"src/runtime/assets.cpp",
 		"src/runtime/assets.h",
 
@@ -739,6 +737,9 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 		"src/runtime/mesh.h",
 		"src/runtime/mesh_library.cpp",
 		"src/runtime/mesh_library.h",
+
+		"src/runtime/audio_library.cpp",
+		"src/runtime/audio_library.h",
 
 		"src/runtime/texture_library.cpp",
 		"src/runtime/texture_library.h",
@@ -1248,8 +1249,8 @@ def products(arguments, **kwargs):
 		# "src/engine/game/screencontrol.*",
 
 		"src/engine/game/entity_allocator.h",
-		"src/engine/game/particlesystem.h",
-		"src/engine/game/particlesystem.cpp",
+		# "src/engine/game/particlesystem.h",
+		# "src/engine/game/particlesystem.cpp",
 
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_image.h"),
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_vorbis.c")
