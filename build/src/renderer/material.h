@@ -52,7 +52,6 @@ namespace renderer
 		int int_value;
 		glm::vec4 vector_value;
 		unsigned int texture_unit;
-		//renderer::Texture* texture;
 		gemini::AssetHandle texture_handle;
 
 

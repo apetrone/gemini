@@ -73,7 +73,7 @@ namespace gemini
 
 	struct Mesh
 	{
-		FixedArray<renderer::Geometry*> geometry;
+		FixedArray<::renderer::Geometry*> geometry;
 		//FixedArray<Geometry*> geometry_vn;
 		glm::mat4 world_matrix;
 
@@ -96,9 +96,6 @@ namespace gemini
 		void reset();
 
 		virtual void release();
-
-		// prepare all geometry
-		void prepare_geometry();
 
 		glm::mat4 node_transform;
 

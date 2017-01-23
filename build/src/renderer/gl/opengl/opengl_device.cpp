@@ -241,6 +241,26 @@ namespace render2
 		default_target->framebuffer_srgb(parameters.flags & RF_GAMMA_CORRECT);
 	}
 
+	size_t OpenGLDevice::compute_vertex_stride(const VertexDescriptor& descriptor)
+	{
+		size_t stride = 0;
+		for (size_t index = 0; index < descriptor.size(); ++index)
+		{
+			const VertexDescriptor::InputDescription& input = descriptor[index];
+			const VertexDataTypeToGL& gldata = get_vertexdata_table()[input.type];
+
+			stride += (gldata.element_size * input.element_count);
+		}
+
+		return stride;
+	}
+
+	size_t OpenGLDevice::compute_index_stride()
+	{
+		// If you change this, you need to change calls to DrawElements.
+		return sizeof(uint16_t);
+	}
+
 	// ---------------------------------------------------------------------
 	// shader
 	// ---------------------------------------------------------------------

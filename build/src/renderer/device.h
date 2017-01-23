@@ -135,5 +135,8 @@ namespace render2
 		//
 		// ---------------------------------------------------------------------
 		virtual void update_parameters(const RenderParameters& render_params) = 0;
+
+		virtual size_t compute_vertex_stride(const VertexDescriptor& descriptor) = 0;
+		virtual size_t compute_index_stride() = 0;
 	}; // class Device
 } // namespace render2

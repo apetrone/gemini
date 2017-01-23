@@ -206,15 +206,14 @@ class ModelInterface : public gemini::IModelInterface
 		{
 			assert(mesh != 0);
 
-			assert(0); // TODO: 01-19-17: fix this (meshes)
 			// does this have an animation?
-			//if (mesh->has_skeletal_animation)
-			//{
-			//	size_t total_elements = (mesh->geometry.size() * mesh->skeleton.size());
-			//	local_bone_transforms = new glm::mat4[total_elements];
-			//	model_bone_transforms = new glm::mat4[total_elements];
-			//	inverse_bind_transforms = new glm::mat4[total_elements];
-			//}
+			if (mesh->has_skeletal_animation)
+			{
+				size_t total_elements = (mesh->geometry.size() * mesh->skeleton.size());
+				local_bone_transforms = new glm::mat4[total_elements];
+				model_bone_transforms = new glm::mat4[total_elements];
+				inverse_bind_transforms = new glm::mat4[total_elements];
+			}
 		}
 
 		void destroy_bones()
@@ -546,10 +545,6 @@ public:
 		Mesh* mesh = mesh_from_handle(mesh_handle);
 		if (mesh)
 		{
-			if (mesh->is_dirty)
-			{
-				mesh->prepare_geometry();
-			}
 			ModelInstanceData data(allocator);
 			data.set_mesh_index(mesh_handle);
 			data.create_bones();
@@ -716,12 +711,13 @@ class EngineInterface : public IEngineInterface
 	platform::window::NativeWindow* main_window;
 	//SceneLink& scenelink;
 	render2::Device* device;
+	render2::Pipeline* pipeline;
 
 	//Array<char> render_stream_data;
 	//Array<::renderer::RenderState> render_commands;
 
 	gemini::Allocator& engine_allocator;
-
+	unsigned int diffuse_unit;
 public:
 
 	EngineInterface(gemini::Allocator& _allocator,
@@ -745,10 +741,24 @@ public:
 	{
 		//render_stream_data.resize(GEMINI_MAX_RENDERSTREAM_BYTES);
 		//render_commands.resize(GEMINI_MAX_RENDER_STREAM_COMMANDS);
+
+		render2::PipelineDescriptor desc;
+		render2::VertexDescriptor& vertex_format = desc.vertex_description;
+		vertex_format.add("in_position", render2::VD_FLOAT, 3);
+		vertex_format.add("in_normal", render2::VD_FLOAT, 3);
+		vertex_format.add("in_uv", render2::VD_FLOAT, 2);
+		desc.shader = shader_load("rendertest");
+		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
+		pipeline = device->create_pipeline(desc);
+
+		diffuse_unit = 0;
 	}
 
 
-	virtual ~EngineInterface() {};
+	virtual ~EngineInterface()
+	{
+		device->destroy_pipeline(pipeline);
+	}
 
 	virtual IEntityManager* entities() { return entity_manager; }
 	virtual IModelInterface* models() { return model_interface; }
@@ -813,14 +823,34 @@ public:
 
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
-		render_pass.color(0.0f, 0.0f, 0.0f, 1.0f);
+		render_pass.color(0.05f, 0.05f, 0.05f, 1.0f);
 		render_pass.clear_color = true;
 		render_pass.clear_depth = true;
 		render_pass.depth_test = false;
 
 		render2::CommandQueue* queue = device->create_queue(render_pass);
-		//render2::CommandSerializer* serializer = device->create_serializer(queue);
+		render2::CommandSerializer* serializer = device->create_serializer(queue);
+
+		AssetHandle mesh_handle = mesh_load("models/level2");
+		Mesh* mesh = mesh_from_handle(mesh_handle);
+
+		serializer->pipeline(pipeline);
+		pipeline->constants().set("modelview_matrix", &view.modelview);
+		pipeline->constants().set("projection_matrix", &view.projection);
+
+
+		pipeline->constants().set("diffuse", &diffuse_unit);
+		if (mesh)
+		{
+			serializer->texture(texture_from_handle(texture_load("textures/measure")), 0);
+			serializer->vertex_buffer(mesh->geometry[0]->vertex_buffer);
+			serializer->draw_indexed_primitives(mesh->geometry[0]->index_buffer, mesh->geometry[0]->indices.size());
+		}
+
+		device->destroy_serializer(serializer);
+
 		device->queue_buffers(queue, 1);
+
 	}
 
 	virtual void render_gui()
@@ -1536,6 +1566,8 @@ Options:
 		MEMORY2_DELETE(audio_allocator, interface);
 		audio::set_instance(nullptr);
 
+		MEMORY2_DELETE(engine_allocator, engine_interface);
+
 		// must shutdown the renderer before our window
 		render2::destroy_device(renderer_allocator, device);
 
@@ -1549,7 +1581,7 @@ Options:
 
 		gemini::runtime_shutdown();
 
-		MEMORY2_DELETE(engine_allocator, engine_interface);
+
 		//MEMORY2_DELETE(renderer_allocator, scenelink);
 	}
 };

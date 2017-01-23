@@ -40,6 +40,9 @@
 
 #include <renderer/debug_draw.h>
 
+#include <runtime/assets.h>
+#include <runtime/mesh.h>
+
 #include <sdk/engine_api.h>
 #include <sdk/model_api.h>
 #include <sdk/physics_api.h>
@@ -111,8 +114,7 @@ namespace gemini
 		}
 
 		// TODO: 01-19-17: fix this (meshes)
-#if 0
-		btCompoundShape* compound_shape_from_geometry(assets::Mesh* mesh, bool is_dynamic, float mass)
+		btCompoundShape* compound_shape_from_geometry(Mesh* mesh, bool is_dynamic, float mass)
 		{
 			bool use_quantized_bvh_tree = true;
 
@@ -120,7 +122,7 @@ namespace gemini
 
 			for( uint32_t index = 0; index < mesh->geometry.size(); ++index )
 			{
-				assets::Geometry* geo = mesh->geometry[index];
+				renderer::Geometry* geo = mesh->geometry[index];
 				FixedArray<glm::vec3>& vertices = geo->vertices;
 
 				// this shape's transform
@@ -165,7 +167,6 @@ namespace gemini
 
 			return compound;
 		}
-#endif
 
 		physics::ICollisionObject* PhysicsInterface::create_physics_model(int32_t model_index, ObjectProperties& properties)
 		{
@@ -175,10 +176,8 @@ namespace gemini
 			btScalar mass(properties.mass_kg);
 			btVector3 local_inertia(0, 0, 0);
 
-			assert(0); // TODO: 01-19-17: fix this (meshes)
-#if 0
 			IModelInstanceData* model_interface = engine::instance()->models()->get_instance_data(model_index);
-			assets::Mesh* mesh = assets::meshes()->find_with_id(model_interface->asset_index());
+			gemini::Mesh* mesh = gemini::mesh_from_handle(model_interface->asset_index());
 			if (!mesh)
 			{
 				LOGW("Unable to create physics for null mesh\n");
@@ -190,7 +189,6 @@ namespace gemini
 				LOGE("Unable to add physics for mesh; invalid physics state\n");
 				return nullptr;
 			}
-#endif
 
 			ICollisionObject* object = 0;
 			BulletStaticBody* static_body = 0;
@@ -211,8 +209,7 @@ namespace gemini
 
 			// create a compound shape and add geometries to it
 
-			assert(0); // TODO: 01-19-17: fix this (meshes)
-			btCompoundShape* compound = nullptr; // compound_shape_from_geometry(mesh, dynamic_body, mass);
+			btCompoundShape* compound = compound_shape_from_geometry(mesh, dynamic_body, mass);
 			btRigidBody* body = 0;
 
 			// The rigid body world transform is the center of mass. This is at the origin.

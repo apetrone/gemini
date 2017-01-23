@@ -494,7 +494,45 @@ namespace gemini
 			{
 				renderer::Geometry* geo = state.asset->geometry[index];
 				LOGV("geo [%i] vertices: %i\n", index, geo->vertex_count);
-				// geo->render_setup();
+
+				render2::VertexDescriptor descriptor;
+
+				descriptor.add("in_position", render2::VD_FLOAT, 3);
+				descriptor.add("in_normal", render2::VD_FLOAT, 3);
+				descriptor.add("in_uv", render2::VD_FLOAT, 2);
+
+				size_t stride = device->compute_vertex_stride(descriptor);
+				const size_t vertex_buffer_size = (geo->vertex_count * stride);
+
+				assert(geo->vertex_buffer == nullptr);
+				geo->vertex_buffer = device->create_vertex_buffer(vertex_buffer_size);
+
+				const size_t index_buffer_size = geo->index_count * device->compute_index_stride();
+				geo->index_buffer = device->create_index_buffer(index_buffer_size);
+
+				LOGV("vertex_buffer_size: %i\n", vertex_buffer_size);
+				LOGV("index_buffer_size: %i\n", index_buffer_size);
+
+				char* data = static_cast<char*>(MEMORY2_ALLOC(*state.allocator, vertex_buffer_size));
+				renderer::GeometryVertex* vertex = reinterpret_cast<renderer::GeometryVertex*>(data);
+
+				for (size_t v = 0; v < geo->vertex_count; ++v)
+				{
+					vertex->position = geo->vertices[v];
+					vertex->normal = geo->normals[v];
+					vertex->uvs = geo->uvs[v];
+					if (geo->blend_indices.size() > 0)
+					{
+						vertex->blend_indices = geo->blend_indices[v];
+						vertex->blend_weights = geo->blend_weights[v];
+					}
+				}
+
+				device->buffer_upload(geo->vertex_buffer, data, vertex_buffer_size);
+				MEMORY2_DEALLOC(*state.allocator, data);
+
+				// upload indices
+				device->buffer_upload(geo->index_buffer, &geo->indices[0], index_buffer_size);
 
 				// if geometry has blend indices, we'll assume it's an animated mesh,
 				// otherwise, we'll assume it's static.
@@ -514,6 +552,22 @@ namespace gemini
 
 	void MeshLibrary::destroy_asset(LoadState& state)
 	{
+		// free buffers on geometry.
+		for (size_t index = 0; index < state.asset->geometry.size(); ++index)
+		{
+			renderer::Geometry* geometry = state.asset->geometry[index];
+			if (geometry->vertex_buffer)
+			{
+				device->destroy_buffer(geometry->vertex_buffer);
+			}
+
+			if (geometry->index_buffer)
+			{
+				device->destroy_buffer(geometry->index_buffer);
+			}
+		}
+
+
 		MEMORY2_DELETE(*state.allocator, state.asset);
 	}
 } // namespace gemini

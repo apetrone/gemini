@@ -41,35 +41,15 @@ namespace gemini
 
 	Mesh::~Mesh()
 	{
-		assert(0); // TODO: 01-19-17: fix this (meshes)
-		//for (assets::Geometry* geo : geometry)
-		//{
-		//	MEMORY2_DELETE(allocator, geo);
-		//}
+		for (renderer::Geometry* geo : geometry)
+		{
+			MEMORY2_DELETE(allocator, geo);
+		}
 	}
 
 	void Mesh::release()
 	{
 	} // release
-
-	void Mesh::prepare_geometry()
-	{
-		if (!is_dirty)
-		{
-			return;
-		}
-
-		assert(geometry.size() != 0);
-
-		assert(0); // TODO: 01-19-17: fix this (meshes)
-		//for (unsigned int geo_id = 0; geo_id < geometry.size(); ++geo_id)
-		//{
-		//	assets::Geometry* geo = geometry[geo_id];
-		//	geo->render_setup();
-		//}
-
-		is_dirty = false;
-	} // prepare_geometry
 
 	Joint* Mesh::find_bone_named(const char* name)
 	{

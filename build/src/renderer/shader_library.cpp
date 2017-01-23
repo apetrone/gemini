@@ -78,6 +78,10 @@ namespace gemini
 		render2::ShaderSource* sources[] = { &vertex_source, &frag_source };
 
 		state.asset = device->create_shader(sources, 2);
+		if (!state.asset)
+		{
+			return AssetLoad_Failure;
+		}
 
 		return AssetLoad_Success;
 	}

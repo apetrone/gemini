@@ -76,8 +76,9 @@ namespace gemini
 				//image.filter = parameters.filter_type;
 				image.filter = image::FILTER_LINEAR;
 
-				render2::Texture* texture = device->create_texture(image);
-				state.asset = texture;
+				// The texture was previously created in create_asset; here we just
+				// update the texture.
+				device->update_texture(state.asset, image, glm::vec2(0.0f), glm::vec2(image.width, image.height));
 
 				LOGV("Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", asset_uri(), image.width, image.height, image.channels);
 

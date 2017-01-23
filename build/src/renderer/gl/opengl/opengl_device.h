@@ -429,6 +429,9 @@ namespace render2
 		// ---------------------------------------------------------------------
 		virtual void update_parameters(const RenderParameters& render_params);
 
+		virtual size_t compute_vertex_stride(const VertexDescriptor& descriptor);
+		virtual size_t compute_index_stride();
+
 	private:
 		GLRenderTarget* default_target;
 
