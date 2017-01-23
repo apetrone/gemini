@@ -908,6 +908,9 @@ namespace platform
 
 		Result startup(RenderingBackend)
 		{
+			// If you hit this assert, startup was called more than once.
+			assert(_window_provider == nullptr);
+
 			// create the win32 window provider instance
 			_window_provider = MEMORY2_NEW(get_platform_allocator2(), Win32WindowProvider);
 
