@@ -37,6 +37,7 @@
 #include <runtime/mesh_library.h>
 #include <runtime/texture_library.h>
 #include <renderer/shader_library.h>
+#include <runtime/audio_library.h>
 
 using namespace renderer;
 
@@ -47,29 +48,6 @@ namespace gemini
 		AssetParameters::~AssetParameters()
 		{
 		}
-
-		unsigned int find_parameter_mask( ShaderString & name )
-		{
-			// TODO: need to validate the name here against the
-			// parameter names in permutations config file.
-
-
-	//		if ( _shader_permutations != 0 )
-	//		{
-	//			for( unsigned int option_id = 0; option_id < shader_permutations().num_permutations; ++option_id )
-	//			{
-	//				ShaderPermutationGroup * option = shader_permutations().options[ option_id ];
-	//				if ( xstr_nicmp( (const char*)name.c_str(), option->name.c_str(), 64 ) == 0 )
-	//				{
-	//					//				LOGV( "mask for %s is %i\n", name.c_str(), option->mask_value );
-	//					return (1 << option->mask_value);
-	//				}
-	//			}
-	//		}
-
-			LOGV("Unable to find parameter mask for %s\n", name.c_str());
-			return 0;
-		} // find_parameter_mask
 	} // namespace assets
 
 
@@ -79,6 +57,7 @@ namespace gemini
 		MaterialLibrary* materials;
 		MeshLibrary* meshes;
 		gemini::ShaderLibrary* shaders;
+		AudioLibrary* sounds;
 		TextureLibrary* textures;
 		render2::Device* device;
 	};
@@ -88,9 +67,6 @@ namespace gemini
 	namespace assets
 	{
 		gemini::Allocator asset_allocator;
-
-		// 1. Implement asset library
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(sounds)
 
 		void load_default_texture_and_material()
 		{
@@ -151,9 +127,8 @@ namespace gemini
 			_asset_state->materials		= MEMORY2_NEW(asset_allocator, gemini::MaterialLibrary)(asset_allocator, device);
 			_asset_state->meshes		= MEMORY2_NEW(asset_allocator, gemini::MeshLibrary)(asset_allocator, device);
 			_asset_state->shaders		= MEMORY2_NEW(asset_allocator, gemini::ShaderLibrary)(asset_allocator, device);
+			_asset_state->sounds		= MEMORY2_NEW(asset_allocator, gemini::AudioLibrary)(asset_allocator);
 			_asset_state->textures		= MEMORY2_NEW(asset_allocator, gemini::TextureLibrary)(asset_allocator, device);
-
-			_sounds						= MEMORY2_NEW(asset_allocator, soundsAssetLibrary)				(asset_allocator, sound_construct_extension, sound_load_callback);
 
 			_asset_state->fonts->prefix_path("fonts");
 			_asset_state->shaders->prefix_path(shader_root);
@@ -167,12 +142,11 @@ namespace gemini
 		void shutdown()
 		{
 			// Delete asset libraries
-			MEMORY2_DELETE(asset_allocator, _sounds);
-
 			MEMORY2_DELETE(asset_allocator, _asset_state->fonts);
 			MEMORY2_DELETE(asset_allocator, _asset_state->materials);
 			MEMORY2_DELETE(asset_allocator, _asset_state->meshes);
 			MEMORY2_DELETE(asset_allocator, _asset_state->shaders);
+			MEMORY2_DELETE(asset_allocator, _asset_state->sounds);
 			MEMORY2_DELETE(asset_allocator, _asset_state->textures);
 
 			// Delete base asset state
@@ -180,36 +154,6 @@ namespace gemini
 			_asset_state = nullptr;
 		} // shutdown
 
-		void append_asset_extension( AssetType type, core::StackString<MAX_PATH_SIZE> & path )
-		{
-			const char * extension = "";
-#if defined(PLATFORM_IPHONEOS)
-			kernel::KernelDeviceFlags device_flags = kernel::parameters().device_flags;
-#endif
-
-			switch( type )
-			{
-				case AssetType::Sound:
-				{
-#if defined(PLATFORM_IPHONEOS)
-					if ( (device_flags & kernel::DeviceiPad) || (device_flags & kernel::DeviceiPhone) )
-					{
-						extension = "caf";
-					}
-#else
-					extension = "ogg";
-#endif
-					break;
-				} // Sound
-
-
-				default: LOGW( "AssetType %i is NOT supported!\n" ); break;
-			}
-
-			path.append( "." );
-			path.append( extension );
-
-		} // append_asset_extension
 	} // namespace assets
 
 	AssetHandle mesh_load(const char* path, bool ignore_cache, void* parameters)
@@ -286,5 +230,15 @@ namespace gemini
 	{
 		return _asset_state->fonts->string_metrics(handle, utf8, string_length, mins, maxs);
 	} // font_string_metrics
+
+	AssetHandle sound_load(const char* path, bool ignore_cache, void* parameters)
+	{
+		return _asset_state->sounds->load(path, ignore_cache, parameters);
+	} // sound_load
+
+	Sound* sound_from_handle(AssetHandle handle)
+	{
+		return _asset_state->sounds->lookup(handle);
+	} // sound_from_handle
 
 } // namespace gemini

@@ -81,11 +81,7 @@ Audio Decompression
 
 namespace gemini
 {
-	namespace assets
-	{
-		struct Sound;
-	}
-
+	struct Sound;
 	namespace audio
 	{
 		typedef size_t SoundHandle_t;
@@ -99,12 +95,12 @@ namespace gemini
 		const size_t AUDIO_MAX_OUTPUT_CHANNELS = 2;
 
 		// Samples are stored as floats in memory for mixing.
-		typedef float InMemorySampleType;
+		//typedef float InMemorySampleType;
 		const float InMemorySampleValueMax = 32767.0f;
 		const size_t InMemoryChannelCount = 2;
 
 		// start playing sound [repeats]
-		SoundHandle_t play_sound(gemini::assets::Sound* sound, int32_t repeats = 0);
+		SoundHandle_t play_sound(Sound* sound, int32_t repeats = 0);
 
 		// stop playing sound
 		void stop_sound(SoundHandle_t handle);

@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include <runtime/audio_mixer.h>
-#include <runtime/assets/asset_sound.h>
+#include <runtime/audio_library.h>
 
 #include <core/array.h>
 #include <core/logging.h>
@@ -55,7 +55,7 @@ namespace gemini
 				Playing
 			};
 
-			assets::Sound* sound_asset;
+			Sound* sound_asset;
 			uint64_t frames_buffered;
 			uint64_t total_frames;
 			uint64_t sample_count_started; // sample count this started playing
@@ -207,7 +207,7 @@ namespace gemini
 	{
 		gemini::Allocator* audio_allocator = nullptr;
 
-		SoundHandle_t play_sound(assets::Sound* sound, int32_t repeats)
+		SoundHandle_t play_sound(Sound* sound, int32_t repeats)
 		{
 #if defined(AUDIO_USE_LOCK)
 			platform::mutex_lock(audio_lock);

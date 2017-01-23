@@ -25,10 +25,6 @@
 #pragma once
 #include <runtime/assets_common.h>
 
-#include <runtime/assetlibrary.h>
-
-#include <runtime/assets/asset_sound.h>
-
 #include <renderer/renderer.h> // for ShaderString
 
 namespace render2
@@ -45,17 +41,11 @@ namespace gemini
 	struct FontMetrics;
 	struct FontVertex;
 	struct FontCreateParameters;
+	struct Sound;
 
 
 	namespace assets
 	{
-		// Asset utils
-		enum class AssetType
-		{
-			Shader,
-			Sound
-		}; // AssetType
-
 		// called to initialize default textures and other required resources.
 		void startup(render2::Device* device, bool load_default_assets = true);
 
@@ -64,13 +54,6 @@ namespace gemini
 
 		// purge all assets and reclaim unused memory
 		void shutdown();
-
-		// Given a relative path to an asset, tack on a platform-specific file extension
-		void append_asset_extension(AssetType type, core::StackString< MAX_PATH_SIZE > & path);
-
-		// do we still need this?
-		unsigned int find_parameter_mask(::renderer::ShaderString& name);
-
 	} // namespace assets
 
 	AssetHandle mesh_load(const char* path, bool ignore_cache = false, void* parameters = nullptr);
@@ -102,4 +85,7 @@ namespace gemini
 	// fetch metrics for a string
 	int32_t font_string_metrics(AssetHandle handle, const char* utf8, size_t string_length, glm::vec2& mins, glm::vec2& maxs);
 
+
+	AssetHandle sound_load(const char* path, bool ignore_cache, void* parameters = nullptr);
+	Sound* sound_from_handle(AssetHandle handle);
 } // namespace gemini

@@ -34,8 +34,9 @@
 #include <core/mathlib.h>
 #include <core/profiler.h>
 
+#include <runtime/assets.h>
+#include <runtime/audio_mixer.h>
 #include <runtime/filesystem.h>
-
 #include <runtime/runtime.h>
 #include <runtime/standaloneresourcecache.h>
 
@@ -61,8 +62,6 @@
 
 #include "input.h"
 
-#include "assets/asset_font.h"
-//#include "assets/asset_mesh.h"
 #include "scenelink.h"
 #include "audio.h"
 #include "animation.h"
@@ -90,6 +89,8 @@ using namespace gemini; // for renderer
 #include <ui/button.h>
 
 #include "guirenderer.h"
+
+#include <map>
 
 // this is required at the moment because our render method needs it!
 gui::Compositor* _compositor = 0;
@@ -680,13 +681,13 @@ class AudioInterface : public IAudioInterface
 public:
 	virtual void precache_sound(const char* path)
 	{
-		assets::sounds()->load_from_path(path);
+		sound_load(path, false);
 	}
 
 	virtual gemini::AudioHandle play(const char* path, int num_repeats)
 	{
 		return gemini::audio::play_sound(
-			assets::sounds()->load_from_path(path),
+			sound_from_handle(sound_load(path, false)),
 			num_repeats
 		);
 	}
