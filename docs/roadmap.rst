@@ -26,9 +26,9 @@ priority.
 - engine: Joint-specific hit boxes
 
 
----------------------------
+---------------------------------------------------------------------------------
 Brainstorming
----------------------------
+---------------------------------------------------------------------------------
 
 Ideas or nice to haves I want to learn or integrate.
 
@@ -73,3 +73,9 @@ RenderNode
 - material handle
 - vertex buffer
 - index buffer
+
+---------------------------
+Renderer
+---------------------------
+-> Hand a list of render objects; it will do everything behind the scenes and present that list.
+-> Need a way to hand the renderer resources
