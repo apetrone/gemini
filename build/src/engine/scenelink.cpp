@@ -26,7 +26,7 @@
 
 #include "scenelink.h"
 
-#include <renderer/renderstream.h>
+//#include <renderer/renderstream.h>
 #include <renderer/debug_draw.h>
 
 #include <sdk/engine_api.h>
@@ -41,6 +41,7 @@
 
 namespace gemini
 {
+#if 0
 	SceneLink::SceneLink(gemini::Allocator& _allocator)
 		: allocator(_allocator)
 	{
@@ -247,4 +248,5 @@ namespace gemini
 
 		queue->sort();
 	}
+#endif
 } // namespace gemini

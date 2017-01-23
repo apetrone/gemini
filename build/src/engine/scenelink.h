@@ -35,6 +35,7 @@ namespace gemini
 {
 	class IEngineEntity;
 
+#if 0
 	// The purpose of this class is to provide a connection between
 	// a scene graph and the render queue.
 	// In short, it will provide the conversion from scene graph nodes
@@ -54,4 +55,5 @@ namespace gemini
 
 		void queue_entities(gemini::IEngineEntity** entity_list, uint32_t max_entities, uint32_t render_flags = 0);
 	};
+#endif
 } // namespace gemini

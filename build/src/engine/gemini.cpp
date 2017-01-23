@@ -41,7 +41,6 @@
 #include <runtime/standaloneresourcecache.h>
 
 #include <renderer/renderer.h>
-#include <renderer/renderstream.h>
 #include <renderer/constantbuffer.h>
 #include <renderer/debug_draw.h>
 
@@ -95,14 +94,14 @@ using namespace gemini; // for renderer
 // this is required at the moment because our render method needs it!
 gui::Compositor* _compositor = 0;
 
-void render_scene_from_camera(::renderer::RenderStream& stream, gemini::IEngineEntity** entity_list, View& view, SceneLink& scenelink)
-{
-	// use the entity list to render
-	scenelink.clear();
-	scenelink.queue_entities(entity_list, MAX_ENTITIES, RENDER_VISIBLE);
-	scenelink.sort();
-	scenelink.draw(stream, &view.modelview, &view.projection);
-}
+//void render_scene_from_camera(::renderer::RenderStream& stream, gemini::IEngineEntity** entity_list, View& view, SceneLink& scenelink)
+//{
+//	// use the entity list to render
+//	scenelink.clear();
+//	scenelink.queue_entities(entity_list, MAX_ENTITIES, RENDER_VISIBLE);
+//	scenelink.sort();
+//	scenelink.draw(stream, &view.modelview, &view.projection);
+//}
 
 class EntityManager : public IEntityManager
 {
@@ -673,8 +672,8 @@ struct SharedState
 
 static SharedState _sharedstate;
 
-const size_t GEMINI_MAX_RENDERSTREAM_BYTES = 8192;
-const size_t GEMINI_MAX_RENDER_STREAM_COMMANDS = 512;
+//const size_t GEMINI_MAX_RENDERSTREAM_BYTES = 8192;
+//const size_t GEMINI_MAX_RENDER_STREAM_COMMANDS = 512;
 
 class AudioInterface : public IAudioInterface
 {
@@ -715,10 +714,11 @@ class EngineInterface : public IEngineInterface
 	IExperimental* experimental_interface;
 
 	platform::window::NativeWindow* main_window;
-	SceneLink& scenelink;
+	//SceneLink& scenelink;
+	render2::Device* device;
 
-	Array<char> render_stream_data;
-	Array<::renderer::RenderState> render_commands;
+	//Array<char> render_stream_data;
+	//Array<::renderer::RenderState> render_commands;
 
 	gemini::Allocator& engine_allocator;
 
@@ -729,7 +729,8 @@ public:
 					IModelInterface* mi,
 					gemini::physics::IPhysicsInterface* pi,
 					IExperimental* ei,
-					SceneLink& scene_link,
+					//SceneLink& scene_link,
+					render2::Device* render_device,
 					platform::window::NativeWindow* window)
 		: engine_allocator(_allocator)
 		, entity_manager(em)
@@ -737,12 +738,13 @@ public:
 		, physics_interface(pi)
 		, experimental_interface(ei)
 		, main_window(window)
-		, scenelink(scene_link)
-		, render_stream_data(_allocator)
-		, render_commands(_allocator)
+		, device(render_device)
+		//, scenelink(scene_link)
+		//, render_stream_data(_allocator)
+		//, render_commands(_allocator)
 	{
-		render_stream_data.resize(GEMINI_MAX_RENDERSTREAM_BYTES);
-		render_commands.resize(GEMINI_MAX_RENDER_STREAM_COMMANDS);
+		//render_stream_data.resize(GEMINI_MAX_RENDERSTREAM_BYTES);
+		//render_commands.resize(GEMINI_MAX_RENDER_STREAM_COMMANDS);
 	}
 
 
@@ -769,6 +771,8 @@ public:
 
 	virtual void render_view(const View& view, const Color& clear_color)
 	{
+		// old rendering code
+#if 0
 		// TODO: need to validate this origin/orientation is allowed.
 		// otherwise, client could ask us to render from anyone's POV.
 		EntityManager* em = static_cast<EntityManager*>(engine::instance()->entities());
@@ -791,6 +795,19 @@ public:
 		newview.height = frame.height;
 
 		render_scene_from_camera(rs, entity_list, newview, scenelink);
+#endif
+
+
+		render2::Pass render_pass;
+		render_pass.target = device->default_render_target();
+		render_pass.color(0.0f, 0.0f, 0.0f, 1.0f);
+		render_pass.clear_color = true;
+		render_pass.clear_depth = true;
+		render_pass.depth_test = false;
+
+		render2::CommandQueue* queue = device->create_queue(render_pass);
+		//render2::CommandSerializer* serializer = device->create_serializer(queue);
+		device->queue_buffers(queue, 1);
 	}
 
 	virtual void render_gui()
@@ -862,7 +879,6 @@ public:
 	virtual void set_relative_mouse_mode(bool enable) override
 	{
 		platform::window::set_relative_mouse_mode(main_window, enable);
-
 		center_cursor();
 	}
 };
@@ -901,7 +917,7 @@ private:
 	uint64_t last_time;
 
 	// rendering
-	SceneLink* scenelink;
+	//SceneLink* scenelink;
 	render2::Device* device;
 
 	// game library
@@ -1251,9 +1267,6 @@ Options:
 
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 
-		// initialize window subsystem
-		//platform::window::startup(platform::window::RenderingBackend_Default);
-
 		platform::window::Parameters window_params;
 
 		platform::window::Frame screen_frame = platform::window::screen_frame(0);
@@ -1275,43 +1288,36 @@ Options:
 		main_window = platform::window::create(window_params);
 		platform::window::focus(main_window);
 
-
 		engine_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		renderer_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
 
 		// initialize rendering subsystems
-		{
-			render2::RenderParameters render_params(renderer_allocator);
-			// set some options
-			render_params["vsync"] = "true";
-			render_params["double_buffer"] = "true";
-			render_params["depth_size"] = "24";
-			render_params["multisample"] = "4";
+		render2::RenderParameters render_params(renderer_allocator);
+		// set some options
+		render_params["vsync"] = "true";
+		render_params["double_buffer"] = "true";
+		render_params["depth_size"] = "24";
+		render_params["multisample"] = "4";
 
-			// set opengl specific options
-			render_params["rendering_backend"] = "opengl";
-			render_params["opengl.major"] = "3";
-			render_params["opengl.minor"] = "2";
-			render_params["opengl.profile"] = "core";
-			render_params["opengl.share_context"] = "true";
+		render_params["gamma_correct"] = "true";
 
-			device = render2::create_device(renderer_allocator, render_params);
-			assert(device != nullptr);
+		// set opengl specific options
+		render_params["rendering_backend"] = "opengl";
+		render_params["opengl.major"] = "3";
+		render_params["opengl.minor"] = "2";
+		render_params["opengl.profile"] = "core";
+		render_params["opengl.share_context"] = "true";
 
-			device->init(config.window_width, config.window_height);
+		device = render2::create_device(renderer_allocator, render_params);
+		assert(device != nullptr);
 
-			scenelink = MEMORY2_NEW(renderer_allocator, SceneLink)(renderer_allocator);
-		}
+		device->init(config.window_width, config.window_height);
 
+		//scenelink = MEMORY2_NEW(renderer_allocator, SceneLink)(renderer_allocator);
+		assets::startup(device);
 
-
-		if (device)
-		{
-			assets::startup(device);
-
-			// initialize debug draw
-			debugdraw::startup(renderer_allocator, device);
-		}
+		// initialize debug draw
+		debugdraw::startup(renderer_allocator, device);
 
 		audio_allocator = memory_allocator_default(MEMORY_ZONE_AUDIO);
 
@@ -1330,7 +1336,6 @@ Options:
 			hotloading::startup(renderer_allocator);
 		}
 
-
 		// setup interfaces
 		engine_interface = MEMORY2_NEW(engine_allocator, EngineInterface)
 			(engine_allocator,
@@ -1338,7 +1343,8 @@ Options:
 			&model_interface,
 			physics::instance(),
 			&experimental,
-			*scenelink,
+			device,
+			//*scenelink,
 			main_window
 		);
 		gemini::engine::set_instance(engine_interface);
@@ -1346,7 +1352,7 @@ Options:
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		setup_gui(device, renderer_allocator, frame.width, frame.height);
 
-		// open_gamelibrary();
+		 open_gamelibrary();
 
 		//navigation::startup();
 
@@ -1392,7 +1398,8 @@ Options:
 		//	core::memory::global_allocator().get_zone()->get_active_bytes() / (float)(1024 * 1024)), Color());
 		//y += 12;
 
-		while (accumulator >= params.step_interval_seconds)
+		// causing jittery frametime graph.
+		//while (accumulator >= params.step_interval_seconds)
 		{
 			if (game_interface)
 			{
@@ -1402,7 +1409,7 @@ Options:
 			// this is going to be incorrect unless this is placed in the step.
 			// additionally, these aren't interpolated: figure how to; for example,
 			// draw hit boxes for a moving player with this system.
-			debugdraw::update(params.step_interval_seconds /** MillisecondsPerSecond*/);
+			//debugdraw::update(params.step_interval_seconds /** MillisecondsPerSecond*/);
 
 			// subtract the interval from the accumulator
 			accumulator -= params.step_interval_seconds;
@@ -1490,7 +1497,7 @@ Options:
 
 		// since the game can create gui elements, we need to shutdown
 		// the gui before shutting down the game library.
-		// close_gamelibrary();
+		 close_gamelibrary();
 
 		// we need to explicitly shut this down so it cleans up before
 		// our memory detects any leaks.
@@ -1525,7 +1532,7 @@ Options:
 		gemini::runtime_shutdown();
 
 		MEMORY2_DELETE(engine_allocator, engine_interface);
-		MEMORY2_DELETE(renderer_allocator, scenelink);
+		//MEMORY2_DELETE(renderer_allocator, scenelink);
 	}
 };
 
