@@ -307,9 +307,11 @@ namespace gemini
 
 			// try to open the device
 			platform::Result res = audio_open_output_device(devices[0]);
-			assert(res.succeeded());
-
-			platform::audio_set_callback(audio_fill_buffer, nullptr);
+			// assert(res.succeeded());
+			if (res.succeeded())
+			{
+				platform::audio_set_callback(audio_fill_buffer, nullptr);
+			}
 		}
 
 		void shutdown()

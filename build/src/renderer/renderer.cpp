@@ -110,18 +110,24 @@ namespace renderer
 	Geometry::Geometry(gemini::Allocator& allocator)
 		: vertices(allocator)
 		, normals(allocator)
-		, colors(allocator)
 		, uvs(allocator)
 		, blend_indices(allocator)
 		, blend_weights(allocator)
 		, indices(allocator)
+		, bind_poses(allocator)
+		, inverse_bind_poses(allocator)
 	{
+		material_id = gemini::InvalidAssetHandle;
+		shader_id = gemini::InvalidAssetHandle;
+		vertex_count = 0;
+		index_count = 0;
+		vertex_buffer = nullptr;
+		index_buffer = nullptr;
 	}
 
 	Geometry::~Geometry()
 	{
 	}
-
 } // namespace renderer
 
 

@@ -150,7 +150,7 @@ namespace gemini
 
 			// setup materials
 
-			Geometry* geo = MEMORY2_NEW(state.allocator, Geometry)(state.allocator);
+			renderer::Geometry* geo = MEMORY2_NEW(state.allocator, renderer::Geometry)(state.allocator);
 			//assets::Geometry* geo = state.mesh->geometry[state.current_geometry++];
 			state.mesh->geometry[state.current_geometry++] = geo;
 
@@ -183,7 +183,7 @@ namespace gemini
 			}
 
 			geo->shader_id = shader_load(shader_path.c_str());
-			geo->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
+			// geo->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
 			geo->name = node["name"].asString().c_str();
 
 	//				LOGV("assign material id %i to geometry: %s\n", geo->material_id, geo->name());
@@ -196,7 +196,7 @@ namespace gemini
 			geo->vertices.allocate(vertex_array.size());
 			geo->normals.allocate(vertex_array.size());
 			geo->uvs.allocate(vertex_array.size() * renderer::GEOMETRY_UV_SET_MAX);
-			geo->colors.allocate(vertex_colors.size());
+			// geo->colors.allocate(vertex_colors.size());
 
 			if (!bind_data.empty())
 			{
@@ -222,11 +222,11 @@ namespace gemini
 			}
 
 			// read vertex colors
-			for (int v = 0; v < static_cast<int>(geo->colors.size()); ++v)
-			{
-				const Json::Value& vertex_color = vertex_colors[v];
-				geo->colors[v] = Color(vertex_color[0].asFloat(), vertex_color[1].asFloat(), vertex_color[2].asFloat(), vertex_color[3].asFloat());
-			}
+			// for (int v = 0; v < static_cast<int>(geo->colors.size()); ++v)
+			// {
+			// 	const Json::Value& vertex_color = vertex_colors[v];
+			// 	geo->colors[v] = Color(vertex_color[0].asFloat(), vertex_color[1].asFloat(), vertex_color[2].asFloat(), vertex_color[3].asFloat());
+			// }
 
 			// read uv sets
 			for (Json::Value::ArrayIndex set_id = 0; set_id < uv_sets.size(); ++set_id)
@@ -492,16 +492,22 @@ namespace gemini
 		{
 			for (size_t index = 0; index < state.asset->geometry.size(); ++index)
 			{
-				Geometry* geo = state.asset->geometry[index];
+				renderer::Geometry* geo = state.asset->geometry[index];
 				LOGV("geo [%i] vertices: %i\n", index, geo->vertex_count);
-				geo->render_setup();
+				// geo->render_setup();
 
+				// if geometry has blend indices, we'll assume it's an animated mesh,
+				// otherwise, we'll assume it's static.
 
+				// We'll also need some heuristics to determine if it's a world-mesh.
+				// create a vertex buffer for this geometry
+
+				// store it somewhere
+
+				// upload to GPU
 			}
 			return AssetLoad_Success;
 		}
-
-
 
 		return AssetLoad_Failure;
 	}

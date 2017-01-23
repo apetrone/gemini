@@ -71,33 +71,9 @@ namespace gemini
 		}
 	};
 
-	struct Geometry : public ::renderer::Geometry
-	{
-		core::StackString<128> name;
-		AssetHandle material_id;
-		AssetHandle shader_id;
-
-		glm::vec3 mins;
-		glm::vec3 maxs;
-
-		Geometry(gemini::Allocator& allocator);
-		virtual ~Geometry();
-
-		Geometry& operator=(const Geometry& rhs) = delete;
-
-		// set this geometry up for rendering
-		void render_setup();
-
-		// model space to bone space transforms
-		FixedArray<glm::mat4> bind_poses;
-
-		// object-space to joint-space transforms
-		FixedArray<glm::mat4> inverse_bind_poses;
-	}; // Geometry
-
 	struct Mesh
 	{
-		FixedArray<Geometry*> geometry;
+		FixedArray<renderer::Geometry*> geometry;
 		//FixedArray<Geometry*> geometry_vn;
 		glm::mat4 world_matrix;
 

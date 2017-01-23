@@ -796,6 +796,19 @@ public:
 
 		render_scene_from_camera(rs, entity_list, newview, scenelink);
 #endif
+		EntityManager* entity_manager = static_cast<EntityManager*>(engine::instance()->entities());
+		IEngineEntity** entity_list = entity_manager->get_entity_list();
+
+		for (uint32_t entity_index = 0; entity_index < MAX_ENTITIES; ++entity_index)
+		{
+			gemini::IEngineEntity* entity = entity_list[entity_index];
+
+			// draw visible entities
+			if (!entity)
+			{
+				continue;
+			}
+		}
 
 
 		render2::Pass render_pass;

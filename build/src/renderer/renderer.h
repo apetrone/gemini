@@ -231,11 +231,19 @@ namespace renderer
 		unsigned int destination;
 	}; // BlendParameters
 
+	// I would like to be able to test both interleaved and serial formats
+	// on the GPU.
+	struct GeometryVertex
+	{
+		glm::vec3 position;
+		glm::vec3 normal;
+		glm::vec2 uvs;
+		glm::vec4 blend_indices;
+		glm::vec4 blend_weights;
+	};
 
 	struct Geometry
 	{
-		unsigned short attributes;
-
 		unsigned int vertex_count;
 		unsigned int index_count;
 
@@ -243,21 +251,32 @@ namespace renderer
 		// they will be vertex_count in length.
 		FixedArray<glm::vec3> vertices;
 		FixedArray<glm::vec3> normals;
-		FixedArray<gemini::Color> colors;
 		FixedArray<glm::vec2> uvs;
 		FixedArray<glm::vec4> blend_indices;
 		FixedArray<glm::vec4> blend_weights;
 		FixedArray<renderer::IndexType> indices;
 
-		renderer::VertexBuffer* vertexbuffer;
-		renderer::VertexBufferDrawType draw_type;
-
-		// return true if this object is animated
-		// i.e. requires dynamic updates in the renderer
-		bool is_animated() const { return 0; }
 		Geometry(gemini::Allocator& allocator);
 		virtual ~Geometry();
 		Geometry& operator=(const Geometry& other) = delete;
+
+		core::StackString<128> name;
+
+		gemini::AssetHandle material_id;
+		gemini::AssetHandle shader_id;
+
+		render2::Buffer* vertex_buffer;
+		render2::Buffer* index_buffer;
+
+		// are these still needed for any reason?
+		glm::vec3 mins;
+		glm::vec3 maxs;
+
+		// model space to bone space transforms
+		FixedArray<glm::mat4> bind_poses;
+
+		// object-space to joint-space transforms
+		FixedArray<glm::mat4> inverse_bind_poses;
 	}; // Geometry
 } // namespace renderer
 

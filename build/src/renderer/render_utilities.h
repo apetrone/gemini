@@ -26,11 +26,6 @@
 
 namespace gemini
 {
-	namespace assets
-	{
-		struct Geometry;
-	}
-
 	struct RenderStream;
 
 	namespace assets
@@ -40,8 +35,9 @@ namespace gemini
 
 	namespace renderer
 	{
-		struct RenderBlock;
 		struct ConstantBuffer;
+		struct Geometry;
+		struct RenderBlock;
 	}
 } // namespace gemini
 
