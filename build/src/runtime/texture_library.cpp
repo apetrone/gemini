@@ -43,12 +43,7 @@ namespace gemini
 
 	void TextureLibrary::create_asset(LoadState& state, void* parameters)
 	{
-		image::Image image(*state.allocator);
-		image.width = 4;
-		image.height = 4;
-
-		state.asset = device->create_texture(image);
-		assert(state.asset);
+		// nothing to do here -- image is created in load_asset only.
 	}
 
 	AssetLoadStatus TextureLibrary::load_asset(LoadState& state, platform::PathString& fullpath, void* /*parameters*/)
@@ -69,16 +64,10 @@ namespace gemini
 			unsigned char* pixels = image::load_image_from_memory(&buffer[0], buffer.size(), &image.width, &image.height, &image.channels);
 			if (pixels)
 			{
-				//				may need to actually flip the image vertically here
-				//				flip_image_vertically( width, height, components, pixels );
-
 				image.pixels = pixels;
-				//image.filter = parameters.filter_type;
 				image.filter = image::FILTER_LINEAR;
 
-				// The texture was previously created in create_asset; here we just
-				// update the texture.
-				device->update_texture(state.asset, image, glm::vec2(0.0f), glm::vec2(image.width, image.height));
+				state.asset = device->create_texture(image);
 
 				LOGV("Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", asset_uri(), image.width, image.height, image.channels);
 

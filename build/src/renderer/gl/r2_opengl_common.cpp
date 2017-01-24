@@ -439,8 +439,8 @@ namespace render2
 
 
 		// set filter type
-		GLint min_filter = GL_NEAREST;
-		GLint mag_filter = GL_NEAREST;
+		GLint min_filter;
+		GLint mag_filter;
 
 		if (image.filter == image::FILTER_LINEAR)
 		{
@@ -451,6 +451,16 @@ namespace render2
 		{
 			min_filter = GL_LINEAR_MIPMAP_LINEAR;
 			mag_filter = GL_LINEAR;
+		}
+		else if (image.filter == image::FILTER_NONE)
+		{
+			min_filter = GL_NEAREST;
+			mag_filter = GL_NEAREST;
+		}
+		else
+		{
+			// Unhandled image filter type!
+			assert(0);
 		}
 
 		// set filtering

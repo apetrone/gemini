@@ -68,10 +68,9 @@ namespace gemini
 			default_image.channels = 3;
 			generate_checker_pattern(default_image, gemini::Color(1.0f, 0.0f, 1.0f), gemini::Color(0.0f, 1.0f, 0.0f));
 
-			TextureCreateParameters params;
-			params.device = _asset_state->device;
-			params.filter = image::FILTER_NONE;
-			render2::Texture* default_texture = _asset_state->textures->create(asset_allocator, &params);
+			default_image.filter = image::FILTER_NONE;
+			render2::Texture* default_texture = _asset_state->device->create_texture(default_image);
+
 			_asset_state->textures->default_asset(default_texture);
 			_asset_state->textures->take_ownership("default", default_texture, false);
 
