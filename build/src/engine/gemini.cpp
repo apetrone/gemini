@@ -1345,7 +1345,7 @@ Options:
 		render_params["depth_size"] = "24";
 		render_params["multisample"] = "4";
 
-		render_params["gamma_correct"] = "true";
+		render_params["gamma_correct"] = "false";
 
 		// set opengl specific options
 		render_params["rendering_backend"] = "opengl";

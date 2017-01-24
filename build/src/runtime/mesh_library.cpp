@@ -514,10 +514,11 @@ namespace gemini
 				LOGV("index_buffer_size: %i\n", index_buffer_size);
 
 				char* data = static_cast<char*>(MEMORY2_ALLOC(*state.allocator, vertex_buffer_size));
-				renderer::GeometryVertex* vertex = reinterpret_cast<renderer::GeometryVertex*>(data);
+
 
 				for (size_t v = 0; v < geo->vertex_count; ++v)
 				{
+					renderer::GeometryVertex* vertex = reinterpret_cast<renderer::GeometryVertex*>(data) + v;
 					vertex->position = geo->vertices[v];
 					vertex->normal = geo->normals[v];
 					vertex->uvs = geo->uvs[v];

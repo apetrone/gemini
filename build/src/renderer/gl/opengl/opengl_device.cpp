@@ -258,7 +258,7 @@ namespace render2
 	size_t OpenGLDevice::compute_index_stride()
 	{
 		// If you change this, you need to change calls to DrawElements.
-		return sizeof(uint16_t);
+		return sizeof(renderer::IndexType);
 	}
 
 	// ---------------------------------------------------------------------

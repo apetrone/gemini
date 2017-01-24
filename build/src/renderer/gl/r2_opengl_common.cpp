@@ -397,6 +397,7 @@ namespace render2
 	{
 		GLuint id = activate ? texture_id : 0;
 		gl.BindTexture(texture_type, id);
+		gl.CheckError("BindTexture");
 	}
 
 	void GLTexture::unbind()
