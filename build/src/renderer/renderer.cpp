@@ -25,7 +25,7 @@
 #include "renderer.h"
 
 #include "gemgl.h"
-#include "gl/opengl_common.h"
+//#include "gl/opengl_common.h"
 
 //#include <runtime/assets.h>
 
@@ -36,77 +36,6 @@
 
 namespace renderer
 {
-	IRenderDriver * _render_driver = 0;
-
-	IRenderDriver * driver() { return _render_driver; }
-
-	int startup(gemini::Allocator& /*allocator*/, DriverType /*driver_type*/, const RenderSettings& /*settings*/)
-	{
-		assert(0);
-#if 0
-		// setup vertex descriptor
-		VertexDescriptor::startup();
-
-		// load the shader config data
-		shader_config::startup(allocator);
-
-		gemgl_config config;
-
-		// parse the GL_VERSION string and determine which renderer to use.
-		gemgl_parse_version(config.major_version, config.minor_version);
-#if defined(PLATFORM_OPENGL_SUPPORT)
-			if (config.major_version == 3 && config.minor_version >= 2)
-			{
-				// use core32
-				_render_driver = MEMORY2_NEW(allocator, GLCore32)(allocator);
-			}
-			else // fallback to 2.1
-			{
-				// TODO: if at least 2.1 is NOT supported,
-				// this has to fail hard.
-				// return GL2.1 render driver
-				_render_driver = nullptr;
-			}
-#endif
-
-#if defined(PLATFORM_GLES2_SUPPORT)
-			// TODO: load GLES
-			if (config.major_version == 2)
-			{
-				_render_driver = nullptr;
-				// return the gles2 driver.
-				assert(0);
-			}
-#endif
-
-		if (_render_driver)
-		{
-			LOGV( "Initialized renderer: '%s'\n", _render_driver->description() );
-
-			// init render driver settings
-			_render_driver->init_with_settings(settings);
-
-			_render_driver->create_default_render_target();
-
-			return 1;
-		}
-#endif
-		return 0;
-	} // startup
-
-	void shutdown(gemini::Allocator& allocator)
-	{
-		if ( _render_driver )
-		{
-			MEMORY2_DELETE(allocator, _render_driver);
-		}
-
-		// TODO@APP: This is no longer correct to be called here.
-		// Moved to render2 device startup/shutdown.
-		//gemgl_shutdown(gl);
-	} // shutdown
-
-
 	Geometry::Geometry(gemini::Allocator& allocator)
 		: vertices(allocator)
 		, normals(allocator)
@@ -129,6 +58,13 @@ namespace renderer
 	{
 	}
 } // namespace renderer
+
+namespace render2
+{
+	Buffer::~Buffer()
+	{
+	}
+} // namespace render2
 
 
 namespace renderer

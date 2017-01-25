@@ -33,7 +33,6 @@
 #include <renderer/debug_draw.h>
 #include <renderer/font_library.h>
 #include <renderer/renderer.h>
-#include <renderer/renderstream.h>
 
 // Enable this to temporarily make all debug draw functions a no-op.
 //#define DISABLE_DEBUG_DRAW 1

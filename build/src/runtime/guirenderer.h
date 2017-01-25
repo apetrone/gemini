@@ -35,7 +35,6 @@ namespace gui
 	class Compositor;
 }
 
-#include <renderer/renderstream.h>
 #include <renderer/image.h>
 #include <renderer/font_library.h>
 

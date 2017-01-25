@@ -26,13 +26,6 @@
 
 namespace gemini
 {
-	struct RenderStream;
-
-	namespace assets
-	{
-		struct Shader;
-	}
-
 	namespace renderer
 	{
 		struct ConstantBuffer;
@@ -53,7 +46,6 @@ namespace renderer
 		{
 			void calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height );
 		} // sprite
-
 
 		template <class Type>
 		struct PhysicsState
@@ -78,10 +70,6 @@ namespace renderer
 				render = interpolator( last, current, t );
 			}
 		}; // PhysicsState
-
-
-		// strip the version line from shader source
-		void strip_shader_version( char * buffer, core::StackString<32> & version );
 	} // namespace render_utilities
 } // namespace renderer
 

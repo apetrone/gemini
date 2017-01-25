@@ -137,11 +137,6 @@ namespace renderer
 	};
 
 
-
-	// returns 0 on failure, 1 on success
-	int startup(gemini::Allocator& allocator, DriverType driver, const RenderSettings& settings);
-	void shutdown(gemini::Allocator& allocator);
-
 #if defined(PLATFORM_GLES2_SUPPORT)
 	typedef unsigned short IndexType;
 #elif defined(PLATFORM_OPENGL_SUPPORT)
@@ -286,106 +281,6 @@ namespace renderer
 #include "constantbuffer.h"
 #include "pipeline.h"
 #include "commandbuffer.h"
-
-namespace renderer
-{
-	struct RenderStream;
-}
-
-
-namespace renderer
-{
-	// This interface can be derived for each new platform
-	class RenderDevice
-	{
-	public:
-		virtual ~RenderDevice() {}
-
-		// resource management
-
-		// commands
-	};
-
-
-	// Renderer is a high-level interface for visuals. It doesn't know/care
-	// what the underlying API or devices are.
-	// Internally, it will direct calls to the device.
-	class Renderer
-	{
-	public:
-		virtual ~Renderer() {}
-
-		virtual void apply_settings(const renderer::RenderSettings& settings) = 0;
-	};
-
-	//
-	// IRenderDriver
-	// The render driver acts as a command processor. The implementation details are up to the driver
-	// which make this a nice abstraction layer.
-	class IRenderDriver
-	{
-	public:
-		virtual ~IRenderDriver() {}
-		virtual const char * description() = 0;
-
-
-		virtual void init_with_settings(const renderer::RenderSettings& settings) = 0;
-		virtual void create_default_render_target() = 0;
-
-		// these commands are called with the command and current memory stream
-		virtual void run_command( DriverCommandType command, core::util::MemoryStream & stream ) = 0;
-		virtual void post_command( DriverCommandType command, core::util::MemoryStream & stream ) = 0;
-
-		virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, core::util::MemoryStream & stream ) = 0;
-		virtual void setup_material( renderer::Material* material, renderer::ShaderProgram* program, RenderStream& stream) = 0;
-
-		// texture
-		virtual renderer::Texture* texture_create(image::Image& image) = 0;
-		virtual void texture_update(renderer::Texture* texture, const image::Image& image, const mathlib::Recti& rect) = 0;
-		virtual void texture_destroy(renderer::Texture* texture) = 0;
-
-		virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
-		virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream ) = 0;
-		virtual void vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices ) = 0;
-
-
-		virtual renderer::VertexBuffer * vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry ) = 0;
-		virtual void vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer::Geometry * geometry ) = 0;
-
-//		virtual void vertexbuffer_activate( renderer::VertexBuffer & parameters ) = 0;
-//		virtual void vertexbuffer_update( renderer::VertexBuffer & parameters ) = 0;
-		virtual void vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices ) = 0;
-		virtual void vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned int num_vertices ) = 0;
-//		virtual void vertexbuffer_deactivate( renderer::VertexBuffer & parameters ) = 0;
-
-		virtual renderer::ShaderObject shaderobject_create( renderer::ShaderObjectType shader_type ) = 0;
-		virtual bool shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version ) = 0;
-		virtual void shaderobject_destroy( renderer::ShaderObject shader_object ) = 0;
-
-		virtual renderer::ShaderProgram* shaderprogram_create() = 0;
-		virtual void shaderprogram_destroy( renderer::ShaderProgram* program ) = 0;
-		virtual void shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object ) = 0;
-		virtual void shaderprogram_detach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object ) = 0;
-		virtual void shaderprogram_bind_attributes( renderer::ShaderProgram* shader_program ) = 0;
-		virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram* shader_program ) = 0;
-		virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram* shader_program, const char* block_name) = 0;
-		virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram* shader_program ) = 0;
-		virtual void shaderprogram_activate( renderer::ShaderProgram* shader_program ) = 0;
-		virtual void shaderprogram_deactivate( renderer::ShaderProgram* shader_program ) = 0;
-
-		virtual renderer::RenderTarget* render_target_create(uint16_t width, uint16_t height) = 0;
-		virtual void render_target_destroy(renderer::RenderTarget* rt) = 0;
-		virtual void render_target_activate(renderer::RenderTarget* rt) = 0;
-		virtual void render_target_deactivate(renderer::RenderTarget* rt) = 0;
-		virtual void render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture) = 0;
-	}; // IRenderDriver
-
-	typedef IRenderDriver* (*RenderDriverCreator)();
-
-	IRenderDriver * driver();
-} // namespace renderer
-
-
 
 namespace render2
 {
