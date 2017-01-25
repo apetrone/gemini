@@ -25,7 +25,7 @@
 #pragma once
 
 #include <runtime/asset_library.h>
-#include <renderer/shaderprogram.h>
+#include <renderer/shader.h>
 
 namespace render2
 {

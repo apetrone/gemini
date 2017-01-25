@@ -22,10 +22,10 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include "opengl_device.h"
-#include "glcommandserializer.h"
-#include "commandbuffer.h"
-#include "r2_opengl_common.h"
+#include <renderer/gl/opengl_device.h>
+#include <renderer/gl/glcommandserializer.h>
+#include <renderer/commandbuffer.h>
+#include <renderer/gl/opengl_common.h>
 
 #include <runtime/assets.h>
 

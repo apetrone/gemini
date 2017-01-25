@@ -651,8 +651,6 @@ namespace renderer
 
 		struct gemgl_config
 		{
-			renderer::DriverType type;
-
 			short major_version;
 			short minor_version;
 		}; // gemgl_config

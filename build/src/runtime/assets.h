@@ -24,8 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <renderer/renderer.h> // for ShaderString
-
+#include <core/mathlib.h>
+#include <runtime/asset_handle.h>
 
 #define IMPLEMENT_ASSET_LIBRARY_ACCESSOR( name )\
 	name##AssetLibrary* _##name = 0;\
@@ -40,12 +40,14 @@
 
 namespace render2
 {
+	class Device;
 	struct Texture;
 	struct Shader;
 } // namespace render2
 
 namespace gemini
 {
+	struct Color;
 	struct Material;
 	struct Mesh;
 	struct FontData;

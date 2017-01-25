@@ -46,30 +46,6 @@ namespace renderer
 		{
 			void calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height );
 		} // sprite
-
-		template <class Type>
-		struct PhysicsState
-		{
-			Type last;
-			Type current;
-			Type render;
-
-			void snap( const Type & value )
-			{
-				render = current = last = value;
-			}
-
-			void step(float /*delta_sec*/)
-			{
-				last = current;
-			}
-
-			void interpolate( float t )
-			{
-				gemini::Interpolator<Type> interpolator;
-				render = interpolator( last, current, t );
-			}
-		}; // PhysicsState
 	} // namespace render_utilities
 } // namespace renderer
 

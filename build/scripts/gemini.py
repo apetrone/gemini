@@ -622,8 +622,8 @@ def get_librenderer(arguments, target_platform):
 		"src/renderer/rqueue.h",
 		"src/renderer/shader_library.cpp",
 		"src/renderer/shader_library.h",
-		"src/renderer/shaderprogram.cpp",
-		"src/renderer/shaderprogram.h",
+		"src/renderer/shader.cpp",
+		"src/renderer/shader.h",
 		"src/renderer/texture.cpp",
 		"src/renderer/texture.h",
 		"src/renderer/vertexbuffer.h",
@@ -657,24 +657,24 @@ def get_librenderer(arguments, target_platform):
 		librenderer.sources += [
 			"src/renderer/gl/gemgl.cpp",
 			"src/renderer/gl/gemgl.h",
-			"src/renderer/gl/opengl/opengl_device.cpp",
-			"src/renderer/gl/opengl/opengl_device.h",
+			"src/renderer/gl/opengl_device.cpp",
+			"src/renderer/gl/opengl_device.h",
 			"src/renderer/gl/glcommandserializer.cpp",
 			"src/renderer/gl/glcommandserializer.h",
-			"src/renderer/gl/r2_opengl_common.cpp",
-			"src/renderer/gl/r2_opengl_common.h"
+			"src/renderer/gl/opengl_common.cpp",
+			"src/renderer/gl/opengl_common.h"
 
 		]
 	elif arguments.gles:
 		librenderer.sources += [
 			"src/renderer/gl/gemgl.cpp",
 			"src/renderer/gl/gemgl.h",
-			"src/renderer/gl/gles2/gles2_device.cpp",
-			"src/renderer/gl/r2_gles2_device.h",
+			"src/renderer/gl/gles2_device.cpp",
+			"src/renderer/gl/gles2_device.h",
 			"src/renderer/gl/glcommandserializer.cpp",
 			"src/renderer/gl/glcommandserializer.h",
-			"src/renderer/gl/r2_opengl_common.cpp",
-			"src/renderer/gl/r2_opengl_common.h"
+			"src/renderer/gl/opengl_common.cpp",
+			"src/renderer/gl/opengl_common.h"
 		]
 		librenderer.excludes += [
 			"src/renderer/gl/gles2/opengl_glesv2.*"

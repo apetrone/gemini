@@ -62,8 +62,6 @@ namespace gemini
 		core::StackString<128> window_title;
 		platform::PathString application_directory;
 
-		::renderer::RenderSettings render_settings;
-
 		Settings()
 		{
 			// setup sane defaults

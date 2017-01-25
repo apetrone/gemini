@@ -292,20 +292,6 @@ namespace gemini
 	} // runtime_decompose_url
 
 
-
-	static util::ConfigLoadStatus load_render_config(const Json::Value& root, void* data)
-	{
-		::renderer::RenderSettings* settings = static_cast<::renderer::RenderSettings*>(data);
-
-		// TODO: there should be a better way to do this?
-		if (!root["gamma_correct"].isNull())
-		{
-			settings->gamma_correct = root["gamma_correct"].asBool();
-		}
-
-		return util::ConfigLoad_Success;
-	} // load_render_config
-
 	static util::ConfigLoadStatus settings_conf_loader(const Json::Value & root, void * data)
 	{
 		util::ConfigLoadStatus result = util::ConfigLoad_Success;
@@ -350,13 +336,6 @@ namespace gemini
 		if (!application_directory.isNull())
 		{
 			cfg->application_directory = application_directory.asString().c_str();
-		}
-
-		const Json::Value& renderer = root["renderer"];
-		if (!renderer.isNull())
-		{
-			// load renderer settings
-			result = load_render_config(renderer, &cfg->render_settings);
 		}
 
 		return result;

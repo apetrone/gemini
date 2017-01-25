@@ -27,17 +27,37 @@
 
 namespace render2
 {
+	// ---------------------------------------------------------------------
+	// Pass
+	// ---------------------------------------------------------------------
+	Pass::Pass() :
+		target(nullptr),
+		clear_color(false),
+		clear_depth(false),
+		clear_stencil(false),
+		depth_test(true),
+		cull_mode(CullMode::Backface)
+	{
+		color(0, 0, 0, 0);
+	}
+
+	void Pass::color(float red, float green, float blue, float alpha)
+	{
+		target_color[0] = red;
+		target_color[1] = green;
+		target_color[2] = blue;
+		target_color[3] = alpha;
+	}
+
 	CommandQueue::CommandQueue(gemini::Allocator& _allocator, const Pass& _pass)
 		: allocator(_allocator)
 		, commands(allocator)
 	{
-		//commands = MEMORY2_NEW(allocator, Array<Command>)(allocator);
 		pass = _pass;
 	}
 
 	CommandQueue::~CommandQueue()
 	{
-		//MEMORY2_DELETE(allocator, commands);
 	}
 
 	CommandQueue& CommandQueue::operator=(const CommandQueue& other)

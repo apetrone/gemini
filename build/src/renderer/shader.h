@@ -22,20 +22,25 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include "shaderprogram.h"
+#pragma once
 
-namespace renderer
+#include <core/typedefs.h>
+
+namespace render2
 {
-	ShaderProgram::~ShaderProgram()
+	// ---------------------------------------------------------------------
+	// Shader
+	// ---------------------------------------------------------------------
+	struct Shader
 	{
-	}
+		virtual ~Shader();
+	}; // Shader
 
-	ShaderProgram& ShaderProgram::operator=(const ShaderProgram& other)
+	// ShaderSource wrapper to be compiled (and linked)
+	struct ShaderSource
 	{
-		frag_data_location = other.frag_data_location;
-		uniforms = other.uniforms;
-		attributes = other.attributes;
-		object = other.object;
-		return *this;
-	}
-} // namespace renderer
+		uint32_t stage_type;
+		uint32_t data_size;
+		unsigned char* data;
+	}; // ShaderSource
+} // namespace render2

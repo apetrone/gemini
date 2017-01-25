@@ -769,21 +769,6 @@ Options:
 			camera.update_view();
 		}
 
-
-
-		// old renderer initialize
-		{
-//			renderer::RenderSettings render_settings;
-//			render_settings.gamma_correct = true;
-
-//			renderer::startup(renderer::OpenGL, render_settings);
-
-			// clear errors
-//			gl.CheckError("before render startup");
-
-//			fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-		}
-
 		platform::window::Frame window_frame;
 
 		asset_allocator = memory_allocator_default(MEMORY_ZONE_ASSETS);

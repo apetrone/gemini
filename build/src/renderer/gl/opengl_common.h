@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -24,47 +24,219 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "renderer.h"
-#include "gemgl.h" // for GLObject
+#include <renderer/gl/gemgl.h>
 
-#include <core/stackstring.h>
+#include <core/fixedarray.h>
+#include <core/typedefs.h>
 
-#include <stack>
-#include <string>
-
-#define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
-
-namespace renderer
+namespace render2
 {
-	typedef GLenum (*get_internal_image_format)(unsigned int);
+	const size_t RENDERER_MAX_COMMAND_QUEUES = 256;
 
-	GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type );
-	GLenum vertexbuffer_buffertype_to_gl_buffertype( renderer::VertexBufferBufferType type );
-	GLenum shaderobject_type_to_gl_shaderobjecttype( renderer::ShaderObjectType type );
-
-	// the callee is responsible for deallocating the memory returned from this function
-	char * query_shader_info_log( gemini::Allocator& allocator, GLObject handle );
-
-	// the callee is responsible for deallocating the memory returned from this function
-	char * query_program_info_log( gemini::Allocator& allocator,  GLObject handle );
-
-	GLenum driver_state_to_gl_state( renderer::DriverState state );
-	GLenum convert_blendstate( renderer::RenderBlendType state );
-
-	GLenum cullmode_to_gl_cullmode( renderer::CullMode mode );
-
-	typedef void (*gemgl_state_function)(renderer::DriverState, core::util::MemoryStream&, renderer::IRenderDriver*);
-
-	gemgl_state_function operator_for_state( renderer::DriverState state );
-
-	//#define GL_LOG(...) GLFunctionLogger _gl_log(__FUNCTION__)
-	#define GL_LOG(...)
-	struct GLFunctionLogger
+	static size_t type_to_bytes(const GLenum& type)
 	{
-		const char* function;
-		static std::stack<std::string> call_stack;
+		switch(type)
+		{
+			case GL_INT: return sizeof(int);
+			case GL_UNSIGNED_INT: return sizeof(unsigned int);
 
-		GLFunctionLogger(const char* fn);
-		~GLFunctionLogger();
+			case GL_FLOAT_VEC2: return sizeof(GLfloat) * 2;
+			case GL_FLOAT_VEC3: return sizeof(GLfloat) * 3;
+			case GL_FLOAT_VEC4: return sizeof(GLfloat) * 4;
+
+			case GL_FLOAT_MAT4: return sizeof(GLfloat) * 16;
+			case GL_SAMPLER_2D: return sizeof(GLuint);
+
+			default: break;
+		}
+
+		// If you reach this, you're missing an OpenGL type from the above switch
+		assert(0);
+		return 0;
+	}
+
+	const size_t MAX_ATTRIBUTE_NAME_LENGTH = 32;
+	struct shader_variable
+	{
+		// location of this variable
+		GLint location;
+
+		// byte-length of name
+		GLsizei length;
+
+		// byte-length of the attribute value
+		GLint size;
+
+		// attribute name (null-terminated string)
+		GLchar name[ MAX_ATTRIBUTE_NAME_LENGTH ];
+
+		// data type of the attribute
+		GLenum type;
+
+		// size (in bytes) of this type
+		GLint byte_size;
+
+		void compute_size()
+		{
+			// compute byte size for this attribute
+			byte_size = static_cast<GLint>(size * type_to_bytes(type));
+		}
 	};
-} // namespace renderer
+
+	enum GLRenderFlags
+	{
+		RF_GAMMA_CORRECT = 1
+	};
+
+	struct GLRenderParameters
+	{
+		uint8_t flags;
+	};
+
+	class GLInputLayout : public InputLayout
+	{
+	public:
+		struct Description
+		{
+			GLint location;
+			GLenum type;
+			GLint element_count;
+			GLboolean normalized;
+			size_t offset;
+			size_t size;
+		};
+
+		size_t vertex_stride;
+		FixedArray<Description> items;
+
+		GLInputLayout(gemini::Allocator& allocator)
+			: items(allocator)
+		{
+		}
+	}; // GLInputLayout
+
+	struct GLShader : public Shader
+	{
+		GLShader(gemini::Allocator& allocator);
+		virtual ~GLShader();
+
+		bool compile_shader(gemini::Allocator& allocator, GLuint shader, const char* source, const char* preprocessor_defines, const char* version);
+
+		int build_from_source(gemini::Allocator& allocator, const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version);
+		int32_t build_from_sources(gemini::Allocator& allocator, ShaderSource** sources, uint32_t total_sources);
+		GLint get_attribute_location(const char* name);
+		GLint get_uniform_location(const char* name);
+
+		GLuint id;
+		FixedArray<shader_variable> uniforms;
+		FixedArray<shader_variable> attributes;
+	}; // GLShader
+
+	struct GLPipeline : public Pipeline
+	{
+		gemini::AssetHandle shader;
+		VertexDescriptor vertex_description;
+		GLInputLayout* input_layout;
+
+		bool enable_blending;
+		GLenum blend_source;
+		GLenum blend_destination;
+		GLenum draw_type;
+
+		GLPipeline(gemini::Allocator& allocator, const PipelineDescriptor& descriptor);
+		virtual ~GLPipeline();
+	}; // GLPipeline
+
+	struct GLTexture : public Texture
+	{
+		GLTexture(const Image& image, GLRenderParameters& render_parameters);
+		virtual ~GLTexture();
+
+		void bind(bool activate = true);
+		void unbind();
+
+		void set_parameters(const Image& image);
+
+		GLuint texture_id;
+		GLenum texture_type;
+		uint8_t unpack_alignment;
+		GLenum internal_format;
+
+		// texture dimensions
+		uint32_t width;
+		uint32_t height;
+	}; // GLTexture
+
+	struct GLRenderTarget : public RenderTarget
+	{
+		GLRenderTarget(uint32_t _width, uint32_t _height, bool _is_default = false);
+		virtual ~GLRenderTarget();
+
+		void bind(bool activate = true);
+		void activate();
+		void deactivate();
+		bool is_complete() const;
+		void attach_texture(GLTexture* texture);
+		void resize(uint32_t width, uint32_t height);
+		void framebuffer_srgb(bool enable);
+
+	private:
+		GLuint framebuffer;
+		GLuint renderbuffer;
+
+		GLTexture* attached_texture;
+	};	// GLRenderTarget
+
+	struct VertexDataTypeToGL
+	{
+		GLenum type;
+		GLenum normalized;
+		uint32_t element_size;
+
+		VertexDataTypeToGL(GLenum _type = GL_INVALID_ENUM, GLenum _normalized = GL_INVALID_ENUM, uint32_t _element_size = 0) :
+			type(_type),
+			normalized(_normalized),
+			element_size(_element_size)
+		{
+		}
+	};
+
+	void setup_input_layout(GLInputLayout* layout, const VertexDescriptor& descriptor, GLShader* shader);
+	void setup_pipeline(GLPipeline* pipeline, const PipelineDescriptor& descriptor);
+	void populate_vertexdata_table();
+	VertexDataTypeToGL* get_vertexdata_table();
+
+	// returns 0 on success
+	int load_gl_symbols();
+	void unload_gl_symbols();
+
+	GLenum convert_blendstate(BlendOp op);
+
+	RenderTarget* common_create_render_target(gemini::Allocator& allocator, Texture* texture);
+	void common_destroy_render_target(gemini::Allocator& allocator, RenderTarget* render_target);
+	void common_resize_render_target(RenderTarget* target, uint32_t width, uint32_t height);
+	void common_render_target_read_pixels(RenderTarget* target, Image& image);
+
+	void common_push_render_target(RenderTarget* render_target);
+	void common_pop_render_target(RenderTarget* render_target);
+
+	void common_queue_buffers(CommandQueue* queue_list, size_t total_queues, Array<CommandQueue*>& queued_buffers);
+	void common_resize_backbuffer(int width, int height, RenderTarget* target);
+	CommandQueue* common_create_queue(const Pass& render_pass, CommandQueue* next_queue);
+	void common_pass_setup(const Pass* pass);
+
+	bool common_compile_source(gemini::Allocator& allocator, GLuint program_id, GLuint shader, ShaderSource* source);
+
+	// for use with glTexImage
+	GLenum image_to_source_format(const Image& image, GLRenderParameters& render_parameters);
+	GLint image_to_internal_format(const Image& image, GLRenderParameters& render_parameters);
+	GLenum texture_type_from_image(const Image& image, GLRenderParameters& render_parameters);
+	GLTexture* common_create_texture(gemini::Allocator& allocator, const Image& image, GLRenderParameters& render_parameters);
+	void common_update_texture(GLTexture* texture, const Image& image, GLRenderParameters& render_parameters, const glm::vec2& origin, const glm::vec2& dimensions);
+	void common_destroy_texture(gemini::Allocator& allocator, Texture* texture);
+
+	void common_setup_uniforms(GLShader* shader, ConstantBuffer& constants);
+
+	void query_program_info_log(gemini::Allocator& allocator, GLuint program_id);
+	void query_shader_info_log(gemini::Allocator& allocator, GLuint program_id, GLuint handle);
+} // namespace render2

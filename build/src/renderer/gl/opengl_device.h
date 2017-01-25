@@ -25,13 +25,12 @@
 #pragma once
 
 #include <renderer/gl/gemgl.h>
-#include "r2_opengl_common.h"
-
-#include <core/logging.h>
-
-#include <core/array.h>
+#include <renderer/gl/opengl_common.h>
 
 #include <runtime/asset_handle.h>
+
+#include <core/logging.h>
+#include <core/array.h>
 
 namespace render2
 {

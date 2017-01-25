@@ -69,17 +69,7 @@ namespace render2
 	// ---------------------------------------------------------------------
 	struct Pass
 	{
-		Pass() :
-			target(nullptr),
-			clear_color(false),
-			clear_depth(false),
-			clear_stencil(false),
-			depth_test(true),
-			cull_mode(CullMode::Backface)
-		{
-			color(0, 0, 0, 0);
-		}
-
+		Pass();
 		void color(float red, float green, float blue, float alpha);
 
 		// color attachments (4)

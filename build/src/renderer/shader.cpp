@@ -22,88 +22,14 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
-
-#include <core/stackstring.h>
-#include <core/fixedarray.h>
-
-#include <string>
-#include <utility> // for std::pair
-
-namespace renderer
-{
-	enum ShaderObjectType
-	{
-		SHADER_VERTEX,
-		SHADER_FRAGMENT,
-		SHADER_GEOMETRY,
-		SHADER_COMPUTE,
-
-		SHADER_LIMIT
-	}; // ShaderObjectType
-
-	typedef std::pair<std::string, int> ShaderKeyValuePair;
-
-	// Generic container for shader objects before they are linked into a shader
-	// program.
-	struct ShaderObject
-	{
-		unsigned int shader_id;
-
-		ShaderObject() : shader_id(0) {}
-	}; // ShaderObject
-
-	struct ShaderProgram
-	{
-		core::StackString<64> frag_data_location;
-
-		FixedArray<ShaderKeyValuePair> uniforms;
-		FixedArray<ShaderKeyValuePair> attributes;
-
-		unsigned int object;
-
-		ShaderProgram(gemini::Allocator& allocator)
-			: frag_data_location("out_color")
-			, uniforms(allocator)
-			, attributes(allocator)
-			, object(0)
-		{
-		}
-		virtual ~ShaderProgram();
-		ShaderProgram& operator=(const ShaderProgram& other);
-
-		int get_uniform_location(const char* name);
-
-		void show_uniforms();
-		void show_attributes();
-	}; // ShaderProgram
-
-
-
-	enum ShaderErrorType
-	{
-		SHADER_ERROR_NONE = 0,
-		SHADER_ERROR_COMPILE_FAILED,
-	}; // ShaderErrorType
-
-} // namespace renderer
-
+#include <renderer/shader.h>
 
 namespace render2
 {
 	// ---------------------------------------------------------------------
 	// Shader
 	// ---------------------------------------------------------------------
-	struct Shader
+	Shader::~Shader()
 	{
-		virtual ~Shader();
-	}; // Shader
-
-	// ShaderSource wrapper to be compiled (and linked)
-	struct ShaderSource
-	{
-		uint32_t stage_type;
-		uint32_t data_size;
-		unsigned char* data;
-	}; // ShaderSource
+	}
 } // namespace render2
