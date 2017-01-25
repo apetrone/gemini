@@ -41,10 +41,22 @@ enum AssetCompilerError
 using namespace gemini;
 
 
-void asset_compiler_convert(const char* source, const char* destination)
+struct AssetCompilerSettings
 {
-	LOGV("source_asset_path = %s\n", source);
-	LOGV("destination_asset_path = %s\n", destination);
+	platform::PathString source;
+	platform::PathString destination;
+	core::StackString<64> target_platform;
+};
+
+void asset_compiler_convert(AssetCompilerSettings* settings)
+{
+	LOGV("source_asset_path = %s\n", settings->source());
+	LOGV("destination_asset_path = %s\n", settings->destination());
+
+	if (!settings->target_platform.is_empty())
+	{
+		LOGV("target platform = %s\n", settings->target_platform());
+	}
 }
 
 
@@ -66,12 +78,13 @@ int asset_compiler_main()
 	core::argparse::VariableMap vm;
 	const char* docstring = R"(
 Usage:
-	<source_asset_path> <destination_asset_path>
+	[--platform <platform>] <source_asset_path> <destination_asset_path>
 
 
 Options:
-	-h, --help  Show this help screen
-	--version  Display the version number
+	-h, --help				Show this help screen
+	--version				Display the version number
+	--platform <platform>	Target platform: [windows, linux, macosx, ios, android, raspberrypi]
 	)";
 
 	if (!parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
@@ -81,7 +94,13 @@ Options:
 
 	std::string source_asset_path = vm["source_asset_path"];
 	std::string destination_asset_path = vm["destination_asset_path"];
-	asset_compiler_convert(source_asset_path.c_str(), destination_asset_path.c_str());
+	std::string target_platform = vm["--platform"];
+
+	AssetCompilerSettings settings;
+	settings.source = source_asset_path.c_str();
+	settings.destination = destination_asset_path.c_str();
+	settings.target_platform = target_platform.c_str();
+	asset_compiler_convert(&settings);
 
 	core_shutdown();
 	return AssetCompilerError_None;
