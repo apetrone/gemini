@@ -113,7 +113,6 @@ namespace gemini
 			return rigidbody;
 		}
 
-		// TODO: 01-19-17: fix this (meshes)
 		btCompoundShape* compound_shape_from_geometry(Mesh* mesh, bool is_dynamic, float mass)
 		{
 			bool use_quantized_bvh_tree = true;

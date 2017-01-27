@@ -246,8 +246,7 @@ class ModelInterface : public gemini::IModelInterface
 			{
 				return nullptr;
 			}
-			assert(0); // TODO: 01-19-17: fix this (meshes)
-			return nullptr; // &model_bone_transforms[mesh->skeleton.size() * geometry_index];
+			return &model_bone_transforms[mesh->skeleton.size() * geometry_index];
 		}
 
 		virtual const Hitbox* get_hitboxes() const
@@ -257,9 +256,7 @@ class ModelInterface : public gemini::IModelInterface
 				return nullptr;
 			}
 
-			assert(0); // TODO: 01-19-17: fix this (meshes)
-			return nullptr;
-			//return &mesh->hitboxes[0];
+			return &mesh->hitboxes[0];
 		}
 
 		virtual glm::mat4* get_inverse_bind_transforms(uint32_t geometry_index) const
@@ -268,16 +265,12 @@ class ModelInterface : public gemini::IModelInterface
 			{
 				return nullptr;
 			}
-			assert(0); // TODO: 01-19-17: fix this (meshes)
-			return nullptr;
-			//return &inverse_bind_transforms[mesh->skeleton.size() * geometry_index];
+			return &inverse_bind_transforms[mesh->skeleton.size() * geometry_index];
 		}
 
 		virtual uint32_t get_total_transforms() const
 		{
-			assert(0); // TODO: 01-19-17: fix this (meshes)
-			return 0;
-			//return mesh->skeleton.size();
+			return mesh->skeleton.size();
 		}
 
 		virtual void set_animation_enabled(int32_t index, bool enabled)
@@ -335,8 +328,7 @@ class ModelInterface : public gemini::IModelInterface
 
 		virtual void set_pose(glm::vec3* positions, glm::quat* rotations)
 		{
-			assert(0); // TODO: 01-19-17: fix this (meshes)
-#if 0
+#if 1
 			if (mesh->skeleton.empty())
 			{
 				return;
@@ -350,7 +342,7 @@ class ModelInterface : public gemini::IModelInterface
 
 			size_t geometry_index = 0;
 			// we must update the transforms for each geometry instance
-			for (const assets::Geometry* geo : mesh->geometry)
+			for (const ::renderer::Geometry* geo : mesh->geometry)
 			{
 				// If you hit this assert, one mesh in this model didn't have
 				// blend weights.
@@ -361,7 +353,7 @@ class ModelInterface : public gemini::IModelInterface
 				for (size_t index = 0; index < mesh->skeleton.size(); ++index)
 				{
 					transform_index = (geometry_index * mesh->skeleton.size()) + index;
-					assets::Joint* joint = &mesh->skeleton[index];
+					Joint* joint = &mesh->skeleton[index];
 
 					glm::mat4& local_bone_pose = local_bone_transforms[transform_index];
 					glm::mat4& model_pose = model_bone_transforms[transform_index];
@@ -476,12 +468,13 @@ class ModelInterface : public gemini::IModelInterface
 
 		virtual int32_t find_bone_named(const char* bone)
 		{
-			assert(0); // TODO: 01-19-17: fix this (meshes)
-			//for (const assets::Joint& joint : mesh->skeleton)
-			//{
-			//	if (joint.name == bone)
-			//		return joint.index;
-			//}
+			for (const Joint& joint : mesh->skeleton)
+			{
+				if (joint.name == bone)
+				{
+					return joint.index;
+				}
+			}
 
 			return -1;
 		}
@@ -506,23 +499,17 @@ class ModelInterface : public gemini::IModelInterface
 
 		virtual const glm::vec3& get_mins() const
 		{
-			assert(0); // TODO: 01-19-17: fix this (meshes)
-			return glm::vec3();
-			//return mesh->aabb_mins;
+			return mesh->aabb_mins;
 		}
 
 		virtual const glm::vec3& get_maxs() const
 		{
-			assert(0); // TODO: 01-19-17: fix this (meshes)
-			return glm::vec3();
-			//return mesh->aabb_maxs;
+			return mesh->aabb_maxs;
 		}
 
 		virtual const glm::vec3& get_center_offset() const
 		{
-			assert(0); // TODO: 01-19-17: fix this (meshes)
-			//return mesh->mass_center_offset;
-			return glm::vec3();
+			return mesh->mass_center_offset;
 		}
 	};
 
@@ -1339,6 +1326,7 @@ Options:
 
 		// initialize rendering subsystems
 		render2::RenderParameters render_params(renderer_allocator);
+
 		// set some options
 		render_params["vsync"] = "true";
 		render_params["double_buffer"] = "true";
@@ -1430,10 +1418,6 @@ Options:
 		// update accumulator
 		accumulator += params.framedelta_seconds;
 
-		// record the current frametime milliseconds
-#if defined(DEBUG_FRAMERATE)
-		graph->record_value(params.framedelta_milliseconds, 0);
-#endif
 		// set the baseline for the font
 		int x = 250;
 		int y = 16;
@@ -1445,17 +1429,12 @@ Options:
 		//y += 12;
 
 		// causing jittery frametime graph.
-		//while (accumulator >= params.step_interval_seconds)
+		while (accumulator >= params.step_interval_seconds)
 		{
 			if (game_interface)
 			{
 				game_interface->tick(params.current_tick, params.step_interval_seconds, params.step_alpha);
 			}
-
-			// this is going to be incorrect unless this is placed in the step.
-			// additionally, these aren't interpolated: figure how to; for example,
-			// draw hit boxes for a moving player with this system.
-			//debugdraw::update(params.step_interval_seconds /** MillisecondsPerSecond*/);
 
 			// subtract the interval from the accumulator
 			accumulator -= params.step_interval_seconds;
@@ -1470,17 +1449,24 @@ Options:
 			params.step_alpha -= 1.0f;
 		}
 
+		debugdraw::update(kernel::parameters().framedelta_seconds * MillisecondsPerSecond);
+
 		animation::update(kernel::parameters().framedelta_seconds);
 		hotloading::tick();
 		post_tick();
 		kernel::parameters().current_frame++;
 
-
 		// calculate delta ticks in milliseconds
-		params.framedelta_milliseconds = (current_time - last_time) * SecondsPerMillisecond;
+		params.framedelta_milliseconds = (current_time - last_time) * MillisecondsPerMicrosecond;
 
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
+
+		// record the current frametime milliseconds
+#if defined(DEBUG_FRAMERATE)
+		graph->record_value(params.framedelta_milliseconds, 0);
+#endif
+
 		last_time = current_time;
 
 		//gemini::profiler::report();

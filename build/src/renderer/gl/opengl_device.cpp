@@ -205,6 +205,83 @@ namespace render2
 	} // deactivate_pipeline
 
 
+	// submit queue command buffers to GPU
+	void OpenGLDevice::submit()
+	{
+		// If you hit this assert, there's a buffer locked for writing!
+		assert(locked_buffer == nullptr);
+
+		for (CommandQueue* cq : queued_buffers)
+		{
+			// setup pass
+			const Pass* pass = &cq->pass;
+
+			common_push_render_target(pass->target);
+
+			common_pass_setup(pass);
+
+			GLPipeline* current_pipeline = nullptr;
+			GLBuffer* vertex_stream = nullptr;
+			GLBuffer* index_stream = nullptr;
+			GLTexture* texture = nullptr;
+
+			for (size_t index = 0; index < cq->commands.size(); ++index)
+			{
+				const Command* command = &cq->commands[index];
+				if (command->type == COMMAND_DRAW)
+				{
+					draw(current_pipeline,
+						vertex_stream,
+						command->params[0],
+						command->params[1],
+						command->params[2],
+						command->params[3]
+					);
+				}
+				else if (command->type == COMMAND_DRAW_INDEXED)
+				{
+					index_stream = static_cast<GLBuffer*>(command->data[0]);
+					draw_indexed(current_pipeline, vertex_stream, index_stream, command->params[0]);
+				}
+				else if (command->type == COMMAND_PIPELINE)
+				{
+					current_pipeline = static_cast<GLPipeline*>(command->data[0]);
+					assert(current_pipeline != 0);
+				}
+				else if (command->type == COMMAND_SET_VERTEX_BUFFER)
+				{
+					vertex_stream = static_cast<GLBuffer*>(command->data[0]);
+				}
+				else if (command->type == COMMAND_TEXTURE)
+				{
+					texture = static_cast<GLTexture*>(command->data[0]);
+					gl.ActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + command->params[0]));
+					gl.CheckError("ActiveTexture");
+					texture->bind();
+
+					assert(gl.IsTexture(texture->texture_id));
+				}
+				else
+				{
+					// Encountered an unhandled render command
+					assert(0);
+				}
+			}
+
+			cq->reset();
+			if (texture)
+			{
+				texture->unbind();
+			}
+
+			common_pop_render_target(pass->target);
+		}
+
+
+		reset();
+		queued_buffers.resize(0);
+	}
+
 	// ---------------------------------------------------------------------
 	// texture
 	// ---------------------------------------------------------------------
