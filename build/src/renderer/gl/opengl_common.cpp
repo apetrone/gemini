@@ -513,6 +513,7 @@ namespace render2
 
 		GLuint fbo = activate ? framebuffer : 0;
 		gl.BindFramebuffer(GL_FRAMEBUFFER, fbo);
+		gl.CheckError("BindFramebuffer");
 	}
 
 	void GLRenderTarget::activate()
@@ -938,6 +939,10 @@ namespace render2
 			gl.CheckError("ClearStencil");
 		}
 
+		// depth mask must be enabled in order to clear depth buffer!
+		GLenum mask_table[] = { GL_FALSE, GL_TRUE };
+		gl.DepthMask(mask_table[pass->depth_write]);
+
 		if (clear_flags != 0)
 		{
 			gl.Clear(clear_flags);
@@ -952,9 +957,6 @@ namespace render2
 		{
 			gl.Disable(GL_DEPTH_TEST);
 		}
-
-		GLenum mask_table[] = { GL_FALSE, GL_TRUE };
-		gl.DepthMask(mask_table[pass->depth_write]);
 
 		if (pass->cull_mode == CullMode::Frontface)
 		{

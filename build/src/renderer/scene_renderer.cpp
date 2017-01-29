@@ -122,7 +122,8 @@ namespace gemini
 			}
 		}
 
-		device->destroy_serializer(serializer);
 		device->queue_buffers(queue, 1);
+		device->destroy_serializer(serializer);
+
 	} // render_scene_draw
 } // namespace gemini

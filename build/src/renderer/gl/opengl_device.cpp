@@ -153,6 +153,10 @@ namespace render2
 			gl.BlendFunc(pipeline->blend_source, pipeline->blend_destination);
 			gl.CheckError("BlendFunc");
 		}
+		else
+		{
+			gl.Disable(GL_BLEND);
+		}
 	} // activate_pipeline
 
 	void OpenGLDevice::deactivate_pipeline(GLPipeline* pipeline)
@@ -282,10 +286,6 @@ namespace render2
 			}
 
 			cq->reset();
-			//if (texture)
-			//{
-			//	texture->unbind();
-			//}
 
 			common_pop_render_target(pass->target);
 		}

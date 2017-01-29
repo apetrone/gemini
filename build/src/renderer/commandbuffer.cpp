@@ -28,6 +28,27 @@
 namespace render2
 {
 	// ---------------------------------------------------------------------
+	// Command
+	// ---------------------------------------------------------------------
+	const char* render_command_to_string(CommandType command)
+	{
+		switch (command)
+		{
+		case COMMAND_INVALID: 				return "COMMAND_INVALID";
+		case COMMAND_SET_VERTEX_BUFFER: 	return "COMMAND_SET_VERTEX_BUFFER";
+		case COMMAND_DRAW: 					return "COMMAND_DRAW";
+		case COMMAND_DRAW_INDEXED: 			return "COMMAND_DRAW_INDEXED";
+		case COMMAND_PIPELINE: 				return "COMMAND_PIPELINE";
+		case COMMAND_VIEWPORT: 				return "COMMAND_VIEWPORT";
+		case COMMAND_TEXTURE: 				return "COMMAND_TEXTURE";
+		case COMMAND_STATE: 				return "COMMAND_STATE";
+		case COMMAND_CONSTANT: 				return "COMMAND_CONSTANT";
+		}
+
+		return "Unknown";
+	} // render_command_to_string
+
+	// ---------------------------------------------------------------------
 	// Pass
 	// ---------------------------------------------------------------------
 	Pass::Pass()

@@ -65,6 +65,8 @@ namespace render2
 				size_t param3 = 0);
 	};
 
+	const char* render_command_to_string(CommandType command);
+
 	// ---------------------------------------------------------------------
 	// Pass
 	// ---------------------------------------------------------------------

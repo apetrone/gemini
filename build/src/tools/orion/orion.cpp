@@ -666,11 +666,11 @@ public:
 
 	void render_main_content(render2::RenderTarget* render_target)
 	{
-#if 1
+#if 0
 		render2::Pass render_pass;
-		render_pass.color(0.0f, 0.0f, 1.0, 1.0f);
-		render_pass.clear_color = true;
-		render_pass.clear_depth = true;
+		render_pass.color(0.0f, 0.0f, 0.0, 0.0f);
+		render_pass.clear_color = false;
+		render_pass.clear_depth = false;
 		render_pass.depth_test = false;
 		render_pass.target = render_target;
 
@@ -679,13 +679,13 @@ public:
 
 		serializer->pipeline(surface_pipeline);
 
-		const bool test_triangle = 1;
+		const bool test_triangle = 0;
 		if (test_triangle)
 		{
 			serializer->vertex_buffer(vertex_buffer);
 			serializer->draw(0, 3);
-			device->queue_buffers(queue, 1);
 		}
+		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
 #endif
 		render_scene_draw(render_scene, device, camera.get_modelview(), camera.get_projection(), render_target);
@@ -768,9 +768,17 @@ Options:
 			// set perspective on camera
 			camera.perspective(60.0f, (int)params.frame.width, (int)params.frame.height, 0.01f, 1024.0f);
 			//camera.set_position(glm::vec3(0.0f, 5.0f, 10.0f));
-			camera.set_position(glm::vec3(0.69f, 0.55f, 0.45f));
-			camera.set_yaw(-78.15f);
-			camera.set_pitch(31.65f);
+
+			// test for rendering mocap suit
+			//camera.set_position(glm::vec3(0.69f, 0.55f, 0.45f));
+			//camera.set_yaw(-78.15f);
+			//camera.set_pitch(31.65f);
+
+			// test for rendering cubes
+			camera.set_position(glm::vec3(-2.10f, 1.24f, 1.10f));
+			camera.set_yaw(71.70f);
+			camera.set_pitch(12.45f);
+
 			camera.set_type(Camera::FIRST_PERSON);
 			camera.update_view();
 		}
@@ -1236,6 +1244,7 @@ Options:
 		debugdraw::text(20, yoffset, "Left Click + Drag: Rotate Camera", gemini::Color(1.0f, 1.0f, 1.0f));
 		debugdraw::text(20, yoffset+16, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
 		debugdraw::text(20, yoffset+32, "Space: Calibrate / Freeze Rotations", gemini::Color(1.0f, 1.0f, 1.0f));
+		debugdraw::text(20, yoffset+48, core::str::format("Camera: %2.2f, %2.2f, %2.2f [%2.2f, %2.2f]", camera.get_position().x, camera.get_position().y, camera.get_position().z, camera.get_yaw(), camera.get_pitch()), gemini::Color(1.0f, 1.0f, 1.0f));
 
 		glm::quat local_rotations[IMOCAP_TOTAL_SENSORS];
 
