@@ -28,19 +28,17 @@
 
 #include <renderer/gl/gemgl.h>
 
-
-
+#include <core/mem.h>
 #include <core/typedefs.h>
 
 namespace render2
 {
+	const size_t CONSTANT_BUFFER_SIZE = 8192;
+
 	class GLCommandSerializer : public CommandSerializer
 	{
 	public:
-		GLCommandSerializer(CommandQueue& command_queue) :
-		queue(command_queue)
-		{
-		}
+		GLCommandSerializer(CommandQueue& command_queue);
 
 		GLCommandSerializer& operator=(const GLCommandSerializer& other) = delete;
 
@@ -86,7 +84,14 @@ namespace render2
 							  );
 		}
 
+		virtual void constant(
+			const char* name,
+			void* data,
+			size_t data_size);
 	private:
 		CommandQueue& queue;
+
+		char buffer_data[CONSTANT_BUFFER_SIZE];
+		gemini::Allocator allocator;
 	}; // GLCommandSerializer
 } // namespace render2

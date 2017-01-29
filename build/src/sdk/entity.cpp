@@ -165,7 +165,7 @@ Entity::Entity()
 	this->id = entity_list().count();
 
 	entity_list().add( this );
-	engine::instance()->entities()->add(this);
+	index = engine::instance()->entities()->add(this);
 	LOGV("Entity() - %p, %ld\n", this, (unsigned long)this->id);
 
 	render_flags = RENDER_NONE;
@@ -312,6 +312,11 @@ void Entity::remove_colliders()
 	colliders.clear();
 }
 
+uint16_t Entity::entity_index() const
+{
+	return index;
+}
+
 //
 // MEMORY OVERLOADS
 //
@@ -415,6 +420,6 @@ void Entity::set_parent(Entity* /*other*/)
 void Entity::set_model(const char* path)
 {
 //	engine::instance()->models()->destroy_instance_data(model_index);
-	model_index = engine::instance()->models()->create_instance_data(path);
+	model_index = engine::instance()->models()->create_instance_data(entity_index(), path);
 //	LOGV("set model index: %i, for model: %s\n", model_index, path);
 }

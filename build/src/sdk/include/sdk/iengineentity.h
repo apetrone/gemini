@@ -58,5 +58,7 @@ namespace gemini
 
 		virtual void get_render_position(glm::vec3& position) const = 0;
 		virtual void get_pivot_point(glm::vec3& pivot) const = 0;
+
+		virtual uint16_t entity_index() const = 0;
 	};
 } // namespace gemini

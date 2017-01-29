@@ -214,6 +214,11 @@ namespace render2
 		virtual void texture(
 			Texture* texture,
 			uint32_t index) = 0;
+
+		virtual void constant(
+			const char* name,
+			void* data,
+			size_t data_size) = 0;
 	}; // CommandSerializer
 
 	// ---------------------------------------------------------------------

@@ -43,6 +43,7 @@
 #include <renderer/renderer.h>
 #include <renderer/constantbuffer.h>
 #include <renderer/debug_draw.h>
+#include <renderer/scene_renderer.h>
 
 #include <runtime/keyframechannel.h>
 #include <runtime/mesh.h>
@@ -67,6 +68,8 @@
 #include "physics/physics.h"
 #include "hotloading.h"
 #include "navigation.h"
+
+#include <engine/model_instance_data.h>
 
 // for MAX_BONES
 #include <shared/shared_constants.h>
@@ -111,11 +114,13 @@ class EntityManager : public IEntityManager
 public:
 	EntityManager() : index(0)
 	{
-		memset(entity_list, 0, sizeof(gemini::IEngineEntity*)*MAX_ENTITIES);
+		memset(entity_list, 0, sizeof(gemini::IEngineEntity*) * MAX_ENTITIES);
 	}
 
-	virtual void add(IEngineEntity* entity);
+	virtual uint16_t add(IEngineEntity* entity);
 	virtual void remove(IEngineEntity* entity);
+
+	virtual gemini::IEngineEntity* at_index(uint16_t index);
 
 	virtual void startup();
 	virtual void shutdown();
@@ -124,9 +129,11 @@ public:
 };
 
 
-void EntityManager::add(IEngineEntity* entity)
+uint16_t EntityManager::add(IEngineEntity* entity)
 {
+	uint16_t entity_index = index;
 	entity_list[index++] = entity;
+	return entity_index;
 }
 
 void EntityManager::remove(IEngineEntity* entity)
@@ -142,6 +149,11 @@ void EntityManager::remove(IEngineEntity* entity)
 	}
 }
 
+gemini::IEngineEntity* EntityManager::at_index(uint16_t index)
+{
+	return entity_list[index];
+}
+
 void EntityManager::startup()
 {
 
@@ -151,422 +163,6 @@ void EntityManager::shutdown()
 {
 
 }
-
-
-class ModelInterface : public gemini::IModelInterface
-{
-	// Each entity that has a model associated with it
-	// will have a model instance data allocated.
-	class ModelInstanceData : public IModelInstanceData
-	{
-		AssetHandle mesh_handle;
-		Mesh* mesh;
-		glm::mat4 transform;
-
-		// parent-local bone transforms
-		glm::mat4* local_bone_transforms;
-
-		// model bone transforms
-		glm::mat4* model_bone_transforms;
-
-		glm::mat4* inverse_bind_transforms;
-
-		Channel<glm::vec3> scale_channel;
-		Channel<glm::quat> rotation_channel;
-		Channel<glm::vec3> translation_channel;
-
-		glm::vec3 scale;
-		glm::quat rotation;
-		glm::vec3 translation;
-
-		std::vector<animation::SequenceId> animations;
-
-		gemini::Allocator& allocator;
-	public:
-
-		ModelInstanceData(gemini::Allocator& allocator)
-			: mesh(nullptr)
-			, local_bone_transforms(0)
-			, model_bone_transforms(0)
-			, inverse_bind_transforms(0)
-			, scale_channel(scale)
-			, rotation_channel(rotation)
-			, translation_channel(translation)
-			, allocator(allocator)
-		{
-		}
-
-		void set_mesh_index(AssetHandle in_mesh_handle)
-		{
-			mesh_handle = in_mesh_handle;
-			mesh = mesh_from_handle(mesh_handle);
-		}
-
-		void create_bones()
-		{
-			assert(mesh != 0);
-
-			// does this have an animation?
-			if (mesh->has_skeletal_animation)
-			{
-				size_t total_elements = (mesh->geometry.size() * mesh->skeleton.size());
-				local_bone_transforms = new glm::mat4[total_elements];
-				model_bone_transforms = new glm::mat4[total_elements];
-				inverse_bind_transforms = new glm::mat4[total_elements];
-			}
-		}
-
-		void destroy_bones()
-		{
-			if (local_bone_transforms)
-			{
-				delete [] local_bone_transforms;
-				local_bone_transforms = 0;
-			}
-
-			if (model_bone_transforms)
-			{
-				delete [] model_bone_transforms;
-				model_bone_transforms = 0;
-			}
-
-			if (inverse_bind_transforms)
-			{
-				delete [] inverse_bind_transforms;
-				inverse_bind_transforms = 0;
-			}
-		}
-
-		virtual AssetHandle asset_index() const { return mesh_handle; }
-		virtual glm::mat4& get_local_transform() { return transform; }
-		virtual void set_local_transform(const glm::mat4& _transform) { transform = _transform; }
-		virtual glm::mat4* get_model_bone_transforms(uint32_t geometry_index) const
-		{
-			if (!model_bone_transforms)
-			{
-				return nullptr;
-			}
-			return &model_bone_transforms[mesh->skeleton.size() * geometry_index];
-		}
-
-		virtual const Hitbox* get_hitboxes() const
-		{
-			if (!model_bone_transforms)
-			{
-				return nullptr;
-			}
-
-			return &mesh->hitboxes[0];
-		}
-
-		virtual glm::mat4* get_inverse_bind_transforms(uint32_t geometry_index) const
-		{
-			if (!inverse_bind_transforms)
-			{
-				return nullptr;
-			}
-			return &inverse_bind_transforms[mesh->skeleton.size() * geometry_index];
-		}
-
-		virtual uint32_t get_total_transforms() const
-		{
-			return mesh->skeleton.size();
-		}
-
-		virtual void set_animation_enabled(int32_t index, bool enabled)
-		{
-			animation::SequenceId global_instance_index = animations[index];
-			animation::AnimatedInstance* instance = animation::get_instance_by_index(global_instance_index);
-			assert(instance != 0);
-			if (instance)
-			{
-				instance->enabled = enabled;
-			}
-		}
-
-		virtual void get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations)
-		{
-			animation::SequenceId instance_index = animations[index];
-			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
-
-#if defined(GEMINI_DEBUG_BONES)
-			const glm::vec2 origin(10.0f, 30.0f);
-#endif
-
-			const size_t total_joints = instance->animation_set.size() / ANIMATION_KEYFRAME_VALUES_MAX;
-
-			for (size_t bone_index = 0; bone_index < total_joints; ++bone_index)
-			{
-				animation::Channel* channel = &instance->channel_set[bone_index * ANIMATION_KEYFRAME_VALUES_MAX];
-
-				assert(bone_index < MAX_BONES);
-
-				glm::vec3& pos = positions[bone_index];
-				glm::quat& rot = rotations[bone_index];
-				const animation::Channel& tx = channel[0];
-				const animation::Channel& ty = channel[1];
-				const animation::Channel& tz = channel[2];
-				pos = glm::vec3(tx(), ty(), tz());
-
-				const animation::Channel& rx = channel[3];
-				const animation::Channel& ry = channel[4];
-				const animation::Channel& rz = channel[5];
-				const animation::Channel& rw = channel[6];
-
-				rot = glm::quat(rw(), rx(), ry(), rz());
-
-#if defined(GEMINI_DEBUG_BONES)
-				debugdraw::text(origin.x,
-					origin.y + (12.0f * bone_index),
-					core::str::format("%2i) '%s' | rot: [%2.2f, %2.2f, %2.2f, %2.2f]", bone_index,
-					mesh->skeleton[bone_index].name(),
-					rot.x, rot.y, rot.z, rot.w),
-					Color(0.0f, 0.0f, 0.0f));
-#endif
-			}
-		}
-
-		virtual void set_pose(glm::vec3* positions, glm::quat* rotations)
-		{
-#if 1
-			if (mesh->skeleton.empty())
-			{
-				return;
-			}
-
-			// You've hit the upper bounds for skeletal bones for a single
-			// model. Congrats.
-			assert(mesh->skeleton.size() < MAX_BONES);
-
-			Hitbox* hitboxes = &mesh->hitboxes[0];
-
-			size_t geometry_index = 0;
-			// we must update the transforms for each geometry instance
-			for (const ::renderer::Geometry* geo : mesh->geometry)
-			{
-				// If you hit this assert, one mesh in this model didn't have
-				// blend weights.
-				assert(!geo->bind_poses.empty());
-
-				size_t transform_index;
-
-				for (size_t index = 0; index < mesh->skeleton.size(); ++index)
-				{
-					transform_index = (geometry_index * mesh->skeleton.size()) + index;
-					Joint* joint = &mesh->skeleton[index];
-
-					glm::mat4& local_bone_pose = local_bone_transforms[transform_index];
-					glm::mat4& model_pose = model_bone_transforms[transform_index];
-
-					glm::mat4 parent_pose;
-					glm::mat4& inverse_bind_pose = inverse_bind_transforms[transform_index];
-
-					glm::mat4 local_rotation = glm::toMat4(rotations[index]);
-					glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), positions[index]);
-
-					const glm::mat4 local_pose = local_transform * local_rotation;
-					if (joint->parent_index > -1)
-					{
-						parent_pose = model_bone_transforms[joint->parent_index];
-					}
-
-					// this will be cached in local transforms
-					local_bone_pose = geo->bind_poses[index] * local_pose;
-
-					// this will be used for skinning in the vertex shader
-					model_pose = parent_pose * local_bone_pose;
-
-					// set the inverse_bind_pose
-					inverse_bind_pose = geo->inverse_bind_poses[index];
-
-					glm::mat4 local_bbox_xf = glm::toMat4(glm::angleAxis(glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
-					Hitbox* hitbox = (hitboxes + index);
-					//glm::vec3 pos(0.0f, 0.0f, 0.0f);
-					//glm::vec3 dims(0.5f, 0.5f, 0.5f);
-					//pos = mathlib::transform_point(local_bone_pose, pos);
-					//debugdraw::box(-dims + pos, dims + pos, gemini::Color(0.0f, 1.0f, 1.0f));
-					debugdraw::axes(glm::mat4(hitbox->rotation) * model_pose, 1.0f, 0.0f);
-				}
-
-				++geometry_index;
-			}
-#endif
-		}
-
-		virtual int32_t get_animation_index(const char* name)
-		{
-			size_t index = 0;
-			for (const animation::SequenceId& id : animations)
-			{
-				animation::AnimatedInstance* instance = animation::get_instance_by_index(id);
-				animation::Sequence* sequence = animation::get_sequence_by_index(instance->sequence_index);
-				if (0 == core::str::case_insensitive_compare(name, sequence->name(), 0))
-				{
-					return index;
-					break;
-				}
-				++index;
-			}
-
-			return -1;
-		}
-
-		virtual int32_t add_animation(const char* name)
-		{
-			animation::SequenceId id = animation::load_sequence(allocator, name, mesh);
-			if (id > -1)
-			{
-				animations.push_back(id);
-				LOGV("[engine] added animation %s to index: %i\n", name, animations.size()-1);
-				return animations.size()-1;
-			}
-			else
-			{
-				LOGW("Unable to load sequence %s\n", name);
-				return -1;
-			}
-		}
-
-		virtual int32_t get_total_animations() const
-		{
-			return animations.size();
-		}
-
-		virtual void reset_channels(int32_t index)
-		{
-			animation::SequenceId instance_index = animations[index];
-			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
-
-			// reset all the channels
-			instance->reset_channels();
-
-			// force an advance, to fetch the first frame
-			// but don't advance time.
-			instance->advance(0.0f);
-		}
-
-		virtual float get_animation_duration(int32_t index) const
-		{
-			float duration_seconds = 0;
-			animation::SequenceId instance_index = animations[index];
-			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
-			assert(instance != 0);
-
-			animation::Sequence* sequence = animation::get_sequence_by_index(instance->sequence_index);
-			assert(sequence != 0 );
-
-			duration_seconds = sequence->duration_seconds;
-
-			return duration_seconds;
-		}
-
-		virtual uint32_t get_total_bones(int32_t /*index*/) const
-		{
-			assert(mesh != nullptr);
-			return mesh->skeleton.size();
-		}
-
-		virtual int32_t find_bone_named(const char* bone)
-		{
-			for (const Joint& joint : mesh->skeleton)
-			{
-				if (joint.name == bone)
-				{
-					return joint.index;
-				}
-			}
-
-			return -1;
-		}
-
-		virtual void get_local_bone_pose(int32_t /*animation_index*/, int32_t bone_index, glm::vec3& position, glm::quat& rotation)
-		{
-			assert(bone_index != -1);
-
-			const glm::mat4 model_matrix = local_bone_transforms[bone_index];
-			rotation = glm::toQuat(model_matrix);
-			position = glm::vec3(glm::column(model_matrix, 3));
-		}
-
-		virtual void get_model_bone_pose(int32_t /*animation_index*/, int32_t bone_index, glm::vec3& position, glm::quat& rotation)
-		{
-			assert(bone_index != -1);
-
-			const glm::mat4& model_matrix = model_bone_transforms[bone_index];
-			rotation = glm::toQuat(model_matrix);
-			position = glm::vec3(glm::column(model_matrix, 3));
-		}
-
-		virtual const glm::vec3& get_mins() const
-		{
-			return mesh->aabb_mins;
-		}
-
-		virtual const glm::vec3& get_maxs() const
-		{
-			return mesh->aabb_maxs;
-		}
-
-		virtual const glm::vec3& get_center_offset() const
-		{
-			return mesh->mass_center_offset;
-		}
-	};
-
-
-	typedef std::map<int32_t, ModelInstanceData> ModelInstanceMap;
-	ModelInstanceMap id_to_instance;
-
-	gemini::Allocator& allocator;
-
-
-public:
-	ModelInterface(gemini::Allocator& _allocator)
-		: allocator(_allocator)
-	{
-	}
-
-	virtual int32_t create_instance_data(const char* model_path)
-	{
-		AssetHandle mesh_handle = mesh_load(model_path);
-		Mesh* mesh = mesh_from_handle(mesh_handle);
-		if (mesh)
-		{
-			ModelInstanceData data(allocator);
-			data.set_mesh_index(mesh_handle);
-			data.create_bones();
-			int32_t index = (int32_t)id_to_instance.size();
-			id_to_instance.insert(ModelInstanceMap::value_type(index, data));
-			return index;
-		}
-
-		return -1;
-	}
-
-	virtual void destroy_instance_data(int32_t index)
-	{
-		ModelInstanceMap::iterator it = id_to_instance.find(index);
-		if (it != id_to_instance.end())
-		{
-			ModelInstanceData& data = it->second;
-			data.destroy_bones();
-
-			id_to_instance.erase(it);
-		}
-	}
-
-
-	IModelInstanceData* get_instance_data(int32_t index)
-	{
-		ModelInstanceMap::iterator it = id_to_instance.find(index);
-		if (it != id_to_instance.end())
-		{
-			return &(*it).second;
-		}
-
-		return 0;
-	}
-};
 
 
 class Experimental : public gemini::IExperimental
@@ -685,10 +281,10 @@ public:
 };
 
 
+struct ModelInstanceData;
 
 
-
-class EngineInterface : public IEngineInterface
+class EngineInterface : public IEngineInterface, public IModelInterface
 {
 	IEntityManager* entity_manager;
 	IModelInterface* model_interface;
@@ -705,11 +301,18 @@ class EngineInterface : public IEngineInterface
 
 	gemini::Allocator& engine_allocator;
 	unsigned int diffuse_unit;
+
+	RenderScene* render_scene;
+
+	// model instance data
+	typedef std::map<int32_t, gemini::ModelInstanceData> ModelInstanceMap;
+	ModelInstanceMap id_to_instance;
+
 public:
 
 	EngineInterface(gemini::Allocator& _allocator,
 					IEntityManager* em,
-					IModelInterface* mi,
+					//IModelInterface* mi,
 					gemini::physics::IPhysicsInterface* pi,
 					IExperimental* ei,
 					//SceneLink& scene_link,
@@ -717,7 +320,8 @@ public:
 					platform::window::NativeWindow* window)
 		: engine_allocator(_allocator)
 		, entity_manager(em)
-		, model_interface(mi)
+		//, model_interface(mi)
+		//, id_to_instance(_allocator)
 		, physics_interface(pi)
 		, experimental_interface(ei)
 		, main_window(window)
@@ -739,16 +343,20 @@ public:
 		pipeline = device->create_pipeline(desc);
 
 		diffuse_unit = 0;
+
+		render_scene = render_scene_create(_allocator, device);
 	}
 
 
 	virtual ~EngineInterface()
 	{
 		device->destroy_pipeline(pipeline);
+
+		render_scene_destroy(render_scene, device);
 	}
 
 	virtual IEntityManager* entities() { return entity_manager; }
-	virtual IModelInterface* models() { return model_interface; }
+	virtual IModelInterface* models() { return this; }
 	virtual gemini::physics::IPhysicsInterface* physics() { return physics_interface; }
 	virtual IExperimental* experiment() { return experimental_interface; }
 	virtual core::logging::ILog* log() { return core::logging::instance(); }
@@ -793,49 +401,20 @@ public:
 
 		render_scene_from_camera(rs, entity_list, newview, scenelink);
 #endif
-		EntityManager* entity_manager = static_cast<EntityManager*>(engine::instance()->entities());
-		IEngineEntity** entity_list = entity_manager->get_entity_list();
+		//EntityManager* entity_manager = static_cast<EntityManager*>(engine::instance()->entities());
+		//IEngineEntity** entity_list = entity_manager->get_entity_list();
 
-		for (uint32_t entity_index = 0; entity_index < MAX_ENTITIES; ++entity_index)
-		{
-			gemini::IEngineEntity* entity = entity_list[entity_index];
+		//for (uint32_t entity_index = 0; entity_index < MAX_ENTITIES; ++entity_index)
+		//{
+		//	gemini::IEngineEntity* entity = entity_list[entity_index];
 
-			// draw visible entities
-			if (!entity)
-			{
-				continue;
-			}
-		}
+		//	// draw visible entities
+		//	if (!entity)
+		//	{
+		//		continue;
+		//	}
+		//}
 
-
-		render2::Pass render_pass;
-		render_pass.target = device->default_render_target();
-		render_pass.color(clear_color.red, clear_color.blue, clear_color.green, clear_color.alpha);
-		render_pass.clear_color = true;
-		render_pass.clear_depth = true;
-		render_pass.depth_test = false;
-
-		render2::CommandQueue* queue = device->create_queue(render_pass);
-		render2::CommandSerializer* serializer = device->create_serializer(queue);
-
-		AssetHandle mesh_handle = mesh_load("models/level2");
-		Mesh* mesh = mesh_from_handle(mesh_handle);
-
-		serializer->pipeline(pipeline);
-		pipeline->constants().set("modelview_matrix", &view.modelview);
-		pipeline->constants().set("projection_matrix", &view.projection);
-
-		pipeline->constants().set("diffuse", &diffuse_unit);
-		if (mesh)
-		{
-			serializer->texture(texture_from_handle(texture_load("textures/measure")), 0);
-			serializer->vertex_buffer(mesh->geometry[0]->vertex_buffer);
-			serializer->draw_indexed_primitives(mesh->geometry[0]->index_buffer, mesh->geometry[0]->indices.size());
-		}
-
-		device->destroy_serializer(serializer);
-
-		device->queue_buffers(queue, 1);
 	}
 
 	virtual void render_gui()
@@ -909,7 +488,63 @@ public:
 		platform::window::set_relative_mouse_mode(main_window, enable);
 		center_cursor();
 	}
+
+
+
+	// IModelInterface
+	virtual int32_t create_instance_data(uint16_t entity_index, const char* model_path);
+	virtual void destroy_instance_data(int32_t index);
+	virtual IModelInstanceData* get_instance_data(int32_t index);
+
 };
+
+int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char* model_path)
+{
+	AssetHandle mesh_handle = mesh_load(model_path);
+	Mesh* mesh = mesh_from_handle(mesh_handle);
+	if (mesh)
+	{
+		gemini::ModelInstanceData data(engine_allocator);
+		data.set_mesh_index(mesh_handle);
+		data.create_bones();
+		int32_t index = (int32_t)id_to_instance.size();
+		id_to_instance.insert(ModelInstanceMap::value_type(index, data));
+
+		// create a static mesh component
+		//StaticMeshComponent* component = MEMORY2_NEW(engine_allocator, StaticMeshComponent)();
+		//component->entity_index = entity_index;
+		//component->mesh_handle = mesh_handle;
+		//static_meshes.push_back(component);
+
+		return index;
+	}
+
+	return -1;
+}
+
+void EngineInterface::destroy_instance_data(int32_t index)
+{
+	ModelInstanceMap::iterator it = id_to_instance.find(index);
+	if (it != id_to_instance.end())
+	{
+		gemini::ModelInstanceData& data = it->second;
+		data.destroy_bones();
+
+		id_to_instance.erase(it);
+	}
+}
+
+
+IModelInstanceData* EngineInterface::get_instance_data(int32_t index)
+{
+	ModelInstanceMap::iterator it = id_to_instance.find(index);
+	if (it != id_to_instance.end())
+	{
+		return &(*it).second;
+	}
+
+	return 0;
+}
 
 
 
@@ -952,7 +587,7 @@ private:
 	platform::DynamicLibrary* gamelib;
 	disconnect_engine_fn disconnect_engine;
 	EntityManager entity_manager;
-	ModelInterface model_interface;
+	//ModelInterface model_interface;
 	Experimental experimental;
 	IEngineInterface* engine_interface;
 	IGameInterface* game_interface;
@@ -1074,7 +709,7 @@ public:
 		engine_interface(0),
 		game_interface(0)
 		, engine_allocator(memory_allocator_default(MEMORY_ZONE_DEFAULT))
-		, model_interface(engine_allocator)
+		//, model_interface(engine_allocator)
 	{
 		game_path = "";
 		compositor = nullptr;
@@ -1374,7 +1009,7 @@ Options:
 		engine_interface = MEMORY2_NEW(engine_allocator, EngineInterface)
 			(engine_allocator,
 			&entity_manager,
-			&model_interface,
+			//&model_interface,
 			physics::instance(),
 			&experimental,
 			device,
@@ -1436,6 +1071,8 @@ Options:
 				game_interface->tick(params.current_tick, params.step_interval_seconds, params.step_alpha);
 			}
 
+			debugdraw::update(params.step_interval_seconds * MillisecondsPerSecond);
+
 			// subtract the interval from the accumulator
 			accumulator -= params.step_interval_seconds;
 
@@ -1449,7 +1086,7 @@ Options:
 			params.step_alpha -= 1.0f;
 		}
 
-		debugdraw::update(kernel::parameters().framedelta_seconds * MillisecondsPerSecond);
+		/*debugdraw::update(kernel::parameters().framedelta_seconds * MillisecondsPerSecond);*/
 
 		animation::update(kernel::parameters().framedelta_seconds);
 		hotloading::tick();

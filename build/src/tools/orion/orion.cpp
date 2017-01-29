@@ -59,6 +59,7 @@
 #include <renderer/debug_draw.h>
 #include <renderer/font_library.h>
 #include <renderer/renderer.h>
+#include <renderer/scene_renderer.h>
 
 #include <sdk/camera.h>
 #include <sdk/game_api.h>
@@ -233,6 +234,8 @@ private:
 	MyVertex vertex_data[4];
 
 //	GLsync fence;
+
+	RenderScene* render_scene;
 
 	gui::Compositor* compositor;
 	gui::Label* log_window;
@@ -806,12 +809,12 @@ Options:
 			// set some options
 			params["vsync"] = "true";
 			params["double_buffer"] = "true";
-			params["gamma_correct"] = "false";
+			params["gamma_correct"] = "true";
 			params["depth_size"] = "24";
 //			params["multisample"] = "4";
 
 			// set opengl specific options
-			params["rendering_backend"] = "opengl";
+			//params["rendering_backend"] = "opengl";
 
 
 			device = create_device(render_allocator, params);
@@ -889,6 +892,19 @@ Options:
 		// setup editor assets / content paths
 		{
 //			fs->add_virtual_path("editor/assets");
+		}
+
+
+		render_scene = render_scene_create(render_allocator, device);
+
+		AssetHandle test_mesh = mesh_load("models/cube");
+
+		glm::mat4 transform(1.0f);
+
+		for (size_t index = 0; index < 4; ++index)
+		{
+			render_scene_add_static_mesh(render_scene, test_mesh, 0, transform);
+			transform = glm::translate(transform, glm::vec3(1.5f, 0.0f, 0.0f));
 		}
 
 		// initialize debug draw
@@ -1375,11 +1391,12 @@ Options:
 		render_pass.clear_color = true;
 		render_pass.clear_depth = true;
 		render_pass.depth_test = false;
+		render_pass.depth_write = true;
 
 		render2::CommandQueue* queue = device->create_queue(render_pass);
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 
-		serializer->pipeline(pipeline);
+		serializer->pipeline(surface_pipeline);
 		serializer->vertex_buffer(vertex_buffer);
 		serializer->draw(0, 3);
 		device->queue_buffers(queue, 1);
@@ -1387,10 +1404,12 @@ Options:
 #endif
 		platform::window::activate_context(main_window);
 
-		if (compositor)
-		{
-			compositor->draw();
-		}
+		render_scene_draw(render_scene, device, modelview_matrix, projection_matrix);
+
+		//if (compositor)
+		//{
+		//	compositor->draw();
+		//}
 
 		device->submit();
 
@@ -1456,6 +1475,8 @@ Options:
 		MEMORY2_DELETE(render_allocator, resource_cache);
 
 		assets::shutdown();
+
+		render_scene_destroy(render_scene, device);
 
 		// shutdown the render device
 		device->destroy_buffer(vertex_buffer);

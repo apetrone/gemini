@@ -44,6 +44,7 @@ namespace render2
 			case GL_FLOAT_VEC3: return sizeof(GLfloat) * 3;
 			case GL_FLOAT_VEC4: return sizeof(GLfloat) * 4;
 
+			case GL_FLOAT_MAT3: return sizeof(GLfloat) * 12;
 			case GL_FLOAT_MAT4: return sizeof(GLfloat) * 16;
 			case GL_SAMPLER_2D: return sizeof(GLuint);
 
@@ -235,6 +236,7 @@ namespace render2
 	void common_update_texture(GLTexture* texture, const Image& image, GLRenderParameters& render_parameters, const glm::vec2& origin, const glm::vec2& dimensions);
 	void common_destroy_texture(gemini::Allocator& allocator, Texture* texture);
 
+	void common_set_uniform_variable(shader_variable& uniform, const void* data);
 	void common_setup_uniforms(GLShader* shader, ConstantBuffer& constants);
 
 	void query_program_info_log(gemini::Allocator& allocator, GLuint program_id);

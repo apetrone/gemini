@@ -102,6 +102,7 @@ public:
 	uint32_t flags;
 	uint32_t render_flags;
 	int32_t model_index;
+	uint16_t index;
 	EntityName name;
 
 	glm::vec3 position;
@@ -165,6 +166,7 @@ public:
 	virtual void add_collider(gemini::physics::ICollisionObject* collider, const glm::vec3& offset);
 	virtual void remove_colliders();
 
+	virtual uint16_t entity_index() const;
 public:
 	// memory overloads
 	void* operator new(size_t bytes);

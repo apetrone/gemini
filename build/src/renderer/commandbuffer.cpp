@@ -30,13 +30,14 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// Pass
 	// ---------------------------------------------------------------------
-	Pass::Pass() :
-		target(nullptr),
-		clear_color(false),
-		clear_depth(false),
-		clear_stencil(false),
-		depth_test(true),
-		cull_mode(CullMode::Backface)
+	Pass::Pass()
+		: target(nullptr)
+		, clear_color(false)
+		, clear_depth(false)
+		, clear_stencil(false)
+		, depth_test(true)
+		, depth_write(true)
+		, cull_mode(CullMode::Backface)
 	{
 		color(0, 0, 0, 0);
 	}

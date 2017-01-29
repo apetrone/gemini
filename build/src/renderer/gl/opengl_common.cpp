@@ -919,8 +919,14 @@ namespace render2
 		if (pass->clear_depth)
 		{
 			clear_flags |= GL_DEPTH_BUFFER_BIT;
+
+			// set maximum depth
 			gl.ClearDepth(1.0f);
 			gl.CheckError("ClearDepth");
+
+			// draw pixels when they are LESS than the compared depth.
+			glDepthFunc(GL_LESS);
+			gl.CheckError("DepthFunc");
 		}
 #else
 #warning gl.ClearDepth needs support on this platform
@@ -948,19 +954,29 @@ namespace render2
 			gl.Disable(GL_DEPTH_TEST);
 		}
 
-		//if (pass->cull_mode == CullMode::Frontface)
-		//{
-		//	gl.Enable(GL_CULL_FACE);
-		//	gl.CullFace(GL_FRONT);
-		//}
-		//else if (pass->cull_mode == CullMode::Backface)
-		//{
-		//	gl.Enable(GL_CULL_FACE);
-		//	gl.CullFace(GL_BACK);
-		//}
-		//else
+		GLenum mask_table[] = { GL_FALSE, GL_TRUE };
+		gl.DepthMask(mask_table[pass->depth_write]);
+
+		if (pass->cull_mode == CullMode::Frontface)
+		{
+			gl.Enable(GL_CULL_FACE);
+			gl.CheckError("enable GL_CULL_FACE");
+
+			gl.CullFace(GL_FRONT);
+			gl.CheckError("cull face GL_FRONT");
+		}
+		else if (pass->cull_mode == CullMode::Backface)
+		{
+			gl.Enable(GL_CULL_FACE);
+			gl.CheckError("enable GL_CULL_FACE");
+
+			gl.CullFace(GL_BACK);
+			gl.CheckError("cull face GL_BACK");
+		}
+		else
 		{
 			gl.Disable(GL_CULL_FACE);
+			gl.CheckError("disable GL_CULL_FACE");
 		}
 	}
 
@@ -1233,10 +1249,55 @@ namespace render2
 		MEMORY2_DELETE(allocator, texture);
 	}
 
+	void common_set_uniform_variable(shader_variable& uniform, const void* data)
+	{
+		switch (uniform.type)
+		{
+		case GL_INT:
+		case GL_UNSIGNED_INT:
+		{
+			const GLint* value = static_cast<const GLint*>(data);
+			gl.Uniform1i(uniform.location, (*value));
+			gl.CheckError("Uniform1i");
+			break;
+		}
+
+		case GL_FLOAT_MAT3:
+		{
+			gl.UniformMatrix3fv(uniform.location, uniform.size, GL_FALSE, (GLfloat*)data);
+			gl.CheckError("UniformMatrix3fv");
+			break;
+		}
+		case GL_FLOAT_MAT4:
+		{
+			gl.UniformMatrix4fv(uniform.location, uniform.size, GL_FALSE, (GLfloat*)data);
+			gl.CheckError("UniformMatrix4fv");
+			break;
+		}
+		case GL_SAMPLER_2D:
+		{
+			const GLint* sampler = static_cast<const GLint*>(data);
+
+			// maximum of eight texture units
+			assert(*sampler < 8);
+
+			gl.Uniform1i(uniform.location, (*sampler));
+			gl.CheckError("Uniform1i");
+			break;
+		}
+
+		default:
+			// If you hit this assert, there's a discrepancy between this function
+			// and the 'type_to_bytes' function -- where by an unhandled
+			// uniform type was hit to cause this assert.
+			assert(0);
+			break;
+		}
+	}
 
 	void common_setup_uniforms(GLShader* shader, ConstantBuffer& constants)
 	{
-		size_t offset = 0;
+		//size_t offset = 0;
 
 		// TODO: dispatch of various uniform types
 		for(size_t index = 0; index < shader->uniforms.size(); ++index)
@@ -1246,47 +1307,16 @@ namespace render2
 
 			if (!data)
 			{
-				LOGW("Missing uniform data for '%s'\n", uniform.name);
+				//LOGW("Missing uniform data for '%s'\n", uniform.name);
 				// If you hit this assert the uniform named above wasn't given
 				// a value prior to rendering.
-				assert(0);
+				//assert(0);
+				continue;
 			}
 
-			switch(uniform.type)
-			{
-				case GL_INT:
-				case GL_UNSIGNED_INT:
-				{
-					const GLint* value = static_cast<const GLint*>(data);
-					gl.Uniform1i(uniform.location, (*value));
-					gl.CheckError("Uniform1i");
-					break;
-				}
+			common_set_uniform_variable(uniform, data);
 
-				case GL_FLOAT_MAT4:
-					gl.UniformMatrix4fv(uniform.location, uniform.size, GL_FALSE, (GLfloat*)data);
-					gl.CheckError("UniformMatrix4fv");
-					break;
-				case GL_SAMPLER_2D:
-				{
-					const GLint* sampler = static_cast<const GLint*>(data);
-
-					// maximum of eight texture units
-					assert(*sampler < 8);
-
-					gl.Uniform1i(uniform.location, (*sampler));
-					gl.CheckError("Uniform1i");
-					break;
-				}
-
-				default:
-					// If you hit this assert, there's a discrepancy between this function
-					// and the 'type_to_bytes' function -- where by an unhandled
-					// uniform type was hit to cause this assert.
-					assert(0);
-				break;
-			}
-			offset += uniform.byte_size;
+			//offset += uniform.byte_size;
 		}
 	} // common_setup_uniforms
 

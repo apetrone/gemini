@@ -134,7 +134,7 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// pipeline
 	// ---------------------------------------------------------------------
-	void OpenGLDevice::activate_pipeline(GLPipeline* pipeline, GLBuffer* vertex_buffer)
+	void OpenGLDevice::activate_pipeline(GLPipeline* pipeline)
 	{
 		GLShader* shader = static_cast<GLShader*>(shader_from_handle(pipeline->shader));
 		assert(shader);
@@ -143,43 +143,6 @@ namespace render2
 
 		// bind uniforms
 		common_setup_uniforms(shader, pipeline->constants());
-
-		// determine if the VAO for the vertex_buffer needs to be built
-		if (!vertex_buffer->is_vao_valid())
-		{
-			vertex_buffer->create_vao();
-
-			vertex_buffer->bind_vao();
-
-			vertex_buffer->bind();
-
-			GLInputLayout* layout = static_cast<GLInputLayout*>(pipeline->input_layout);
-			for (size_t index = 0; index < layout->items.size(); ++index)
-			{
-				const GLInputLayout::Description& item = layout->items[index];
-
-				assert(item.type != GL_INVALID_ENUM);
-
-				assert(item.element_count >= 1 && item.element_count <= 4);
-
-				gl.EnableVertexAttribArray(static_cast<GLuint>(index));
-				gl.CheckError("EnableVertexAttribArray");
-
-				gl.VertexAttribPointer(static_cast<GLuint>(index),
-					item.element_count,
-					static_cast<GLenum>(item.type),
-					item.normalized,
-					static_cast<GLsizei>(layout->vertex_stride),
-					(void*)item.offset
-				);
-				gl.CheckError("VertexAttribPointer");
-			}
-
-			vertex_buffer->unbind_vao();
-
-			vertex_buffer->unbind();
-		}
-
 
 		// see if we need to enable blending
 		if (pipeline->enable_blending)
@@ -245,8 +208,17 @@ namespace render2
 				}
 				else if (command->type == COMMAND_PIPELINE)
 				{
-					current_pipeline = static_cast<GLPipeline*>(command->data[0]);
-					assert(current_pipeline != 0);
+					GLPipeline* new_pipeline = static_cast<GLPipeline*>(command->data[0]);
+					assert(new_pipeline != 0);
+					if (current_pipeline && current_pipeline != new_pipeline)
+					{
+						deactivate_pipeline(current_pipeline);
+					}
+
+					current_pipeline = new_pipeline;
+
+					// activate the new pipeline
+					activate_pipeline(current_pipeline);
 				}
 				else if (command->type == COMMAND_SET_VERTEX_BUFFER)
 				{
@@ -261,6 +233,40 @@ namespace render2
 
 					assert(gl.IsTexture(texture->texture_id));
 				}
+				else if (command->type == COMMAND_CONSTANT)
+				{
+					char* constant_name = static_cast<char*>(command->data[0]);
+					//LOGV("constant = %s\n", constant_name);
+
+					// In order to process constant commands, we must have a pipeline set.
+					assert(current_pipeline);
+
+					render2::Shader* bound_shader = shader_from_handle(current_pipeline->shader);
+
+					// I don't think it's legal to have a NULL shader at this point...
+					assert(bound_shader);
+					if (bound_shader)
+					{
+						bool found_uniform = false;
+						GLShader* glshader = static_cast<GLShader*>(bound_shader);
+						for (size_t uniform_index = 0; uniform_index < glshader->uniforms.size(); ++uniform_index)
+						{
+							shader_variable& uniform = glshader->uniforms[uniform_index];
+							if (core::str::case_insensitive_compare(uniform.name, constant_name, command->params[1]) == 0)
+							{
+								//LOGV("bind: %s\n", uniform.name);
+								common_set_uniform_variable(uniform, command->data[1]);
+								found_uniform = true;
+								break;
+							}
+						}
+
+						if (!found_uniform)
+						{
+							LOGW("Unable to find uniform: %s\n", constant_name);
+						}
+					}
+				}
 				else
 				{
 					// Encountered an unhandled render command
@@ -268,11 +274,16 @@ namespace render2
 				}
 			}
 
-			cq->reset();
-			if (texture)
+			if (current_pipeline)
 			{
-				texture->unbind();
+				deactivate_pipeline(current_pipeline);
 			}
+
+			cq->reset();
+			//if (texture)
+			//{
+			//	texture->unbind();
+			//}
 
 			common_pop_render_target(pass->target);
 		}
@@ -336,6 +347,52 @@ namespace render2
 	{
 		// If you change this, you need to change calls to DrawElements.
 		return sizeof(renderer::IndexType);
+	}
+
+	void OpenGLDevice::activate_vertex_buffer(GLInputLayout* input_layout, GLBuffer* vertex_buffer)
+	{
+		// determine if the VAO for the vertex_buffer needs to be built
+		if (!vertex_buffer->is_vao_valid())
+		{
+			vertex_buffer->create_vao();
+
+			vertex_buffer->bind_vao();
+
+			vertex_buffer->bind();
+
+			GLInputLayout* layout = static_cast<GLInputLayout*>(input_layout);
+			for (size_t index = 0; index < layout->items.size(); ++index)
+			{
+				const GLInputLayout::Description& item = layout->items[index];
+
+				assert(item.type != GL_INVALID_ENUM);
+
+				assert(item.element_count >= 1 && item.element_count <= 4);
+
+				gl.EnableVertexAttribArray(static_cast<GLuint>(index));
+				gl.CheckError("EnableVertexAttribArray");
+
+				gl.VertexAttribPointer(static_cast<GLuint>(index),
+					item.element_count,
+					static_cast<GLenum>(item.type),
+					item.normalized,
+					static_cast<GLsizei>(layout->vertex_stride),
+					(void*)item.offset
+				);
+				gl.CheckError("VertexAttribPointer");
+			}
+
+			vertex_buffer->unbind_vao();
+
+			vertex_buffer->unbind();
+		}
+
+		vertex_buffer->bind_vao();
+	}
+
+	void OpenGLDevice::deactivate_vertex_buffer(GLBuffer* vertex_buffer)
+	{
+		vertex_buffer->unbind_vao();
 	}
 
 	// ---------------------------------------------------------------------

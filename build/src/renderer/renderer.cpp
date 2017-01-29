@@ -118,10 +118,10 @@ namespace render2
 	Device* create_device(gemini::Allocator& allocator, const RenderParameters& params)
 	{
 		// determine the renderer
-		assert(params.has_key("rendering_backend"));
+		//assert(params.has_key("rendering_backend"));
 
-		const param_string& renderer = params["rendering_backend"];
-		LOGV("create device for rendering_backend '%s'\n", renderer());
+		//const param_string& renderer = params["rendering_backend"];
+		//LOGV("create device for rendering_backend '%s'\n", renderer());
 
 		Device* device = nullptr;
 

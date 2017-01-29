@@ -38,7 +38,8 @@ namespace render2
 		COMMAND_PIPELINE,			// set the rendering pipeline
 		COMMAND_VIEWPORT,			// set viewport
 		COMMAND_TEXTURE,			// set a texture
-		COMMAND_STATE
+		COMMAND_STATE,				// set graphics state
+		COMMAND_CONSTANT			// set a constant
 	};
 
 	// It is assumed that front faces are counter-clock wise.
@@ -84,6 +85,7 @@ namespace render2
 		bool clear_depth;
 		bool clear_stencil;
 		bool depth_test;
+		bool depth_write;
 
 		CullMode cull_mode;
 	}; // Pass

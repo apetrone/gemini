@@ -92,7 +92,7 @@ namespace gemini
 
 //		virtual int32_t get_model_index(const char* model_path) = 0;
 
-		virtual int32_t create_instance_data(const char* model_path) = 0;
+		virtual int32_t create_instance_data(uint16_t entity_index, const char* model_path) = 0;
 		virtual void destroy_instance_data(int32_t index) = 0;
 
 		virtual IModelInstanceData* get_instance_data(int32_t index) = 0;

@@ -176,17 +176,13 @@ namespace render2
 			size_t /*instance_index*/,
 			size_t /*index_count*/)
 		{
-			activate_pipeline(pipeline, vertex_stream);
+			activate_vertex_buffer(pipeline->input_layout, vertex_stream);
 
-			vertex_stream->bind_vao();
 			gl.DrawArrays(pipeline->draw_type, static_cast<GLint>(initial_offset), static_cast<GLsizei>(total));
 			gl.CheckError("DrawArrays");
 
-			vertex_stream->unbind_vao();
-
-			deactivate_pipeline(pipeline);
+			deactivate_vertex_buffer(vertex_stream);
 		}
-
 
 		void draw_indexed(
 						  GLPipeline* pipeline,
@@ -194,24 +190,19 @@ namespace render2
 						  GLBuffer* index_buffer,
 						  size_t total)
 		{
-			activate_pipeline(pipeline, vertex_buffer);
-
-			vertex_buffer->bind_vao();
+			activate_vertex_buffer(pipeline->input_layout, vertex_buffer);
 
 			index_buffer->bind();
 			gl.DrawElements(pipeline->draw_type, static_cast<GLsizei>(total), GL_UNSIGNED_INT, 0);
 			gl.CheckError("DrawElements");
 			index_buffer->unbind();
 
-			vertex_buffer->unbind_vao();
-
-			deactivate_pipeline(pipeline);
+			deactivate_vertex_buffer(vertex_buffer);
 		}
-
 
 	public:
 
-		void activate_pipeline(GLPipeline* pipeline, GLBuffer* vertex_buffer);
+		void activate_pipeline(GLPipeline* pipeline);
 		void deactivate_pipeline(GLPipeline* pipeline);
 
 		// submit queue command buffers to GPU
@@ -358,6 +349,11 @@ namespace render2
 		virtual size_t compute_index_stride();
 
 	private:
+
+		void activate_vertex_buffer(GLInputLayout* input_layout, GLBuffer* vertex_buffer);
+		void deactivate_vertex_buffer(GLBuffer* vertex_buffer);
+
+
 		GLRenderTarget* default_target;
 
 		// rotating list of command queues

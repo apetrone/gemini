@@ -60,11 +60,22 @@ namespace platform
 
 #endif
 		// constants for wglChoosePixelFormatARB
+
 		const uint32_t WGL_DRAW_TO_WINDOW_ARB						= 0x2001;
+		const uint32_t WGL_ACCELERATION_ARB							= 0x2003;
 		const uint32_t WGL_SUPPORT_OPENGL_ARB						= 0x2010;
 		const uint32_t WGL_DOUBLE_BUFFER_ARB						= 0x2011;
 		const uint32_t WGL_PIXEL_TYPE_ARB							= 0x2013;
 		const uint32_t WGL_COLOR_BITS_ARB							= 0x2014;
+		const uint32_t WGL_RED_BITS_ARB								= 0x2015;
+		const uint32_t WGL_GREEN_BITS_ARB							= 0x2017;
+		const uint32_t WGL_BLUE_BITS_ARB							= 0x2019;
+		const uint32_t WGL_ALPHA_BITS_ARB							= 0x201B;
+		const uint32_t WGL_ACCUM_BITS_ARB							= 0x201D;
+		const uint32_t WGL_ACCUM_RED_BITS_ARB						= 0x201E;
+		const uint32_t WGL_ACCUM_GREEN_BITS_ARB						= 0x201F;
+		const uint32_t WGL_ACCUM_BLUE_BITS_ARB						= 0x2020;
+		const uint32_t WGL_ACCUM_ALPHA_BITS_ARB						= 0x2021;
 		const uint32_t WGL_DEPTH_BITS_ARB							= 0x2022;
 		const uint32_t WGL_STENCIL_BITS_ARB							= 0x2023;
 		const uint32_t WGL_SAMPLE_BUFFERS_ARB						= 0x2041;
@@ -87,6 +98,11 @@ namespace platform
 		// accepted as profile mask
 		const uint32_t WGL_CONTEXT_CORE_PROFILE_BIT_ARB				= 0x00000001;
 		const uint32_t WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB	= 0x00000002;
+
+		// accepted as ACCELERATION params
+		const uint32_t WGL_NO_ACCELERATION_ARB						= 0x2025;
+		const uint32_t WGL_GENERIC_ACCELERATION_ARB					= 0x2026;
+		const uint32_t WGL_FULL_ACCELERATION_ARB					= 0x2027;
 
 
 		struct Win32GraphicsData
@@ -120,10 +136,31 @@ namespace platform
 			const int* attribute_list
 		);
 
+		typedef BOOL (__stdcall* wgl_get_pixel_format_attribiv)(
+			HDC hdc,
+			int iPixelFormat,
+			int iLayerPlane,
+			UINT nAttributes,
+			const int *piAttributes,
+			int *piValues
+		);
+
+		typedef BOOL (__stdcall* wgl_get_pixel_format_attribfv)(
+			HDC hdc,
+			int iPixelFormat,
+			int iLayerPlane,
+			UINT nAttributes,
+			const int *piAttributes,
+			FLOAT *pfValues
+		);
+
+
 		//typedef BOOL (*wgl_swap_interval)(int interval);
 
 		wgl_choose_pixel_format choose_pixel_format = nullptr;
 		wgl_create_context_attribs create_context_attribs = nullptr;
+		wgl_get_pixel_format_attribiv get_pixel_format_attribiv = nullptr;
+		wgl_get_pixel_format_attribfv get_pixel_format_attribfv = nullptr;
 		//wgl_swap_interval swap_interval = nullptr;
 
 
@@ -154,6 +191,12 @@ namespace platform
 
 			create_context_attribs = (wgl_create_context_attribs)get_symbol("wglCreateContextAttribsARB");
 			assert(create_context_attribs);
+
+			get_pixel_format_attribiv = (wgl_get_pixel_format_attribiv)get_symbol("wglGetPixelFormatAttribivARB");
+			assert(get_pixel_format_attribiv);
+
+			get_pixel_format_attribfv = (wgl_get_pixel_format_attribfv)get_symbol("wglGetPixelFormatAttribfvARB");
+			assert(get_pixel_format_attribfv);
 
 			// This doesn't seem to work vs. glSwapInterval... so, oh well.
 			//swap_interval = (wgl_swap_interval)get_symbol("wglSwapIntervalEXT");
@@ -187,14 +230,17 @@ namespace platform
 					WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
 					WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
 					WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+					WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
 					WGL_COLOR_BITS_ARB, 32,
 					WGL_DEPTH_BITS_ARB, 24,
-					WGL_STENCIL_BITS_ARB, 8,
+					WGL_STENCIL_BITS_ARB, 0,
+					//WGL_SAMPLE_BUFFERS_ARB, 0,
+					//WGL_SAMPLES_ARB, 1,
 					0
 				};
 
-				const UINT max_formats = 1;
-				int format_indices[1];
+				const UINT max_formats = 256;
+				int format_indices[256];
 				UINT total_matching_formats;
 
 				BOOL result = choose_pixel_format(data->device_context,
@@ -211,7 +257,41 @@ namespace platform
 					return;
 				}
 
-				result = SetPixelFormat(data->device_context, format_indices[0], nullptr);
+				int best_pixel_format = -1;
+
+				for (size_t format_index = 0; format_index < total_matching_formats; ++format_index)
+				{
+					const UINT fetch_attrib_count = 8;
+
+					int fetch_attribs[] = {
+						WGL_COLOR_BITS_ARB,
+						WGL_DEPTH_BITS_ARB,
+						WGL_STENCIL_BITS_ARB,
+						WGL_RED_BITS_ARB,
+						WGL_GREEN_BITS_ARB,
+						WGL_BLUE_BITS_ARB,
+						WGL_ALPHA_BITS_ARB,
+						WGL_SAMPLE_BUFFERS_ARB
+					};
+
+
+					int attrib_values[fetch_attrib_count] = { 0 };
+
+					get_pixel_format_attribiv(data->device_context, format_indices[format_index], 0, fetch_attrib_count, fetch_attribs, attrib_values);
+
+					//for (size_t attrib_index = 0; attrib_index < fetch_attrib_count; ++attrib_index)
+					//{
+					//	LOGV("attrib[%i] = %i\n", attrib_index, attrib_values[attrib_index]);
+					//}
+
+					if (attrib_values[0] == 32 && attrib_values[1] >= 24 && attrib_values[2] == 0 && attrib_values[7] == 0)
+					{
+						best_pixel_format = format_indices[format_index];
+						break;
+					}
+				}
+
+				result = SetPixelFormat(data->device_context, best_pixel_format, nullptr);
 				if (result == FALSE)
 				{
 					LOGE("SetPixelFormat failed! Error [ARB]: %i\n", GetLastError());
@@ -241,7 +321,7 @@ namespace platform
 				pfd.dwFlags = (PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER);
 				pfd.cColorBits = 32;
 				pfd.cDepthBits = 24;
-				pfd.cStencilBits = 8;
+				pfd.cStencilBits = 0;
 				pfd.dwLayerMask = PFD_MAIN_PLANE;
 				pfd.iPixelType = PFD_TYPE_RGBA;
 
