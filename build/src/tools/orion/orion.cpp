@@ -666,8 +666,9 @@ public:
 
 	void render_main_content(render2::RenderTarget* render_target)
 	{
+#if 1
 		render2::Pass render_pass;
-		render_pass.color(0.0f, value, value, 1.0f);
+		render_pass.color(0.0f, 0.0f, 1.0, 1.0f);
 		render_pass.clear_color = true;
 		render_pass.clear_depth = true;
 		render_pass.depth_test = false;
@@ -686,6 +687,8 @@ public:
 			device->queue_buffers(queue, 1);
 		}
 		device->destroy_serializer(serializer);
+#endif
+		render_scene_draw(render_scene, device, camera.get_modelview(), camera.get_projection(), render_target);
 
 		debugdraw::render(camera.get_modelview(), camera.get_projection(), render_target->width, render_target->height, render_target);
 	}
@@ -1365,6 +1368,15 @@ Options:
 		debugdraw::oriented_box(box.rotation, box.center, box.positive_extents, gemini::Color(1.0f, 0.0f, 0.0f));
 		debugdraw::axes(glm::mat4(box.rotation), 1.0f, 0.0f);
 #endif
+		static float the_time = 0.0f;
+		render_scene->light_position_world.x = cosf(the_time);
+		render_scene->light_position_world.y = 2.0f;
+		render_scene->light_position_world.z = sinf(the_time);
+
+		the_time += 0.01f;
+
+		// draw the position of the light
+		debugdraw::sphere(render_scene->light_position_world, Color(1.0f, 1.0f, 1.0f), 0.5f, 0.0f);
 
 		debugdraw::update(kernel::parameters().framedelta_seconds);
 
@@ -1404,12 +1416,14 @@ Options:
 #endif
 		platform::window::activate_context(main_window);
 
-		render_scene_draw(render_scene, device, modelview_matrix, projection_matrix);
+		//render_scene_draw(render_scene, device, modelview_matrix, projection_matrix);
 
-		//if (compositor)
-		//{
-		//	compositor->draw();
-		//}
+		//debugdraw::render(camera.get_modelview(), camera.get_projection(), render_target->width, render_target->height, device->default_render_target());
+
+		if (compositor)
+		{
+			compositor->draw();
+		}
 
 		device->submit();
 

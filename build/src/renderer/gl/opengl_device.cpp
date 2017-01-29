@@ -261,10 +261,12 @@ namespace render2
 							}
 						}
 
+#if defined(GEMINI_ENABLE_SHADER_MISSING_CONSTANTS)
 						if (!found_uniform)
 						{
 							LOGW("Unable to find uniform: %s\n", constant_name);
 						}
+#endif
 					}
 				}
 				else

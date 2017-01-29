@@ -1052,6 +1052,7 @@ namespace debugdraw
 
 		render2::Pass pass;
 		pass.depth_test = false;
+		pass.depth_write = false;
 		pass.cull_mode = render2::CullMode::None;
 		if (render_target == nullptr)
 		{

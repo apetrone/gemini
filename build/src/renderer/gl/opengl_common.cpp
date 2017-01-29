@@ -28,9 +28,6 @@
 
 using namespace renderer;
 
-// Enable this to perform extra debug checks when setting up input layouts.
-#define VERIFY_VERTEX_DATA_MATCHES_SHADER_DATA 1
-
 namespace render2
 {
 	// ---------------------------------------------------------------------
@@ -666,7 +663,9 @@ namespace render2
 		assert(descriptor.total_attributes > 0);
 
 		// descriptor doesn't match shader!
+#if defined(GEMINI_ENABLE_SHADER_MISSING_CONSTANTS)
 		assert(descriptor.total_attributes == shader->attributes.size());
+#endif
 
 		// allocate enough layout items to hold all the descriptors
 		layout->items.allocate(descriptor.total_attributes);
@@ -1274,6 +1273,28 @@ namespace render2
 			gl.CheckError("UniformMatrix4fv");
 			break;
 		}
+
+		case GL_FLOAT_VEC2_ARB:
+		{
+			gl.Uniform2fv(uniform.location, 1, (GLfloat*)data);
+			gl.CheckError("Uniform2fv");
+			break;
+		}
+
+		case GL_FLOAT_VEC3_ARB:
+		{
+			gl.Uniform3fv(uniform.location, 1, (GLfloat*)data);
+			gl.CheckError("Uniform3fv");
+			break;
+		}
+
+		case GL_FLOAT_VEC4_ARB:
+		{
+			gl.Uniform4fv(uniform.location, 1, (GLfloat*)data);
+			gl.CheckError("Uniform4fv");
+			break;
+		}
+
 		case GL_SAMPLER_2D:
 		{
 			const GLint* sampler = static_cast<const GLint*>(data);
