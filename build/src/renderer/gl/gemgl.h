@@ -112,7 +112,7 @@ namespace renderer
 		typedef void (GEMGLAPI GEMGLFNDRAWARRAYS) ( GLenum mode, GLint first, GLsizei count );
 		typedef void (GEMGLAPI GEMGLFNDRAWELEMENTS) ( GLenum mode, GLsizei count, GLenum type, GLvoid* indices );
 		typedef void (GEMGLAPI GEMGLFNCLEARSTENCIL) (GLint stencil);
-		typedef void (GEMGLAPI GEMGLFNCLEARDEPTH) (GLclampf depth);
+		typedef void (GEMGLAPI GEMGLFNCLEARDEPTH) (GLclampd depth);
 		typedef void (GEMGLAPI GEMGLFNCLEARCOLOR) ( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha );
 		typedef void (GEMGLAPI GEMGLFNCLEAR) ( GLbitfield mask );
 		typedef void (GEMGLAPI GEMGLFNPOINTSIZE) ( GLfloat size );
