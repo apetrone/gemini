@@ -300,9 +300,9 @@ class VertexCache(object):
 				vertices[vertex_index][1],
 				vertices[vertex_index][2])
 
-			normal = Vector3(normals[vertex_index][0],
-				normals[vertex_index][1],
-				normals[vertex_index][2])
+			normal = Vector3(normals[loop.index][0],
+				normals[loop.index][1],
+				normals[loop.index][2])
 
 			# for now, this only handles one uv set
 			uv = uvs[0][loop.index]
