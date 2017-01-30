@@ -32,6 +32,15 @@
 
 namespace gemini
 {
+	void render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
+	{
+		AnimatedMeshComponent* component = MEMORY2_NEW(*scene->allocator, AnimatedMeshComponent);
+		component->entity_index = entity_index;
+		component->mesh_handle = mesh_handle;
+		component->model_matrix = model_transform;
+		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
+		scene->animated_meshes.push_back(component);
+	} // render_scene_add_animated_mesh
 
 	void render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
 	{
@@ -47,14 +56,33 @@ namespace gemini
 	{
 		RenderScene* scene = MEMORY2_NEW(allocator, RenderScene)(allocator);
 
-		render2::PipelineDescriptor desc;
-		render2::VertexDescriptor& vertex_format = desc.vertex_description;
-		vertex_format.add("in_position", render2::VD_FLOAT, 3);
-		vertex_format.add("in_normal", render2::VD_FLOAT, 3);
-		vertex_format.add("in_uv", render2::VD_FLOAT, 2);
-		desc.shader = shader_load("rendertest");
-		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
-		scene->static_mesh_pipeline = device->create_pipeline(desc);
+		// create pipelines
+
+		// static mesh pipeline
+		{
+			render2::PipelineDescriptor desc;
+			render2::VertexDescriptor& vertex_format = desc.vertex_description;
+			vertex_format.add("in_position", render2::VD_FLOAT, 3);
+			vertex_format.add("in_normal", render2::VD_FLOAT, 3);
+			vertex_format.add("in_uv", render2::VD_FLOAT, 2);
+			desc.shader = shader_load("rendertest");
+			desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
+			scene->static_mesh_pipeline = device->create_pipeline(desc);
+		}
+
+		// animated (skeletal) mesh pipeline
+		{
+			render2::PipelineDescriptor desc;
+			render2::VertexDescriptor& vertex_format = desc.vertex_description;
+			vertex_format.add("in_position", render2::VD_FLOAT, 3);
+			vertex_format.add("in_normal", render2::VD_FLOAT, 3);
+			vertex_format.add("in_uv", render2::VD_FLOAT, 2);
+			vertex_format.add("in_blendindices", render2::VD_FLOAT, 4);
+			vertex_format.add("in_blendweights", render2::VD_FLOAT, 4);
+			desc.shader = shader_load("animated");
+			desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
+			scene->animated_mesh_pipeline = device->create_pipeline(desc);
+		}
 
 		return scene;
 	} // render_scene_create
@@ -67,6 +95,7 @@ namespace gemini
 		}
 
 		device->destroy_pipeline(scene->static_mesh_pipeline);
+		device->destroy_pipeline(scene->animated_mesh_pipeline);
 
 		MEMORY2_DELETE(*scene->allocator, scene);
 	} // render_scene_destroy
@@ -87,7 +116,13 @@ namespace gemini
 		render_pass.depth_write = true;
 		render_pass.cull_mode = render2::CullMode::Backface;
 
-		render2::CommandQueue* queue = device->create_queue(render_pass);
+		render_static_meshes(scene, device, view, projection, render_pass);
+		render_animated_meshes(scene, device, view, projection, render_pass);
+	} // render_scene_draw
+
+	void render_static_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass)
+	{
+		render2::CommandQueue* queue = device->create_queue(pass);
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 
 		// render static meshes
@@ -126,6 +161,48 @@ namespace gemini
 
 		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
+	} // render_static_meshes
 
-	} // render_scene_draw
+	void render_animated_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass)
+	{
+		render2::CommandQueue* queue = device->create_queue(pass);
+		render2::CommandSerializer* serializer = device->create_serializer(queue);
+
+		// render static meshes
+		// setup the static mesh pipeline
+		static uint32_t diffuse_unit = 0;
+		serializer->pipeline(scene->static_mesh_pipeline);
+		scene->static_mesh_pipeline->constants().set("view_matrix", &view);
+		scene->static_mesh_pipeline->constants().set("projection_matrix", &projection);
+		scene->static_mesh_pipeline->constants().set("diffuse", &diffuse_unit);
+		scene->static_mesh_pipeline->constants().set("light_position_world", &scene->light_position_world);
+		scene->static_mesh_pipeline->constants().set("camera_position_world", &scene->camera_position_world);
+		scene->static_mesh_pipeline->constants().set("camera_view_direction", &scene->camera_view_direction);
+
+		serializer->texture(texture_from_handle(texture_load("textures/measure")), diffuse_unit);
+
+		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
+		{
+			StaticMeshComponent* static_mesh = scene->static_meshes[index];
+
+			Mesh* mesh = mesh_from_handle(static_mesh->mesh_handle);
+			if (mesh)
+			{
+				serializer->constant("model_matrix", &static_mesh->model_matrix, sizeof(glm::mat4));
+				serializer->constant("normal_matrix", &static_mesh->normal_matrix, sizeof(glm::mat3));
+				for (size_t geo = 0; geo < mesh->geometry.size(); ++geo)
+				{
+					::renderer::Geometry* geometry = mesh->geometry[geo];
+					//Material* material = material_from_handle(geometry->material_id);
+					// TODO: setup material for rendering
+
+					serializer->vertex_buffer(geometry->vertex_buffer);
+					serializer->draw_indexed_primitives(geometry->index_buffer, geometry->indices.size());
+				}
+			}
+		}
+
+		device->queue_buffers(queue, 1);
+		device->destroy_serializer(serializer);
+	} // render_animated_meshes
 } // namespace gemini

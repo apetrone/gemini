@@ -432,6 +432,7 @@ public:
 			compositor->resize(event.window_width, event.window_height);
 
 			main_panel->set_size(event.window_width, event.window_height-24);
+			camera.perspective(60.0f, (int)event.window_width, (int)event.window_height, 0.01f, 1024.0f);
 		}
 		else if (event.subtype == kernel::WindowClosed)
 		{
@@ -661,7 +662,11 @@ public:
 
 	void timeline_scrubber_changed(size_t current_frame)
 	{
-		value = (current_frame / 30.0f);
+		value = mathlib::PI * 2.0 * (current_frame / 30.0f);
+
+		render_scene->light_position_world.x = cosf(value);
+		render_scene->light_position_world.y = 2.0f;
+		render_scene->light_position_world.z = sinf(value);
 	}
 
 	void render_main_content(render2::RenderTarget* render_target)
@@ -1379,12 +1384,12 @@ Options:
 		debugdraw::oriented_box(box.rotation, box.center, box.positive_extents, gemini::Color(1.0f, 0.0f, 0.0f));
 		debugdraw::axes(glm::mat4(box.rotation), 1.0f, 0.0f);
 #endif
-		static float the_time = 0.0f;
-		render_scene->light_position_world.x = cosf(the_time);
-		render_scene->light_position_world.y = 2.0f;
-		render_scene->light_position_world.z = sinf(the_time);
+		//static float the_time = 0.0f;
+		//render_scene->light_position_world.x = cosf(the_time);
+		//render_scene->light_position_world.y = 2.0f;
+		//render_scene->light_position_world.z = sinf(the_time);
 
-		the_time += 0.01f;
+		//the_time += 0.01f;
 
 		// draw the position of the light
 		debugdraw::sphere(render_scene->light_position_world, Color(1.0f, 1.0f, 1.0f), 0.5f, 0.0f);

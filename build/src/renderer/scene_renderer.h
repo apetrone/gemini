@@ -35,6 +35,7 @@ namespace render2
 {
 	class Device;
 	class Pipeline;
+	struct Pass;
 	struct RenderTarget;
 } // namespace render2
 
@@ -48,14 +49,29 @@ namespace gemini
 		// populated in extract phase
 		glm::mat4 model_matrix;
 		glm::mat3 normal_matrix;
-	};
+	}; // StaticMeshComponent
+
+	struct AnimatedMeshComponent
+	{
+		AssetHandle mesh_handle;
+		uint16_t entity_index;
+
+		// populated in extract phase
+		glm::mat4 model_matrix;
+		glm::mat3 normal_matrix;
+
+		// Assumptions we're going to make for now for simplicity.
+		// An animated mesh will only have ONE geometry chunk.
+	}; // AnimatedMeshComponent
 
 	struct RenderScene
 	{
 		Allocator* allocator;
 		Array<StaticMeshComponent*> static_meshes;
+		Array<AnimatedMeshComponent*> animated_meshes;
 
 		render2::Pipeline* static_mesh_pipeline;
+		render2::Pipeline* animated_mesh_pipeline;
 
 		// additional scene-specific uniforms
 		glm::vec3 light_position_world;
@@ -64,15 +80,20 @@ namespace gemini
 
 		RenderScene(Allocator& _allocator)
 			: static_meshes(_allocator)
+			, animated_meshes(_allocator)
 			, allocator(&_allocator)
+			, static_mesh_pipeline(nullptr)
+			, animated_mesh_pipeline(nullptr)
 		{
-			static_mesh_pipeline = nullptr;
 		}
 	};
 
+	void render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
 	void render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device);
 	void render_scene_destroy(RenderScene* scene, render2::Device* device);
 
 	void render_scene_draw(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::RenderTarget* render_target = nullptr);
+	void render_static_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
+	void render_animated_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 } // namespace gemini
