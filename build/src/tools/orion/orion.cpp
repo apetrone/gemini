@@ -688,6 +688,8 @@ public:
 		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
 #endif
+		render_scene->camera_position_world = camera.get_position();
+		render_scene->camera_view_direction = camera.get_view();
 		render_scene_draw(render_scene, device, camera.get_modelview(), camera.get_projection(), render_target);
 
 		debugdraw::render(camera.get_modelview(), camera.get_projection(), render_target->width, render_target->height, render_target);

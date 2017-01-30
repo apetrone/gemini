@@ -415,6 +415,7 @@ public:
 		//	}
 		//}
 
+		//render_scene_draw(render_scene, device, view.modelview, view.projection);
 	}
 
 	virtual void render_gui()

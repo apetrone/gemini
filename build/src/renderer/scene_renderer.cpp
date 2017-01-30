@@ -98,6 +98,8 @@ namespace gemini
 		scene->static_mesh_pipeline->constants().set("projection_matrix", &projection);
 		scene->static_mesh_pipeline->constants().set("diffuse", &diffuse_unit);
 		scene->static_mesh_pipeline->constants().set("light_position_world", &scene->light_position_world);
+		scene->static_mesh_pipeline->constants().set("camera_position_world", &scene->camera_position_world);
+		scene->static_mesh_pipeline->constants().set("camera_view_direction", &scene->camera_view_direction);
 
 		serializer->texture(texture_from_handle(texture_load("textures/measure")), diffuse_unit);
 

@@ -57,7 +57,10 @@ namespace gemini
 
 		render2::Pipeline* static_mesh_pipeline;
 
+		// additional scene-specific uniforms
 		glm::vec3 light_position_world;
+		glm::vec3 camera_position_world;
+		glm::vec3 camera_view_direction;
 
 		RenderScene(Allocator& _allocator)
 			: static_meshes(_allocator)
