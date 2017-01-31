@@ -37,11 +37,12 @@ namespace gemini
 		, local_bone_transforms(0)
 		, model_bone_transforms(0)
 		, inverse_bind_transforms(0)
-		, scale_channel(scale)
-		, rotation_channel(rotation)
-		, translation_channel(translation)
+		//, scale_channel(scale)
+		//, rotation_channel(rotation)
+		//, translation_channel(translation)
 		, allocator(allocator)
 	{
+
 	}
 
 	void ModelInstanceData::set_mesh_index(AssetHandle in_mesh_handle)

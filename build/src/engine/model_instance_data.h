@@ -54,13 +54,13 @@ namespace gemini
 
 		glm::mat4* inverse_bind_transforms;
 
-		Channel<glm::vec3> scale_channel;
-		Channel<glm::quat> rotation_channel;
-		Channel<glm::vec3> translation_channel;
+		//Channel<glm::vec3> scale_channel;
+		//Channel<glm::quat> rotation_channel;
+		//Channel<glm::vec3> translation_channel;
 
-		glm::vec3 scale;
-		glm::quat rotation;
-		glm::vec3 translation;
+		//glm::vec3 scale;
+		//glm::quat rotation;
+		//glm::vec3 translation;
 
 		std::vector<animation::SequenceId> animations;
 

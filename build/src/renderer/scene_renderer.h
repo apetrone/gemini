@@ -62,6 +62,11 @@ namespace gemini
 
 		// Assumptions we're going to make for now for simplicity.
 		// An animated mesh will only have ONE geometry chunk.
+
+		// inverse bind poses used by the instance associated with this component.
+		glm::mat4* inverse_bind_poses;
+
+
 	}; // AnimatedMeshComponent
 
 	struct RenderScene
