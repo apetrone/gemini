@@ -22,12 +22,12 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-
 #pragma once
 
+#include <core/mathlib.h>
 #include <core/mem.h>
-#include <core/typedefs.h>
 #include <core/str.h>
+#include <core/typedefs.h>
 
 #include <platform/platform.h>
 
@@ -41,9 +41,14 @@ public:
 	void set_name(const String& new_name);
 
 	platform::Result save_project();
-	platform::Result save_project_as(const String& path);
+
+	platform::Result save_project_as(const String& absolute_path);
 
 	static Project* open_project(const String& absolute_path);
+
+	glm::vec3 camera_position;
+	float camera_yaw;
+	float camera_pitch;
 
 private:
 	// the name by which to refer to this object
@@ -54,4 +59,6 @@ private:
 
 	// set to non-zero if the project settings have been modified
 	uint32_t modified_flag;
+
+
 }; // Project

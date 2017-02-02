@@ -548,7 +548,9 @@ public:
 		{
 			Project test;
 			test.set_name("Just a test");
-
+			test.camera_position = camera.get_position();
+			test.camera_yaw = camera.get_yaw();
+			test.camera_pitch = camera.get_pitch();
 			platform::PathString project_path = paths[0];
 			project_path.append(PATH_SEPARATOR_STRING);
 			project_path.append("project.conf");
@@ -597,11 +599,25 @@ public:
 			project_path.append("project.conf");
 
 			environment.project = Project::open_project(project_path());
+
+			camera.set_position(environment.project->camera_position);
+			camera.set_yaw(environment.project->camera_yaw);
+			camera.set_pitch(environment.project->camera_pitch);
 		}
 	}
 
 	void on_file_save_project()
 	{
+		// If you hit this, there's no opened project.
+		assert(environment.project);
+
+		if (environment.project)
+		{
+			environment.project->camera_position = camera.get_position();
+			environment.project->camera_yaw = camera.get_yaw();
+			environment.project->camera_pitch = camera.get_pitch();
+			environment.project->save_project();
+		}
 	}
 
 	void on_file_save_project_as()

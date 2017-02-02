@@ -26,6 +26,7 @@
 
 #include <core/datastream.h>
 #include <core/logging.h>
+#include <core/mathlib.h>
 #include <runtime/filesystem.h>
 
 Project::Project()
@@ -50,6 +51,12 @@ void Project::set_name(const String& new_name)
 
 platform::Result Project::save_project()
 {
+	platform::PathString absolute_path = root_path.c_str();
+	absolute_path.append(PATH_SEPARATOR_STRING);
+	absolute_path.append("project.conf");
+
+	save_project_as(absolute_path());
+
 	return platform::Result::success();
 }
 
@@ -60,6 +67,10 @@ platform::Result Project::save_project_as(const String& absolute_path)
 	uint32_t name_length = name.length();
 	stream.write(&name_length, sizeof(uint32_t));
 	stream.write(&name[0], name_length);
+
+	stream.write(&camera_position, sizeof(glm::vec3));
+	stream.write(&camera_yaw, sizeof(float));
+	stream.write(&camera_pitch, sizeof(float));
 
 	platform::File handle = platform::fs_open(absolute_path.c_str(), platform::FileMode_Write);
 	if (!handle.is_open())
@@ -94,6 +105,7 @@ Project* Project::open_project(const String& absolute_path)
 	char* buffer = (char*)MEMORY2_ALLOC(allocator, file_size);
 
 	platform::fs_read(handle, buffer, file_size, 1);
+	platform::fs_close(handle);
 
 	core::util::MemoryStream stream;
 	stream.init(buffer, file_size);
@@ -102,8 +114,14 @@ Project* Project::open_project(const String& absolute_path)
 	stream.read(name_length);
 	project->name.resize(name_length);
 	stream.read(&project->name[0], name_length);
+	stream.read(&project->camera_position, sizeof(glm::vec3));
+	stream.read(project->camera_yaw);
+	stream.read(project->camera_pitch);
 
 	MEMORY2_DEALLOC(allocator, buffer);
+
+	platform::PathString root_path = absolute_path.c_str();
+	project->root_path = root_path.dirname()();
 
 	return project;
 }
