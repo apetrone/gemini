@@ -209,6 +209,11 @@ typedef HashSet<platform::PathString, ModifiedAssetData> PathDelayHashSet;
 size_t total_bytes = sizeof(MyVertex) * 4;
 
 
+struct EditorEnvironment
+{
+	Project* project;
+};
+
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -232,6 +237,8 @@ private:
 	glm::mat4 joint_offsets[IMOCAP_TOTAL_SENSORS];
 
 	MyVertex vertex_data[4];
+
+	EditorEnvironment environment;
 
 //	GLsync fence;
 
@@ -328,9 +335,17 @@ public:
 		should_move_view = false;
 
 		asset_processor = nullptr;
+
+		memset(&environment, 0, sizeof(EditorEnvironment));
 	}
 
-	virtual ~EditorKernel() {}
+	virtual ~EditorKernel()
+	{
+		if (environment.project)
+		{
+			delete environment.project;
+		}
+	}
 
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
@@ -523,9 +538,73 @@ public:
 
 	void on_file_new(void)
 	{
+		uint32_t open_flags = platform::OpenDialogFlags::CanChooseDirectories | platform::OpenDialogFlags::CanCreateDirectories;
+
+		gemini::Allocator temp = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
+		Array<PathString> paths(temp);
+		platform::Result result = platform::show_open_dialog("Choose project root", open_flags, paths);
+		if (result.succeeded())
+		{
+			Project test;
+			test.set_name("Just a test");
+
+			platform::PathString project_path = paths[0];
+			project_path.append(PATH_SEPARATOR_STRING);
+			project_path.append("project.conf");
+
+			test.save_project_as(project_path());
+
+			LOGV("saved path: %s\n", paths[0]());
+		}
+	}
+
+
+	uint32_t on_test_click(platform::PlatformDialogEvent& event)
+	{
+		if (event.type == OpenDialogEventType::OkClicked)
+		{
+			// does a project file exist at path?
+			platform::PathString project_path = event.filename;
+			project_path.append(PATH_SEPARATOR_STRING);
+			project_path.append("project.conf");
+			if (!core::filesystem::instance()->file_exists(project_path(), false))
+			{
+				// TODO: Alert the user that this directory doesn't contain
+				// a project file.
+				LOGW("file '%s' does not exist\n", project_path());
+				return 1;
+			}
+		}
+
+		return 0;
 	}
 
 	void on_file_open()
+	{
+		uint32_t open_flags = platform::OpenDialogFlags::CanChooseDirectories;
+
+		gemini::Allocator temp = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
+		Array<PathString> paths(temp);
+		platform::open_dialog_event_handler delegate;
+		delegate.bind<EditorKernel, &EditorKernel::on_test_click>(this);
+		platform::Result result = platform::show_open_dialog("Choose project", open_flags, paths, delegate);
+		if (result.succeeded())
+		{
+			platform::PathString project_path = paths[0];
+			project_path.append(PATH_SEPARATOR_STRING);
+			project_path.append("project.conf");
+
+			environment.project = Project::open_project(project_path());
+		}
+	}
+
+	void on_file_save_project()
+	{
+	}
+
+	void on_file_save_project_as()
 	{
 	}
 
@@ -1029,6 +1108,9 @@ Options:
 
 				filemenu->add_item("New Project...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_new, this));
 				filemenu->add_item("Open Project...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_open, this));
+				filemenu->add_separator();
+				filemenu->add_item("Save Project", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_save_project, this));
+				filemenu->add_item("Save Project As...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_save_project_as, this));
 				filemenu->add_separator();
 				filemenu->add_item("Quit", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_quit, this));
 				menubar->add_menu(filemenu);

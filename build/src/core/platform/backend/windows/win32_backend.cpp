@@ -25,9 +25,26 @@
 
 #include "platform_internal.h"
 
+#include <core/logging.h>
+
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 #include <commdlg.h> // for OPENFILENAME, GetOpenFileName, GetSaveFileName
+#include <shobjidl.h> // for the Common Item Dialog functions
+#include <Shlwapi.h>
+
+namespace win32
+{
+	void wide_to_ascii(platform::PathString& filename, WCHAR* string)
+	{
+		int mb_size_required = WideCharToMultiByte(CP_ACP, 0, string, wcslen(string), NULL, 0, NULL, NULL);
+
+		// If this is too large, then we need to use a dynamic buffer instead.
+		assert(filename.max_size() > mb_size_required);
+
+		WideCharToMultiByte(CP_ACP, 0, string, wcslen(string), &filename[0], mb_size_required, NULL, NULL);
+	} // wide_to_ascii
+} // namespace win32
 
 namespace platform
 {
@@ -170,37 +187,181 @@ namespace platform
 	// These should be converted to use the OFNHookProc.
 	// https://msdn.microsoft.com/en-us/library/ms646931(v=vs.85).aspx
 
-	Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths)
+	class OpenFileCallback : public IFileDialogEvents
 	{
-		char filename_buffer[MAX_PATH_SIZE] = { 0 };
+	public:
+		open_dialog_event_handler event_handler;
 
-		OPENFILENAMEA info;
-		ZeroMemory(&info, sizeof(OPENFILENAMEA));
-
-		info.lStructSize = sizeof(OPENFILENAMEA);
-		info.hwndOwner = GetFocus();
-
-		info.lpstrTitle = title;
-		info.lpstrFile = filename_buffer;
-		info.nMaxFile = MAX_PATH_SIZE;
-
-		if (open_flags & OpenDialogFlags::ShowHiddenFiles)
+		OpenFileCallback()
+			: references(0)
 		{
-			info.Flags |= OFN_FORCESHOWHIDDEN;
 		}
 
-		if (open_flags & OpenDialogFlags::AllowMultiselect)
+		void set_handler(open_dialog_event_handler handler)
 		{
-			info.Flags |= OFN_ALLOWMULTISELECT;
+			event_handler = handler;
 		}
 
-		if (GetOpenFileNameA(&info))
+		IFACEMETHODIMP QueryInterface(REFIID refiid, void** ppv)
 		{
-			paths.push_back(info.lpstrFile);
+			static const QITAB qit[] = {
+				QITABENT(OpenFileCallback, IFileDialogEvents),
+				{ 0 }
+			};
+
+			return QISearch(this, qit, refiid, ppv);
+		}
+
+
+		IFACEMETHODIMP_(ULONG) AddRef()
+		{
+			return InterlockedIncrement(&references);
+		}
+
+		IFACEMETHODIMP_(ULONG) Release()
+		{
+			long refs = InterlockedDecrement(&references);
+			if (refs == 0)
+			{
+				delete this;
+			}
+			return refs;
+		}
+
+		// IFileDialogEvents
+		IFACEMETHODIMP OnFileOk(IFileDialog* file_dialog)
+		{
+			uint32_t result = 0;
+			if (event_handler.is_valid())
+			{
+				PlatformDialogEvent event;
+				event.type = OpenDialogEventType::OkClicked;
+
+				IShellItem* shell_item;
+				if (SUCCEEDED(file_dialog->GetResult(&shell_item)))
+				{
+					WCHAR* buffer;
+					if (!SUCCEEDED(shell_item->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, (LPWSTR*)&buffer)))
+					{
+						return E_INVALIDARG;
+					}
+
+					win32::wide_to_ascii(event.filename, buffer);
+					CoTaskMemFree(buffer);
+				}
+				result = event_handler(event);
+			}
+
+			// result to HRESULT.
+			if (result != 0)
+			{
+				return E_INVALIDARG;
+			}
+			else
+			{
+				return S_OK;
+			}
+		}
+		IFACEMETHODIMP OnFolderChanging(IFileDialog* pfd, IShellItem* psiFolder) { return E_NOTIMPL; }
+		IFACEMETHODIMP OnFolderChange(IFileDialog* pfd) { return E_NOTIMPL; }
+		IFACEMETHODIMP OnSelectionChange(IFileDialog* pfd) { return S_OK; }
+		IFACEMETHODIMP OnShareViolation(IFileDialog* pfd, IShellItem* psi,
+			FDE_SHAREVIOLATION_RESPONSE* pResponse) { return E_NOTIMPL; }
+		IFACEMETHODIMP OnTypeChange(IFileDialog* pfd) { return E_NOTIMPL; }
+		IFACEMETHODIMP OnOverwrite(IFileDialog* pfd, IShellItem* psi,
+			FDE_OVERWRITE_RESPONSE* pResponse) { return E_NOTIMPL; }
+
+
+	private:
+		long references;
+	}; // OpenFileCallback
+
+
+	HRESULT OpenFileCallback_CreateInstance(REFIID riid, void** ppv)
+	{
+		*ppv = nullptr;
+
+		HRESULT result = E_OUTOFMEMORY;
+
+		OpenFileCallback* callback = new OpenFileCallback();
+		if (callback)
+		{
+			result = callback->QueryInterface(riid, ppv);
+			//callback->Release();
+		}
+
+		return result;
+	}
+
+	Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths, open_dialog_event_handler event_handler)
+	{
+		bool result = false;
+		WCHAR* buffer = nullptr;
+
+		IFileDialog* filedialog;
+		if (SUCCEEDED(CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&filedialog))))
+		{
+			DWORD dwOptions;
+			if (SUCCEEDED(filedialog->GetOptions(&dwOptions)))
+			{
+				if (open_flags & OpenDialogFlags::CanChooseDirectories)
+				{
+					filedialog->SetOptions(dwOptions | FOS_PICKFOLDERS | FOS_PATHMUSTEXIST);
+				}
+				else if (open_flags & OpenDialogFlags::CanChooseFiles)
+				{
+					filedialog->SetOptions(dwOptions | FOS_FILEMUSTEXIST);
+				}
+				else
+				{
+					// I don't know what to display here.
+					assert(0);
+				}
+			}
+
+			IFileDialogEvents* dialog_events;
+			OpenFileCallback_CreateInstance(IID_PPV_ARGS(&dialog_events));
+			DWORD cookie;
+			HRESULT advise_result = filedialog->Advise(dialog_events, &cookie);
+			if (FAILED(advise_result))
+			{
+				assert(0);
+			}
+
+			OpenFileCallback* callback = reinterpret_cast<OpenFileCallback*>(dialog_events);
+			callback->set_handler(event_handler);
+
+			filedialog->SetTitle(L"Choose...");
+
+			if (SUCCEEDED(filedialog->Show(NULL)))
+			{
+				IShellItem *psi;
+				if (SUCCEEDED(filedialog->GetResult(&psi)))
+				{
+					if (!SUCCEEDED(psi->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, (LPWSTR*)&buffer)))
+					{
+						return Result::failure("GetDisplayName failed");
+					}
+
+					platform::PathString filename;
+					win32::wide_to_ascii(filename, buffer);
+					CoTaskMemFree(buffer);
+					result = true;
+					paths.push_back(filename);
+					psi->Release();
+				}
+			}
+			filedialog->Unadvise(cookie);
+			dialog_events->Release();
+			filedialog->Release();
+		}
+
+		if (result)
+		{
 			return Result::success();
 		}
 
-		return Result::failure("Not implemented");
+		return Result::failure("User canceled dialog");
 	} // show_open_dialog
 
 	Result show_save_dialog(const char* title,

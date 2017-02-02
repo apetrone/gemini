@@ -527,7 +527,19 @@ namespace platform
 		constexpr uint8_t CanChooseFiles		= 16;	// files can be selected
 	} // namespace OpenDialogFlags
 
-	Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths);
+	enum class OpenDialogEventType
+	{
+		OkClicked
+	};
+
+	struct PlatformDialogEvent
+	{
+		OpenDialogEventType type;
+		platform::PathString filename;
+	};
+
+	typedef gemini::Delegate<uint32_t(PlatformDialogEvent&)> open_dialog_event_handler;
+	Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths, open_dialog_event_handler event_handler = open_dialog_event_handler());
 
 	namespace SaveDialogFlags
 	{
