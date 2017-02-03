@@ -377,7 +377,6 @@ namespace gemini
 				// 1. allocate enough space for each bone
 				sequence->animation_set.allocate(bones_array.size() * ANIMATION_KEYFRAME_VALUES_MAX, KeyframeList(sequence->allocator));
 
-
 				Json::ValueIterator node_iter = bones_array.begin();
 				size_t node_index = 0;
 				for (; node_iter != bones_array.end(); ++node_iter)
@@ -499,6 +498,7 @@ namespace gemini
 				data.mesh = mesh;
 				data.sequence = sequence;
 				sequence->name = name;
+				LOGV("loading animation %s\n", filepath());
 				if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(filepath(), load_animation_from_json, &data, true))
 				{
 					sequence->index= _sequences.size();

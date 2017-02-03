@@ -77,7 +77,12 @@ namespace gemini
 		struct LoadState
 		{
 			Allocator* allocator;
+
+			// asset instance
 			T* asset;
+
+			// path of the current asset on disk
+			platform::PathString asset_uri;
 		}; // AssetLoadState
 
 		Allocator& allocator;
@@ -185,6 +190,7 @@ namespace gemini
 			LoadState load_state;
 			load_state.asset = nullptr;
 			load_state.allocator = &allocator;
+			load_state.asset_uri = fullpath;
 
 			instance_reference().create_asset(load_state, parameters);
 			AssetLoadStatus load_result = instance_reference().load_asset(load_state, fullpath, parameters);

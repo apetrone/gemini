@@ -22,6 +22,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#include <runtime/animation.h>
 #include <runtime/assets.h>
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
@@ -1015,7 +1016,10 @@ Options:
 
 		render_scene = render_scene_create(render_allocator, device);
 
+		animation::startup(asset_allocator);
+
 		AssetHandle test_mesh = mesh_load("models/cube");
+		AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
 
 		glm::mat4 transform(1.0f);
 
@@ -1582,6 +1586,8 @@ Options:
 
 		notify_client_destroy(&notify_client);
 		notify_server_destroy(&notify_server);
+
+		animation::shutdown();
 
 		MEMORY2_DELETE(asset_allocator, queued_asset_changes);
 		queued_asset_changes = nullptr;

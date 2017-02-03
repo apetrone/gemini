@@ -22,6 +22,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#include <runtime/animation.h>
 #include <runtime/configloader.h>
 #include <runtime/filesystem.h>
 #include <runtime/geometry.h>
@@ -147,7 +148,6 @@ namespace gemini
 				}
 			}
 
-
 			// setup materials
 
 			renderer::Geometry* geo = MEMORY2_NEW(state.allocator, renderer::Geometry)(state.allocator);
@@ -179,7 +179,7 @@ namespace gemini
 			std::string shader_path = "objects";
 			if (!bind_data.empty())
 			{
-				shader_path = "animation";
+				shader_path = "animated";
 			}
 
 			geo->shader_id = shader_load(shader_path.c_str());
@@ -465,6 +465,23 @@ namespace gemini
 			traverse_nodes(state, node, materials_by_id, false /*is_world*/);
 		}
 
+
+		// try to load animations
+		Json::Value animation_list = root["animations"];
+		if (!animation_list.isNull())
+		{
+			Json::ValueIterator it = animation_list.begin();
+			for (; it != animation_list.end(); ++it)
+			{
+				const Json::Value& animation_name = (*it);
+				std::string name = animation_name.asString();
+
+				platform::PathString animation_sequence_uri = load_state->asset_uri.dirname();
+				animation_sequence_uri.append(PATH_SEPARATOR_STRING);
+				animation_sequence_uri.append(name.c_str());
+				gemini::animation::load_sequence(*load_state->allocator, animation_sequence_uri(), mesh);
+			}
+		}
 
 		return core::util::ConfigLoad_Success;
 	}

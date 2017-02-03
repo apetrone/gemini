@@ -26,7 +26,6 @@
 
 #include <core/fixedarray.h>
 #include <core/stackstring.h>
-
 #include <core/typedefs.h>
 
 namespace gemini
@@ -116,8 +115,7 @@ namespace gemini
 			FixedArray<KeyframeList> animation_set;
 
 			Sequence(gemini::Allocator& allocator);
-		};
-
+		}; // Sequence
 
 
 		struct AnimatedInstance
@@ -129,7 +127,6 @@ namespace gemini
 			FixedArray<Channel> channel_set;
 			bool enabled;
 
-
 			AnimatedInstance(gemini::Allocator& allocator);
 			virtual ~AnimatedInstance() {}
 
@@ -137,7 +134,7 @@ namespace gemini
 			virtual void advance(float delta_seconds);
 			virtual bool is_playing() const { return enabled; }
 			virtual void reset_channels();
-		};
+		}; // AnimatedInstance
 
 		//
 		// animation system
