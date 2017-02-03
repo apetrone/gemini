@@ -51,8 +51,6 @@ namespace renderer
 	#error Unknown renderer support!
 #endif
 
-	typedef unsigned char VertexType;
-
 	// I would like to be able to test both interleaved and serial formats
 	// on the GPU.
 	struct GeometryVertex

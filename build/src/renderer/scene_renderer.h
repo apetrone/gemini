@@ -91,7 +91,7 @@ namespace gemini
 		}
 	};
 
-	void render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
+	AnimatedMeshComponent* render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
 	void render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device);
 	void render_scene_destroy(RenderScene* scene, render2::Device* device);

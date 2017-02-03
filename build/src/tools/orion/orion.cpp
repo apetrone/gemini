@@ -1029,6 +1029,10 @@ Options:
 			transform = glm::translate(transform, glm::vec3(1.5f, 0.0f, 0.0f));
 		}
 
+		AnimatedMeshComponent* component = render_scene_add_animated_mesh(render_scene, plane_rig, 0, transform);
+
+
+
 		// initialize debug draw
 		debugdraw::startup(debugdraw_allocator, device);
 

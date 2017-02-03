@@ -32,7 +32,7 @@
 
 namespace gemini
 {
-	void render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
+	AnimatedMeshComponent* render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
 	{
 		AnimatedMeshComponent* component = MEMORY2_NEW(*scene->allocator, AnimatedMeshComponent);
 		component->entity_index = entity_index;
@@ -40,6 +40,8 @@ namespace gemini
 		component->model_matrix = model_transform;
 		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
 		scene->animated_meshes.push_back(component);
+
+		return component;
 	} // render_scene_add_animated_mesh
 
 	void render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
@@ -94,6 +96,11 @@ namespace gemini
 			MEMORY2_DELETE(*scene->allocator, scene->static_meshes[index]);
 		}
 
+		for (size_t index = 0; index < scene->animated_meshes.size(); ++index)
+		{
+			MEMORY2_DELETE(*scene->allocator, scene->animated_meshes[index]);
+		}
+
 		device->destroy_pipeline(scene->static_mesh_pipeline);
 		device->destroy_pipeline(scene->animated_mesh_pipeline);
 
@@ -115,9 +122,21 @@ namespace gemini
 		render_pass.depth_test = true;
 		render_pass.depth_write = true;
 		render_pass.cull_mode = render2::CullMode::Backface;
-
 		render_static_meshes(scene, device, view, projection, render_pass);
-		render_animated_meshes(scene, device, view, projection, render_pass);
+
+
+		render2::Pass animated_pass;
+		if (!render_target)
+		{
+			animated_pass.target = device->default_render_target();
+		}
+		animated_pass.target = render_target;
+		animated_pass.clear_color = false;
+		animated_pass.clear_depth = false;
+		animated_pass.depth_test = true;
+		animated_pass.depth_write = true;
+		animated_pass.cull_mode = render2::CullMode::Backface;
+		render_animated_meshes(scene, device, view, projection, animated_pass);
 	} // render_scene_draw
 
 	void render_static_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass)
@@ -181,15 +200,15 @@ namespace gemini
 
 		serializer->texture(texture_from_handle(texture_load("textures/measure")), diffuse_unit);
 
-		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
+		for (size_t index = 0; index < scene->animated_meshes.size(); ++index)
 		{
-			StaticMeshComponent* static_mesh = scene->static_meshes[index];
+			AnimatedMeshComponent* instance = scene->animated_meshes[index];
 
-			Mesh* mesh = mesh_from_handle(static_mesh->mesh_handle);
+			Mesh* mesh = mesh_from_handle(instance->mesh_handle);
 			if (mesh)
 			{
-				serializer->constant("model_matrix", &static_mesh->model_matrix, sizeof(glm::mat4));
-				serializer->constant("normal_matrix", &static_mesh->normal_matrix, sizeof(glm::mat3));
+				serializer->constant("model_matrix", &instance->model_matrix, sizeof(glm::mat4));
+				serializer->constant("normal_matrix", &instance->normal_matrix, sizeof(glm::mat3));
 				for (size_t geo = 0; geo < mesh->geometry.size(); ++geo)
 				{
 					::renderer::Geometry* geometry = mesh->geometry[geo];

@@ -513,10 +513,17 @@ namespace gemini
 				LOGV("geo [%i] vertices: %i\n", index, geo->vertex_count);
 
 				render2::VertexDescriptor descriptor;
-
+				// static mesh
 				descriptor.add("in_position", render2::VD_FLOAT, 3);
 				descriptor.add("in_normal", render2::VD_FLOAT, 3);
 				descriptor.add("in_uv", render2::VD_FLOAT, 2);
+
+				// animated mesh
+				//descriptor.add("in_position", render2::VD_FLOAT, 3);
+				//descriptor.add("in_normal", render2::VD_FLOAT, 3);
+				//descriptor.add("in_uv", render2::VD_FLOAT, 2);
+				//descriptor.add("in_blendindices", render2::VD_FLOAT, 4);
+				//descriptor.add("in_blendweights", render2::VD_FLOAT, 4);
 
 				size_t stride = device->compute_vertex_stride(descriptor);
 				const size_t vertex_buffer_size = (geo->vertex_count * stride);
