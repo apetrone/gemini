@@ -756,6 +756,7 @@ class GeminiModel(object):
 		self.bone_data = None
 
 		self.selected_meshes = []
+
 	#
 	# Materials
 	#
@@ -810,7 +811,7 @@ class GeminiModel(object):
 
 		# bail out early if we're missing data
 		if not (self.armature and self.bone_data):
-			return
+			return []
 
 		bpy.ops.object.select_all(action='DESELECT')
 
@@ -980,6 +981,8 @@ class GeminiModel(object):
 
 		print("Total selected meshes: %i" % len(self.selected_meshes))
 
+		animations = []
+
 		root_node = RootNode(materials=[])
 		root_node.export_info = {
 			'blender_version': ("%i.%i.%i" % (bpy.app.version[0], bpy.app.version[1], bpy.app.version[2])),
@@ -1001,10 +1004,6 @@ class GeminiModel(object):
 
 		root_node.prepare_materials_for_export(self)
 
-		self.file_handle.write(root_node.to_json())
-
-		self.file_handle.close()
-
 		if self.armature:
 			# write animations to the same directory where the .model goes
 			target_directory = os.path.dirname(self.filepath)
@@ -1019,6 +1018,13 @@ class GeminiModel(object):
 
 				handle.write(animation.to_json())
 				handle.close()
+
+		# Populate the animations so we know which to load.
+		root_node.animations = [anim.name for anim in animations]
+
+		# Write out the mesh file
+		self.file_handle.write(root_node.to_json())
+		self.file_handle.close()
 
 		# restore the original frame
 		bpy.context.scene.frame_set(original_scrubber_position)
