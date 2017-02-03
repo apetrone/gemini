@@ -546,16 +546,21 @@ public:
 		platform::Result result = platform::show_open_dialog("Choose project root", open_flags, paths);
 		if (result.succeeded())
 		{
-			Project test;
-			test.set_name("Just a test");
-			test.camera_position = camera.get_position();
-			test.camera_yaw = camera.get_yaw();
-			test.camera_pitch = camera.get_pitch();
+			assert(environment.project == nullptr);
+
+			Project* project = Project::create_project();
+			environment.project = project;
+
+			project->set_name("TestProject");
+			project->camera_position = camera.get_position();
+			project->camera_yaw = camera.get_yaw();
+			project->camera_pitch = camera.get_pitch();
 			platform::PathString project_path = paths[0];
+			project->set_root_path(project_path());
 			project_path.append(PATH_SEPARATOR_STRING);
 			project_path.append("project.conf");
 
-			test.save_project_as(project_path());
+			project->save_project_as(project_path());
 
 			LOGV("saved path: %s\n", paths[0]());
 		}
@@ -1482,12 +1487,11 @@ Options:
 		debugdraw::oriented_box(box.rotation, box.center, box.positive_extents, gemini::Color(1.0f, 0.0f, 0.0f));
 		debugdraw::axes(glm::mat4(box.rotation), 1.0f, 0.0f);
 #endif
-		//static float the_time = 0.0f;
-		//render_scene->light_position_world.x = cosf(the_time);
-		//render_scene->light_position_world.y = 2.0f;
-		//render_scene->light_position_world.z = sinf(the_time);
-
-		//the_time += 0.01f;
+		static float the_time = 0.0f;
+		render_scene->light_position_world.x = cosf(the_time);
+		render_scene->light_position_world.y = 2.0f;
+		render_scene->light_position_world.z = sinf(the_time);
+		the_time += 0.01f;
 
 		// draw the position of the light
 		debugdraw::sphere(render_scene->light_position_world, Color(1.0f, 1.0f, 1.0f), 0.5f, 0.0f);

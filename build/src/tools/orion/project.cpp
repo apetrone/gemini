@@ -85,6 +85,17 @@ platform::Result Project::save_project_as(const String& absolute_path)
 	return platform::Result::success();
 }
 
+void Project::set_root_path(const String& in_root_path)
+{
+	root_path = in_root_path;
+}
+
+Project* Project::create_project()
+{
+	Project* project = new Project();
+	return project;
+}
+
 Project* Project::open_project(const String& absolute_path)
 {
 	Project* project = new Project();
