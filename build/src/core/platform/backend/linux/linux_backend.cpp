@@ -357,7 +357,7 @@ namespace platform
 		return version;
 	}
 
-	Result show_open_dialog(const char* /*title*/, uint32_t /*open_flags*/, Array<PathString>& /*paths*/)
+	Result show_open_dialog(const char* /*title*/, uint32_t /*open_flags*/, Array<PathString>& /*paths*/, open_dialog_event_handler /*event_handler*/)
 	{
 		return Result::failure("Not implemented.");
 	} // show_open_dialog

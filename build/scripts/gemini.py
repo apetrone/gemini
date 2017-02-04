@@ -620,6 +620,8 @@ def get_librenderer(arguments, target_platform):
 		"src/renderer/rendertarget.h",
 		"src/renderer/rqueue.cpp",
 		"src/renderer/rqueue.h",
+		"src/renderer/scene_renderer.cpp",
+		"src/renderer/scene_renderer.h",
 		"src/renderer/shader_library.cpp",
 		"src/renderer/shader_library.h",
 		"src/renderer/shader.cpp",
