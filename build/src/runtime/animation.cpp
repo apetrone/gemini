@@ -268,21 +268,19 @@ namespace gemini
 		SequenceHash* _sequences_by_name;
 		gemini::Allocator* _allocator = nullptr;
 
+		struct AnimationSequenceLoadData
+		{
+			Sequence* sequence;
+			Mesh* mesh;
+		};
+
 		namespace detail
 		{
-
 			typedef std::vector<Sequence*> SequenceArray;
 			typedef std::vector<AnimatedInstance*> InstanceArray;
 
-
 			SequenceArray _sequences;
 			InstanceArray _instances;
-
-			struct AnimationSequenceLoadData
-			{
-				Sequence* sequence;
-				Mesh* mesh;
-			};
 
 			static bool validate_node(const Json::Value& node, const char* error_message)
 			{
@@ -480,40 +478,38 @@ namespace gemini
 
 				return core::util::ConfigLoad_Success;
 			}
+		} // namespace detail
 
-
-			Sequence* load_sequence_from_file(gemini::Allocator& allocator, const char* name, Mesh* mesh)
+		Sequence* load_sequence_from_file(gemini::Allocator& allocator, const char* name, Mesh* mesh)
+		{
+			if (_sequences_by_name->has_key(name))
 			{
-				if (_sequences_by_name->has_key(name))
-				{
-					Sequence* data = 0;
-					data = _sequences_by_name->get(name);
-					return data;
-				}
+				Sequence* data = 0;
+				data = _sequences_by_name->get(name);
+				return data;
+			}
 
-				Sequence* sequence = MEMORY2_NEW(allocator, Sequence)(allocator);
-				platform::PathString filepath = name;
-				filepath.append(".animation");
-				AnimationSequenceLoadData data;
-				data.mesh = mesh;
-				data.sequence = sequence;
-				sequence->name = name;
-				LOGV("loading animation %s\n", filepath());
-				if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(filepath(), load_animation_from_json, &data, true))
-				{
-					sequence->index= _sequences.size();
-					_sequences_by_name->insert(SequenceHash::value_type(name, sequence));
-					_sequences.push_back(sequence);
-				}
-				else
-				{
-					MEMORY2_DELETE(allocator, sequence);
-				}
+			Sequence* sequence = MEMORY2_NEW(allocator, Sequence)(allocator);
+			platform::PathString filepath = name;
+			filepath.append(".animation");
+			AnimationSequenceLoadData data;
+			data.mesh = mesh;
+			data.sequence = sequence;
+			sequence->name = name;
+			LOGV("loading animation %s\n", filepath());
+			if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(filepath(), detail::load_animation_from_json, &data, true))
+			{
+				sequence->index = detail::_sequences.size();
+				_sequences_by_name->insert(SequenceHash::value_type(name, sequence));
+				detail::_sequences.push_back(sequence);
+			}
+			else
+			{
+				MEMORY2_DELETE(allocator, sequence);
+			}
 
-				return sequence;
-			} // load_sequence_from_file
-		}
-
+			return sequence;
+		} // load_sequence_from_file
 
 		void startup(gemini::Allocator& allocator)
 		{
@@ -551,7 +547,7 @@ namespace gemini
 
 		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, Mesh* mesh)
 		{
-			Sequence* sequence = detail::load_sequence_from_file(allocator, name, mesh);
+			Sequence* sequence = load_sequence_from_file(allocator, name, mesh);
 			if (sequence)
 			{
 				AnimatedInstance* instance = create_sequence_instance(allocator, sequence->index);

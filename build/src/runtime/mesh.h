@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <runtime/animation.h>
 #include <runtime/asset_handle.h>
 #include <runtime/geometry.h>
 
@@ -79,7 +80,11 @@ namespace gemini
 
 		uint16_t* indices;
 
+		// geometry definitions for this mesh
 		FixedArray<GeometryDefinition> geometry;
+
+		// list of animation sequences associated with this mesh
+		FixedArray<animation::SequenceId> sequences;
 
 		// offset to the center of mass
 		glm::vec3 mass_center_offset;

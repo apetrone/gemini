@@ -194,6 +194,14 @@ namespace gemini
 
 		Mesh* mesh = mesh_from_handle(mesh_handle);
 
+		// iterate over all sequences and create sequence instances
+		// for this AnimationMeshComponent.
+		for (size_t sequence = 0; sequence < mesh->sequences.size(); ++sequence)
+		{
+			// create_sequence_instance(
+		}
+
+
 		for (size_t index = 0; index < MAX_BONES; ++index)
 		{
 			component->bone_transforms[index] = mesh->bind_poses[index] * glm::mat4(1.0f);

@@ -67,6 +67,8 @@ namespace gemini
 		glm::mat4* inverse_bind_poses;
 
 		glm::mat4* bone_transforms;
+
+		// animation::SequenceId current_sequence;
 	}; // AnimatedMeshComponent
 
 	struct RenderScene

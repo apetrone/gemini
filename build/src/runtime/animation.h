@@ -143,6 +143,10 @@ namespace gemini
 		void shutdown();
 		void update(float delta_seconds);
 
+		Sequence* load_sequence_from_file(gemini::Allocator& allocator, const char* name, Mesh* mesh);
+
+
+
 		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, Mesh* mesh);
 		SequenceId find_sequence(const char* name);
 		Sequence* get_sequence_by_index(SequenceId index);

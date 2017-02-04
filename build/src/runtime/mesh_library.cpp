@@ -360,13 +360,6 @@ namespace gemini
 
 	void collect_scene_data(const Json::Value& node, SceneInfo* scene_info)
 	{
-		//assert(!node["name"].isNull());
-		//assert(!node["type"].isNull());
-		//std::string node_name = node["name"].asString();
-		////		LOGV("node %s\n", node_name.c_str());
-
-		//++total_nodes;
-
 		std::string node_type = node["type"].asString();
 		if (node_type == "mesh")
 		{
@@ -389,11 +382,6 @@ namespace gemini
 
 			scene_info->geometry.push_back(geometry_definition);
 
-			//Json::Value uv_sets = node["uv_sets"];
-			//Json::Value vertex_colors = node["vertex_colors"];
-			//const Json::Value& blend_weights = node["blend_weights"];
-			//const Json::Value& bind_data = node["bind_data"];
-
 			// load skeleton, if one exists
 			// this will only construct the hierarchy -- which should be consistent
 			// for a single model file.
@@ -411,34 +399,13 @@ namespace gemini
 				collect_scene_data((*child_iter), scene_info);
 			}
 		}
-	}
+	} // collect_scene_Data
 
 
 	core::util::ConfigLoadStatus load_json_model(const Json::Value& root, void* data)
 	{
 		MeshLibrary::LoadState* load_state = reinterpret_cast<MeshLibrary::LoadState*>(data);
 		Mesh* mesh = load_state->asset;
-
-		// TODO: remove this hack for maps in the re-write.
-		//core::StackString<MAX_PATH_SIZE> fullpath = mesh->path;
-		//bool is_world = fullpath.startswith("maps");
-
-		// make sure we can load the default material
-		//Material* default_mat = materials()->default_asset();
-		//if (!default_mat)
-		//{
-		//	LOGE("Could not load the default material!\n");
-		//	return core::util::ConfigLoad_Failure;
-		//}
-
-		// n-meshes
-		// skeleton (should this be separate?)
-		// animation (should be separate)
-
-		// try to read all geometry
-		// first pass will examine nodes
-
-		//LOGV("loading model '%s'...\n", mesh->path());
 
 		Json::Value node_root = root["children"];
 
@@ -489,13 +456,17 @@ namespace gemini
 			traverse_nodes(state, node, materials_by_id, &current_geometry);
 		}
 
-#if 0
 		// try to load animations
 		Json::Value animation_list = root["animations"];
 		if (!animation_list.isNull())
 		{
 			Json::ValueIterator it = animation_list.begin();
-			for (; it != animation_list.end(); ++it)
+
+			uint32_t total_sequences = animation_list.size();
+			mesh->sequences.allocate(total_sequences);
+
+			uint32_t animation_index = 0;
+			for (; it != animation_list.end(); ++it, ++animation_index)
 			{
 				const Json::Value& animation_name = (*it);
 				std::string name = animation_name.asString();
@@ -503,10 +474,10 @@ namespace gemini
 				platform::PathString animation_sequence_uri = load_state->asset_uri.dirname();
 				animation_sequence_uri.append(PATH_SEPARATOR_STRING);
 				animation_sequence_uri.append(name.c_str());
-				gemini::animation::load_sequence(*load_state->allocator, animation_sequence_uri(), mesh);
+				animation::Sequence* sequence = animation::load_sequence_from_file(*load_state->allocator, animation_sequence_uri(), mesh);
+				mesh->sequences[animation_index] = sequence->index;
 			}
 		}
-#endif
 
 		return core::util::ConfigLoad_Success;
 	}
