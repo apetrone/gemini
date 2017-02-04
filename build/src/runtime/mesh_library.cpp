@@ -225,13 +225,11 @@ namespace gemini
 
 					const Json::Value& bind_pose = skeleton_entry["bind_pose"];
 					assert(!bind_pose.isNull());
-					//state.mesh->bind_poses[bone_index] = json_to_mat4(bind_pose);
-					state.mesh->bind_poses[bone_index] = glm::mat4(1.0f);
+					state.mesh->bind_poses[bone_index] = json_to_mat4(bind_pose);
 
 					const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
 					assert(!inverse_bind_pose.isNull());
-					//state.mesh->inverse_bind_poses[bone_index] = json_to_mat4(inverse_bind_pose);
-					state.mesh->inverse_bind_poses[bone_index] = glm::mat4(1.0f);
+					state.mesh->inverse_bind_poses[bone_index] = json_to_mat4(inverse_bind_pose);
 				}
 
 				// read all blend weights and indices
