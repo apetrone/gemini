@@ -145,7 +145,7 @@ namespace gemini
 						joint.parent_index = parent.asInt();
 					}
 
-	//						LOGV("read joint: %s, parent: %i, index: %i\n", joint.name(), joint.parent_index, joint.index);
+//					LOGV("read joint: %s, parent: %i, index: %i\n", joint.name(), joint.parent_index, joint.index);
 				}
 			}
 
@@ -196,7 +196,6 @@ namespace gemini
 				// no material specified; load default material
 				geometry->material_handle = material_load("materials/default");
 			}
-
 
 			// If this has a skeleton...
 			if (!state.mesh->skeleton.empty())

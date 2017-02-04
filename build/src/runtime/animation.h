@@ -31,10 +31,9 @@
 namespace gemini
 {
 	struct Allocator;
+	struct Mesh;
 
 	const size_t ANIMATION_KEYFRAME_VALUES_MAX = 7;
-
-	struct Mesh;
 
 
 	namespace animation
@@ -68,7 +67,7 @@ namespace gemini
 		class Channel
 		{
 		private:
-			// source keyframe list
+			// source key frame list
 			KeyframeList* keyframelist;
 
 			// local time in seconds [0, keyframelist->duration_seconds]
@@ -135,6 +134,7 @@ namespace gemini
 			virtual bool is_playing() const { return enabled; }
 			virtual void reset_channels();
 		}; // AnimatedInstance
+
 
 		//
 		// animation system

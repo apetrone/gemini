@@ -183,7 +183,6 @@ namespace gemini
 	} // render_scene_track_mesh
 
 
-
 	AnimatedMeshComponent* render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
 	{
 		AnimatedMeshComponent* component = MEMORY2_NEW(*scene->allocator, AnimatedMeshComponent);
@@ -423,7 +422,6 @@ namespace gemini
 					serializer->draw_indexed_primitives(mesh_info->index_buffer, geometry->total_indices);
 				}
 
-
 				// Enable this to debug bone transforms
 #if 1
 				if (mesh->skeleton.size() > 0)
@@ -445,9 +443,8 @@ namespace gemini
 						}
 						else
 						{
-							last_origin = position;
+							last_origin = glm::vec3(instance->model_matrix * glm::vec4(position, 1.0f));
 						}
-
 
 						const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
 						glm::vec3 origin = glm::vec3(glm::column(world_pose, 3));
