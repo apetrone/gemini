@@ -28,16 +28,17 @@
 
 namespace render2
 {
-	GLCommandSerializer::GLCommandSerializer(CommandQueue& command_queue)
+	GLCommandSerializer::GLCommandSerializer(gemini::Allocator& in_allocator, CommandQueue& command_queue)
 		: queue(command_queue)
+		, allocator(in_allocator)
 	{
-		allocator = gemini::memory_allocator_linear(gemini::MEMORY_ZONE_RENDERER, buffer_data, CONSTANT_BUFFER_SIZE);
 	}
 
 	void GLCommandSerializer::constant(const char* name, void* data, size_t data_size)
 	{
 		size_t name_length = core::str::len(name) + 1;
 		char* buffer = reinterpret_cast<char*>(MEMORY2_ALLOC(allocator, name_length));
+		assert(buffer != nullptr);
 		core::str::copy(buffer, name, name_length);
 		buffer[name_length - 1] = '\0';
 

@@ -80,16 +80,16 @@ namespace render2
 #if defined(PLATFORM_WINDOWS)
 		gl.SwapInterval(1);
 #endif
+		frame_allocator = gemini::memory_allocator_linear(gemini::MEMORY_ZONE_RENDERER, frame_memory, RENDERER_FRAME_MEMORY_SIZE);
 	}
-
 
 	// ---------------------------------------------------------------------
 	// command serializer
 	// ---------------------------------------------------------------------
 	CommandSerializer* OpenGLDevice::create_serializer(CommandQueue* command_queue)
 	{
-		static GLCommandSerializer serializer(*command_queue);
-		new (&serializer) GLCommandSerializer(*command_queue);
+		static GLCommandSerializer serializer(frame_allocator, *command_queue);
+		new (&serializer) GLCommandSerializer(frame_allocator, *command_queue);
 		return &serializer;
 	}
 
@@ -293,6 +293,9 @@ namespace render2
 
 		reset();
 		queued_buffers.resize(0);
+
+		// rewind the frame allocator
+		frame_allocator = gemini::memory_allocator_linear(gemini::MEMORY_ZONE_RENDERER, frame_memory, RENDERER_FRAME_MEMORY_SIZE);
 	}
 
 	// ---------------------------------------------------------------------

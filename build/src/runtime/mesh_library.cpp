@@ -180,127 +180,35 @@ namespace gemini
 				state.mesh->indices[index] = index_array[index].asInt();
 			}
 
-			geometry->material_handle = material_load("materials/default");
-
+			// assign material to this geometry
 			Json::Value material_id = node["material_id"];
 			if (!material_id.isNull())
 			{
-				// assign this material
-				auto it = materials.find(material_id.asInt());
+				MaterialByIdContainer::iterator it = materials.find(material_id.asInt());
 				if (it != materials.end())
 				{
 					std::string material_path = "materials/" + it->second;
 					geometry->material_handle = material_load(material_path.c_str());
 				}
 			}
-#if 0
-			renderer::Geometry* geo = MEMORY2_NEW(state.allocator, renderer::Geometry)(state.allocator);
-			//assets::Geometry* geo = state.mesh->geometry[state.current_geometry++];
-			//state.mesh->geometry[state.current_geometry++] = geo;
-
-			geo->material_id = material_load("materials/default");
-
-			Json::Value material_id = node["material_id"];
-			if (!material_id.isNull())
+			else
 			{
-				// assign this material
-				auto it = materials.find(material_id.asInt());
-				if (it != materials.end())
-				{
-					std::string material_name = it->second;
-					//if (is_world)
-					//{
-					//	material_name.append("_world");
-					//}
-
-					std::string material_path = "materials/" + material_name;
-					AssetHandle material_handle = material_load(material_path.c_str());
-					geo->material_id = material_handle;
-				}
-			}
-
-			// TODO: Remove this hack in the rewrite
-			std::string shader_path = "objects";
-			if (!bind_data.empty())
-			{
-				shader_path = "animated";
-			}
-
-			geo->shader_id = shader_load(shader_path.c_str());
-			// geo->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
-			geo->name = node["name"].asString().c_str();
-
-	//				LOGV("assign material id %i to geometry: %s\n", geo->material_id, geo->name());
-	//				LOGV("load geometry: %s\n", geo->name());
-
-			// allocate the geometry arrays
-			geo->index_count = index_array.size();
-			geo->vertex_count = vertex_array.size();
-			geo->indices.allocate(index_array.size());
-			geo->vertices.allocate(vertex_array.size());
-			geo->normals.allocate(vertex_array.size());
-			geo->uvs.allocate(vertex_array.size() * renderer::GEOMETRY_UV_SET_MAX);
-			// geo->colors.allocate(vertex_colors.size());
-
-			if (!bind_data.empty())
-			{
-				geo->blend_weights.allocate(geo->vertex_count);
-				geo->blend_indices.allocate(geo->vertex_count);
-			}
-
-			// read all indices
-			for (int i = 0; i < static_cast<int>(geo->indices.size()); ++i)
-			{
-				geo->indices[i] = index_array[i].asInt();
-			}
-
-			// read vertices and normals
-			for (int v = 0; v < static_cast<int>(geo->vertices.size()); ++v)
-			{
-				const Json::Value& vertex = vertex_array[v];
-				geo->vertices[v] = glm::vec3(vertex[0].asFloat(), vertex[1].asFloat(), vertex[2].asFloat());
-	//					LOGV("v: %i | %g %g %g\n", v, geo->vertices[v].x, geo->vertices[v].y, geo->vertices[v].z);
-
-				const Json::Value& normal = normal_array[v];
-				geo->normals[v] = glm::vec3(normal[0].asFloat(), normal[1].asFloat(), normal[2].asFloat());
-			}
-
-			// read vertex colors
-			// for (int v = 0; v < static_cast<int>(geo->colors.size()); ++v)
-			// {
-			// 	const Json::Value& vertex_color = vertex_colors[v];
-			// 	geo->colors[v] = Color(vertex_color[0].asFloat(), vertex_color[1].asFloat(), vertex_color[2].asFloat(), vertex_color[3].asFloat());
-			// }
-
-			// read uv sets
-			for (Json::Value::ArrayIndex set_id = 0; set_id < uv_sets.size(); ++set_id)
-			{
-				//geo->uvs[set_id].allocate(vertex_array.size());
-				assert(vertex_array.size() == geo->vertices.size());
-				for (int v = 0; v < static_cast<int>(geo->vertices.size()); ++v)
-				{
-					const Json::Value& texcoord = uv_sets[set_id][v];
-					glm::vec2& uv = geo->uvs[(v * renderer::GEOMETRY_UV_SET_MAX) + set_id];
-					uv.x = texcoord[0].asFloat();
-					uv.y = texcoord[1].asFloat();
-	//						LOGV("uv (set=%i) (vertex=%i) %g %g\n", set_id, v, uv.s, uv.t);
-				}
+				// no material specified; load default material
+				geometry->material_handle = material_load("materials/default");
 			}
 
 
-			if (!blend_weights.empty())
+			// If this has a skeleton...
+			if (!state.mesh->skeleton.empty())
 			{
-	//					LOGV("blend_weights.size = %i, geo->vertex_count = %i\n", blend_weights.size(), geo->vertex_count);
-				assert(blend_weights.size() == geo->vertex_count);
-			}
 
+				// blend weight array must match the total vertices
+				assert(blend_weights.size() == geometry->total_vertices);
+				//LOGV("blend_weights.size = %i, geometry->total_vertices = %i\n", blend_weights.size(), geometry->total_vertices);
 
-			if (!bind_data.isNull() && !bind_data.empty())
-			{
-				// allocate enough bones
-				geo->bind_poses.allocate(bind_data.size());
-				geo->inverse_bind_poses.allocate(bind_data.size());
-				state.mesh->hitboxes.allocate(bind_data.size());
+				// load animation data
+
+				// TODO: allocate hitboxes
 
 				Json::ValueIterator it = bind_data.begin();
 				for (; it != bind_data.end(); ++it)
@@ -313,19 +221,18 @@ namespace gemini
 					assert(joint != 0);
 
 					size_t bone_index = joint->index;
-					//						LOGV("reading bind_pose for '%s' -> %i\n", bone_name.c_str(), bone_index);
-					const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
-					assert(!inverse_bind_pose.isNull());
-					geo->inverse_bind_poses[bone_index] = json_to_mat4(inverse_bind_pose);
+//					LOGV("reading bind_pose for '%s' -> %i\n", bone_name.c_str(), bone_index);
 
 					const Json::Value& bind_pose = skeleton_entry["bind_pose"];
 					assert(!bind_pose.isNull());
-					geo->bind_poses[bone_index] = json_to_mat4(bind_pose);
+					//state.mesh->bind_poses[bone_index] = json_to_mat4(bind_pose);
+					state.mesh->bind_poses[bone_index] = glm::mat4(1.0f);
+
+					const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
+					assert(!inverse_bind_pose.isNull());
+					//state.mesh->inverse_bind_poses[bone_index] = json_to_mat4(inverse_bind_pose);
+					state.mesh->inverse_bind_poses[bone_index] = glm::mat4(1.0f);
 				}
-
-
-				//state.mesh->has_skeletal_animation = true;
-
 
 				// read all blend weights and indices
 				it = blend_weights.begin();
@@ -353,47 +260,45 @@ namespace gemini
 						Joint* joint = mesh_find_bone_named(state.mesh, bone.asString().c_str());
 						assert(joint != 0);
 
-	//							LOGV("[%i] bone: '%s', value: %2.2f\n", weight_id, bone.asString().c_str(), value.asFloat());
+//						LOGV("[%i] bone: '%s', value: %2.2f\n", weight_id, bone.asString().c_str(), value.asFloat());
 
 						bone_indices[blend_index] = joint->index;
 						bone_weights[blend_index] = value.asFloat();
 					}
 
 					// assign these values to the blend_weights and blend_indices index
-					geo->blend_indices[weight_id] = glm::vec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
-	//						LOGV("[%i] indices: %g %g %g %g\n", weight_id, geo->blend_indices[weight_id].x, geo->blend_indices[weight_id].y, geo->blend_indices[weight_id].z, geo->blend_indices[weight_id].w);
-					geo->blend_weights[weight_id] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
-	//						LOGV("weights: %2.2f %2.2f %2.2f %2.f\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
+					state.mesh->blend_indices[weight_id] = glm::vec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
+					//LOGV("[%i] indices: %i %i %i %i\n", weight_id, bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
+					state.mesh->blend_weights[weight_id] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
+//					LOGV("weights: %2.2f %2.2f %2.2f %2.f\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
 				}
 
-				Hitbox hb;
-				hb.positive_extents = glm::vec3(0.25f, 0.25f, 0.25f);
 
+				//Hitbox hb;
+				//hb.positive_extents = glm::vec3(0.25f, 0.25f, 0.25f);
+				//for (size_t index = 0; index < state.mesh->skeleton.size(); ++index)
+				//{
+				//	const Joint& joint = state.mesh->skeleton[index];
+				//	Hitbox& hitbox = state.mesh->hitboxes[joint.index];
+				//	//hitbox.positive_extents = glm::vec3(0.25f, 0.25f, 0.25f);
+				//	//hitbox.rotation = glm::toMat3(glm::angleAxis(glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+				//	hitbox = hb;
+				//}
 
-				for (size_t index = 0; index < state.mesh->skeleton.size(); ++index)
+				if (!bbox_mins.isNull() && !bbox_maxs.isNull())
 				{
-					const Joint& joint = state.mesh->skeleton[index];
-					Hitbox& hitbox = state.mesh->hitboxes[joint.index];
-					//hitbox.positive_extents = glm::vec3(0.25f, 0.25f, 0.25f);
-					//hitbox.rotation = glm::toMat3(glm::angleAxis(glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
-					hitbox = hb;
+					state.mesh->aabb_mins = glm::vec3(bbox_mins[0].asFloat(), bbox_mins[1].asFloat(), bbox_mins[2].asFloat());
+					state.mesh->aabb_maxs = glm::vec3(bbox_maxs[0].asFloat(), bbox_maxs[1].asFloat(), bbox_maxs[2].asFloat());
+				}
+
+				// physics related settings
+				const Json::Value& center_mass_offset = node["mass_center_offset"];
+				if (!center_mass_offset.isNull())
+				{
+					state.mesh->mass_center_offset = glm::vec3(center_mass_offset[0].asFloat(), center_mass_offset[1].asFloat(), center_mass_offset[2].asFloat());
 				}
 			}
 
-
-			if (!bbox_mins.isNull() && !bbox_maxs.isNull())
-			{
-				state.mesh->aabb_mins = geo->mins = glm::vec3(bbox_mins[0].asFloat(), bbox_mins[1].asFloat(), bbox_mins[2].asFloat());
-				state.mesh->aabb_maxs = geo->maxs = glm::vec3(bbox_maxs[0].asFloat(), bbox_maxs[1].asFloat(), bbox_maxs[2].asFloat());
-			}
-
-			// physics related settings
-			const Json::Value& center_mass_offset = node["mass_center_offset"];
-			if (!center_mass_offset.isNull())
-			{
-				state.mesh->mass_center_offset = glm::vec3(center_mass_offset[0].asFloat(), center_mass_offset[1].asFloat(), center_mass_offset[2].asFloat());
-			}
-#endif
 			(*current_geometry)++;
 		}
 		else
@@ -443,11 +348,13 @@ namespace gemini
 		Array<GeometryDefinition> geometry;
 		uint32_t current_vertex_offset;
 		uint32_t current_index_offset;
+		uint32_t total_bones;
 
 		SceneInfo(Allocator& allocator)
 			: geometry(allocator)
 			, current_vertex_offset(0)
 			, current_index_offset(0)
+			, total_bones(0)
 		{
 		}
 	};
@@ -495,9 +402,7 @@ namespace gemini
 			// for a single model file.
 			// I can't foresee needing multiple skeletons in the same model just yet.
 			Json::Value skeleton = node["skeleton"];
-
-			const size_t skeleton_size = skeleton.size();
-			LOGV("skel size: %i\n", skeleton_size);
+			scene_info->total_bones = skeleton.size();
 		}
 
 		const Json::Value& children = node["children"];
@@ -573,7 +478,7 @@ namespace gemini
 			mesh->geometry[index] = scene_info.geometry[index];
 		}
 
-		mesh_init(*load_state->allocator, mesh, scene_info.current_vertex_offset, scene_info.current_index_offset);
+		mesh_init(*load_state->allocator, mesh, scene_info.current_vertex_offset, scene_info.current_index_offset, scene_info.total_bones);
 
 		MeshLoaderState state(*load_state->allocator, mesh);
 

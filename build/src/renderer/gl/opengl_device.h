@@ -362,6 +362,10 @@ namespace render2
 		// the list of buffers queued this frame
 		Array<CommandQueue*> queued_buffers;
 
+		gemini::Allocator frame_allocator;
+
 		GLBuffer* locked_buffer;
+
+		uint8_t frame_memory[RENDERER_FRAME_MEMORY_SIZE];
 	}; // OpenGLDevice
 } // namespace render2

@@ -32,13 +32,15 @@ namespace gemini
 		, uvs(nullptr)
 		, blend_indices(nullptr)
 		, blend_weights(nullptr)
+		, bind_poses(nullptr)
+		, inverse_bind_poses(nullptr)
 		, geometry(_allocator)
 		, skeleton(_allocator)
 		, hitboxes(_allocator)
 	{
 	} // Mesh
 
-	void mesh_init(Allocator& allocator, Mesh* mesh, uint32_t total_vertices, uint32_t total_indices)
+	void mesh_init(Allocator& allocator, Mesh* mesh, uint32_t total_vertices, uint32_t total_indices, uint32_t total_bones)
 	{
 		size_t vertex_data_size = 0;
 
@@ -71,12 +73,25 @@ namespace gemini
 		mesh->blend_weights = reinterpret_cast<glm::vec4*>(mem + vec3_size + vec3_size + vec2_size + vec4_size);
 
 		mesh->indices = static_cast<uint16_t*>(MEMORY2_ALLOC(allocator, sizeof(uint16_t) * total_indices));
+
+		// setup skeleton data
+		if (total_bones > 0)
+		{
+			uint8_t* data = static_cast<uint8_t*>(MEMORY2_ALLOC(allocator, sizeof(glm::mat4) * total_bones * 2));
+			mesh->bind_poses = reinterpret_cast<glm::mat4*>(data);
+			mesh->inverse_bind_poses = reinterpret_cast<glm::mat4*>(data + (sizeof(glm::mat4) * total_bones));
+		}
 	} // mesh_init
 
 	void mesh_destroy(Allocator& allocator, Mesh* mesh)
 	{
 		MEMORY2_DEALLOC(allocator, mesh->vertices);
 		MEMORY2_DEALLOC(allocator, mesh->indices);
+
+		if (mesh->bind_poses)
+		{
+			MEMORY2_DEALLOC(allocator, mesh->bind_poses);
+		}
 	} // mesh_destroy
 
 	void mesh_stats(Mesh* mesh, uint32_t& total_vertices, uint32_t& total_indices)

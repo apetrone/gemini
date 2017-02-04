@@ -91,7 +91,7 @@ namespace gemini
 		FixedArray<Hitbox> hitboxes;
 	}; // Mesh
 
-	void mesh_init(Allocator& allocator, Mesh* mesh, uint32_t total_vertices, uint32_t total_indices);
+	void mesh_init(Allocator& allocator, Mesh* mesh, uint32_t total_vertices, uint32_t total_indices, uint32_t total_bones);
 	void mesh_destroy(Allocator& allocator, Mesh* mesh);
 	void mesh_stats(Mesh* mesh, uint32_t& total_vertices, uint32_t& total_indices);
 	Joint* mesh_find_bone_named(Mesh* mesh, const char* name);

@@ -1020,7 +1020,7 @@ Options:
 		animation::startup(asset_allocator);
 
 		AssetHandle test_mesh = mesh_load("models/cube");
-		//AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
+		AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
 
 		glm::mat4 transform(1.0f);
 
@@ -1030,7 +1030,7 @@ Options:
 			transform = glm::translate(transform, glm::vec3(1.5f, 0.0f, 0.0f));
 		}
 
-		//AnimatedMeshComponent* component = render_scene_add_animated_mesh(render_scene, plane_rig, 0, transform);
+		AnimatedMeshComponent* component = render_scene_add_animated_mesh(render_scene, plane_rig, 0, transform);
 
 		// initialize debug draw
 		debugdraw::startup(debugdraw_allocator, device);

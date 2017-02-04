@@ -65,6 +65,8 @@ namespace gemini
 
 		// inverse bind poses used by the instance associated with this component.
 		glm::mat4* inverse_bind_poses;
+
+		glm::mat4* bone_transforms;
 	}; // AnimatedMeshComponent
 
 	struct RenderScene

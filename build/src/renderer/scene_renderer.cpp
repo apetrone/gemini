@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 #include <core/logging.h>
 
+#include <renderer/debug_draw.h>
 #include <renderer/renderer.h>
 #include <renderer/scene_renderer.h>
 #include <renderer/vertexdescriptor.h>
@@ -31,6 +32,8 @@
 #include <runtime/assets.h>
 #include <runtime/material.h>
 #include <runtime/mesh.h>
+
+#include <shared/shared_constants.h>
 
 
 namespace gemini
@@ -89,7 +92,29 @@ namespace gemini
 		MEMORY2_DELETE(*render_scene_state->allocator, render_scene_state);
 	} // render_scene_shutdown
 
+	void interleave_static_mesh(char* vertex_data, Mesh* mesh, uint32_t total_vertices)
+	{
+		for (size_t vertex_index = 0; vertex_index < total_vertices; ++vertex_index)
+		{
+			renderer::StaticMeshVertex* vertex = reinterpret_cast<renderer::StaticMeshVertex*>(vertex_data) + vertex_index;
+			vertex->position = mesh->vertices[vertex_index];
+			vertex->normal = mesh->normals[vertex_index];
+			vertex->uvs = mesh->uvs[vertex_index];
+		}
+	}
 
+	void interleave_animated_mesh(char* vertex_data, Mesh* mesh, uint32_t total_vertices)
+	{
+		for (size_t vertex_index = 0; vertex_index < total_vertices; ++vertex_index)
+		{
+			renderer::AnimatedMeshVertex* vertex = reinterpret_cast<renderer::AnimatedMeshVertex*>(vertex_data) + vertex_index;
+			vertex->position = mesh->vertices[vertex_index];
+			vertex->normal = mesh->normals[vertex_index];
+			vertex->uvs = mesh->uvs[vertex_index];
+			vertex->blend_indices = mesh->blend_indices[vertex_index];
+			vertex->blend_weights = mesh->blend_weights[vertex_index];
+		}
+	}
 
 	void render_scene_track_mesh(RenderScene* scene, AssetHandle mesh_handle)
 	{
@@ -107,9 +132,7 @@ namespace gemini
 			render_mesh->vertex_buffer = nullptr;
 			render_mesh->index_buffer = nullptr;
 
-			// TODO: support skeletal meshes!
 			bool is_animated_mesh = (mesh->skeleton.size() > 0);
-			assert(is_animated_mesh == false);
 
 			// static mesh only for now
 			render2::VertexDescriptor descriptor;
@@ -132,28 +155,24 @@ namespace gemini
 			const size_t vertex_buffer_size = total_vertices * stride;
 			const size_t index_buffer_size = total_indices * render_scene_state->device->compute_index_stride();
 
-			LOGV("vertex_buffer_size: %i\n", vertex_buffer_size);
-			LOGV("index_buffer_size: %i\n", index_buffer_size);
+			//LOGV("vertex_buffer_size: %i\n", vertex_buffer_size);
+			//LOGV("index_buffer_size: %i\n", index_buffer_size);
 			render_mesh->vertex_buffer = render_scene_state->device->create_vertex_buffer(vertex_buffer_size);
 			render_mesh->index_buffer = render_scene_state->device->create_index_buffer(index_buffer_size);
 
 			// interleave data for upload...
-			char* data = static_cast<char*>(MEMORY2_ALLOC(*scene->allocator, vertex_buffer_size));
-			for (size_t vertex_index = 0; vertex_index < total_vertices; ++vertex_index)
+			char* vertex_data = static_cast<char*>(MEMORY2_ALLOC(*scene->allocator, vertex_buffer_size));
+			if (!is_animated_mesh)
 			{
-				renderer::StaticMeshVertex* vertex = reinterpret_cast<renderer::StaticMeshVertex*>(data) + vertex_index;
-				vertex->position = mesh->vertices[vertex_index];
-				vertex->normal = mesh->normals[vertex_index];
-				vertex->uvs = mesh->uvs[vertex_index];
-				//if (geo->blend_indices.size() > 0)
-				//{
-				//	vertex->blend_indices = geo->blend_indices[v];
-				//	vertex->blend_weights = geo->blend_weights[v];
-				//}
+				interleave_static_mesh(vertex_data, mesh, total_vertices);
+			}
+			else
+			{
+				interleave_animated_mesh(vertex_data, mesh, total_vertices);
 			}
 
-			render_scene_state->device->buffer_upload(render_mesh->vertex_buffer, data, vertex_buffer_size);
-			MEMORY2_DEALLOC(*scene->allocator, data);
+			render_scene_state->device->buffer_upload(render_mesh->vertex_buffer, vertex_data, vertex_buffer_size);
+			MEMORY2_DEALLOC(*scene->allocator, vertex_data);
 
 			// upload index data
 			render_scene_state->device->buffer_upload(render_mesh->index_buffer, mesh->indices, index_buffer_size);
@@ -172,6 +191,14 @@ namespace gemini
 		component->mesh_handle = mesh_handle;
 		component->model_matrix = model_transform;
 		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
+		component->bone_transforms = (glm::mat4*)MEMORY2_ALLOC(*scene->allocator, sizeof(glm::mat4) * MAX_BONES);
+
+		Mesh* mesh = mesh_from_handle(mesh_handle);
+
+		for (size_t index = 0; index < MAX_BONES; ++index)
+		{
+			component->bone_transforms[index] = mesh->bind_poses[index] * glm::mat4(1.0f);
+		}
 		scene->animated_meshes.push_back(component);
 
 		render_scene_track_mesh(scene, mesh_handle);
@@ -237,6 +264,7 @@ namespace gemini
 
 		for (size_t index = 0; index < scene->animated_meshes.size(); ++index)
 		{
+			MEMORY2_DEALLOC(*scene->allocator, scene->animated_meshes[index]->bone_transforms);
 			MEMORY2_DELETE(*scene->allocator, scene->animated_meshes[index]);
 		}
 
@@ -262,7 +290,6 @@ namespace gemini
 		render_pass.depth_write = true;
 		render_pass.cull_mode = render2::CullMode::Backface;
 		render_static_meshes(scene, device, view, projection, render_pass);
-
 
 		render2::Pass animated_pass;
 		if (!render_target)
@@ -293,8 +320,6 @@ namespace gemini
 		scene->static_mesh_pipeline->constants().set("light_position_world", &scene->light_position_world);
 		scene->static_mesh_pipeline->constants().set("camera_position_world", &scene->camera_position_world);
 		scene->static_mesh_pipeline->constants().set("camera_view_direction", &scene->camera_view_direction);
-
-
 
 		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
 		{
@@ -349,15 +374,13 @@ namespace gemini
 		// render static meshes
 		// setup the static mesh pipeline
 		static uint32_t diffuse_unit = 0;
-		serializer->pipeline(scene->static_mesh_pipeline);
-		scene->static_mesh_pipeline->constants().set("view_matrix", &view);
-		scene->static_mesh_pipeline->constants().set("projection_matrix", &projection);
-		scene->static_mesh_pipeline->constants().set("diffuse", &diffuse_unit);
-		scene->static_mesh_pipeline->constants().set("light_position_world", &scene->light_position_world);
-		scene->static_mesh_pipeline->constants().set("camera_position_world", &scene->camera_position_world);
-		scene->static_mesh_pipeline->constants().set("camera_view_direction", &scene->camera_view_direction);
-
-		serializer->texture(texture_from_handle(texture_load("textures/measure")), diffuse_unit);
+		serializer->pipeline(scene->animated_mesh_pipeline);
+		scene->animated_mesh_pipeline->constants().set("view_matrix", &view);
+		scene->animated_mesh_pipeline->constants().set("projection_matrix", &projection);
+		scene->animated_mesh_pipeline->constants().set("diffuse", &diffuse_unit);
+		scene->animated_mesh_pipeline->constants().set("light_position_world", &scene->light_position_world);
+		scene->animated_mesh_pipeline->constants().set("camera_position_world", &scene->camera_position_world);
+		scene->animated_mesh_pipeline->constants().set("camera_view_direction", &scene->camera_view_direction);
 
 		for (size_t index = 0; index < scene->animated_meshes.size(); ++index)
 		{
@@ -366,17 +389,80 @@ namespace gemini
 			Mesh* mesh = mesh_from_handle(instance->mesh_handle);
 			if (mesh)
 			{
+				// If you hit this, the renderer has no reference to this mesh!
+				// Are you sure it was uploaded?
+				assert(render_scene_state->render_mesh_by_handle.has_key(instance->mesh_handle));
+
 				serializer->constant("model_matrix", &instance->model_matrix, sizeof(glm::mat4));
 				serializer->constant("normal_matrix", &instance->normal_matrix, sizeof(glm::mat3));
-#if 0
+				serializer->constant("node_transforms[0]", instance->bone_transforms, sizeof(glm::mat4) * MAX_BONES);
+				serializer->constant("inverse_bind_transforms[0]", mesh->inverse_bind_poses, sizeof(glm::mat4) * MAX_BONES);
+
+				RenderMeshInfo* mesh_info = render_scene_state->render_mesh_by_handle[instance->mesh_handle];
+				serializer->vertex_buffer(mesh_info->vertex_buffer);
+
+				// TODO: Convert into render blocks that can be re-sorted.
 				for (size_t geo = 0; geo < mesh->geometry.size(); ++geo)
 				{
-					::renderer::Geometry* geometry = mesh->geometry[geo];
-					//Material* material = material_from_handle(geometry->material_id);
-					// TODO: setup material for rendering
+					const GeometryDefinition* geometry = &mesh->geometry[geo];
+					Material* material = material_from_handle(geometry->material_handle);
+					for (size_t param_index = 0; param_index < material->parameters.size(); ++param_index)
+					{
+						renderer::MaterialParameter* parameter = &material->parameters[param_index];
+						if (parameter->type == renderer::MP_SAMPLER_2D)
+						{
+							render2::Texture* texture = texture_from_handle(parameter->texture_handle);
+							serializer->texture(texture, parameter->texture_unit);
+						}
+						else
+						{
+							LOGV("Unhandled material parameter: %i\n", parameter->type);
+						}
+					}
 
-					serializer->vertex_buffer(geometry->vertex_buffer);
-					serializer->draw_indexed_primitives(geometry->index_buffer, geometry->indices.size());
+					serializer->draw_indexed_primitives(mesh_info->index_buffer, geometry->total_indices);
+				}
+
+
+				// Enable this to debug bone transforms
+#if 1
+				if (mesh->skeleton.size() > 0)
+				{
+					glm::vec3 position; // render position
+					glm::vec3 last_origin;
+					glm::vec3 origins[MAX_BONES];
+					const glm::mat4* model_poses = instance->bone_transforms;
+					//const glm::vec3* hitboxes = model_instance->get_hitboxes();
+
+					// draw individual links for each bone to represent the skeleton
+					for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
+					{
+						size_t transform_index = mesh->skeleton.size() + bone_index;
+						Joint* joint = &mesh->skeleton[bone_index];
+						if (joint->parent_index != -1)
+						{
+							last_origin = origins[joint->parent_index];
+						}
+						else
+						{
+							last_origin = position;
+						}
+
+
+						const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
+						glm::vec3 origin = glm::vec3(glm::column(world_pose, 3));
+
+						debugdraw::line(last_origin, origin, Color::from_rgba(255, 128, 0, 255));
+						last_origin = origin;
+						origins[bone_index] = origin;
+
+						// this only displays local transforms
+						debugdraw::axes(world_pose, 0.15f, 0.0f);
+
+						//glm::vec3 box_center = origin;
+						//const glm::vec3& positive_extents = hitboxes[bone_index];
+						//debugdraw::box(box_center - positive_extents, box_center + positive_extents, gemini::Color(0.0f, 0.5f, 0.5f));
+					}
 				}
 #endif
 			}

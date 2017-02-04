@@ -33,12 +33,10 @@
 
 namespace render2
 {
-	const size_t CONSTANT_BUFFER_SIZE = 8192;
-
 	class GLCommandSerializer : public CommandSerializer
 	{
 	public:
-		GLCommandSerializer(CommandQueue& command_queue);
+		GLCommandSerializer(gemini::Allocator& allocator, CommandQueue& command_queue);
 
 		GLCommandSerializer& operator=(const GLCommandSerializer& other) = delete;
 
@@ -91,7 +89,6 @@ namespace render2
 	private:
 		CommandQueue& queue;
 
-		char buffer_data[CONSTANT_BUFFER_SIZE];
-		gemini::Allocator allocator;
+		gemini::Allocator& allocator;
 	}; // GLCommandSerializer
 } // namespace render2
