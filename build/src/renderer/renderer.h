@@ -53,13 +53,21 @@ namespace renderer
 
 	// I would like to be able to test both interleaved and serial formats
 	// on the GPU.
-	struct GeometryVertex
+	struct StaticMeshVertex
 	{
 		glm::vec3 position;
 		glm::vec3 normal;
 		glm::vec2 uvs;
-		//glm::vec4 blend_indices;
-		//glm::vec4 blend_weights;
+	};
+
+
+	struct AnimatedMeshVertex
+	{
+		glm::vec3 position;
+		glm::vec3 normal;
+		glm::vec2 uvs;
+		glm::vec4 blend_indices;
+		glm::vec4 blend_weights;
 	};
 
 	struct Geometry

@@ -507,6 +507,9 @@ namespace gemini
 
 		if (core::util::json_load_with_callback(asset_uri(), load_json_model, &state, true) == core::util::ConfigLoad_Success)
 		{
+			// TODO: Determine if geometry is static or animated.
+
+
 			for (size_t index = 0; index < state.asset->geometry.size(); ++index)
 			{
 				renderer::Geometry* geo = state.asset->geometry[index];
@@ -542,7 +545,7 @@ namespace gemini
 
 				for (size_t v = 0; v < geo->vertex_count; ++v)
 				{
-					renderer::GeometryVertex* vertex = reinterpret_cast<renderer::GeometryVertex*>(data) + v;
+					renderer::StaticMeshVertex* vertex = reinterpret_cast<renderer::StaticMeshVertex*>(data) + v;
 					vertex->position = geo->vertices[v];
 					vertex->normal = geo->normals[v];
 					vertex->uvs = geo->uvs[v];
