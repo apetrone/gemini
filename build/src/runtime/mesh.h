@@ -71,39 +71,49 @@ namespace gemini
 		}
 	};
 
+
+	struct GeometryDefinition
+	{
+		uint16_t vertex_offset;
+		uint16_t total_vertices;
+		uint16_t index_offset;
+		uint16_t total_indices;
+
+		AssetHandle material_handle;
+		AssetHandle shader_handle;
+	}; // GeometryDefinition
+
+
 	struct Mesh
 	{
-		FixedArray<::renderer::Geometry*> geometry;
-		//FixedArray<Geometry*> geometry_vn;
-		glm::mat4 world_matrix;
+		Mesh(gemini::Allocator& allocator);
 
-		// if this is true, it needs to be re-uploaded to the gpu
-		bool is_dirty;
+		glm::vec3* vertices;
+		glm::vec3* normals;
+		glm::vec2* uvs;
+		glm::vec4* blend_indices;
+		glm::vec4* blend_weights;
 
-		// true when any geometry has a skeleton loaded
-		bool has_skeletal_animation;
+		glm::mat4* bind_poses;
+		glm::mat4* inverse_bind_poses;
+
+		uint16_t* indices;
+
+		FixedArray<GeometryDefinition> geometry;
 
 		// offset to the center of mass
 		glm::vec3 mass_center_offset;
-
 		glm::vec3 aabb_mins;
 		glm::vec3 aabb_maxs;
-
-		gemini::Allocator& allocator;
-
-		Mesh(gemini::Allocator& allocator);
-		virtual ~Mesh();
-		void reset();
-
-		virtual void release();
-
-		glm::mat4 node_transform;
-
-		Joint* find_bone_named(const char* name);
 
 		// bind pose skeleton
 		FixedArray<Joint> skeleton;
 		FixedArray<Hitbox> hitboxes;
 	}; // Mesh
+
+	void mesh_init(Allocator& allocator, Mesh* mesh, uint32_t total_vertices, uint32_t total_indices);
+	void mesh_destroy(Allocator& allocator, Mesh* mesh);
+	Joint* mesh_find_bone_named(Mesh* mesh, const char* name);
+
 } // namespace gemini
 

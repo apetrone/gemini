@@ -29,7 +29,9 @@
 
 #include <platform/platform.h>
 
+#include <runtime/asset_handle.h>
 #include <runtime/asset_library.h>
+#include <runtime/assets.h>
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
 #include <runtime/jobqueue.h>
@@ -148,6 +150,8 @@ UNITTEST(Geometry)
 
 	OrientedBoundingBox box;
 	compute_oriented_bounding_box_by_points(box, vertices, 4);
+
+	//AssetHandle mesh_handle = mesh_load("models/plane");
 }
 
 // ---------------------------------------------------------------------

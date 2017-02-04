@@ -27,6 +27,7 @@
 #include <runtime/filesystem.h>
 #include <runtime/geometry.h>
 #include <runtime/mesh_library.h>
+#include <runtime/mesh.h>
 #include <runtime/assets.h>
 
 #include <renderer/renderer.h>
@@ -94,7 +95,7 @@ namespace gemini
 		}
 	}; // MeshLoaderState
 
-	void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, const bool is_world)
+	void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, uint32_t* current_geometry)
 	{
 		const std::string node_type = node["type"].asString();
 		if (node_type == "mesh")
@@ -150,9 +151,51 @@ namespace gemini
 
 			// setup materials
 
+			GeometryDefinition* geometry = &state.mesh->geometry[state.current_geometry];
+
+			// read all geometry data into arrays
+			glm::vec3* vertex = &state.mesh->vertices[geometry->vertex_offset];
+			glm::vec3* normal = &state.mesh->normals[geometry->vertex_offset];
+			glm::vec2* uv = &state.mesh->uvs[geometry->vertex_offset];
+
+			for (uint32_t vertex_index = 0;
+				vertex_index < geometry->total_vertices;
+				++vertex_index, ++vertex, ++normal, ++uv)
+			{
+				const Json::Value& in_vertex = vertex_array[vertex_index];
+				*vertex = glm::vec3(in_vertex[0].asFloat(), in_vertex[1].asFloat(), in_vertex[2].asFloat());
+
+				const Json::Value& in_normal = normal_array[vertex_index];
+				*normal = glm::vec3(in_normal[0].asFloat(), in_normal[1].asFloat(), in_normal[2].asFloat());
+
+				const Json::Value& in_uv = uv_sets[0][vertex_index];
+				*uv = glm::vec2(in_uv[0].asFloat(), in_uv[1].asFloat());
+			}
+
+			geometry->material_handle = material_load("materials/default");
+
+			//Json::Value material_id = node["material_id"];
+			//if (!material_id.isNull())
+			//{
+			//	// assign this material
+			//	auto it = materials.find(material_id.asInt());
+			//	if (it != materials.end())
+			//	{
+			//		std::string material_name = it->second;
+			//		//if (is_world)
+			//		//{
+			//		//	material_name.append("_world");
+			//		//}
+
+			//		std::string material_path = "materials/" + material_name;
+			//		AssetHandle material_handle = material_load(material_path.c_str());
+			//		geo->material_id = material_handle;
+			//	}
+			//}
+#if 0
 			renderer::Geometry* geo = MEMORY2_NEW(state.allocator, renderer::Geometry)(state.allocator);
 			//assets::Geometry* geo = state.mesh->geometry[state.current_geometry++];
-			state.mesh->geometry[state.current_geometry++] = geo;
+			//state.mesh->geometry[state.current_geometry++] = geo;
 
 			geo->material_id = material_load("materials/default");
 
@@ -265,7 +308,7 @@ namespace gemini
 					const Json::Value& name = skeleton_entry["name"];
 
 					const std::string& bone_name = name.asString();
-					Joint* joint = state.mesh->find_bone_named(bone_name.c_str());
+					Joint* joint = mesh_find_bone_named(state.mesh, bone_name.c_str());
 					assert(joint != 0);
 
 					size_t bone_index = joint->index;
@@ -280,7 +323,7 @@ namespace gemini
 				}
 
 
-				state.mesh->has_skeletal_animation = true;
+				//state.mesh->has_skeletal_animation = true;
 
 
 				// read all blend weights and indices
@@ -306,8 +349,7 @@ namespace gemini
 						const Json::Value& weightblock = (*pair);
 						const Json::Value& bone = weightblock["bone"];
 						const Json::Value& value = weightblock["value"];
-
-						Joint* joint = state.mesh->find_bone_named(bone.asString().c_str());
+						Joint* joint = mesh_find_bone_named(state.mesh, bone.asString().c_str());
 						assert(joint != 0);
 
 	//							LOGV("[%i] bone: '%s', value: %2.2f\n", weight_id, bone.asString().c_str(), value.asFloat());
@@ -350,6 +392,8 @@ namespace gemini
 			{
 				state.mesh->mass_center_offset = glm::vec3(center_mass_offset[0].asFloat(), center_mass_offset[1].asFloat(), center_mass_offset[2].asFloat());
 			}
+#endif
+			(*current_geometry)++;
 		}
 		else
 		{
@@ -362,7 +406,7 @@ namespace gemini
 			Json::ValueIterator child_iter = children.begin();
 			for (; child_iter != children.end(); ++child_iter)
 			{
-				traverse_nodes(state, (*child_iter), materials, false /*is_world*/);
+				traverse_nodes(state, (*child_iter), materials, current_geometry);
 			}
 		}
 	}
@@ -392,6 +436,80 @@ namespace gemini
 			}
 		}
 	}
+
+	struct SceneInfo
+	{
+		Array<GeometryDefinition> geometry;
+		uint32_t current_vertex_offset;
+		uint32_t current_index_offset;
+
+		SceneInfo(Allocator& allocator)
+			: geometry(allocator)
+			, current_vertex_offset(0)
+			, current_index_offset(0)
+		{
+		}
+	};
+
+
+
+	void collect_scene_data(const Json::Value& node, SceneInfo* scene_info)
+	{
+		//assert(!node["name"].isNull());
+		//assert(!node["type"].isNull());
+		//std::string node_name = node["name"].asString();
+		////		LOGV("node %s\n", node_name.c_str());
+
+		//++total_nodes;
+
+		std::string node_type = node["type"].asString();
+		if (node_type == "mesh")
+		{
+			Json::Value index_array = node["indices"];
+			Json::Value vertex_array = node["vertices"];
+			Json::Value normal_array = node["normals"];
+
+			const size_t total_vertices = vertex_array.size();
+			const size_t total_indices = index_array.size();
+			LOGV("verts: %i, indices: %i\n", total_vertices, total_indices);
+
+			GeometryDefinition geometry_definition;
+			geometry_definition.vertex_offset = scene_info->current_vertex_offset;
+			geometry_definition.index_offset = scene_info->current_index_offset;
+			geometry_definition.total_vertices = total_vertices;
+			geometry_definition.total_indices = total_indices;
+
+			scene_info->current_vertex_offset += total_vertices;
+			scene_info->current_index_offset += total_indices;
+
+			scene_info->geometry.push_back(geometry_definition);
+
+			//Json::Value uv_sets = node["uv_sets"];
+			//Json::Value vertex_colors = node["vertex_colors"];
+			//const Json::Value& blend_weights = node["blend_weights"];
+			//const Json::Value& bind_data = node["bind_data"];
+
+			// load skeleton, if one exists
+			// this will only construct the hierarchy -- which should be consistent
+			// for a single model file.
+			// I can't foresee needing multiple skeletons in the same model just yet.
+			Json::Value skeleton = node["skeleton"];
+
+			const size_t skeleton_size = skeleton.size();
+			LOGV("skel size: %i\n", skeleton_size);
+		}
+
+		const Json::Value& children = node["children"];
+		if (!children.isNull())
+		{
+			Json::ValueIterator child_iter = children.begin();
+			for (; child_iter != children.end(); ++child_iter)
+			{
+				collect_scene_data((*child_iter), scene_info);
+			}
+		}
+	}
+
 
 	core::util::ConfigLoadStatus load_json_model(const Json::Value& root, void* data)
 	{
@@ -438,34 +556,38 @@ namespace gemini
 			}
 		}
 
-		size_t total_nodes = 0;
-		size_t total_meshes = 0;
+		SceneInfo scene_info(*load_state->allocator);
+		{
+			Json::ValueIterator node_iter = node_root.begin();
+			for (; node_iter != node_root.end(); ++node_iter)
+			{
+				Json::Value node = (*node_iter);
+				collect_scene_data(node, &scene_info);
+			}
+		}
 
-		// iterate over all nodes and count how many there are, of each kind
+		mesh->geometry.allocate(scene_info.geometry.size());
+		for (size_t index = 0; index < scene_info.geometry.size(); ++index)
+		{
+			mesh->geometry[index] = scene_info.geometry[index];
+		}
+
+
+		mesh_init(*load_state->allocator, mesh, scene_info.current_vertex_offset, scene_info.current_index_offset);
+
+		MeshLoaderState state(*load_state->allocator, mesh);
+
+		uint32_t current_geometry = 0;
+
+		// traverse over hierarchy
 		Json::ValueIterator node_iter = node_root.begin();
 		for (; node_iter != node_root.end(); ++node_iter)
 		{
 			Json::Value node = (*node_iter);
-			count_nodes(node, total_nodes, total_meshes);
+			traverse_nodes(state, node, materials_by_id, &current_geometry);
 		}
 
-		// allocate nodes
-		LOGV("nodes: %i, meshes: %i\n", total_nodes, total_meshes);
-		mesh->geometry.allocate(total_meshes);
-
-
-
-		MeshLoaderState state(*load_state->allocator, mesh);
-
-		// traverse over hierarchy
-		node_iter = node_root.begin();
-		for (; node_iter != node_root.end(); ++node_iter)
-		{
-			Json::Value node = (*node_iter);
-			traverse_nodes(state, node, materials_by_id, false /*is_world*/);
-		}
-
-
+#if 0
 		// try to load animations
 		Json::Value animation_list = root["animations"];
 		if (!animation_list.isNull())
@@ -482,6 +604,7 @@ namespace gemini
 				gemini::animation::load_sequence(*load_state->allocator, animation_sequence_uri(), mesh);
 			}
 		}
+#endif
 
 		return core::util::ConfigLoad_Success;
 	}
@@ -508,7 +631,7 @@ namespace gemini
 		if (core::util::json_load_with_callback(asset_uri(), load_json_model, &state, true) == core::util::ConfigLoad_Success)
 		{
 			// TODO: Determine if geometry is static or animated.
-
+#if 0
 
 			for (size_t index = 0; index < state.asset->geometry.size(); ++index)
 			{
@@ -572,6 +695,7 @@ namespace gemini
 
 				// upload to GPU
 			}
+#endif
 			return AssetLoad_Success;
 		}
 
@@ -581,20 +705,21 @@ namespace gemini
 	void MeshLibrary::destroy_asset(LoadState& state)
 	{
 		// free buffers on geometry.
-		for (size_t index = 0; index < state.asset->geometry.size(); ++index)
-		{
-			renderer::Geometry* geometry = state.asset->geometry[index];
-			if (geometry->vertex_buffer)
-			{
-				device->destroy_buffer(geometry->vertex_buffer);
-			}
+		//for (size_t index = 0; index < state.asset->geometry.size(); ++index)
+		//{
+		//	renderer::Geometry* geometry = state.asset->geometry[index];
+		//	if (geometry->vertex_buffer)
+		//	{
+		//		device->destroy_buffer(geometry->vertex_buffer);
+		//	}
 
-			if (geometry->index_buffer)
-			{
-				device->destroy_buffer(geometry->index_buffer);
-			}
-		}
+		//	if (geometry->index_buffer)
+		//	{
+		//		device->destroy_buffer(geometry->index_buffer);
+		//	}
+		//}
 
+		mesh_destroy(*state.allocator, state.asset);
 
 		MEMORY2_DELETE(*state.allocator, state.asset);
 	}

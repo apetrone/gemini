@@ -166,14 +166,19 @@ namespace gemini
 			{
 				serializer->constant("model_matrix", &static_mesh->model_matrix, sizeof(glm::mat4));
 				serializer->constant("normal_matrix", &static_mesh->normal_matrix, sizeof(glm::mat3));
+
+				// TODO: Convert into render blocks that can be re-sorted.
 				for (size_t geo = 0; geo < mesh->geometry.size(); ++geo)
 				{
-					::renderer::Geometry* geometry = mesh->geometry[geo];
+					//::renderer::Geometry* geometry = mesh->geometry[geo];
+					const GeometryDefinition* geometry = &mesh->geometry[geo];
 					//Material* material = material_from_handle(geometry->material_id);
 					// TODO: setup material for rendering
+#if 0
 
 					serializer->vertex_buffer(geometry->vertex_buffer);
 					serializer->draw_indexed_primitives(geometry->index_buffer, geometry->indices.size());
+#endif
 				}
 			}
 		}
@@ -209,6 +214,7 @@ namespace gemini
 			{
 				serializer->constant("model_matrix", &instance->model_matrix, sizeof(glm::mat4));
 				serializer->constant("normal_matrix", &instance->normal_matrix, sizeof(glm::mat3));
+#if 0
 				for (size_t geo = 0; geo < mesh->geometry.size(); ++geo)
 				{
 					::renderer::Geometry* geometry = mesh->geometry[geo];
@@ -218,6 +224,7 @@ namespace gemini
 					serializer->vertex_buffer(geometry->vertex_buffer);
 					serializer->draw_indexed_primitives(geometry->index_buffer, geometry->indices.size());
 				}
+#endif
 			}
 		}
 

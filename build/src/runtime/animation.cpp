@@ -319,11 +319,11 @@ namespace gemini
 
 				core::util::ConfigLoadStatus result = core::util::ConfigLoad_Failure;
 
-				if (!mesh->has_skeletal_animation)
-				{
-					LOGW("Tried to attach an animation to a non-animated model!\n");
-					return result;
-				}
+				//if (!mesh->has_skeletal_animation)
+				//{
+				//	LOGW("Tried to attach an animation to a non-animated model!\n");
+				//	return result;
+				//}
 
 				if (root.isNull())
 				{
@@ -390,7 +390,7 @@ namespace gemini
 					assert(!scale_keys.isNull() && !rotation_keys.isNull() && !translation_keys.isNull());
 
 #if 1
-					Joint* joint = mesh->find_bone_named(node_name.c_str());
+					Joint* joint = mesh_find_bone_named(mesh, node_name.c_str());
 					assert(joint != 0);
 
 //					LOGV("reading keyframes for bone \"%s\", joint->index = %i\n", joint->name(), joint->index);
