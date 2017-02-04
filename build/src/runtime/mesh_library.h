@@ -27,25 +27,17 @@
 #include <runtime/asset_library.h>
 #include <runtime/mesh.h>
 
-namespace render2
-{
-	class Device;
-} // namespace render2
-
 namespace gemini
 {
 	class MeshLibrary : public AssetLibrary2<Mesh, MeshLibrary>
 	{
 	public:
 
-		MeshLibrary(Allocator& allocator, render2::Device* render_device);
+		MeshLibrary(Allocator& allocator);
 
 		void create_asset(LoadState& state, void* parameters);
 		inline bool is_same_asset(AssetClass*, void*) { return true; }
 		AssetLoadStatus load_asset(LoadState& state, platform::PathString& fullpath, void* parameters);
 		void destroy_asset(LoadState& state);
-
-	private:
-		render2::Device* device;
 	}; // MeshLibrary
 } // namespace gemini

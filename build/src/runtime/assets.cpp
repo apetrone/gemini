@@ -116,7 +116,7 @@ namespace gemini
 			// allocate each asset library
 			_asset_state->fonts			= MEMORY2_NEW(asset_allocator, gemini::FontLibrary)(asset_allocator, device);
 			_asset_state->materials		= MEMORY2_NEW(asset_allocator, gemini::MaterialLibrary)(asset_allocator, device);
-			_asset_state->meshes		= MEMORY2_NEW(asset_allocator, gemini::MeshLibrary)(asset_allocator, device);
+			_asset_state->meshes		= MEMORY2_NEW(asset_allocator, gemini::MeshLibrary)(asset_allocator);
 			_asset_state->shaders		= MEMORY2_NEW(asset_allocator, gemini::ShaderLibrary)(asset_allocator, device);
 			_asset_state->sounds		= MEMORY2_NEW(asset_allocator, gemini::AudioLibrary)(asset_allocator);
 			_asset_state->textures		= MEMORY2_NEW(asset_allocator, gemini::TextureLibrary)(asset_allocator, device);

@@ -620,9 +620,8 @@ namespace gemini
 	}
 
 
-	MeshLibrary::MeshLibrary(Allocator& allocator, render2::Device* render_device)
+	MeshLibrary::MeshLibrary(Allocator& allocator)
 		: AssetLibrary2(allocator)
-		, device(render_device)
 	{
 	}
 
@@ -714,21 +713,6 @@ namespace gemini
 
 	void MeshLibrary::destroy_asset(LoadState& state)
 	{
-		// free buffers on geometry.
-		//for (size_t index = 0; index < state.asset->geometry.size(); ++index)
-		//{
-		//	renderer::Geometry* geometry = state.asset->geometry[index];
-		//	if (geometry->vertex_buffer)
-		//	{
-		//		device->destroy_buffer(geometry->vertex_buffer);
-		//	}
-
-		//	if (geometry->index_buffer)
-		//	{
-		//		device->destroy_buffer(geometry->index_buffer);
-		//	}
-		//}
-
 		mesh_destroy(*state.allocator, state.asset);
 
 		MEMORY2_DELETE(*state.allocator, state.asset);
