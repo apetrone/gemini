@@ -149,8 +149,6 @@ namespace gemini
 				}
 			}
 
-			// setup materials
-
 			GeometryDefinition* geometry = &state.mesh->geometry[state.current_geometry];
 
 			// read all geometry data into arrays
@@ -184,24 +182,17 @@ namespace gemini
 
 			geometry->material_handle = material_load("materials/default");
 
-			//Json::Value material_id = node["material_id"];
-			//if (!material_id.isNull())
-			//{
-			//	// assign this material
-			//	auto it = materials.find(material_id.asInt());
-			//	if (it != materials.end())
-			//	{
-			//		std::string material_name = it->second;
-			//		//if (is_world)
-			//		//{
-			//		//	material_name.append("_world");
-			//		//}
-
-			//		std::string material_path = "materials/" + material_name;
-			//		AssetHandle material_handle = material_load(material_path.c_str());
-			//		geo->material_id = material_handle;
-			//	}
-			//}
+			Json::Value material_id = node["material_id"];
+			if (!material_id.isNull())
+			{
+				// assign this material
+				auto it = materials.find(material_id.asInt());
+				if (it != materials.end())
+				{
+					std::string material_path = "materials/" + it->second;
+					geometry->material_handle = material_load(material_path.c_str());
+				}
+			}
 #if 0
 			renderer::Geometry* geo = MEMORY2_NEW(state.allocator, renderer::Geometry)(state.allocator);
 			//assets::Geometry* geo = state.mesh->geometry[state.current_geometry++];
@@ -582,7 +573,6 @@ namespace gemini
 			mesh->geometry[index] = scene_info.geometry[index];
 		}
 
-
 		mesh_init(*load_state->allocator, mesh, scene_info.current_vertex_offset, scene_info.current_index_offset);
 
 		MeshLoaderState state(*load_state->allocator, mesh);
@@ -639,72 +629,6 @@ namespace gemini
 
 		if (core::util::json_load_with_callback(asset_uri(), load_json_model, &state, true) == core::util::ConfigLoad_Success)
 		{
-			// TODO: Determine if geometry is static or animated.
-#if 0
-
-			for (size_t index = 0; index < state.asset->geometry.size(); ++index)
-			{
-				renderer::Geometry* geo = state.asset->geometry[index];
-				LOGV("geo [%i] vertices: %i\n", index, geo->vertex_count);
-
-				render2::VertexDescriptor descriptor;
-				// static mesh
-				descriptor.add("in_position", render2::VD_FLOAT, 3);
-				descriptor.add("in_normal", render2::VD_FLOAT, 3);
-				descriptor.add("in_uv", render2::VD_FLOAT, 2);
-
-				// animated mesh
-				//descriptor.add("in_position", render2::VD_FLOAT, 3);
-				//descriptor.add("in_normal", render2::VD_FLOAT, 3);
-				//descriptor.add("in_uv", render2::VD_FLOAT, 2);
-				//descriptor.add("in_blendindices", render2::VD_FLOAT, 4);
-				//descriptor.add("in_blendweights", render2::VD_FLOAT, 4);
-
-				size_t stride = device->compute_vertex_stride(descriptor);
-				const size_t vertex_buffer_size = (geo->vertex_count * stride);
-
-				assert(geo->vertex_buffer == nullptr);
-				geo->vertex_buffer = device->create_vertex_buffer(vertex_buffer_size);
-
-				const size_t index_buffer_size = geo->index_count * device->compute_index_stride();
-				geo->index_buffer = device->create_index_buffer(index_buffer_size);
-
-				LOGV("vertex_buffer_size: %i\n", vertex_buffer_size);
-				LOGV("index_buffer_size: %i\n", index_buffer_size);
-
-				char* data = static_cast<char*>(MEMORY2_ALLOC(*state.allocator, vertex_buffer_size));
-
-
-				for (size_t v = 0; v < geo->vertex_count; ++v)
-				{
-					renderer::StaticMeshVertex* vertex = reinterpret_cast<renderer::StaticMeshVertex*>(data) + v;
-					vertex->position = geo->vertices[v];
-					vertex->normal = geo->normals[v];
-					vertex->uvs = geo->uvs[v];
-					//if (geo->blend_indices.size() > 0)
-					//{
-					//	vertex->blend_indices = geo->blend_indices[v];
-					//	vertex->blend_weights = geo->blend_weights[v];
-					//}
-				}
-
-				device->buffer_upload(geo->vertex_buffer, data, vertex_buffer_size);
-				MEMORY2_DEALLOC(*state.allocator, data);
-
-				// upload indices
-				device->buffer_upload(geo->index_buffer, &geo->indices[0], index_buffer_size);
-
-				// if geometry has blend indices, we'll assume it's an animated mesh,
-				// otherwise, we'll assume it's static.
-
-				// We'll also need some heuristics to determine if it's a world-mesh.
-				// create a vertex buffer for this geometry
-
-				// store it somewhere
-
-				// upload to GPU
-			}
-#endif
 			return AssetLoad_Success;
 		}
 

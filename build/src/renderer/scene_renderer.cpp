@@ -29,6 +29,7 @@
 #include <renderer/vertexdescriptor.h>
 
 #include <runtime/assets.h>
+#include <runtime/material.h>
 #include <runtime/mesh.h>
 
 
@@ -293,7 +294,7 @@ namespace gemini
 		scene->static_mesh_pipeline->constants().set("camera_position_world", &scene->camera_position_world);
 		scene->static_mesh_pipeline->constants().set("camera_view_direction", &scene->camera_view_direction);
 
-		serializer->texture(texture_from_handle(texture_load("textures/measure")), diffuse_unit);
+
 
 		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
 		{
@@ -316,8 +317,21 @@ namespace gemini
 				for (size_t geo = 0; geo < mesh->geometry.size(); ++geo)
 				{
 					const GeometryDefinition* geometry = &mesh->geometry[geo];
-					//Material* material = material_from_handle(geometry->material_id);
-					// TODO: setup material for rendering
+					Material* material = material_from_handle(geometry->material_handle);
+					for (size_t param_index = 0; param_index < material->parameters.size(); ++param_index)
+					{
+						renderer::MaterialParameter* parameter = &material->parameters[param_index];
+						if (parameter->type == renderer::MP_SAMPLER_2D)
+						{
+							render2::Texture* texture = texture_from_handle(parameter->texture_handle);
+							serializer->texture(texture, parameter->texture_unit);
+						}
+						else
+						{
+							LOGV("Unhandled material parameter: %i\n", parameter->type);
+						}
+					}
+
 					serializer->draw_indexed_primitives(mesh_info->index_buffer, geometry->total_indices);
 				}
 			}
