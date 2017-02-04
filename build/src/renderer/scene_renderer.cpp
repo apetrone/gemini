@@ -22,6 +22,8 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#include <core/logging.h>
+
 #include <renderer/renderer.h>
 #include <renderer/scene_renderer.h>
 #include <renderer/vertexdescriptor.h>
@@ -32,6 +34,136 @@
 
 namespace gemini
 {
+	// cached meshes associated with an asset handle in the runtime.
+	// Data required by the renderer for each mesh.
+	struct RenderMeshInfo
+	{
+		render2::Buffer* vertex_buffer;
+		render2::Buffer* index_buffer;
+	}; // RenderMeshInfo
+
+	struct RenderSceneState
+	{
+		RenderSceneState(Allocator& _allocator)
+			: allocator(&_allocator)
+			, render_mesh_by_handle(_allocator)
+			, render_meshes(_allocator)
+		{
+		}
+
+		Allocator* allocator;
+		render2::Device* device;
+		HashSet<AssetHandle, RenderMeshInfo*> render_mesh_by_handle;
+		Array<RenderMeshInfo*> render_meshes;
+	}; // RenderSceneState
+
+	RenderSceneState* render_scene_state = nullptr;
+
+	void render_scene_startup(render2::Device* device, Allocator& allocator)
+	{
+		if (!render_scene_state)
+		{
+			render_scene_state = MEMORY2_NEW(allocator, RenderSceneState)(allocator);
+			render_scene_state->device = device;
+		}
+	} // render_scene_startup
+
+	void render_scene_shutdown()
+	{
+		assert(render_scene_state);
+
+		// purge all meshes
+		render_scene_state->render_mesh_by_handle.clear();
+		for (size_t index = 0; index < render_scene_state->render_meshes.size(); ++index)
+		{
+			RenderMeshInfo* render_mesh = render_scene_state->render_meshes[index];
+
+			render_scene_state->device->destroy_buffer(render_mesh->vertex_buffer);
+			render_scene_state->device->destroy_buffer(render_mesh->index_buffer);
+
+			MEMORY2_DELETE(*render_scene_state->allocator, render_mesh);
+		}
+		render_scene_state->render_meshes.clear();
+
+		MEMORY2_DELETE(*render_scene_state->allocator, render_scene_state);
+	} // render_scene_shutdown
+
+
+
+	void render_scene_track_mesh(RenderScene* scene, AssetHandle mesh_handle)
+	{
+		if (!render_scene_state->render_mesh_by_handle.has_key(mesh_handle))
+		{
+			Mesh* mesh = mesh_from_handle(mesh_handle);
+			if (!mesh)
+			{
+				LOGW("Mesh (%i) is invalid. Skipping upload.\n", mesh_handle);
+				return;
+			}
+
+			// upload to the GPU
+			RenderMeshInfo* render_mesh = MEMORY2_NEW(*scene->allocator, RenderMeshInfo);
+			render_mesh->vertex_buffer = nullptr;
+			render_mesh->index_buffer = nullptr;
+
+			// TODO: support skeletal meshes!
+			bool is_animated_mesh = (mesh->skeleton.size() > 0);
+			assert(is_animated_mesh == false);
+
+			// static mesh only for now
+			render2::VertexDescriptor descriptor;
+			descriptor.add("in_position", render2::VD_FLOAT, 3);
+			descriptor.add("in_normal", render2::VD_FLOAT, 3);
+			descriptor.add("in_uv", render2::VD_FLOAT, 2);
+
+			if (is_animated_mesh)
+			{
+				descriptor.add("in_blendindices", render2::VD_FLOAT, 4);
+				descriptor.add("in_blendweights", render2::VD_FLOAT, 4);
+			}
+
+			uint32_t total_vertices = 0;
+			uint32_t total_indices = 0;
+
+			mesh_stats(mesh, total_vertices, total_indices);
+
+			const size_t stride = render_scene_state->device->compute_vertex_stride(descriptor);
+			const size_t vertex_buffer_size = total_vertices * stride;
+			const size_t index_buffer_size = total_indices * render_scene_state->device->compute_index_stride();
+
+			LOGV("vertex_buffer_size: %i\n", vertex_buffer_size);
+			LOGV("index_buffer_size: %i\n", index_buffer_size);
+			render_mesh->vertex_buffer = render_scene_state->device->create_vertex_buffer(vertex_buffer_size);
+			render_mesh->index_buffer = render_scene_state->device->create_index_buffer(index_buffer_size);
+
+			// interleave data for upload...
+			char* data = static_cast<char*>(MEMORY2_ALLOC(*scene->allocator, vertex_buffer_size));
+			for (size_t vertex_index = 0; vertex_index < total_vertices; ++vertex_index)
+			{
+				renderer::StaticMeshVertex* vertex = reinterpret_cast<renderer::StaticMeshVertex*>(data) + vertex_index;
+				vertex->position = mesh->vertices[vertex_index];
+				vertex->normal = mesh->normals[vertex_index];
+				vertex->uvs = mesh->uvs[vertex_index];
+				//if (geo->blend_indices.size() > 0)
+				//{
+				//	vertex->blend_indices = geo->blend_indices[v];
+				//	vertex->blend_weights = geo->blend_weights[v];
+				//}
+			}
+
+			render_scene_state->device->buffer_upload(render_mesh->vertex_buffer, data, vertex_buffer_size);
+			MEMORY2_DEALLOC(*scene->allocator, data);
+
+			// upload index data
+			render_scene_state->device->buffer_upload(render_mesh->index_buffer, mesh->indices, index_buffer_size);
+
+			render_scene_state->render_meshes.push_back(render_mesh);
+			render_scene_state->render_mesh_by_handle.insert(std::pair<AssetHandle, RenderMeshInfo*>(mesh_handle, render_mesh));
+		}
+	} // render_scene_track_mesh
+
+
+
 	AnimatedMeshComponent* render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
 	{
 		AnimatedMeshComponent* component = MEMORY2_NEW(*scene->allocator, AnimatedMeshComponent);
@@ -41,10 +173,12 @@ namespace gemini
 		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
 		scene->animated_meshes.push_back(component);
 
+		render_scene_track_mesh(scene, mesh_handle);
+
 		return component;
 	} // render_scene_add_animated_mesh
 
-	void render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
+	StaticMeshComponent* render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
 	{
 		StaticMeshComponent* component = MEMORY2_NEW(*scene->allocator, StaticMeshComponent);
 		component->entity_index = entity_index;
@@ -52,6 +186,10 @@ namespace gemini
 		component->model_matrix = model_transform;
 		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
 		scene->static_meshes.push_back(component);
+
+		render_scene_track_mesh(scene, mesh_handle);
+
+		return component;
 	} // render_scene_add_static_mesh
 
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device)
@@ -164,21 +302,23 @@ namespace gemini
 			Mesh* mesh = mesh_from_handle(static_mesh->mesh_handle);
 			if (mesh)
 			{
+				// If you hit this, the renderer has no reference to this mesh!
+				// Are you sure it was uploaded?
+				assert(render_scene_state->render_mesh_by_handle.has_key(static_mesh->mesh_handle));
+
 				serializer->constant("model_matrix", &static_mesh->model_matrix, sizeof(glm::mat4));
 				serializer->constant("normal_matrix", &static_mesh->normal_matrix, sizeof(glm::mat3));
+
+				RenderMeshInfo* mesh_info = render_scene_state->render_mesh_by_handle[static_mesh->mesh_handle];
+				serializer->vertex_buffer(mesh_info->vertex_buffer);
 
 				// TODO: Convert into render blocks that can be re-sorted.
 				for (size_t geo = 0; geo < mesh->geometry.size(); ++geo)
 				{
-					//::renderer::Geometry* geometry = mesh->geometry[geo];
 					const GeometryDefinition* geometry = &mesh->geometry[geo];
 					//Material* material = material_from_handle(geometry->material_id);
 					// TODO: setup material for rendering
-#if 0
-
-					serializer->vertex_buffer(geometry->vertex_buffer);
-					serializer->draw_indexed_primitives(geometry->index_buffer, geometry->indices.size());
-#endif
+					serializer->draw_indexed_primitives(mesh_info->index_buffer, geometry->total_indices);
 				}
 			}
 		}

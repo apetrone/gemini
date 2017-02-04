@@ -33,26 +33,6 @@
 #include <core/typedefs.h>
 
 
-#include <renderer/renderer.h>
-
-//#include <vector>
-//
-//#include <core/mem.h>
-//#include <core/stackstring.h>
-//
-//#include <runtime/geometry.h>
-//
-////#include "assets.h"
-//#include "renderer/renderer.h"
-//
-//#include <core/fixedarray.h>
-//#include "keyframechannel.h"
-//#include "animation.h"
-//
-//#include <json/json.h>
-//
-//#include <runtime/asset_handle.h>
-
 namespace gemini
 {
 	const int MAX_VERTEX_WEIGHTS = 4;
@@ -113,6 +93,7 @@ namespace gemini
 
 	void mesh_init(Allocator& allocator, Mesh* mesh, uint32_t total_vertices, uint32_t total_indices);
 	void mesh_destroy(Allocator& allocator, Mesh* mesh);
+	void mesh_stats(Mesh* mesh, uint32_t& total_vertices, uint32_t& total_indices);
 	Joint* mesh_find_bone_named(Mesh* mesh, const char* name);
 
 } // namespace gemini

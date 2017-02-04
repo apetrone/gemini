@@ -24,14 +24,9 @@
 // -------------------------------------------------------------
 #include <runtime/mesh.h>
 
-using namespace renderer; // get rid of this!
-
 namespace gemini
 {
 	Mesh::Mesh(gemini::Allocator& _allocator)
-		//: allocator(_allocator)
-		//, geometry(_allocator)
-		//, geometry_vn(_allocator)
 		: vertices(nullptr)
 		, normals(nullptr)
 		, uvs(nullptr)
@@ -41,8 +36,6 @@ namespace gemini
 		, skeleton(_allocator)
 		, hitboxes(_allocator)
 	{
-		//is_dirty = true;
-		//has_skeletal_animation = false;
 	} // Mesh
 
 	void mesh_init(Allocator& allocator, Mesh* mesh, uint32_t total_vertices, uint32_t total_indices)
@@ -68,9 +61,9 @@ namespace gemini
 		// blend weights
 		vertex_data_size += vec4_size;
 
-
 		// setup points
 		uint8_t* mem = static_cast<uint8_t*>(MEMORY2_ALLOC(allocator, vertex_data_size));
+		memset(mem, 0, vertex_data_size);
 		mesh->vertices = reinterpret_cast<glm::vec3*>(mem);
 		mesh->normals = reinterpret_cast<glm::vec3*>(mem + vec3_size);
 		mesh->uvs = reinterpret_cast<glm::vec2*>(mem + vec3_size + vec3_size);
@@ -78,13 +71,22 @@ namespace gemini
 		mesh->blend_weights = reinterpret_cast<glm::vec4*>(mem + vec3_size + vec3_size + vec2_size + vec4_size);
 
 		mesh->indices = static_cast<uint16_t*>(MEMORY2_ALLOC(allocator, sizeof(uint16_t) * total_indices));
-	}
+	} // mesh_init
 
 	void mesh_destroy(Allocator& allocator, Mesh* mesh)
 	{
 		MEMORY2_DEALLOC(allocator, mesh->vertices);
 		MEMORY2_DEALLOC(allocator, mesh->indices);
-	}
+	} // mesh_destroy
+
+	void mesh_stats(Mesh* mesh, uint32_t& total_vertices, uint32_t& total_indices)
+	{
+		for (size_t index = 0; index < mesh->geometry.size(); ++index)
+		{
+			total_vertices += mesh->geometry[index].total_vertices;
+			total_indices += mesh->geometry[index].total_indices;
+		}
+	} // mesh_stats
 
 	Joint* mesh_find_bone_named(Mesh* mesh, const char* name)
 	{

@@ -172,6 +172,16 @@ namespace gemini
 				*uv = glm::vec2(in_uv[0].asFloat(), in_uv[1].asFloat());
 			}
 
+			// If you hit this assert, we need to finally split
+			// large batches of geometry into batches no larger than 65k.
+			assert(geometry->total_indices < USHRT_MAX);
+
+			// read all indices
+			for (uint32_t index = 0; index < geometry->total_indices; ++index)
+			{
+				state.mesh->indices[index] = index_array[index].asInt();
+			}
+
 			geometry->material_handle = material_load("materials/default");
 
 			//Json::Value material_id = node["material_id"];

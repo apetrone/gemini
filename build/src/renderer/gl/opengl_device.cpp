@@ -348,7 +348,7 @@ namespace render2
 	size_t OpenGLDevice::compute_index_stride()
 	{
 		// If you change this, you need to change calls to DrawElements.
-		return sizeof(renderer::IndexType);
+		return sizeof(uint16_t);
 	}
 
 	void OpenGLDevice::activate_vertex_buffer(GLInputLayout* input_layout, GLBuffer* vertex_buffer)
