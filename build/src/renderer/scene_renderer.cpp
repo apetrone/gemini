@@ -191,14 +191,19 @@ namespace gemini
 
 	AnimatedMeshComponent* render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
 	{
+		Mesh* mesh = mesh_from_handle(mesh_handle);
+		if (!mesh)
+		{
+			LOGW("Mesh is not loaded for animated mesh!; ignoring\n");
+			return nullptr;
+		}
+
 		AnimatedMeshComponent* component = MEMORY2_NEW(*scene->allocator, AnimatedMeshComponent)(*scene->allocator);
 		component->entity_index = entity_index;
 		component->mesh_handle = mesh_handle;
 		component->model_matrix = model_transform;
 		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
 		component->bone_transforms = (glm::mat4*)MEMORY2_ALLOC(*scene->allocator, sizeof(glm::mat4) * MAX_BONES);
-
-		Mesh* mesh = mesh_from_handle(mesh_handle);
 
 		// iterate over all sequences and create sequence instances
 		// for this AnimationMeshComponent.
@@ -223,6 +228,13 @@ namespace gemini
 
 	StaticMeshComponent* render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
 	{
+		Mesh* mesh = mesh_from_handle(mesh_handle);
+		if (!mesh)
+		{
+			LOGW("Mesh is not loaded for static mesh!; ignoring\n");
+			return nullptr;
+		}
+
 		StaticMeshComponent* component = MEMORY2_NEW(*scene->allocator, StaticMeshComponent);
 		component->entity_index = entity_index;
 		component->mesh_handle = mesh_handle;

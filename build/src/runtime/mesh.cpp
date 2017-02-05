@@ -32,6 +32,7 @@ namespace gemini
 		, uvs(nullptr)
 		, blend_indices(nullptr)
 		, blend_weights(nullptr)
+		, indices(nullptr)
 		, bind_poses(nullptr)
 		, inverse_bind_poses(nullptr)
 		, geometry(_allocator)
@@ -44,6 +45,9 @@ namespace gemini
 	void mesh_init(Allocator& allocator, Mesh* mesh, uint32_t total_vertices, uint32_t total_indices, uint32_t total_bones)
 	{
 		size_t vertex_data_size = 0;
+
+		assert(total_vertices > 0);
+		assert(total_indices > 0);
 
 		const size_t vec2_size = sizeof(glm::vec2) * total_vertices;
 		const size_t vec3_size = sizeof(glm::vec3) * total_vertices;
@@ -88,11 +92,7 @@ namespace gemini
 	{
 		MEMORY2_DEALLOC(allocator, mesh->vertices);
 		MEMORY2_DEALLOC(allocator, mesh->indices);
-
-		if (mesh->bind_poses)
-		{
-			MEMORY2_DEALLOC(allocator, mesh->bind_poses);
-		}
+		MEMORY2_DEALLOC(allocator, mesh->bind_poses);
 	} // mesh_destroy
 
 	void mesh_stats(Mesh* mesh, uint32_t& total_vertices, uint32_t& total_indices)
