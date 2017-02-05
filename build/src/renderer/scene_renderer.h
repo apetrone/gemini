@@ -41,6 +41,11 @@ namespace render2
 
 namespace gemini
 {
+	namespace animation
+	{
+		struct AnimatedInstance;
+	} // namespace animation
+
 	struct StaticMeshComponent
 	{
 		AssetHandle mesh_handle;
@@ -69,6 +74,10 @@ namespace gemini
 		glm::mat4* bone_transforms;
 
 		// animation::SequenceId current_sequence;
+
+		Array<animation::AnimatedInstance*> sequence_instances;
+
+		AnimatedMeshComponent(gemini::Allocator& allocator);
 	}; // AnimatedMeshComponent
 
 	struct RenderScene

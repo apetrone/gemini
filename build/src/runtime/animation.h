@@ -151,6 +151,7 @@ namespace gemini
 		SequenceId find_sequence(const char* name);
 		Sequence* get_sequence_by_index(SequenceId index);
 
+		// caller must clean up the returned instance by calling destroy_sequence_instance.
 		AnimatedInstance* create_sequence_instance(gemini::Allocator& allocator, SequenceId index);
 		void destroy_sequence_instance(gemini::Allocator& allocator, AnimatedInstance* instance);
 		AnimatedInstance* get_instance_by_index(SequenceId index);

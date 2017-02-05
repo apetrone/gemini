@@ -524,11 +524,6 @@ namespace gemini
 				MEMORY2_DELETE(*_allocator, sequence);
 			}
 			detail::_sequences.clear();
-
-			for (AnimatedInstance* instance : detail::_instances)
-			{
-				destroy_sequence_instance(*_allocator, instance);
-			}
 			detail::_instances.clear();
 
 			MEMORY2_DELETE(*_allocator, _sequences_by_name);

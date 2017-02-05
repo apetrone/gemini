@@ -29,6 +29,7 @@
 #include <renderer/scene_renderer.h>
 #include <renderer/vertexdescriptor.h>
 
+#include <runtime/animation.h>
 #include <runtime/assets.h>
 #include <runtime/material.h>
 #include <runtime/mesh.h>
@@ -60,6 +61,11 @@ namespace gemini
 		HashSet<AssetHandle, RenderMeshInfo*> render_mesh_by_handle;
 		Array<RenderMeshInfo*> render_meshes;
 	}; // RenderSceneState
+
+	AnimatedMeshComponent::AnimatedMeshComponent(gemini::Allocator& in_allocator)
+		: sequence_instances(in_allocator)
+	{
+	}
 
 	RenderSceneState* render_scene_state = nullptr;
 
@@ -185,7 +191,7 @@ namespace gemini
 
 	AnimatedMeshComponent* render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
 	{
-		AnimatedMeshComponent* component = MEMORY2_NEW(*scene->allocator, AnimatedMeshComponent);
+		AnimatedMeshComponent* component = MEMORY2_NEW(*scene->allocator, AnimatedMeshComponent)(*scene->allocator);
 		component->entity_index = entity_index;
 		component->mesh_handle = mesh_handle;
 		component->model_matrix = model_transform;
@@ -198,9 +204,9 @@ namespace gemini
 		// for this AnimationMeshComponent.
 		for (size_t sequence = 0; sequence < mesh->sequences.size(); ++sequence)
 		{
-			// create_sequence_instance(
+			animation::AnimatedInstance* instance = animation::create_sequence_instance(*scene->allocator, mesh->sequences[sequence]);
+			component->sequence_instances.push_back(instance);
 		}
-
 
 		for (size_t index = 0; index < MAX_BONES; ++index)
 		{
@@ -271,8 +277,15 @@ namespace gemini
 
 		for (size_t index = 0; index < scene->animated_meshes.size(); ++index)
 		{
-			MEMORY2_DEALLOC(*scene->allocator, scene->animated_meshes[index]->bone_transforms);
-			MEMORY2_DELETE(*scene->allocator, scene->animated_meshes[index]);
+			AnimatedMeshComponent* component = scene->animated_meshes[index];
+			for (size_t sequence_index = 0; sequence_index < component->sequence_instances.size(); ++sequence_index)
+			{
+				animation::AnimatedInstance* instance = component->sequence_instances[sequence_index];
+				animation::destroy_sequence_instance(*scene->allocator, instance);
+			}
+
+			MEMORY2_DEALLOC(*scene->allocator, component->bone_transforms);
+			MEMORY2_DELETE(*scene->allocator, component);
 		}
 
 		device->destroy_pipeline(scene->static_mesh_pipeline);
