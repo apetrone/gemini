@@ -1021,6 +1021,9 @@ Options:
 
 		AssetHandle test_mesh = mesh_load("models/cube");
 		AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
+		AssetHandle cube_rig = mesh_load("models/cube_rig/cube_rig");
+		AssetHandle chest_rig = mesh_load("models/chest_rig/chest_rig");
+		AssetHandle isocarbon_rig = mesh_load("models/isocarbon_rig/isocarbon_rig");
 
 		glm::mat4 transform(1.0f);
 
@@ -1030,7 +1033,12 @@ Options:
 			transform = glm::translate(transform, glm::vec3(1.5f, 0.0f, 0.0f));
 		}
 
-		AnimatedMeshComponent* component = render_scene_add_animated_mesh(render_scene, plane_rig, 0, transform);
+		transform = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		for (size_t index = 0; index < 3; ++index)
+		{
+			AnimatedMeshComponent* component = render_scene_add_animated_mesh(render_scene, isocarbon_rig, 0, transform);
+			transform = glm::translate(transform, glm::vec3(-1.0f, 0.0f, 0.0f));
+		}
 
 		// initialize debug draw
 		debugdraw::startup(debugdraw_allocator, device);
@@ -1575,6 +1583,12 @@ Options:
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 		last_time = current_time;
+
+		//params.step_alpha = accumulator / params.step_interval_seconds;
+		//if (params.step_alpha >= 1.0f)
+		//{
+		//	params.step_alpha -= 1.0f;
+		//}
 
 		//memory_leak_report(false);
 	}

@@ -601,7 +601,7 @@ namespace gemini
 
 
 
-#define GEMINI_DEBUG_BONES 1
+//#define GEMINI_DEBUG_BONES 1
 
 
 

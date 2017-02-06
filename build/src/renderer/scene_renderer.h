@@ -29,7 +29,7 @@
 #include <core/typedefs.h>
 
 #include <runtime/asset_handle.h>
-
+#include <runtime/animation.h>
 
 namespace render2
 {
@@ -41,11 +41,6 @@ namespace render2
 
 namespace gemini
 {
-	namespace animation
-	{
-		struct AnimatedInstance;
-	} // namespace animation
-
 	struct StaticMeshComponent
 	{
 		AssetHandle mesh_handle;
@@ -78,6 +73,8 @@ namespace gemini
 		Array<animation::AnimatedInstance*> sequence_instances;
 
 		AnimatedMeshComponent(gemini::Allocator& allocator);
+
+		animation::Pose last_pose;
 	}; // AnimatedMeshComponent
 
 	struct RenderScene

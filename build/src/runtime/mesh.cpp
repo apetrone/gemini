@@ -78,9 +78,9 @@ namespace gemini
 		// setup skeleton data
 		if (total_bones > 0)
 		{
-			uint8_t* data = static_cast<uint8_t*>(MEMORY2_ALLOC(allocator, sizeof(glm::mat4) * total_bones * 2));
+			uint8_t* data = static_cast<uint8_t*>(MEMORY2_ALLOC(allocator, sizeof(glm::mat4) * MAX_BONES * 2));
 			mesh->bind_poses = reinterpret_cast<glm::mat4*>(data);
-			mesh->inverse_bind_poses = reinterpret_cast<glm::mat4*>(data + (sizeof(glm::mat4) * total_bones));
+			mesh->inverse_bind_poses = reinterpret_cast<glm::mat4*>(data + (sizeof(glm::mat4) * MAX_BONES));
 		}
 	} // mesh_init
 
