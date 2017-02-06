@@ -204,6 +204,7 @@ namespace gemini
 		component->model_matrix = model_transform;
 		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
 		component->bone_transforms = (glm::mat4*)MEMORY2_ALLOC(*scene->allocator, sizeof(glm::mat4) * MAX_BONES);
+		component->current_sequence_index = 0;
 
 		// iterate over all sequences and create sequence instances
 		// for this AnimationMeshComponent.
@@ -573,23 +574,22 @@ namespace gemini
 		}
 	} // set_pose
 
-
-
-
-
-
-
-
 	void render_scene_extract(RenderScene* scene)
 	{
-		// for the first animation component
+		// extract data from static meshes
+		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
+		{
+
+		}
+
+		// extract data from animated meshes
 		for (size_t index = 0; index < scene->animated_meshes.size(); ++index)
 		{
 			AnimatedMeshComponent* component = scene->animated_meshes[index];
 			animation::Pose pose;
 
 			// TODO: determine how to get the blended pose; for now just use the first animated instance.
-			animated_instance_get_pose(component->sequence_instances[0], pose);
+			animated_instance_get_pose(component->sequence_instances[component->current_sequence_index], pose);
 
 			Mesh* mesh = mesh_from_handle(component->mesh_handle);
 			if (!mesh)
@@ -597,17 +597,7 @@ namespace gemini
 				return;
 			}
 
-			//for (size_t index = 0; index < MAX_BONES; ++index)
-			//{
-			//	component->bone_transforms[index] = mesh->bind_poses[index] * glm::mat4(1.0f);
-			//}
-
-			animation::Pose interpolated_pose;
-			animation_interpolate_pose(interpolated_pose, component->last_pose, pose, 0.0f);
-
-			anim_set_pose(component, interpolated_pose);
-
-			component->last_pose = pose;
+			anim_set_pose(component, pose);
 		}
 	} // render_scene_extract
 } // namespace gemini

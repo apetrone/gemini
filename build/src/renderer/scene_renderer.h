@@ -53,6 +53,8 @@ namespace gemini
 
 	struct AnimatedMeshComponent
 	{
+		AnimatedMeshComponent(gemini::Allocator& allocator);
+
 		AssetHandle mesh_handle;
 		uint16_t entity_index;
 
@@ -66,15 +68,14 @@ namespace gemini
 		// inverse bind poses used by the instance associated with this component.
 		glm::mat4* inverse_bind_poses;
 
+		// local bone transforms (extracted from current pose)
 		glm::mat4* bone_transforms;
 
-		// animation::SequenceId current_sequence;
+		// currently playing sequence
+		uint32_t current_sequence_index;
 
+		// array of all sequence instances for the associated mesh
 		Array<animation::AnimatedInstance*> sequence_instances;
-
-		AnimatedMeshComponent(gemini::Allocator& allocator);
-
-		animation::Pose last_pose;
 	}; // AnimatedMeshComponent
 
 	struct RenderScene
