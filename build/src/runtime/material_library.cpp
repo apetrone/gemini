@@ -197,6 +197,7 @@ namespace gemini
 
 						LOGV("TODO: support texture parameters when loading from materials\n");
 						parameter->texture_handle = texture_load(texture_param.asString().c_str());
+						parameter->texture_unit = texture_unit.asInt();
 					}
 					else
 					{

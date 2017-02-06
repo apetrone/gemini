@@ -30,7 +30,7 @@
 #include <core/typedefs.h>
 
 // If this is enabled, missing constants will be reported.
-#define GEMINI_ENABLE_SHADER_MISSING_CONSTANTS 1
+//#define GEMINI_ENABLE_SHADER_MISSING_CONSTANTS 1
 
 // Enable this to perform extra debug checks when setting up input layouts.
 #define VERIFY_VERTEX_DATA_MATCHES_SHADER_DATA 1

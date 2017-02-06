@@ -1022,9 +1022,9 @@ Options:
 		AssetHandle test_mesh = mesh_load("models/cube");
 		//AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
 		AssetHandle animated_mesh;
-		//animated_mesh = mesh_load("models/cube_rig/cube_rig");
+		animated_mesh = mesh_load("models/cube_rig/cube_rig");
 		//animated_mesh = mesh_load("models/chest_rig/chest_rig");
-		animated_mesh = mesh_load("models/isocarbon_rig/isocarbon_rig");
+		//animated_mesh = mesh_load("models/isocarbon_rig/isocarbon_rig");
 
 		glm::mat4 transform(1.0f);
 

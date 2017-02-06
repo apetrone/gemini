@@ -347,11 +347,9 @@ namespace gemini
 
 		// render static meshes
 		// setup the static mesh pipeline
-		static uint32_t diffuse_unit = 0;
 		serializer->pipeline(scene->static_mesh_pipeline);
 		scene->static_mesh_pipeline->constants().set("view_matrix", &view);
 		scene->static_mesh_pipeline->constants().set("projection_matrix", &projection);
-		scene->static_mesh_pipeline->constants().set("diffuse", &diffuse_unit);
 		scene->static_mesh_pipeline->constants().set("light_position_world", &scene->light_position_world);
 		scene->static_mesh_pipeline->constants().set("camera_position_world", &scene->camera_position_world);
 		scene->static_mesh_pipeline->constants().set("camera_view_direction", &scene->camera_view_direction);
@@ -384,6 +382,7 @@ namespace gemini
 						if (parameter->type == renderer::MP_SAMPLER_2D)
 						{
 							render2::Texture* texture = texture_from_handle(parameter->texture_handle);
+							serializer->constant(parameter->name.c_str(), &parameter->texture_unit, sizeof(uint32_t));
 							serializer->texture(texture, parameter->texture_unit);
 						}
 						else
@@ -408,11 +407,9 @@ namespace gemini
 
 		// render static meshes
 		// setup the static mesh pipeline
-		static uint32_t diffuse_unit = 0;
 		serializer->pipeline(scene->animated_mesh_pipeline);
 		scene->animated_mesh_pipeline->constants().set("view_matrix", &view);
 		scene->animated_mesh_pipeline->constants().set("projection_matrix", &projection);
-		scene->animated_mesh_pipeline->constants().set("diffuse", &diffuse_unit);
 		scene->animated_mesh_pipeline->constants().set("light_position_world", &scene->light_position_world);
 		scene->animated_mesh_pipeline->constants().set("camera_position_world", &scene->camera_position_world);
 		scene->animated_mesh_pipeline->constants().set("camera_view_direction", &scene->camera_view_direction);
@@ -447,6 +444,7 @@ namespace gemini
 						if (parameter->type == renderer::MP_SAMPLER_2D)
 						{
 							render2::Texture* texture = texture_from_handle(parameter->texture_handle);
+							serializer->constant(parameter->name.c_str(), &parameter->texture_unit, sizeof(uint32_t));
 							serializer->texture(texture, parameter->texture_unit);
 						}
 						else
