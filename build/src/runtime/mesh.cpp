@@ -37,6 +37,7 @@ namespace gemini
 		, inverse_bind_poses(nullptr)
 		, geometry(_allocator)
 		, sequences(_allocator)
+		, sequence_index_by_name(_allocator)
 		, skeleton(_allocator)
 		, hitboxes(_allocator)
 	{

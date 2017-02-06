@@ -29,6 +29,7 @@
 #include <runtime/geometry.h>
 
 #include <core/fixedarray.h>
+#include <core/hashset.h>
 #include <core/mathlib.h>
 #include <core/stackstring.h>
 #include <core/typedefs.h>
@@ -85,6 +86,9 @@ namespace gemini
 
 		// list of animation sequences associated with this mesh
 		FixedArray<animation::SequenceId> sequences;
+
+		// name to sequences array mapping
+		HashSet<core::StackString<32>, uint32_t> sequence_index_by_name;
 
 		// offset to the center of mass
 		glm::vec3 mass_center_offset;

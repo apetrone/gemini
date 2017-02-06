@@ -189,13 +189,13 @@ namespace gemini
 	} // render_scene_track_mesh
 
 
-	AnimatedMeshComponent* render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
+	uint32_t render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
 	{
 		Mesh* mesh = mesh_from_handle(mesh_handle);
 		if (!mesh)
 		{
 			LOGW("Mesh is not loaded for animated mesh!; ignoring\n");
-			return nullptr;
+			return 0;
 		}
 
 		AnimatedMeshComponent* component = MEMORY2_NEW(*scene->allocator, AnimatedMeshComponent)(*scene->allocator);
@@ -220,20 +220,18 @@ namespace gemini
 		}
 		scene->animated_meshes.push_back(component);
 
-		component->sequence_instances[0]->enabled = 1;
-
 		render_scene_track_mesh(scene, mesh_handle);
 
-		return component;
+		return scene->animated_meshes.size();
 	} // render_scene_add_animated_mesh
 
-	StaticMeshComponent* render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
+	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
 	{
 		Mesh* mesh = mesh_from_handle(mesh_handle);
 		if (!mesh)
 		{
 			LOGW("Mesh is not loaded for static mesh!; ignoring\n");
-			return nullptr;
+			return 0;
 		}
 
 		StaticMeshComponent* component = MEMORY2_NEW(*scene->allocator, StaticMeshComponent);
@@ -245,8 +243,51 @@ namespace gemini
 
 		render_scene_track_mesh(scene, mesh_handle);
 
-		return component;
+		return scene->static_meshes.size();
 	} // render_scene_add_static_mesh
+
+
+	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name)
+	{
+		// If you hit this, an invalid component id was passed in
+		assert(component_id > 0);
+		component_id--;
+
+		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
+
+		Mesh* mesh = mesh_from_handle(component->mesh_handle);
+		if (!mesh)
+		{
+			return 0;
+		}
+
+		if (!mesh->sequence_index_by_name.has_key(animation_name))
+		{
+			LOGW("No animation named '%s'\n", animation_name);
+			return 0;
+		}
+
+		uint32_t instance_index = mesh->sequence_index_by_name[animation_name];
+		animation::AnimatedInstance* instance = component->sequence_instances[instance_index];
+		instance->enabled = 1;
+		instance->reset_channels();
+		return instance_index;
+	}
+
+	bool render_scene_animation_is_playing(RenderScene* scene, uint32_t component_id, uint32_t instance_id)
+	{
+		// If you hit this, an invalid component id was passed in
+		assert(component_id > 0);
+		component_id--;
+
+		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
+		animation::AnimatedInstance* instance = component->sequence_instances[instance_id];
+		// TODO: implement is playing!
+		assert(0);
+		return false;
+	}
+
+
 
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device)
 	{

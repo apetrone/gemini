@@ -226,13 +226,13 @@ namespace gemini
 		{
 			local_time_seconds = 0.0f;
 
-			Sequence* sequence = animation::get_sequence_by_index(sequence_index);
-			assert(sequence != 0);
+			//Sequence* sequence = animation::get_sequence_by_index(sequence_index);
+			//assert(sequence != 0);
 
-			for (auto& channel : channel_set)
-			{
-				channel.reset();
-			}
+			//for (auto& channel : channel_set)
+			//{
+			//	channel.reset();
+			//}
 		}
 
 		//

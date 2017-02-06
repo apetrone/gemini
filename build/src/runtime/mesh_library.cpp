@@ -476,6 +476,10 @@ namespace gemini
 				animation_sequence_uri.append(name.c_str());
 				animation::Sequence* sequence = animation::load_sequence_from_file(*load_state->allocator, animation_sequence_uri(), mesh);
 				mesh->sequences[animation_index] = sequence->index;
+
+				platform::PathString basename = animation_sequence_uri.basename();
+				assert(basename.size() < 32);
+				mesh->sequence_index_by_name[basename()] = animation_index;
 			}
 		}
 

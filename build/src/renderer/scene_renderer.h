@@ -105,8 +105,15 @@ namespace gemini
 	void render_scene_startup(render2::Device* device, Allocator& allocator);
 	void render_scene_shutdown();
 
-	AnimatedMeshComponent* render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
-	StaticMeshComponent* render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
+	uint32_t render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
+	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
+
+	// returns the instance id for an animation
+	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name);
+
+	// check to see if an animation is playing
+	bool render_scene_animation_is_playing(RenderScene* scene, uint32_t component_id, uint32_t instance_id);
+
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device);
 	void render_scene_destroy(RenderScene* scene, render2::Device* device);
 

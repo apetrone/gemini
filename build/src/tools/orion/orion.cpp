@@ -1048,7 +1048,8 @@ Options:
 		transform = glm::rotate(transform, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		for (size_t index = 0; index < 4; ++index)
 		{
-			AnimatedMeshComponent* component = render_scene_add_animated_mesh(render_scene, animated_mesh, 0, transform);
+			uint32_t component_id = render_scene_add_animated_mesh(render_scene, animated_mesh, 0, transform);
+			render_scene_animation_play(render_scene, component_id, "idle");
 			transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
 		}
 
