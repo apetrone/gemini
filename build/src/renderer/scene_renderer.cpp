@@ -271,6 +271,9 @@ namespace gemini
 		animation::AnimatedInstance* instance = component->sequence_instances[instance_index];
 		instance->enabled = 1;
 		instance->reset_channels();
+
+		component->current_sequence_index = instance_index;
+
 		return instance_index;
 	}
 

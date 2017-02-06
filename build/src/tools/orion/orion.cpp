@@ -1049,7 +1049,14 @@ Options:
 		for (size_t index = 0; index < 4; ++index)
 		{
 			uint32_t component_id = render_scene_add_animated_mesh(render_scene, animated_mesh, 0, transform);
-			render_scene_animation_play(render_scene, component_id, "idle");
+			if (index == 2)
+			{
+				render_scene_animation_play(render_scene, component_id, "wiggle");
+			}
+			else
+			{
+				render_scene_animation_play(render_scene, component_id, "idle");
+			}
 			transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
 		}
 
