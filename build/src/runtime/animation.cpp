@@ -94,7 +94,6 @@ namespace gemini
 		Channel::Channel(float* target, bool should_wrap) : value(target)
 		{
 			keyframelist = 0;
-			local_time_seconds = 0.0f;
 			current_keyframe = 0;
 			wrap = should_wrap;
 		}
@@ -112,94 +111,64 @@ namespace gemini
 			keyframelist = source_keyframe_list;
 		}
 
-		void Channel::advance(float delta_seconds)
-		{
-			if (!keyframelist)
-			{
-				return;
-			}
-
-			if (!value)
-			{
-				return;
-			}
-
-			if (keyframelist->duration_seconds == 0)
-			{
-				*value = 0;
-				return;
-			}
-//			assert(keyframelist->duration_seconds > 0.0f);
-
-			local_time_seconds += delta_seconds;
-			// determine the next keyframe; this must not wrap
-			uint32_t next_keyframe = current_keyframe + 1;
-			if (next_keyframe > keyframelist->total_keys)
-			{
-				next_keyframe = keyframelist->total_keys;
-			}
-
-			// our local time has passed the sequence duration
-			if (local_time_seconds > keyframelist->duration_seconds)
-			{
-				current_keyframe = 0;
-				if (wrap)
-				{
-					local_time_seconds -= keyframelist->duration_seconds;
-				}
-				else
-				{
-					local_time_seconds = keyframelist->duration_seconds;
-				}
-			}
-
-			float last_keyframe_time = keyframelist->keys[current_keyframe].seconds;
-			float next_time = keyframelist->keys[next_keyframe].seconds;
-			assert(next_time != 0.0f);
-
-			// alpha is calculated by dividing the deltas: (a/b)
-			// a. The delta between the current simulation time and the last key frame's time
-			// b. The delta between the next key frame's time and the last key frame's time.
-			float alpha = (local_time_seconds - last_keyframe_time) / (next_time - last_keyframe_time);
-			alpha = glm::clamp(alpha, 0.0f, 1.0f);
-
-			// update value
-			float prev_value = keyframelist->keys[current_keyframe].value;
-			float next_value;
-//			if ((current_keyframe+1) >= keyframelist->total_keys)
-//			{
-//				// TODO: should use post-infinity here
-//				// For now, just use the last keyframe.
-//				next_value = keyframelist->keys[current_keyframe].value;
-//			}
-//			else
-			{
-				next_value = keyframelist->keys[next_keyframe].value;
-			}
-
-			// lerp the value
-			*value = gemini::lerp(prev_value, next_value, alpha);
-
-			// determine if we should advance the keyframe index
-			if (local_time_seconds >= next_time)
-			{
-				// advance the frame
-				++current_keyframe;
-
-				// catch out of frame bounds
-				if (current_keyframe == keyframelist->total_keys-1)
-				{
-					current_keyframe = 0;
-					local_time_seconds -= next_time;
-				}
-			}
-		} // advance
-
 		void Channel::reset()
 		{
 			current_keyframe = 0;
-			local_time_seconds = 0;
 		} // reset
+
+		float Channel::evaluate(float t_seconds, float frame_delay_seconds) const
+		{
+			if (keyframelist->duration_seconds == 0)
+			{
+				return 0.0f;
+			}
+
+			uint32_t last_key = (keyframelist->total_keys - 1);
+
+			// TODO: Perform a direct lookup into the array with some math.
+			// this hasn't been a performance problem yet, fix it when it comes up.
+			float delta;
+			float value_a;
+			float value_b;
+			for (uint32_t key = 0; key < keyframelist->total_keys; ++key)
+			{
+				// alpha is calculated by dividing the deltas: (a/b)
+				// a. The delta between the current simulation time and the last key frame's time
+				// b. The delta between the next key frame's time and the last key frame's time.
+				Keyframe* keyframe = &keyframelist->keys[key];
+				uint32_t next_key = key + 1;
+				if (t_seconds < keyframe->seconds)
+				{
+					if (key == 0)
+					{
+						// can't get previous; lerp forward
+						Keyframe* next = &keyframelist->keys[next_key];
+						delta = (next->seconds - keyframe->seconds);
+						value_a = next->value;
+						value_b = keyframe->value;
+
+						float alpha = (delta / frame_delay_seconds);
+						return gemini::lerp(value_a, value_b, alpha);
+					}
+					else
+					{
+						Keyframe* prev_keyframe = &keyframelist->keys[key - 1];
+						float alpha = (keyframe->seconds - prev_keyframe->seconds) / frame_delay_seconds;
+						return gemini::lerp(prev_keyframe->value, keyframe->value, alpha);
+					}
+				}
+				else if (last_key == key)
+				{
+					// next key would wrap: We may just be able to
+					// return the last/first value.
+					next_key = 0;
+					Keyframe* next = &keyframelist->keys[last_key];
+					return next->value;
+				}
+			}
+
+			return 0.0f;
+		} // evaluate
 
 		float Channel::operator()() const
 		{
@@ -217,8 +186,8 @@ namespace gemini
 		// AnimatedInstance
 
 		AnimatedInstance::AnimatedInstance(gemini::Allocator& allocator)
-			//: local_time_seconds(0.0)
-			: enabled(false)
+			: local_time_seconds(0.0)
+			, enabled(false)
 			, animation_set(allocator)
 			, channel_set(allocator)
 		{
@@ -242,17 +211,21 @@ namespace gemini
 
 		void AnimatedInstance::advance(float delta_seconds)
 		{
+			local_time_seconds += delta_seconds;
+
 			Sequence* sequence = animation::get_sequence_by_index(sequence_index);
 			assert(sequence != 0);
 
-			for (Channel& channel : channel_set)
+			if (local_time_seconds > sequence->duration_seconds)
 			{
-				channel.advance(delta_seconds);
+				local_time_seconds -= sequence->duration_seconds;
 			}
 		}
 
 		void AnimatedInstance::reset_channels()
 		{
+			local_time_seconds = 0.0f;
+
 			Sequence* sequence = animation::get_sequence_by_index(sequence_index);
 			assert(sequence != 0);
 
@@ -615,25 +588,32 @@ namespace gemini
 
 			const size_t total_joints = instance->animation_set.size() / ANIMATION_KEYFRAME_VALUES_MAX;
 
+			// If you hit this, there are more joints than expected in this animation_set.
+			assert(total_joints < MAX_BONES);
+
+			float frame_delay_seconds = detail::_sequences[instance->sequence_index]->frame_delay_seconds;
+
 			for (size_t bone_index = 0; bone_index < total_joints; ++bone_index)
 			{
 				animation::Channel* channel = &instance->channel_set[bone_index * ANIMATION_KEYFRAME_VALUES_MAX];
 
-				assert(bone_index < MAX_BONES);
-
-				glm::vec3& pos = pose.pos[bone_index];
-				glm::quat& rot = pose.rot[bone_index];
 				const animation::Channel& tx = channel[0];
 				const animation::Channel& ty = channel[1];
 				const animation::Channel& tz = channel[2];
-				pos = glm::vec3(tx(), ty(), tz());
+				glm::vec3& pos = pose.pos[bone_index];
+				pos = glm::vec3(tx.evaluate(instance->local_time_seconds, frame_delay_seconds),
+								ty.evaluate(instance->local_time_seconds, frame_delay_seconds),
+								tz.evaluate(instance->local_time_seconds, frame_delay_seconds));
 
 				const animation::Channel& rx = channel[3];
 				const animation::Channel& ry = channel[4];
 				const animation::Channel& rz = channel[5];
 				const animation::Channel& rw = channel[6];
-
-				rot = glm::quat(rw(), rx(), ry(), rz());
+				glm::quat& rot = pose.rot[bone_index];
+				rot = glm::quat(rw.evaluate(instance->local_time_seconds, frame_delay_seconds),
+								rx.evaluate(instance->local_time_seconds, frame_delay_seconds),
+								ry.evaluate(instance->local_time_seconds, frame_delay_seconds),
+								rz.evaluate(instance->local_time_seconds, frame_delay_seconds));
 
 #if defined(GEMINI_DEBUG_BONES)
 				debugdraw::text(origin.x,

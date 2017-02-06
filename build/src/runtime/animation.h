@@ -75,7 +75,7 @@ namespace gemini
 			KeyframeList* keyframelist;
 
 			// local time in seconds [0, keyframelist->duration_seconds]
-			float local_time_seconds;
+			//float local_time_seconds;
 
 			// current key frame index [0, keyframelist->total_keys-1]
 			uint32_t current_keyframe;
@@ -93,8 +93,10 @@ namespace gemini
 
 			void set_target(float* target);
 			void set_keyframe_list(KeyframeList* source_keyframe_list);
-			void advance(float delta_seconds);
 			void reset();
+
+			// evaluate this channel at time t_seconds
+			float evaluate(float t_seconds, float frame_delay_seconds) const;
 
 			float operator()() const;
 		}; // Channel
@@ -130,7 +132,7 @@ namespace gemini
 		struct AnimatedInstance
 		{
 			SequenceId index;
-			//float local_time_seconds;
+			float local_time_seconds;
 			SequenceId sequence_index;
 			FixedArray<float> animation_set;
 			FixedArray<Channel> channel_set;
