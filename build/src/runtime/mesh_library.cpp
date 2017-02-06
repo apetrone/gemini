@@ -187,14 +187,14 @@ namespace gemini
 				MaterialByIdContainer::iterator it = materials.find(material_id.asInt());
 				if (it != materials.end())
 				{
-					std::string material_path = "materials/" + it->second;
+					std::string material_path = it->second;
 					geometry->material_handle = material_load(material_path.c_str());
 				}
 			}
 			else
 			{
 				// no material specified; load default material
-				geometry->material_handle = material_load("materials/default");
+				geometry->material_handle = material_load("default");
 			}
 
 			// If this has a skeleton...

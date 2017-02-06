@@ -340,6 +340,25 @@ namespace gemini
 		render_animated_meshes(scene, device, view, projection, animated_pass);
 	} // render_scene_draw
 
+	void _render_setup_material(render2::CommandSerializer* serializer, AssetHandle material_handle)
+	{
+		Material* material = material_from_handle(material_handle);
+		for (size_t param_index = 0; param_index < material->parameters.size(); ++param_index)
+		{
+			renderer::MaterialParameter* parameter = &material->parameters[param_index];
+			if (parameter->type == renderer::MP_SAMPLER_2D)
+			{
+				render2::Texture* texture = texture_from_handle(parameter->texture_handle);
+				serializer->constant(parameter->name.c_str(), &parameter->texture_unit, sizeof(uint32_t));
+				serializer->texture(texture, parameter->texture_unit);
+			}
+			else
+			{
+				LOGV("Unhandled material parameter: %i\n", parameter->type);
+			}
+		}
+	}
+
 	void render_static_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass)
 	{
 		render2::CommandQueue* queue = device->create_queue(pass);
@@ -375,22 +394,7 @@ namespace gemini
 				for (size_t geo = 0; geo < mesh->geometry.size(); ++geo)
 				{
 					const GeometryDefinition* geometry = &mesh->geometry[geo];
-					Material* material = material_from_handle(geometry->material_handle);
-					for (size_t param_index = 0; param_index < material->parameters.size(); ++param_index)
-					{
-						renderer::MaterialParameter* parameter = &material->parameters[param_index];
-						if (parameter->type == renderer::MP_SAMPLER_2D)
-						{
-							render2::Texture* texture = texture_from_handle(parameter->texture_handle);
-							serializer->constant(parameter->name.c_str(), &parameter->texture_unit, sizeof(uint32_t));
-							serializer->texture(texture, parameter->texture_unit);
-						}
-						else
-						{
-							LOGV("Unhandled material parameter: %i\n", parameter->type);
-						}
-					}
-
+					_render_setup_material(serializer, geometry->material_handle);
 					serializer->draw_indexed_primitives(mesh_info->index_buffer, geometry->total_indices);
 				}
 			}
@@ -437,22 +441,7 @@ namespace gemini
 				for (size_t geo = 0; geo < mesh->geometry.size(); ++geo)
 				{
 					const GeometryDefinition* geometry = &mesh->geometry[geo];
-					Material* material = material_from_handle(geometry->material_handle);
-					for (size_t param_index = 0; param_index < material->parameters.size(); ++param_index)
-					{
-						renderer::MaterialParameter* parameter = &material->parameters[param_index];
-						if (parameter->type == renderer::MP_SAMPLER_2D)
-						{
-							render2::Texture* texture = texture_from_handle(parameter->texture_handle);
-							serializer->constant(parameter->name.c_str(), &parameter->texture_unit, sizeof(uint32_t));
-							serializer->texture(texture, parameter->texture_unit);
-						}
-						else
-						{
-							LOGV("Unhandled material parameter: %i\n", parameter->type);
-						}
-					}
-
+					_render_setup_material(serializer, geometry->material_handle);
 					serializer->draw_indexed_primitives(mesh_info->index_buffer, geometry->total_indices);
 				}
 

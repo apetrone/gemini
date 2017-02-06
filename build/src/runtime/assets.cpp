@@ -122,6 +122,7 @@ namespace gemini
 			_asset_state->textures		= MEMORY2_NEW(asset_allocator, gemini::TextureLibrary)(asset_allocator, device);
 
 			_asset_state->fonts->prefix_path("fonts");
+			_asset_state->materials->prefix_path("materials");
 			_asset_state->shaders->prefix_path(shader_root);
 
 			if (load_default_assets)

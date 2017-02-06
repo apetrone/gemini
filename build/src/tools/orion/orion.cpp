@@ -294,6 +294,7 @@ private:
 
 	gemini::MonitorHandle monitor_zero;
 	gemini::MonitorHandle monitor_one;
+	gemini::MonitorHandle monitor_materials;
 
 	gemini::Allocator asset_allocator;
 	MonitorDelegate monitor_delegate;
@@ -423,6 +424,11 @@ public:
 		else if (channel == 2)
 		{
 			LOGV("reloading TEXTURE asset: %s\n", path());
+		}
+		else if (channel == 3)
+		{
+			LOGV("reload material: %s\n", path());
+			material_load(path(), true);
 		}
 	}
 
@@ -913,6 +919,11 @@ Options:
 		watch_path.append("textures");
 		monitor_one = directory_monitor_add(watch_path(), monitor_delegate);
 
+		watch_path = core::filesystem::instance()->content_directory();
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("materials");
+		monitor_materials = directory_monitor_add(watch_path(), monitor_delegate);
+
 		// initialize the renderer
 		{
 			render_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
@@ -1245,6 +1256,7 @@ Options:
 		channel_delegate.bind<EditorKernel, &EditorKernel::on_asset_reload>(this);
 		notify_client_subscribe(&notify_client, 1, channel_delegate);
 		notify_client_subscribe(&notify_client, 2, channel_delegate);
+		notify_client_subscribe(&notify_client, 3, channel_delegate);
 
 
 		lines = new glm::vec3[TOTAL_LINES];
@@ -1302,13 +1314,14 @@ Options:
 	{
 		uint32_t handle_to_channel[] = {
 			1,
-			2
+			2,
+			3
 		};
 		PathDelayHashSet::Iterator it = hashset.begin();
 		for (; it != hashset.end(); ++it)
 		{
 			ModifiedAssetData& data = it.value();
-			assert(data.monitor_handle > 0 && data.monitor_handle < 3);
+			assert(data.monitor_handle > 0 && data.monitor_handle < 4);
 
 			data.quiet_time_left -= tick_seconds;
 			if (data.quiet_time_left <= 0.0f)
