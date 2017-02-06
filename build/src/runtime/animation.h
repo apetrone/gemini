@@ -74,14 +74,8 @@ namespace gemini
 			// source key frame list
 			KeyframeList* keyframelist;
 
-			// local time in seconds [0, keyframelist->duration_seconds]
-			//float local_time_seconds;
-
-			// current key frame index [0, keyframelist->total_keys-1]
-			uint32_t current_keyframe;
-
 			// value by reference
-			float* value;
+			//float* value;
 
 			// is this a loopable anim; if so, we ignore the last keyframe and wrap
 			// because keyframe[first] == keyframe[last]
@@ -91,14 +85,12 @@ namespace gemini
 			Channel(float* target = 0, bool should_wrap = true);
 			~Channel();
 
-			void set_target(float* target);
 			void set_keyframe_list(KeyframeList* source_keyframe_list);
-			void reset();
 
 			// evaluate this channel at time t_seconds
 			float evaluate(float t_seconds, float frame_delay_seconds) const;
 
-			float operator()() const;
+			//float operator()() const;
 		}; // Channel
 
 

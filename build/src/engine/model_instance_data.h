@@ -70,8 +70,6 @@ namespace gemini
 		ModelInstanceData(gemini::Allocator& allocator);
 
 		void set_mesh_index(AssetHandle in_mesh_handle);
-		void create_bones();
-		void destroy_bones();
 		virtual AssetHandle asset_index() const;
 		virtual glm::mat4& get_local_transform();
 		virtual void set_local_transform(const glm::mat4& _transform);
@@ -83,7 +81,6 @@ namespace gemini
 		virtual void get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations);
 		virtual void set_pose(glm::vec3* positions, glm::quat* rotations);
 		virtual int32_t get_animation_index(const char* name);
-		virtual int32_t add_animation(const char* name);
 		virtual int32_t get_total_animations() const;
 		virtual void reset_channels(int32_t index);
 		virtual float get_animation_duration(int32_t index) const;

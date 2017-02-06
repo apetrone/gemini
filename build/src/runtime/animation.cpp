@@ -91,30 +91,24 @@ namespace gemini
 		// Channel
 		//
 
-		Channel::Channel(float* target, bool should_wrap) : value(target)
+		Channel::Channel(float* target, bool should_wrap)
 		{
 			keyframelist = 0;
-			current_keyframe = 0;
 			wrap = should_wrap;
 		}
 
 		Channel::~Channel()
 		{}
 
-		void Channel::set_target(float *target)
-		{
-			value = target;
-		}
+		//void Channel::set_target(float *target)
+		//{
+		//	value = target;
+		//}
 
 		void Channel::set_keyframe_list(KeyframeList* source_keyframe_list)
 		{
 			keyframelist = source_keyframe_list;
 		}
-
-		void Channel::reset()
-		{
-			current_keyframe = 0;
-		} // reset
 
 		float Channel::evaluate(float t_seconds, float frame_delay_seconds) const
 		{
@@ -170,10 +164,10 @@ namespace gemini
 			return 0.0f;
 		} // evaluate
 
-		float Channel::operator()() const
-		{
-			return *value;
-		} // operator()
+		//float Channel::operator()() const
+		//{
+		//	return *value;
+		//} // operator()
 
 
 		// Sequence
@@ -205,7 +199,6 @@ namespace gemini
 			{
 				Channel& channel = channel_set[index];
 				channel.set_keyframe_list(&sequence->animation_set[index]);
-				channel.set_target(&animation_set[index]);
 			}
 		}
 

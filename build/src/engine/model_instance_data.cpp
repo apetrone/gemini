@@ -51,41 +51,6 @@ namespace gemini
 		mesh = mesh_from_handle(mesh_handle);
 	}
 
-	void ModelInstanceData::create_bones()
-	{
-		assert(mesh != 0);
-
-		// does this have an animation?
-		if (mesh->has_skeletal_animation)
-		{
-			size_t total_elements = (mesh->geometry.size() * mesh->skeleton.size());
-			local_bone_transforms = new glm::mat4[total_elements];
-			model_bone_transforms = new glm::mat4[total_elements];
-			inverse_bind_transforms = new glm::mat4[total_elements];
-		}
-	}
-
-	void ModelInstanceData::destroy_bones()
-	{
-		if (local_bone_transforms)
-		{
-			delete[] local_bone_transforms;
-			local_bone_transforms = 0;
-		}
-
-		if (model_bone_transforms)
-		{
-			delete[] model_bone_transforms;
-			model_bone_transforms = 0;
-		}
-
-		if (inverse_bind_transforms)
-		{
-			delete[] inverse_bind_transforms;
-			inverse_bind_transforms = 0;
-		}
-	}
-
 	AssetHandle ModelInstanceData::asset_index() const { return mesh_handle; }
 	glm::mat4& ModelInstanceData::get_local_transform() { return transform; }
 	void ModelInstanceData::set_local_transform(const glm::mat4& _transform) { transform = _transform; }
@@ -135,48 +100,15 @@ namespace gemini
 
 	void ModelInstanceData::get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations)
 	{
-		animation::SequenceId instance_index = animations[index];
-		animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
-
-#if defined(GEMINI_DEBUG_BONES)
-		const glm::vec2 origin(10.0f, 30.0f);
-#endif
-
-		const size_t total_joints = instance->animation_set.size() / ANIMATION_KEYFRAME_VALUES_MAX;
-
-		for (size_t bone_index = 0; bone_index < total_joints; ++bone_index)
-		{
-			animation::Channel* channel = &instance->channel_set[bone_index * ANIMATION_KEYFRAME_VALUES_MAX];
-
-			assert(bone_index < MAX_BONES);
-
-			glm::vec3& pos = positions[bone_index];
-			glm::quat& rot = rotations[bone_index];
-			const animation::Channel& tx = channel[0];
-			const animation::Channel& ty = channel[1];
-			const animation::Channel& tz = channel[2];
-			pos = glm::vec3(tx(), ty(), tz());
-
-			const animation::Channel& rx = channel[3];
-			const animation::Channel& ry = channel[4];
-			const animation::Channel& rz = channel[5];
-			const animation::Channel& rw = channel[6];
-
-			rot = glm::quat(rw(), rx(), ry(), rz());
-
-#if defined(GEMINI_DEBUG_BONES)
-			debugdraw::text(origin.x,
-				origin.y + (12.0f * bone_index),
-				core::str::format("%2i) '%s' | rot: [%2.2f, %2.2f, %2.2f, %2.2f]", bone_index,
-					mesh->skeleton[bone_index].name(),
-					rot.x, rot.y, rot.z, rot.w),
-				Color(0.0f, 0.0f, 0.0f));
-#endif
-		}
+		// THIS IS DEPRECATED. Replace with new animation code.
+		assert(0);
 	}
 
 	void ModelInstanceData::set_pose(glm::vec3* positions, glm::quat* rotations)
 	{
+		// THIS IS DEPRECATED. Replace with new animation code.
+		assert(0);
+#if 0
 		if (mesh->skeleton.empty())
 		{
 			return;
@@ -238,11 +170,13 @@ namespace gemini
 
 			++geometry_index;
 		}
+#endif
 	}
 
 	int32_t ModelInstanceData::get_animation_index(const char* name)
 	{
 		size_t index = 0;
+#if 0
 		for (const animation::SequenceId& id : animations)
 		{
 			animation::AnimatedInstance* instance = animation::get_instance_by_index(id);
@@ -254,33 +188,18 @@ namespace gemini
 			}
 			++index;
 		}
-
+#endif
 		return -1;
-	}
-
-	int32_t ModelInstanceData::add_animation(const char* name)
-	{
-		animation::SequenceId id = animation::load_sequence(allocator, name, mesh);
-		if (id > -1)
-		{
-			animations.push_back(id);
-			LOGV("[engine] added animation %s to index: %i\n", name, animations.size() - 1);
-			return animations.size() - 1;
-		}
-		else
-		{
-			LOGW("Unable to load sequence %s\n", name);
-			return -1;
-		}
 	}
 
 	int32_t ModelInstanceData::get_total_animations() const
 	{
-		return animations.size();
+		return 0;
 	}
 
 	void ModelInstanceData::reset_channels(int32_t index)
 	{
+#if 0
 		animation::SequenceId instance_index = animations[index];
 		animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
 
@@ -290,11 +209,13 @@ namespace gemini
 		// force an advance, to fetch the first frame
 		// but don't advance time.
 		instance->advance(0.0f);
+#endif
 	}
 
 	float ModelInstanceData::get_animation_duration(int32_t index) const
 	{
 		float duration_seconds = 0;
+#if 0
 		animation::SequenceId instance_index = animations[index];
 		animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
 		assert(instance != 0);
@@ -304,6 +225,7 @@ namespace gemini
 
 		duration_seconds = sequence->duration_seconds;
 
+#endif
 		return duration_seconds;
 	}
 

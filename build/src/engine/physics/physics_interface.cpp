@@ -121,8 +121,8 @@ namespace gemini
 
 			for( uint32_t index = 0; index < mesh->geometry.size(); ++index )
 			{
-				renderer::Geometry* geo = mesh->geometry[index];
-				FixedArray<glm::vec3>& vertices = geo->vertices;
+				GeometryDefinition* geometry = &mesh->geometry[index];
+				glm::vec3* vertices = &mesh->vertices[geometry->vertex_offset];
 
 				// this shape's transform
 				btTransform local_transform;
@@ -150,12 +150,16 @@ namespace gemini
 					// NOTE: This does NOT make a copy of the data. Whatever you pass it
 					// must persist for the life of the shape.
 					btTriangleIndexVertexArray* triangle_vertex_array = new btTriangleIndexVertexArray(
-						geo->index_count/3,
-						(int*)&geo->indices[0],
-						sizeof(int)*3, geo->vertex_count,
-						(btScalar*)&vertices[0],
+						geometry->total_indices/3,
+						(int*)&mesh->indices[geometry->index_offset],
+						sizeof(uint16_t) * 3,
+						geometry->total_vertices,
+						(btScalar*)vertices,
 						sizeof(glm::vec3)
 					);
+
+					// when loading uint16_ts, must specify the index type.
+					triangle_vertex_array->getIndexedMeshArray()[0].m_indexType = PHY_SHORT;
 
 					// use that to create a Bvh triangle mesh shape
 					// TODO: use a btConvexTriangleMeshShape ?

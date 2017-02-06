@@ -507,7 +507,7 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 	{
 		gemini::ModelInstanceData data(engine_allocator);
 		data.set_mesh_index(mesh_handle);
-		data.create_bones();
+		//data.create_bones();
 		int32_t index = (int32_t)id_to_instance.size();
 		id_to_instance.insert(ModelInstanceMap::value_type(index, data));
 
@@ -529,7 +529,7 @@ void EngineInterface::destroy_instance_data(int32_t index)
 	if (it != id_to_instance.end())
 	{
 		gemini::ModelInstanceData& data = it->second;
-		data.destroy_bones();
+		//data.destroy_bones();
 
 		id_to_instance.erase(it);
 	}
