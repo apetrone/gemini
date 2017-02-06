@@ -25,8 +25,12 @@
 #pragma once
 
 #include <core/fixedarray.h>
+#include <core/mathlib.h>
 #include <core/stackstring.h>
 #include <core/typedefs.h>
+
+#include <shared/shared_constants.h>
+
 
 namespace gemini
 {
@@ -100,6 +104,12 @@ namespace gemini
 		// supporting structures
 		//
 
+		struct Pose
+		{
+			glm::vec3 pos[MAX_BONES];
+			glm::quat rot[MAX_BONES];
+		};
+
 		typedef int32_t SequenceId;
 		struct Sequence
 		{
@@ -120,7 +130,7 @@ namespace gemini
 		struct AnimatedInstance
 		{
 			SequenceId index;
-			float local_time_seconds;
+			//float local_time_seconds;
 			SequenceId sequence_index;
 			FixedArray<float> animation_set;
 			FixedArray<Channel> channel_set;
@@ -155,5 +165,10 @@ namespace gemini
 		AnimatedInstance* create_sequence_instance(gemini::Allocator& allocator, SequenceId index);
 		void destroy_sequence_instance(gemini::Allocator& allocator, AnimatedInstance* instance);
 		AnimatedInstance* get_instance_by_index(SequenceId index);
+
+		void animated_instance_get_pose(AnimatedInstance* instance, Pose& pose);
+
+
+		void animation_interpolate_pose(Pose& out, Pose& last_pose, Pose& curr_pose, float t);
 	}
 } // namespace gemini

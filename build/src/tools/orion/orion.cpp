@@ -1240,6 +1240,8 @@ Options:
 
 		lines = new glm::vec3[TOTAL_LINES];
 
+		last_time = platform::microseconds();
+
 		return kernel::NoError;
 	}
 
@@ -1330,6 +1332,9 @@ Options:
 		notify_server_tick(&notify_server);
 		notify_client_tick(&notify_client);
 		tick_queued_asset_changes(*queued_asset_changes, kernel::parameters().framedelta_seconds);
+
+		animation::update(kernel::parameters().framedelta_seconds);
+		render_scene_extract(render_scene);
 
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
@@ -1565,7 +1570,7 @@ Options:
 		params.current_frame++;
 
 		// calculate delta ticks in milliseconds
-		params.framedelta_milliseconds = (current_time - last_time) * SecondsPerMillisecond;
+		params.framedelta_milliseconds = (current_time - last_time) * MillisecondsPerMicrosecond;
 
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;

@@ -37,8 +37,10 @@
 #include <hashset.h>
 
 #include <runtime/configloader.h>
-
 #include <runtime/mesh.h>
+
+#include <renderer/debug_draw.h>
+
 
 #include <vector>
 
@@ -130,7 +132,6 @@ namespace gemini
 //			assert(keyframelist->duration_seconds > 0.0f);
 
 			local_time_seconds += delta_seconds;
-
 			// determine the next keyframe; this must not wrap
 			uint32_t next_keyframe = current_keyframe + 1;
 			if (next_keyframe > keyframelist->total_keys)
@@ -216,8 +217,8 @@ namespace gemini
 		// AnimatedInstance
 
 		AnimatedInstance::AnimatedInstance(gemini::Allocator& allocator)
-			: local_time_seconds(0.0)
-			, enabled(false)
+			//: local_time_seconds(0.0)
+			: enabled(false)
 			, animation_set(allocator)
 			, channel_set(allocator)
 		{
@@ -592,6 +593,78 @@ namespace gemini
 			assert(static_cast<size_t>(index) < detail::_instances.size());
 			return detail::_instances[index];
 		}
+
+
+
+
+
+
+
+
+#define GEMINI_DEBUG_BONES 1
+
+
+
+
+
+		void animated_instance_get_pose(AnimatedInstance* instance, Pose& pose)
+		{
+#if defined(GEMINI_DEBUG_BONES)
+			const glm::vec2 origin(10.0f, 30.0f);
+#endif
+
+			const size_t total_joints = instance->animation_set.size() / ANIMATION_KEYFRAME_VALUES_MAX;
+
+			for (size_t bone_index = 0; bone_index < total_joints; ++bone_index)
+			{
+				animation::Channel* channel = &instance->channel_set[bone_index * ANIMATION_KEYFRAME_VALUES_MAX];
+
+				assert(bone_index < MAX_BONES);
+
+				glm::vec3& pos = pose.pos[bone_index];
+				glm::quat& rot = pose.rot[bone_index];
+				const animation::Channel& tx = channel[0];
+				const animation::Channel& ty = channel[1];
+				const animation::Channel& tz = channel[2];
+				pos = glm::vec3(tx(), ty(), tz());
+
+				const animation::Channel& rx = channel[3];
+				const animation::Channel& ry = channel[4];
+				const animation::Channel& rz = channel[5];
+				const animation::Channel& rw = channel[6];
+
+				rot = glm::quat(rw(), rx(), ry(), rz());
+
+#if defined(GEMINI_DEBUG_BONES)
+				debugdraw::text(origin.x,
+					origin.y + (12.0f * bone_index),
+					core::str::format("%2i) '%s' | rot: [%2.2f, %2.2f, %2.2f, %2.2f]", bone_index,
+						"",//mesh->skeleton[bone_index].name(),
+						rot.x, rot.y, rot.z, rot.w),
+					Color(0.0f, 0.0f, 0.0f));
+#endif
+			}
+		} // animation_instance_get_pose
+
+
+		void animation_interpolate_pose(Pose& out, Pose& last_pose, Pose& curr_pose, float t)
+		{
+#if 1
+			for (size_t index = 0; index < MAX_BONES; ++index)
+			{
+				out.pos[index] = lerp(last_pose.pos[index], curr_pose.pos[index], t);
+				out.rot[index] = slerp(last_pose.rot[index], curr_pose.rot[index], t);
+
+				//				LOGV("out.rot[%i] = %2.2f, %2.2f, %2.2f, %2.2f | curr = %2.2f, %2.2f, %2.2f, %2.2f\n",
+				//					 index,
+				//					 out.rot[index].x, out.rot[index].y, out.rot[index].z, out.rot[index].w,
+				//					 curr.rot[index].x, curr.rot[index].y, curr.rot[index].z, curr.rot[index].w
+				//					 );
+			}
+#else
+			out = curr_pose;
+#endif
+		} // animation_interpolate_pose
 
 	} // namespace animation
 } // namespace gemini
