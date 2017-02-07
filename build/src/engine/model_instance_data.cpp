@@ -52,8 +52,8 @@ namespace gemini
 	}
 
 	AssetHandle ModelInstanceData::asset_index() const { return mesh_handle; }
-	glm::mat4& ModelInstanceData::get_local_transform() { return transform; }
-	void ModelInstanceData::set_local_transform(const glm::mat4& _transform) { transform = _transform; }
+	//glm::mat4& ModelInstanceData::get_local_transform() { return transform; }
+	//void ModelInstanceData::set_local_transform(const glm::mat4& _transform) { transform = _transform; }
 
 	const Hitbox* ModelInstanceData::get_hitboxes() const
 	{
@@ -182,24 +182,26 @@ namespace gemini
 		return duration_seconds;
 	}
 
-	uint32_t ModelInstanceData::get_total_bones(int32_t /*index*/) const
-	{
-		assert(mesh != nullptr);
-		return mesh->skeleton.size();
-	}
+	//uint32_t ModelInstanceData::get_total_bones(int32_t /*index*/) const
+	//{
+	//	assert(mesh != nullptr);
+	//	return mesh->skeleton.size();
+	//}
 
-	int32_t ModelInstanceData::find_bone_named(const char* bone)
-	{
-		for (const Joint& joint : mesh->skeleton)
-		{
-			if (joint.name == bone)
-			{
-				return joint.index;
-			}
-		}
+	//int32_t ModelInstanceData::find_bone_named(const char* bone)
+	//{
+	//	for (const Joint& joint : mesh->skeleton)
+	//	{
+	//		if (joint.name == bone)
+	//		{
+	//			return joint.index;
+	//		}
+	//	}
 
-		return -1;
-	}
+	//	return -1;
+	//}
+
+#if 0
 
 	void ModelInstanceData::get_local_bone_pose(int32_t /*animation_index*/, int32_t bone_index, glm::vec3& position, glm::quat& rotation)
 	{
@@ -218,6 +220,8 @@ namespace gemini
 		rotation = glm::toQuat(model_matrix);
 		position = glm::vec3(glm::column(model_matrix, 3));
 	}
+
+#endif
 
 	const glm::vec3& ModelInstanceData::get_mins() const
 	{

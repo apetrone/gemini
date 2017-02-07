@@ -1030,35 +1030,37 @@ Options:
 
 		animation::startup(asset_allocator);
 
-		AssetHandle test_mesh = mesh_load("models/cube");
+		AssetHandle test_mesh = mesh_load("models/vault");
 		//AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
 		AssetHandle animated_mesh;
-		animated_mesh = mesh_load("models/cube_rig/cube_rig");
+		//animated_mesh = mesh_load("models/cube_rig/cube_rig");
 		//animated_mesh = mesh_load("models/chest_rig/chest_rig");
 		//animated_mesh = mesh_load("models/isocarbon_rig/isocarbon_rig");
 
 		glm::mat4 transform(1.0f);
 
-		for (size_t index = 0; index < 4; ++index)
+		const uint32_t TOTAL_STATIC_MESHES = 1;
+
+		for (size_t index = 0; index < TOTAL_STATIC_MESHES; ++index)
 		{
 			render_scene_add_static_mesh(render_scene, test_mesh, 0, transform);
 			transform = glm::translate(transform, glm::vec3(1.5f, 0.0f, 0.0f));
 		}
 
-		transform = glm::rotate(transform, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		for (size_t index = 0; index < 4; ++index)
-		{
-			uint32_t component_id = render_scene_add_animated_mesh(render_scene, animated_mesh, 0, transform);
-			if (index == 2)
-			{
-				render_scene_animation_play(render_scene, component_id, "wiggle");
-			}
-			else
-			{
-				render_scene_animation_play(render_scene, component_id, "idle");
-			}
-			transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
-		}
+		//transform = glm::rotate(transform, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//for (size_t index = 0; index < 4; ++index)
+		//{
+		//	uint32_t component_id = render_scene_add_animated_mesh(render_scene, animated_mesh, 0, transform);
+		//	if (index == 2)
+		//	{
+		//		render_scene_animation_play(render_scene, component_id, "wiggle");
+		//	}
+		//	else
+		//	{
+		//		render_scene_animation_play(render_scene, component_id, "idle");
+		//	}
+		//	transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
+		//}
 
 		// initialize debug draw
 		debugdraw::startup(debugdraw_allocator, device);

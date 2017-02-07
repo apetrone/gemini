@@ -209,7 +209,7 @@ namespace render2
 				else if (command->type == COMMAND_DRAW_INDEXED)
 				{
 					index_stream = static_cast<GLBuffer*>(command->data[0]);
-					draw_indexed(current_pipeline, vertex_stream, index_stream, command->params[0]);
+					draw_indexed(current_pipeline, vertex_stream, index_stream, command->params[0], command->params[1]);
 				}
 				else if (command->type == COMMAND_PIPELINE)
 				{

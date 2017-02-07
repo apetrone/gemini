@@ -28,6 +28,7 @@
 #include <renderer/gl/opengl_common.h>
 
 #include <runtime/asset_handle.h>
+#include <runtime/mesh.h> // for index_t
 
 #include <core/logging.h>
 #include <core/array.h>
@@ -188,12 +189,12 @@ namespace render2
 						  GLPipeline* pipeline,
 						  GLBuffer* vertex_buffer,
 						  GLBuffer* index_buffer,
+						  size_t index_offset,
 						  size_t total)
 		{
 			activate_vertex_buffer(pipeline->input_layout, vertex_buffer);
-
 			index_buffer->bind();
-			gl.DrawElements(pipeline->draw_type, static_cast<GLsizei>(total), GL_UNSIGNED_INT, 0);
+			gl.DrawElements(pipeline->draw_type, static_cast<GLsizei>(total), GL_UNSIGNED_INT, (GLvoid*)(sizeof(gemini::index_t) * index_offset));
 			gl.CheckError("DrawElements");
 			index_buffer->unbind();
 

@@ -37,8 +37,8 @@ namespace gemini
 		virtual ~IModelInstanceData() {};
 
 		virtual AssetHandle asset_index() const = 0;
-		virtual glm::mat4& get_local_transform() = 0;
-		virtual void set_local_transform(const glm::mat4& transform) = 0;
+		//virtual glm::mat4& get_local_transform() = 0;
+		//virtual void set_local_transform(const glm::mat4& transform) = 0;
 
 		virtual const Hitbox* get_hitboxes() const = 0;
 
@@ -52,15 +52,15 @@ namespace gemini
 		//virtual int32_t add_animation(const char* name) = 0;
 
 		virtual float get_animation_duration(int32_t index) const = 0;
-		virtual uint32_t get_total_bones(int32_t index) const = 0;
+		//virtual uint32_t get_total_bones(int32_t index) const = 0;
 
-		virtual int32_t find_bone_named(const char* bone) = 0;
+		//virtual int32_t find_bone_named(const char* bone) = 0;
 
 		// returns the bone's current pose in local coordinates
-		virtual void get_local_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation) = 0;
+		//virtual void get_local_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation) = 0;
 
 		// returns the bone's current pose in model coordinates
-		virtual void get_model_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation) = 0;
+		//virtual void get_model_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation) = 0;
 
 		virtual const glm::vec3& get_mins() const = 0;
 		virtual const glm::vec3& get_maxs() const = 0;

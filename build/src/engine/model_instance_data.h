@@ -71,16 +71,16 @@ namespace gemini
 
 		void set_mesh_index(AssetHandle in_mesh_handle);
 		virtual AssetHandle asset_index() const;
-		virtual glm::mat4& get_local_transform();
-		virtual void set_local_transform(const glm::mat4& _transform);
+		//virtual glm::mat4& get_local_transform();
+		//virtual void set_local_transform(const glm::mat4& _transform);
 		virtual const Hitbox* get_hitboxes() const;
 		virtual void set_animation_enabled(int32_t index, bool enabled);
 		virtual int32_t get_animation_index(const char* name);
 		virtual float get_animation_duration(int32_t index) const;
-		virtual uint32_t get_total_bones(int32_t /*index*/) const;
-		virtual int32_t find_bone_named(const char* bone);
-		virtual void get_local_bone_pose(int32_t /*animation_index*/, int32_t bone_index, glm::vec3& position, glm::quat& rotation);
-		virtual void get_model_bone_pose(int32_t /*animation_index*/, int32_t bone_index, glm::vec3& position, glm::quat& rotation);
+		//virtual uint32_t get_total_bones(int32_t /*index*/) const;
+		//virtual int32_t find_bone_named(const char* bone);
+		//virtual void get_local_bone_pose(int32_t /*animation_index*/, int32_t bone_index, glm::vec3& position, glm::quat& rotation);
+		//virtual void get_model_bone_pose(int32_t /*animation_index*/, int32_t bone_index, glm::vec3& position, glm::quat& rotation);
 		virtual const glm::vec3& get_mins() const;
 		virtual const glm::vec3& get_maxs() const;
 		virtual const glm::vec3& get_center_offset() const;

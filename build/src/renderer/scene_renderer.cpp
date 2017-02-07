@@ -436,7 +436,7 @@ namespace gemini
 				{
 					const GeometryDefinition* geometry = &mesh->geometry[geo];
 					_render_setup_material(serializer, geometry->material_handle);
-					serializer->draw_indexed_primitives(mesh_info->index_buffer, geometry->total_indices);
+					serializer->draw_indexed_primitives(mesh_info->index_buffer, geometry->index_offset, geometry->total_indices);
 				}
 			}
 		}
@@ -483,7 +483,7 @@ namespace gemini
 				{
 					const GeometryDefinition* geometry = &mesh->geometry[geo];
 					_render_setup_material(serializer, geometry->material_handle);
-					serializer->draw_indexed_primitives(mesh_info->index_buffer, geometry->total_indices);
+					serializer->draw_indexed_primitives(mesh_info->index_buffer, geometry->index_offset, geometry->total_indices);
 				}
 
 				// Enable this to debug bone transforms

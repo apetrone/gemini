@@ -207,6 +207,7 @@ namespace render2
 
 		virtual void draw_indexed_primitives(
 			Buffer* index_buffer,
+			size_t index_offset,
 			size_t total) = 0;
 
 		virtual void pipeline(Pipeline* pipeline) = 0;

@@ -95,7 +95,7 @@ namespace gemini
 		}
 	}; // MeshLoaderState
 
-	void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, uint32_t* current_geometry)
+	void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials)
 	{
 		const std::string node_type = node["type"].asString();
 		if (node_type == "mesh")
@@ -175,9 +175,10 @@ namespace gemini
 			assert(geometry->total_indices < USHRT_MAX);
 
 			// read all indices
+			index_t* indices = &state.mesh->indices[geometry->index_offset];
 			for (uint32_t index = 0; index < geometry->total_indices; ++index)
 			{
-				state.mesh->indices[index] = index_array[index].asInt();
+				indices[index] = geometry->vertex_offset + index_array[index].asInt();
 			}
 
 			// assign material to this geometry
@@ -200,7 +201,6 @@ namespace gemini
 			// If this has a skeleton...
 			if (!state.mesh->skeleton.empty())
 			{
-
 				// blend weight array must match the total vertices
 				assert(blend_weights.size() == geometry->total_vertices);
 				//LOGV("blend_weights.size = %i, geometry->total_vertices = %i\n", blend_weights.size(), geometry->total_vertices);
@@ -295,8 +295,7 @@ namespace gemini
 					state.mesh->mass_center_offset = glm::vec3(center_mass_offset[0].asFloat(), center_mass_offset[1].asFloat(), center_mass_offset[2].asFloat());
 				}
 			}
-
-			(*current_geometry)++;
+			++state.current_geometry;
 		}
 		else
 		{
@@ -309,7 +308,7 @@ namespace gemini
 			Json::ValueIterator child_iter = children.begin();
 			for (; child_iter != children.end(); ++child_iter)
 			{
-				traverse_nodes(state, (*child_iter), materials, current_geometry);
+				traverse_nodes(state, (*child_iter), materials);
 			}
 		}
 	}
@@ -369,9 +368,10 @@ namespace gemini
 
 			const size_t total_vertices = vertex_array.size();
 			const size_t total_indices = index_array.size();
-			LOGV("verts: %i, indices: %i\n", total_vertices, total_indices);
 
 			GeometryDefinition geometry_definition;
+			geometry_definition.material_handle = InvalidAssetHandle;
+			geometry_definition.shader_handle = InvalidAssetHandle;
 			geometry_definition.vertex_offset = scene_info->current_vertex_offset;
 			geometry_definition.index_offset = scene_info->current_index_offset;
 			geometry_definition.total_vertices = total_vertices;
@@ -437,23 +437,18 @@ namespace gemini
 		}
 
 		mesh->geometry.allocate(scene_info.geometry.size());
-		for (size_t index = 0; index < scene_info.geometry.size(); ++index)
-		{
-			mesh->geometry[index] = scene_info.geometry[index];
-		}
+		memcpy(&mesh->geometry[0], &scene_info.geometry[0], sizeof(GeometryDefinition) * scene_info.geometry.size());
 
 		mesh_init(*load_state->allocator, mesh, scene_info.current_vertex_offset, scene_info.current_index_offset, scene_info.total_bones);
 
 		MeshLoaderState state(*load_state->allocator, mesh);
-
-		uint32_t current_geometry = 0;
 
 		// traverse over hierarchy
 		Json::ValueIterator node_iter = node_root.begin();
 		for (; node_iter != node_root.end(); ++node_iter)
 		{
 			Json::Value node = (*node_iter);
-			traverse_nodes(state, node, materials_by_id, &current_geometry);
+			traverse_nodes(state, node, materials_by_id);
 		}
 
 		// try to load animations

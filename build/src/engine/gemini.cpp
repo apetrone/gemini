@@ -516,7 +516,6 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 	{
 		gemini::ModelInstanceData data(engine_allocator);
 		data.set_mesh_index(mesh_handle);
-		//data.create_bones();
 		int32_t index = (int32_t)id_to_instance.size();
 		id_to_instance.insert(ModelInstanceMap::value_type(index, data));
 
