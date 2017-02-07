@@ -39,22 +39,10 @@ namespace gemini
 		virtual AssetHandle asset_index() const = 0;
 		virtual glm::mat4& get_local_transform() = 0;
 		virtual void set_local_transform(const glm::mat4& transform) = 0;
-//		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const = 0;
-
-//		virtual glm::mat4* get_local_bone_transforms(uint32_t geometry_index) const = 0;
-		virtual glm::mat4* get_model_bone_transforms(uint32_t geometry_index) const = 0;
-		virtual glm::mat4* get_inverse_bind_transforms(uint32_t geometry_index) const = 0;
-		virtual uint32_t get_total_transforms() const = 0;
 
 		virtual const Hitbox* get_hitboxes() const = 0;
 
 		virtual void set_animation_enabled(int32_t index, bool enabled) = 0;
-
-		// get an animations pose
-		virtual void get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations) = 0;
-
-		// set the pose for this model instance
-		virtual void set_pose(glm::vec3* positions, glm::quat* rotations) = 0;
 
 		// returns the index of an animation by name
 		// -1 if the animation could not be found.
@@ -63,11 +51,6 @@ namespace gemini
 		// add an animation to this model
 		//virtual int32_t add_animation(const char* name) = 0;
 
-
-		virtual int32_t get_total_animations() const = 0;
-
-
-		virtual void reset_channels(int32_t index) = 0;
 		virtual float get_animation_duration(int32_t index) const = 0;
 		virtual uint32_t get_total_bones(int32_t index) const = 0;
 

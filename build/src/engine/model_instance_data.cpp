@@ -36,7 +36,7 @@ namespace gemini
 		: mesh(nullptr)
 		, local_bone_transforms(0)
 		, model_bone_transforms(0)
-		, inverse_bind_transforms(0)
+		//, inverse_bind_transforms(0)
 		//, scale_channel(scale)
 		//, rotation_channel(rotation)
 		//, translation_channel(translation)
@@ -54,14 +54,6 @@ namespace gemini
 	AssetHandle ModelInstanceData::asset_index() const { return mesh_handle; }
 	glm::mat4& ModelInstanceData::get_local_transform() { return transform; }
 	void ModelInstanceData::set_local_transform(const glm::mat4& _transform) { transform = _transform; }
-	glm::mat4* ModelInstanceData::get_model_bone_transforms(uint32_t geometry_index) const
-	{
-		if (!model_bone_transforms)
-		{
-			return nullptr;
-		}
-		return &model_bone_transforms[mesh->skeleton.size() * geometry_index];
-	}
 
 	const Hitbox* ModelInstanceData::get_hitboxes() const
 	{
@@ -71,20 +63,6 @@ namespace gemini
 		}
 
 		return &mesh->hitboxes[0];
-	}
-
-	glm::mat4* ModelInstanceData::get_inverse_bind_transforms(uint32_t geometry_index) const
-	{
-		if (!inverse_bind_transforms)
-		{
-			return nullptr;
-		}
-		return &inverse_bind_transforms[mesh->skeleton.size() * geometry_index];
-	}
-
-	uint32_t ModelInstanceData::get_total_transforms() const
-	{
-		return mesh->skeleton.size();
 	}
 
 	void ModelInstanceData::set_animation_enabled(int32_t index, bool enabled)
@@ -98,17 +76,12 @@ namespace gemini
 		}
 	}
 
-	void ModelInstanceData::get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations)
-	{
-		// THIS IS DEPRECATED. Replace with new animation code.
-		assert(0);
-	}
-
+#if 0
 	void ModelInstanceData::set_pose(glm::vec3* positions, glm::quat* rotations)
 	{
 		// THIS IS DEPRECATED. Replace with new animation code.
 		assert(0);
-#if 0
+
 		if (mesh->skeleton.empty())
 		{
 			return;
@@ -170,8 +143,8 @@ namespace gemini
 
 			++geometry_index;
 		}
-#endif
 	}
+#endif
 
 	int32_t ModelInstanceData::get_animation_index(const char* name)
 	{
@@ -190,26 +163,6 @@ namespace gemini
 		}
 #endif
 		return -1;
-	}
-
-	int32_t ModelInstanceData::get_total_animations() const
-	{
-		return 0;
-	}
-
-	void ModelInstanceData::reset_channels(int32_t index)
-	{
-#if 0
-		animation::SequenceId instance_index = animations[index];
-		animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
-
-		// reset all the channels
-		instance->reset_channels();
-
-		// force an advance, to fetch the first frame
-		// but don't advance time.
-		instance->advance(0.0f);
-#endif
 	}
 
 	float ModelInstanceData::get_animation_duration(int32_t index) const

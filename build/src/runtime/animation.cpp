@@ -105,6 +105,18 @@ namespace gemini
 		//	value = target;
 		//}
 
+#if 0
+		animation::SequenceId instance_index = animations[index];
+		animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
+
+		// reset all the channels
+		instance->reset_channels();
+
+		// force an advance, to fetch the first frame
+		// but don't advance time.
+		instance->advance(0.0f);
+#endif
+
 		void Channel::set_keyframe_list(KeyframeList* source_keyframe_list)
 		{
 			keyframelist = source_keyframe_list;

@@ -193,7 +193,7 @@ namespace render2
 			activate_vertex_buffer(pipeline->input_layout, vertex_buffer);
 
 			index_buffer->bind();
-			gl.DrawElements(pipeline->draw_type, static_cast<GLsizei>(total), GL_UNSIGNED_SHORT, 0);
+			gl.DrawElements(pipeline->draw_type, static_cast<GLsizei>(total), GL_UNSIGNED_INT, 0);
 			gl.CheckError("DrawElements");
 			index_buffer->unbind();
 

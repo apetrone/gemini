@@ -149,17 +149,19 @@ namespace gemini
 					// specify verts/indices from our meshdef
 					// NOTE: This does NOT make a copy of the data. Whatever you pass it
 					// must persist for the life of the shape.
+					uint32_t* idx = &mesh->indices[geometry->index_offset];
+
 					btTriangleIndexVertexArray* triangle_vertex_array = new btTriangleIndexVertexArray(
 						geometry->total_indices/3,
-						(int*)&mesh->indices[geometry->index_offset],
-						sizeof(uint16_t) * 3,
+						(int*)idx,
+						sizeof(index_t) * 3,
 						geometry->total_vertices,
 						(btScalar*)vertices,
 						sizeof(glm::vec3)
 					);
 
 					// when loading uint16_ts, must specify the index type.
-					triangle_vertex_array->getIndexedMeshArray()[0].m_indexType = PHY_SHORT;
+					//triangle_vertex_array->getIndexedMeshArray()[0].m_indexType = PHY_SHORT;
 
 					// use that to create a Bvh triangle mesh shape
 					// TODO: use a btConvexTriangleMeshShape ?

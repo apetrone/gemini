@@ -78,7 +78,8 @@ namespace gemini
 		mesh->blend_indices = reinterpret_cast<glm::vec4*>(mem + vec3_size + vec3_size + vec2_size);
 		mesh->blend_weights = reinterpret_cast<glm::vec4*>(mem + vec3_size + vec3_size + vec2_size + vec4_size);
 
-		mesh->indices = static_cast<uint16_t*>(MEMORY2_ALLOC(allocator, sizeof(uint16_t) * total_indices));
+		mesh->indices = static_cast<index_t*>(MEMORY2_ALLOC(allocator, sizeof(index_t) * total_indices));
+		memset(mesh->indices, 0, sizeof(index_t) * total_indices);
 
 		// setup skeleton data
 		if (total_bones > 0)

@@ -355,12 +355,13 @@ namespace gemini
 
 	void render_scene_draw(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::RenderTarget* render_target)
 	{
-		Color clear_color = Color::from_rgba(128, 128, 128, 255);
-		render2::Pass render_pass;
 		if (!render_target)
 		{
-			render_pass.target = device->default_render_target();
+			render_target = device->default_render_target();
 		}
+
+		Color clear_color = Color::from_rgba(128, 128, 128, 255);
+		render2::Pass render_pass;
 		render_pass.target = render_target;
 		render_pass.color(clear_color.red, clear_color.blue, clear_color.green, clear_color.alpha);
 		render_pass.clear_color = true;
@@ -371,10 +372,6 @@ namespace gemini
 		render_static_meshes(scene, device, view, projection, render_pass);
 
 		render2::Pass animated_pass;
-		if (!render_target)
-		{
-			animated_pass.target = device->default_render_target();
-		}
 		animated_pass.target = render_target;
 		animated_pass.clear_color = false;
 		animated_pass.clear_depth = false;

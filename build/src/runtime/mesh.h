@@ -65,6 +65,7 @@ namespace gemini
 		AssetHandle shader_handle;
 	}; // GeometryDefinition
 
+	typedef uint32_t index_t;
 
 	struct Mesh
 	{
@@ -79,7 +80,7 @@ namespace gemini
 		glm::mat4* bind_poses;
 		glm::mat4* inverse_bind_poses;
 
-		uint16_t* indices;
+		index_t* indices;
 
 		// geometry definitions for this mesh
 		FixedArray<GeometryDefinition> geometry;

@@ -415,7 +415,7 @@ public:
 		//	}
 		//}
 
-		//render_scene_draw(render_scene, device, view.modelview, view.projection);
+		render_scene_draw(render_scene, device, view.modelview, view.projection);
 	}
 
 	virtual void render_gui()
@@ -490,7 +490,16 @@ public:
 		center_cursor();
 	}
 
+	void tick()
+	{
+		static float the_time = 0.0f;
+		render_scene->light_position_world.x = cosf(the_time);
+		render_scene->light_position_world.y = 2.0f;
+		render_scene->light_position_world.z = sinf(the_time);
+		the_time += 0.01f;
 
+		render_scene_extract(render_scene);
+	}
 
 	// IModelInterface
 	virtual int32_t create_instance_data(uint16_t entity_index, const char* model_path);
@@ -511,11 +520,15 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 		int32_t index = (int32_t)id_to_instance.size();
 		id_to_instance.insert(ModelInstanceMap::value_type(index, data));
 
-		// create a static mesh component
-		//StaticMeshComponent* component = MEMORY2_NEW(engine_allocator, StaticMeshComponent)();
-		//component->entity_index = entity_index;
-		//component->mesh_handle = mesh_handle;
-		//static_meshes.push_back(component);
+		uint32_t component_id = 0;
+		if (mesh->skeleton.empty())
+		{
+			component_id = render_scene_add_static_mesh(render_scene, mesh_handle, entity_index, glm::mat4(1.0f));
+		}
+		else
+		{
+			component_id = render_scene_add_animated_mesh(render_scene, mesh_handle, entity_index, glm::mat4(1.0f));
+		}
 
 		return index;
 	}
@@ -529,8 +542,6 @@ void EngineInterface::destroy_instance_data(int32_t index)
 	if (it != id_to_instance.end())
 	{
 		gemini::ModelInstanceData& data = it->second;
-		//data.destroy_bones();
-
 		id_to_instance.erase(it);
 	}
 }
@@ -986,6 +997,8 @@ Options:
 		//scenelink = MEMORY2_NEW(renderer_allocator, SceneLink)(renderer_allocator);
 		assets::startup(device);
 
+		render_scene_startup(device, renderer_allocator);
+
 		// initialize debug draw
 		debugdraw::startup(renderer_allocator, device);
 
@@ -1087,6 +1100,9 @@ Options:
 			params.step_alpha -= 1.0f;
 		}
 
+		EngineInterface* ei = reinterpret_cast<EngineInterface*>(engine_interface);
+		ei->tick();
+
 		/*debugdraw::update(kernel::parameters().framedelta_seconds * MillisecondsPerSecond);*/
 
 		animation::update(kernel::parameters().framedelta_seconds);
@@ -1182,6 +1198,9 @@ Options:
 		gemini::physics::shutdown();
 		debugdraw::shutdown();
 		audio::shutdown();
+
+		render_scene_shutdown();
+
 		assets::shutdown();
 
 		IAudioInterface* interface = audio::instance();

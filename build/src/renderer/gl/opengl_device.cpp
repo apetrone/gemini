@@ -28,6 +28,7 @@
 #include <renderer/gl/opengl_common.h>
 
 #include <runtime/assets.h>
+#include <runtime/mesh.h>
 
 namespace render2
 {
@@ -351,7 +352,7 @@ namespace render2
 	size_t OpenGLDevice::compute_index_stride()
 	{
 		// If you change this, you need to change calls to DrawElements.
-		return sizeof(uint16_t);
+		return sizeof(gemini::index_t);
 	}
 
 	void OpenGLDevice::activate_vertex_buffer(GLInputLayout* input_layout, GLBuffer* vertex_buffer)

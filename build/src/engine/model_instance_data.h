@@ -52,7 +52,7 @@ namespace gemini
 		// model bone transforms
 		glm::mat4* model_bone_transforms;
 
-		glm::mat4* inverse_bind_transforms;
+		//glm::mat4* inverse_bind_transforms;
 
 		//Channel<glm::vec3> scale_channel;
 		//Channel<glm::quat> rotation_channel;
@@ -73,16 +73,9 @@ namespace gemini
 		virtual AssetHandle asset_index() const;
 		virtual glm::mat4& get_local_transform();
 		virtual void set_local_transform(const glm::mat4& _transform);
-		virtual glm::mat4* get_model_bone_transforms(uint32_t geometry_index) const;
 		virtual const Hitbox* get_hitboxes() const;
-		virtual glm::mat4* get_inverse_bind_transforms(uint32_t geometry_index) const;
-		virtual uint32_t get_total_transforms() const;
 		virtual void set_animation_enabled(int32_t index, bool enabled);
-		virtual void get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations);
-		virtual void set_pose(glm::vec3* positions, glm::quat* rotations);
 		virtual int32_t get_animation_index(const char* name);
-		virtual int32_t get_total_animations() const;
-		virtual void reset_channels(int32_t index);
 		virtual float get_animation_duration(int32_t index) const;
 		virtual uint32_t get_total_bones(int32_t /*index*/) const;
 		virtual int32_t find_bone_named(const char* bone);
