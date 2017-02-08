@@ -40,6 +40,7 @@ namespace gemini
 		, sequence_index_by_name(_allocator)
 		, skeleton(_allocator)
 		, hitboxes(_allocator)
+		, collision_geometry(nullptr)
 	{
 	} // Mesh
 
@@ -90,8 +91,29 @@ namespace gemini
 		}
 	} // mesh_init
 
+	void mesh_create_collision(Allocator& allocator, Mesh* mesh, uint32_t total_vertices, uint32_t total_indices)
+	{
+		assert(mesh->collision_geometry == nullptr);
+
+		mesh->collision_geometry = MEMORY2_NEW(allocator, CollisionGeometry);
+
+		uint32_t vertex_data_size = sizeof(glm::vec3) * total_vertices * 2;
+		mesh->collision_geometry->total_vertices = total_vertices;
+		mesh->collision_geometry->total_indices = total_indices;
+		mesh->collision_geometry->vertices = static_cast<glm::vec3*>(MEMORY2_ALLOC(allocator, vertex_data_size));
+		mesh->collision_geometry->normals = mesh->collision_geometry->vertices + total_vertices;
+		mesh->collision_geometry->indices = static_cast<index_t*>(MEMORY2_ALLOC(allocator, sizeof(index_t) * total_indices));
+	} // mesh_create_collision
+
 	void mesh_destroy(Allocator& allocator, Mesh* mesh)
 	{
+		if (mesh->collision_geometry)
+		{
+			MEMORY2_DEALLOC(allocator, mesh->collision_geometry->vertices);
+			MEMORY2_DEALLOC(allocator, mesh->collision_geometry->indices);
+			MEMORY2_DEALLOC(allocator, mesh->collision_geometry);
+		}
+
 		MEMORY2_DEALLOC(allocator, mesh->vertices);
 		MEMORY2_DEALLOC(allocator, mesh->indices);
 		MEMORY2_DEALLOC(allocator, mesh->bind_poses);

@@ -67,6 +67,17 @@ namespace gemini
 
 	typedef uint32_t index_t;
 
+
+	struct CollisionGeometry
+	{
+		glm::vec3* vertices;
+		glm::vec3* normals;
+		index_t* indices;
+
+		uint16_t total_vertices;
+		uint16_t total_indices;
+	}; // CollisionGeometry
+
 	struct Mesh
 	{
 		Mesh(gemini::Allocator& allocator);
@@ -99,9 +110,18 @@ namespace gemini
 		// bind pose skeleton
 		FixedArray<Joint> skeleton;
 		FixedArray<Hitbox> hitboxes;
+
+		// collision geometry
+		CollisionGeometry* collision_geometry;
 	}; // Mesh
 
+	// initialize a mesh by allocating memory
 	void mesh_init(Allocator& allocator, Mesh* mesh, uint32_t total_vertices, uint32_t total_indices, uint32_t total_bones);
+
+	// create collision geometry for a mesh
+	void mesh_create_collision(Allocator& allocator, Mesh* mesh, uint32_t total_vertices, uint32_t total_indices);
+
+	// free allocated memory for this mesh
 	void mesh_destroy(Allocator& allocator, Mesh* mesh);
 	void mesh_stats(Mesh* mesh, uint32_t& total_vertices, uint32_t& total_indices);
 	Joint* mesh_find_bone_named(Mesh* mesh, const char* name);

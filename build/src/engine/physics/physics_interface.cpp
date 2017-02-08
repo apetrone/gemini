@@ -119,55 +119,61 @@ namespace gemini
 
 			btCompoundShape* compound = new btCompoundShape();
 
-			for( uint32_t index = 0; index < mesh->geometry.size(); ++index )
+			// Use the collision geometry from the mesh.
+			assert(mesh->collision_geometry);
+			assert(mesh->collision_geometry->vertices);
+			assert(mesh->collision_geometry->normals);
+			assert(mesh->collision_geometry->indices);
+
+			glm::vec3* vertices = mesh->collision_geometry->vertices;
+
+			// this shape's transform
+			btTransform local_transform;
+			local_transform.setIdentity();
+
+			// setup shape for a dynamic object
+			if (is_dynamic)
 			{
-				GeometryDefinition* geometry = &mesh->geometry[index];
-				glm::vec3* vertices = &mesh->vertices[geometry->vertex_offset];
+				// create a box for now. this needs to be replaced
+				btCollisionShape* shape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
+				btVector3 local_inertia(0, 0, 0);
 
-				// this shape's transform
-				btTransform local_transform;
-				local_transform.setIdentity();
+				// calculate local inertia
+				shape->calculateLocalInertia(mass, local_inertia);
+				compound->addChildShape(local_transform, shape);
+			}
+			else
+			{
+				// NOTE: Triangle shapes can ONLY be static objects.
+				// TODO: look into an alternative with btGImpactMeshShape or
+				// btCompoundShape + convex decomposition.
+				// Could also use btConvexHullShape.
 
-				// setup shape for a dynamic object
-				if (is_dynamic)
+				// NOTE: This does NOT make a copy of the data. Whatever you pass it
+				// must persist for the life of the shape.
+				void* indices = mesh->collision_geometry->indices;
+
+				static_assert(sizeof(uint32_t) == sizeof(index_t), "physics assumes index_t is 32-bit");
+
+				btTriangleIndexVertexArray* triangle_vertex_array = new btTriangleIndexVertexArray(
+					mesh->collision_geometry->total_indices/3,
+					(int*)indices,
+					sizeof(index_t) * 3,
+					mesh->collision_geometry->total_vertices,
+					(btScalar*)vertices,
+					sizeof(glm::vec3)
+				);
+
+				// when loading uint16_ts, must specify the index type.
+				if (sizeof(index_t) == 2)
 				{
-					// create a box for now. this needs to be replaced
-					btCollisionShape* shape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
-					btVector3 local_inertia(0, 0, 0);
-
-					// calculate local inertia
-					shape->calculateLocalInertia(mass, local_inertia);
-					compound->addChildShape(local_transform, shape);
+					triangle_vertex_array->getIndexedMeshArray()[0].m_indexType = PHY_SHORT;
 				}
-				else
-				{
-					// NOTE: Triangle shapes can ONLY be static objects.
-					// TODO: look into an alternative with btGImpactMeshShape or
-					// btCompoundShape + convex decomposition.
-					// Could also use btConvexHullShape.
 
-					// specify verts/indices from our meshdef
-					// NOTE: This does NOT make a copy of the data. Whatever you pass it
-					// must persist for the life of the shape.
-					uint32_t* idx = &mesh->indices[geometry->index_offset];
-
-					btTriangleIndexVertexArray* triangle_vertex_array = new btTriangleIndexVertexArray(
-						geometry->total_indices/3,
-						(int*)idx,
-						sizeof(index_t) * 3,
-						geometry->total_vertices,
-						(btScalar*)vertices,
-						sizeof(glm::vec3)
-					);
-
-					// when loading uint16_ts, must specify the index type.
-					//triangle_vertex_array->getIndexedMeshArray()[0].m_indexType = PHY_SHORT;
-
-					// use that to create a Bvh triangle mesh shape
-					// TODO: use a btConvexTriangleMeshShape ?
-					btBvhTriangleMeshShape* triangle_mesh = new btBvhTriangleMeshShape(triangle_vertex_array, use_quantized_bvh_tree);
-					compound->addChildShape(local_transform, triangle_mesh);
-				}
+				// use that to create a Bvh triangle mesh shape
+				// TODO: use a btConvexTriangleMeshShape ?
+				btBvhTriangleMeshShape* triangle_mesh = new btBvhTriangleMeshShape(triangle_vertex_array, use_quantized_bvh_tree);
+				compound->addChildShape(local_transform, triangle_mesh);
 			}
 
 			return compound;

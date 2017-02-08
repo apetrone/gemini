@@ -756,6 +756,7 @@ class GeminiModel(object):
 		self.bone_data = None
 
 		self.selected_meshes = []
+		self.collision_meshes = []
 
 	#
 	# Materials
@@ -952,6 +953,19 @@ class GeminiModel(object):
 				if self.selected_only and obj.select or not self.selected_only:
 					self.selected_meshes.append(obj)
 
+	def generate_collision_geometry(self, collision_meshes):
+		vertices = []
+		normals = []
+		indices = []
+
+		if len(collision_meshes) > 1:
+			print("Found more than one collision mesh. Ignoring all but the first, {}".format(collision_meshes[0].name))
+
+		mesh = Mesh.from_object(self, collision_meshes[0], None)
+
+		return {'vertices': mesh.vertices, 'normals': mesh.normals, 'indices': mesh.indices}
+
+
 	#
 	# Export model + animations
 	#
@@ -968,8 +982,11 @@ class GeminiModel(object):
 
 		# scan through scene objects
 		for index, obj in enumerate(bpy.context.scene.objects):
-			print("index: %i, object: %s, type: %s" % (index, obj.name, obj.type))
-			self.add_object(obj)
+			#print("index: %i, object: %s, type: %s" % (index, obj.name, obj.type))
+			if '_collision' in obj.name:
+				self.collision_meshes.append(obj)
+			else:
+				self.add_object(obj)
 
 		# clear selection
 		bpy.ops.object.select_all(action='DESELECT')
@@ -1021,6 +1038,8 @@ class GeminiModel(object):
 
 		# Populate the animations so we know which to load.
 		root_node.animations = [anim.name for anim in animations]
+
+		root_node.collision_geometry = self.generate_collision_geometry(self.collision_meshes)
 
 		# Write out the mesh file
 		self.file_handle.write(root_node.to_json())

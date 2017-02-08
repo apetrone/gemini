@@ -478,6 +478,48 @@ namespace gemini
 			}
 		}
 
+		// try loading embedded collision geometry
+		Json::Value collision_geometry = root["collision_geometry"];
+		if (!collision_geometry.isNull())
+		{
+			Json::Value collision_vertices = collision_geometry["vertices"];
+			Json::Value collision_normals = collision_geometry["normals"];
+			Json::Value collision_indices = collision_geometry["indices"];
+
+			// Sanity check that vertices are 1:1 with normals.
+			assert(collision_vertices.size() == collision_normals.size());
+
+			// If you hit this assert, we need to finally split
+			// large batches of geometry into batches no larger than 65k.
+			// As a collision mesh, this limit should never be hit, question mark?
+			assert(collision_indices.size() < USHRT_MAX);
+
+			LOGV("> Load mesh collision: verts: %i, indices: %i\n", collision_vertices.size(), collision_indices.size());
+
+			mesh_create_collision(*load_state->allocator, mesh, collision_vertices.size(), collision_indices.size());
+
+			// read all vertices and normals
+			for (uint32_t vertex = 0; vertex < collision_vertices.size(); ++vertex)
+			{
+				glm::vec3& out_vertex = mesh->collision_geometry->vertices[vertex];
+				glm::vec3& out_normal = mesh->collision_geometry->normals[vertex];
+
+				const Json::Value& in_vertex = collision_vertices[vertex];
+				out_vertex = glm::vec3(in_vertex[0].asFloat(), in_vertex[1].asFloat(), in_vertex[2].asFloat());
+
+				const Json::Value& in_normal = collision_normals[vertex];
+				out_normal = glm::vec3(in_normal[0].asFloat(), in_normal[1].asFloat(), in_normal[2].asFloat());
+			}
+
+			// read all indices
+			index_t* indices = mesh->collision_geometry->indices;
+			for (uint32_t index = 0; index < collision_indices.size(); ++index)
+			{
+				indices[index] = collision_indices[index].asInt();
+			}
+
+		}
+
 		return core::util::ConfigLoad_Success;
 	}
 
