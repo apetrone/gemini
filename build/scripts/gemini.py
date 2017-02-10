@@ -399,6 +399,9 @@ def get_libcore(arguments, target_platform):
 		"src/core/platform/backend/osx/osx_backend.mm",
 		"src/core/platform/backend/osx/cocoa_common.h",
 
+		# directory monitor
+		"src/core/platform/directory_monitor/osx/osx_directory_monitor.cpp",
+
 		# dylib
 		"src/core/platform/dylib/osx/osx_dylib.cpp",
 		"src/core/platform/dylib/posix/posix_dlopen.cpp",
@@ -694,7 +697,7 @@ def get_librenderer(arguments, target_platform):
 
 	return librenderer
 
-def get_libruntime(arguments, target_platform, librenderer, libcore):
+def get_libruntime(arguments, target_platform, libcore):
 	libruntime = Product(name="runtime", output=get_library_type(target_platform))
 	setup_driver(arguments, libruntime, target_platform)
 	libruntime.project_root = COMMON_PROJECT_ROOT
@@ -762,7 +765,6 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")
 	]
 
-	libruntime.dependencies.append(librenderer)
 	libruntime.dependencies.append(libcore)
 
 	if arguments.with_civet:
@@ -1118,7 +1120,7 @@ def products(arguments, **kwargs):
 	librenderer = get_librenderer(arguments, target_platform)
 	librenderer.dependencies += [libcore, Dependency(file="glm.py")]
 
-	libruntime = get_libruntime(arguments, target_platform, librenderer, libcore)
+	libruntime = get_libruntime(arguments, target_platform, libcore)
 	libruntime.dependencies += [libcore, Dependency(file="glm.py")]
 
 	# don't add this until we clean up the shaderconfig dependency on libruntime
