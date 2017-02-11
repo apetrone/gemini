@@ -472,6 +472,9 @@ Options:
 		fd.vertex_description.add("in_position", render2::VD_FLOAT, 2);
 		fd.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		fd.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
+		fd.enable_blending = true;
+		fd.blend_source = render2::BlendOp::SourceAlpha;
+		fd.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 		fd.input_layout = state.device->create_input_layout(td.vertex_description, fd.shader);
 		state.font_pipeline = state.device->create_pipeline(fd);
 
