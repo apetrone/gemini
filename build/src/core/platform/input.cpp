@@ -86,7 +86,7 @@ namespace gemini
 
 	bool ButtonState::is_down() const
 	{
-		return (state & Button_Held) == Button_Held;
+		return state & (Button_Held | Button_IsDown);
 	}
 
 	bool ButtonState::was_pressed() const
