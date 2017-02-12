@@ -50,12 +50,12 @@ namespace gemini
 	{
 		enum Type
 		{
-			KeyboardEvent		= 1, // 1
+			KeyboardEvent		= 1,
 			// button: keycode
 			// params[0]: is_down
 			// params[1]: keyboard modifiers
 
-			MouseEvent			= 8,   // 8
+			MouseEvent			= 8,
 			// button: mouse button
 			// params[0]: is_down
 
@@ -89,6 +89,10 @@ namespace gemini
 			// params[0]: gamepad_id
 			// params[1]: axis_id
 			// params[2]: axis_value
+
+			SystemEvent			= 8192
+			// params[0]: gain_focus
+			// params[1]: lost_focus
 		};
 
 		uint32_t type;
@@ -96,10 +100,12 @@ namespace gemini
 		uint32_t button;
 		int32_t params[4];
 		glm::quat orientation;
+		uint64_t timestamp;
 
-		GameMessage() :
-			type(0),
-			button(0)
+		GameMessage()
+			: type(0)
+			, button(0)
+			, timestamp(0)
 		{
 			params[0] = params[1] = params[2] = params[3] = 0;
 		}
@@ -159,18 +165,22 @@ namespace gemini
 
 		/// @brief Tick the game
 		/// @param current_ticks The tick counter
+		/// @param delta_seconds The actual frame time delta (in seconds).
+		virtual void tick(uint64_t current_tick, float framedelta_seconds) = 0;
+
+		/// @brief Perform a fixed step at regular interval.
+		/// @param current_ticks The tick counter
 		/// @param step_interval_seconds The fixed step interval (in seconds).
 		/// @param step_alpha Lerp value between ticks.
-		virtual void tick(uint64_t current_tick, float step_interval_seconds, float step_alpha) = 0;
+		virtual void fixed_step(uint64_t current_tick, float step_interval_seconds, float step_alpha) = 0;
 
-		/// @brief Execute a game frame
-		virtual void execute_frame(float framedelta_seconds) = 0;
+		/// @brief Render a frame
+		virtual void render_frame() = 0;
 
 		// event handling
-		virtual void on_event(const kernel::KeyboardEvent& event) = 0;
-		virtual void on_event(const kernel::MouseEvent& event) = 0;
-		virtual void on_event(const kernel::SystemEvent& event) = 0;
-		virtual void on_event(const kernel::GameControllerEvent& event) = 0;
+		virtual void handle_game_message(GameMessage& message) = 0;
+
+		virtual void reset_events() = 0;
 	}; // GameInterface
 
 

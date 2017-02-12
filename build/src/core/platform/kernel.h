@@ -70,7 +70,7 @@ namespace kernel
 
 
 		// the current tick (physics step)
-		uint64_t current_tick;
+		uint64_t current_physics_tick;
 
 		uint64_t current_frame;
 

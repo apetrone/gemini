@@ -149,6 +149,7 @@ QuaternionFollowCamera::QuaternionFollowCamera()
 	position = glm::vec3(0.0f, 3.0f, 3.0f);
 	target_facing_direction = glm::vec3(0.0f, 0.0f, -1.0f);
 
+	move_sensitivity = glm::vec2(25.0f, 25.0f);
 	// height above the player where camera should be
 	//splayer_height = 1.0f;
 
@@ -231,7 +232,7 @@ void QuaternionFollowCamera::move_view(float yaw_delta, float pitch_delta)
 	LOGV("pitch: %2.2f\n", pitch);
 #endif
 
-	glm::quat rotation = mathlib::orientation_from_yaw_pitch(yaw_delta, -pitch_delta, YUP_DIRECTION, camera_right);
+	glm::quat rotation = mathlib::orientation_from_yaw_pitch(move_sensitivity.x * yaw_delta, move_sensitivity.y * -pitch_delta, YUP_DIRECTION, camera_right);
 	camera_direction = glm::normalize(mathlib::rotate_vector(camera_direction, rotation));
 	camera_right = glm::normalize(glm::cross(camera_direction, YUP_DIRECTION));
 	collision_correct();

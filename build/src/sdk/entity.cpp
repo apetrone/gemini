@@ -140,6 +140,14 @@ void entity_update(float delta_seconds, float alpha)
 	entity_deferred_delete( true );
 }
 
+void entity_interpolate(float alpha)
+{
+	for (Entity* entity : entity_list().objects)
+	{
+		entity->interpolate_state(alpha);
+	}
+}
+
 gemini::Allocator& entity_allocator()
 {
 	return _entity_allocator;
@@ -224,6 +232,11 @@ void Entity::update(float delta_seconds, float /*alpha*/)
 {
 	local_time += delta_seconds;
 } // update
+
+void Entity::interpolate_state(float alpha)
+{
+
+} // interpolate_state
 
 void Entity::remove()
 {

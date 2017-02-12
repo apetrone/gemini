@@ -215,6 +215,8 @@ public:
 
 	void set_follow_distance(float target_distance);
 	void set_view(const glm::vec3& view_direction);
+private:
+	glm::vec2 move_sensitivity;
 };
 
 class FixedCamera : public GameCamera

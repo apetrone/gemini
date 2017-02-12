@@ -106,6 +106,125 @@ gui::Compositor* _compositor = 0;
 //	scenelink.draw(stream, &view.modelview, &view.projection);
 //}
 
+namespace gemini
+{
+	GameMessage event_to_gamemessage(const kernel::KeyboardEvent& event, uint64_t physics_tick);
+	GameMessage event_to_gamemessage(const kernel::MouseEvent& event, uint64_t physics_tick);
+	GameMessage event_to_gamemessage(const kernel::SystemEvent& event, uint64_t physics_tick);
+	GameMessage event_to_gamemessage(const kernel::GameControllerEvent& event, uint64_t physics_tick);
+
+
+	GameMessage event_to_gamemessage(const kernel::KeyboardEvent& event, uint64_t physics_tick)
+	{
+		GameMessage out;
+		out.timestamp = physics_tick;
+		out.type = GameMessage::KeyboardEvent;
+		out.button = event.key;
+		out.params[0] = event.is_down;
+		out.params[1] = event.modifiers;
+		return out;
+	}
+
+	GameMessage event_to_gamemessage(const kernel::MouseEvent& event, uint64_t physics_tick)
+	{
+		GameMessage out;
+		out.timestamp = physics_tick;
+		switch (event.subtype)
+		{
+		case kernel::MouseButton:
+			out.type = GameMessage::MouseEvent;
+			out.button = event.button;
+			out.params[0] = event.is_down;
+			break;
+
+		case kernel::MouseMoved:
+			out.type = GameMessage::MouseMove;
+			out.params[0] = event.mx;
+			out.params[1] = event.my;
+			break;
+
+		case kernel::MouseDelta:
+			out.type = GameMessage::MouseDelta;
+			out.params[0] = event.dx;
+			out.params[1] = event.dy;
+			break;
+
+		case kernel::MouseWheelMoved:
+			out.type = GameMessage::MouseWheel;
+			out.button = event.wheel_direction;
+			out.params[0] = event.mx;
+			out.params[1] = event.my;
+			out.params[2] = event.dx;
+			out.params[3] = event.dy;
+			break;
+
+		default:
+			assert(0);
+			break;
+		}
+		return out;
+	}
+
+	GameMessage event_to_gamemessage(const kernel::SystemEvent& event, uint64_t physics_tick)
+	{
+		GameMessage out;
+		out.timestamp = physics_tick;
+		out.type = GameMessage::SystemEvent;
+		if (event.subtype == kernel::WindowGainFocus)
+		{
+			out.params[0] = 1;
+		}
+		else if (event.subtype == kernel::WindowLostFocus)
+		{
+			out.params[1] = 1;
+		}
+		return out;
+	}
+
+	GameMessage event_to_gamemessage(const kernel::GameControllerEvent& event, uint64_t physics_tick)
+	{
+		// TODO@APP: Implement.
+		GameMessage out;
+		out.timestamp = physics_tick;
+		out.params[0] = event.gamepad_id;
+
+		switch (event.subtype)
+		{
+		case kernel::JoystickConnected:
+			out.type = GameMessage::GamePadConnected;
+			break;
+
+		case kernel::JoystickDisconnected:
+			out.type = GameMessage::GamePadDisconnected;
+			break;
+
+		case kernel::JoystickButton:
+			out.type = GameMessage::GamePadButton;
+			out.button = event.button;
+			out.params[1] = event.is_down;
+			break;
+
+		case kernel::JoystickAxisMoved:
+			out.type = GameMessage::GamePadAxis;
+			out.params[1] = event.axis_id;
+			out.params[2] = event.axis_value;
+			break;
+
+		default:
+			// Unhandled gamepad input!
+			assert(0);
+			break;
+		}
+
+		return out;
+	}
+}
+
+
+
+
+
+
 class EntityManager : public IEntityManager
 {
 	gemini::IEngineEntity* entity_list[MAX_ENTITIES];
@@ -586,6 +705,10 @@ private:
 
 	platform::window::NativeWindow* main_window;
 
+
+	Array<gemini::GameMessage>* queued_messages;
+
+
 	// Kernel State variables
 	double accumulator;
 	uint64_t last_time;
@@ -704,9 +827,12 @@ private:
 		}
 
 		::disconnect_engine();
+		game_interface = nullptr;
 #endif
 	}
 
+	glm::vec3 last_p;
+	glm::vec3 p;
 
 
 public:
@@ -721,11 +847,15 @@ public:
 		game_interface(0)
 		, engine_allocator(memory_allocator_default(MEMORY_ZONE_DEFAULT))
 		//, model_interface(engine_allocator)
+		, queued_messages(nullptr)
 	{
 		game_path = "";
 		compositor = nullptr;
 		gui_renderer = nullptr;
 		resource_cache = nullptr;
+
+		last_p = glm::vec3(0.0f, 0.0f, 0.0f);
+		p = glm::vec3(0.0f, 0.0f, 0.0f);
 	}
 
 	virtual ~EngineKernel()
@@ -734,6 +864,14 @@ public:
 
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
+
+	void queue_game_message(const GameMessage& message)
+	{
+		if (queued_messages)
+		{
+			queued_messages->push_back(message);
+		}
+	}
 
 	virtual void event(kernel::KeyboardEvent& event)
 	{
@@ -751,18 +889,12 @@ public:
 			}
 		}
 
-		if (game_interface)
-		{
-			game_interface->on_event(event);
-		}
+		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
 	}
 
 	virtual void event(kernel::MouseEvent& event)
 	{
-		if (game_interface)
-		{
-			game_interface->on_event(event);
-		}
+		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
 	}
 
 	virtual void event(kernel::SystemEvent& event)
@@ -793,23 +925,22 @@ public:
 			set_active(false);
 		}
 
-		if (game_interface)
-		{
-			game_interface->on_event(event);
-		}
+		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
 	}
 
 	virtual void event(kernel::GameControllerEvent& event)
 	{
-		if (game_interface)
-		{
-			//if (event.subtype == kernel::JoystickButton && event.is_down)
-			//{
-			//	gemini::audio::SoundHandle_t sound_handle = gemini::audio::play_sound(test_sound, 0);
-			//}
+		//if (game_interface)
+		//{
+		//	//if (event.subtype == kernel::JoystickButton && event.is_down)
+		//	//{
+		//	//	gemini::audio::SoundHandle_t sound_handle = gemini::audio::play_sound(test_sound, 0);
+		//	//}
 
-			game_interface->on_event(event);
-		}
+		//	game_interface->on_event(event);
+		//}
+
+		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
 	}
 
 	void setup_gui(render2::Device* device, gemini::Allocator& renderer_allocator, uint32_t width, uint32_t height)
@@ -970,6 +1101,8 @@ Options:
 		engine_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		renderer_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
 
+		queued_messages = MEMORY2_NEW(engine_allocator, Array<GameMessage>)(engine_allocator);
+
 		// initialize rendering subsystems
 		render2::RenderParameters render_params(renderer_allocator);
 
@@ -1076,22 +1209,88 @@ Options:
 		//	core::memory::global_allocator().get_zone()->get_active_bytes() / (float)(1024 * 1024)), Color());
 		//y += 12;
 
-		// causing jittery frametime graph.
-		while (accumulator >= params.step_interval_seconds)
+		uint32_t reset_queue = 0;
+		static glm::vec3 poz;
+		static float t = 0.0f;
+		static bool fwd = false;
+		static bool back = false;
+
+		while (accumulator > params.step_interval_seconds)
 		{
-			if (game_interface)
+			last_p = p;
+			// iterate over queued messages and play until we hit the time cap
+			for (size_t index = 0; index < queued_messages->size(); ++index)
 			{
-				game_interface->tick(params.current_tick, params.step_interval_seconds, params.step_alpha);
+				if ((*queued_messages)[index].timestamp <= params.current_physics_tick)
+				{
+					if (game_interface)
+					{
+						GameMessage& message = (*queued_messages)[index];
+						if (message.type == GameMessage::KeyboardEvent)
+						{
+							if (message.button == BUTTON_W)
+							{
+								fwd = message.params[0] ? true : false;
+							}
+							else if (message.button == BUTTON_S)
+							{
+								back = message.params[0] ? true : false;
+							}
+						}
+
+						game_interface->handle_game_message((*queued_messages)[index]);
+					}
+				} // execute
 			}
 
-			debugdraw::update(params.step_interval_seconds * MillisecondsPerSecond);
+			if (game_interface)
+			{
+				game_interface->fixed_step(params.current_physics_tick, params.step_interval_seconds, params.step_alpha);
+				if (fwd)
+				{
+					p.z -= 2.f * params.step_interval_seconds;
+				}
+				if (back)
+				{
+					p.z += 2.f * params.step_interval_seconds;
+				}
+			}
 
 			// subtract the interval from the accumulator
 			accumulator -= params.step_interval_seconds;
 
 			// increment tick counter
-			params.current_tick++;
+			params.current_physics_tick++;
+
+			reset_queue = 1;
+			t = 0.0f;
 		}
+
+		if (reset_queue)
+		{
+			queued_messages->resize(0);
+
+			if (game_interface)
+			{
+				game_interface->reset_events();
+			}
+		}
+
+		if (game_interface)
+		{
+			game_interface->tick(params.current_physics_tick, params.framedelta_seconds);
+		}
+
+
+
+
+
+
+		poz = lerp(last_p, p, t / 0.1f);
+
+		debugdraw::sphere(poz, Color::from_rgba(255, 0, 0, 255), 2.0f);
+
+		debugdraw::update(params.step_interval_seconds * MillisecondsPerSecond);
 
 		params.step_alpha = accumulator / params.step_interval_seconds;
 		if (params.step_alpha >= 1.0f)
@@ -1115,6 +1314,8 @@ Options:
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 
+		t += params.framedelta_seconds;
+
 		// record the current frametime milliseconds
 #if defined(DEBUG_FRAMERATE)
 		graph->record_value(params.framedelta_milliseconds, 0);
@@ -1130,11 +1331,6 @@ Options:
 	{
 		platform::window::activate_context(main_window);
 
-		if (game_interface)
-		{
-			game_interface->execute_frame(kernel::parameters().framedelta_seconds);
-		}
-
 		if (compositor)
 		{
 			compositor->tick(kernel::parameters().framedelta_milliseconds);
@@ -1143,6 +1339,11 @@ Options:
 		if (draw_physics_debug)
 		{
 			physics::debug_draw();
+		}
+
+		if (game_interface)
+		{
+			game_interface->render_frame();
 		}
 
 		//if (draw_navigation_debug)
@@ -1205,6 +1406,9 @@ Options:
 		IAudioInterface* interface = audio::instance();
 		MEMORY2_DELETE(audio_allocator, interface);
 		audio::set_instance(nullptr);
+
+		MEMORY2_DELETE(engine_allocator, queued_messages);
+		queued_messages = nullptr;
 
 		MEMORY2_DELETE(engine_allocator, engine_interface);
 
