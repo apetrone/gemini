@@ -215,6 +215,13 @@ struct EditorEnvironment
 	Project* project;
 };
 
+class OrionTransformExtract : public RenderExtractionInterface
+{
+	virtual void extract_matrix(uint16_t entity_index, glm::mat4& model_matrix)
+	{
+	}
+};
+
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -1033,7 +1040,7 @@ Options:
 		AssetHandle test_mesh = mesh_load("models/vault");
 		//AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
 		AssetHandle animated_mesh;
-		//animated_mesh = mesh_load("models/cube_rig/cube_rig");
+		animated_mesh = mesh_load("models/cube_rig/cube_rig");
 		//animated_mesh = mesh_load("models/chest_rig/chest_rig");
 		//animated_mesh = mesh_load("models/isocarbon_rig/isocarbon_rig");
 
@@ -1047,20 +1054,20 @@ Options:
 			transform = glm::translate(transform, glm::vec3(1.5f, 0.0f, 0.0f));
 		}
 
-		//transform = glm::rotate(transform, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		//for (size_t index = 0; index < 4; ++index)
-		//{
-		//	uint32_t component_id = render_scene_add_animated_mesh(render_scene, animated_mesh, 0, transform);
-		//	if (index == 2)
-		//	{
-		//		render_scene_animation_play(render_scene, component_id, "wiggle");
-		//	}
-		//	else
-		//	{
-		//		render_scene_animation_play(render_scene, component_id, "idle");
-		//	}
-		//	transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
-		//}
+		transform = glm::rotate(transform, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		for (size_t index = 0; index < 4; ++index)
+		{
+			uint32_t component_id = render_scene_add_animated_mesh(render_scene, animated_mesh, 0, transform);
+			if (index == 2)
+			{
+				render_scene_animation_play(render_scene, component_id, "wiggle");
+			}
+			else
+			{
+				render_scene_animation_play(render_scene, component_id, "idle");
+			}
+			transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
+		}
 
 		// initialize debug draw
 		debugdraw::startup(debugdraw_allocator, device);
@@ -1366,7 +1373,9 @@ Options:
 		tick_queued_asset_changes(*queued_asset_changes, kernel::parameters().framedelta_seconds);
 
 		animation::update(kernel::parameters().framedelta_seconds);
-		render_scene_extract(render_scene);
+
+		OrionTransformExtract extract;
+		render_scene_extract(render_scene, &extract);
 
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;

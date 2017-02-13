@@ -52,6 +52,8 @@ namespace gemini
 		// model bone transforms
 		glm::mat4* model_bone_transforms;
 
+		uint32_t component_index;
+
 		//glm::mat4* inverse_bind_transforms;
 
 		//Channel<glm::vec3> scale_channel;
@@ -70,6 +72,8 @@ namespace gemini
 		ModelInstanceData(gemini::Allocator& allocator);
 
 		void set_mesh_index(AssetHandle in_mesh_handle);
+		void set_component_index(uint32_t component_index);
+		uint32_t get_component_index() const { return component_index; }
 		virtual AssetHandle asset_index() const;
 		//virtual glm::mat4& get_local_transform();
 		//virtual void set_local_transform(const glm::mat4& _transform);

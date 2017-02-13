@@ -349,13 +349,13 @@ glm::vec3 QuaternionFollowCamera::perform_raycast(const glm::vec3& start, const 
 	if (result.object)
 	{
 		// we hit something
-		debugdraw::line(start, result.hit, color);
+		//debugdraw::line(start, result.hit, color);
 		point = direction * glm::length(result.hit - start);
 	}
 	else
 	{
 		point = (direction * desired_distance_to_target);
-		debugdraw::line(start, start + (direction * desired_distance_to_target), color);
+		//debugdraw::line(start, start + (direction * desired_distance_to_target), color);
 	}
 
 	return point;

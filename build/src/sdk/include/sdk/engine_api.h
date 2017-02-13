@@ -98,8 +98,9 @@ namespace gemini
 		// the application, do so.
 		virtual void terminate_application() = 0;
 
-
 		virtual void set_relative_mouse_mode(bool enable) = 0;
+
+		virtual void play_animation(class IModelInstanceData* model, const char* name) = 0;
 	};
 
 	namespace engine

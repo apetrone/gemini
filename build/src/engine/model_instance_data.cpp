@@ -30,12 +30,15 @@
 
 #include <shared/shared_constants.h>
 
+
+
 namespace gemini
 {
 	ModelInstanceData::ModelInstanceData(gemini::Allocator& allocator)
 		: mesh(nullptr)
 		, local_bone_transforms(0)
 		, model_bone_transforms(0)
+		, component_index(0)
 		//, inverse_bind_transforms(0)
 		//, scale_channel(scale)
 		//, rotation_channel(rotation)
@@ -49,6 +52,11 @@ namespace gemini
 	{
 		mesh_handle = in_mesh_handle;
 		mesh = mesh_from_handle(mesh_handle);
+	}
+
+	void ModelInstanceData::set_component_index(uint32_t in_component_index)
+	{
+		component_index = in_component_index;
 	}
 
 	AssetHandle ModelInstanceData::asset_index() const { return mesh_handle; }

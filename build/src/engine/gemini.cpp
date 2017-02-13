@@ -394,8 +394,7 @@ public:
 
 struct ModelInstanceData;
 
-
-class EngineInterface : public IEngineInterface, public IModelInterface
+class EngineInterface : public IEngineInterface, public IModelInterface, public RenderExtractionInterface
 {
 	IEntityManager* entity_manager;
 	IModelInterface* model_interface;
@@ -551,6 +550,35 @@ public:
 		center_cursor();
 	}
 
+	virtual void play_animation(IModelInstanceData* model, const char* animation_name)
+	{
+		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
+
+		render_scene_animation_play(render_scene, instance->get_component_index(), animation_name);
+	}
+
+	virtual void extract_matrix(uint16_t entity_index, glm::mat4& model_matrix)
+	{
+		gemini::IEngineEntity* e = entity_manager->at_index(entity_index);
+
+		glm::mat4 transform;
+		glm::vec3 position;
+		glm::quat orientation;
+		glm::vec3 pivot_point;
+
+		glm::vec3 physics_position;
+
+		e->get_world_transform(physics_position, orientation);
+		e->get_render_position(position);
+		e->get_pivot_point(pivot_point);
+
+		glm::mat4 rotation = glm::toMat4(orientation);
+		glm::mat4 translation = glm::translate(transform, position);
+		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
+		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
+		model_matrix = translation * from_pivot * rotation * to_pivot;
+	}
+
 	void tick()
 	{
 		static float the_time = 0.0f;
@@ -559,7 +587,7 @@ public:
 		render_scene->light_position_world.z = sinf(the_time);
 		the_time += 0.01f;
 
-		render_scene_extract(render_scene);
+		render_scene_extract(render_scene, this);
 	}
 
 	// IModelInterface
@@ -575,11 +603,6 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 	Mesh* mesh = mesh_from_handle(mesh_handle);
 	if (mesh)
 	{
-		gemini::ModelInstanceData data(engine_allocator);
-		data.set_mesh_index(mesh_handle);
-		int32_t index = (int32_t)id_to_instance.size();
-		id_to_instance.insert(ModelInstanceMap::value_type(index, data));
-
 		uint32_t component_id = 0;
 		if (mesh->skeleton.empty())
 		{
@@ -589,6 +612,13 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 		{
 			component_id = render_scene_add_animated_mesh(render_scene, mesh_handle, entity_index, glm::mat4(1.0f));
 		}
+
+		gemini::ModelInstanceData data(engine_allocator);
+		data.set_mesh_index(mesh_handle);
+		data.set_component_index(component_id);
+
+		int32_t index = (int32_t)id_to_instance.size();
+		id_to_instance.insert(ModelInstanceMap::value_type(index, data));
 
 		return index;
 	}

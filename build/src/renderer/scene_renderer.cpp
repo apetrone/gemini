@@ -602,12 +602,14 @@ namespace gemini
 		}
 	} // set_pose
 
-	void render_scene_extract(RenderScene* scene)
+	void render_scene_extract(RenderScene* scene, RenderExtractionInterface* interface)
 	{
 		// extract data from static meshes
 		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
 		{
-
+			StaticMeshComponent* component = scene->static_meshes[index];
+			interface->extract_matrix(component->entity_index, component->model_matrix);
+			component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
 		}
 
 		// extract data from animated meshes
@@ -615,6 +617,9 @@ namespace gemini
 		{
 			AnimatedMeshComponent* component = scene->animated_meshes[index];
 			animation::Pose pose;
+
+			interface->extract_matrix(component->entity_index, component->model_matrix);
+			component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
 
 			// TODO: determine how to get the blended pose; for now just use the first animated instance.
 			animated_instance_get_pose(component->sequence_instances[component->current_sequence_index], pose);
