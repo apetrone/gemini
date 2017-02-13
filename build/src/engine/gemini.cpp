@@ -97,14 +97,6 @@ using namespace gemini; // for renderer
 // this is required at the moment because our render method needs it!
 gui::Compositor* _compositor = 0;
 
-//void render_scene_from_camera(::renderer::RenderStream& stream, gemini::IEngineEntity** entity_list, View& view, SceneLink& scenelink)
-//{
-//	// use the entity list to render
-//	scenelink.clear();
-//	scenelink.queue_entities(entity_list, MAX_ENTITIES, RENDER_VISIBLE);
-//	scenelink.sort();
-//	scenelink.draw(stream, &view.modelview, &view.projection);
-//}
 
 namespace gemini
 {
@@ -415,9 +407,6 @@ class EngineInterface : public IEngineInterface, public IModelInterface
 	render2::Device* device;
 	render2::Pipeline* pipeline;
 
-	//Array<char> render_stream_data;
-	//Array<::renderer::RenderState> render_commands;
-
 	gemini::Allocator& engine_allocator;
 	unsigned int diffuse_unit;
 
@@ -431,27 +420,17 @@ public:
 
 	EngineInterface(gemini::Allocator& _allocator,
 					IEntityManager* em,
-					//IModelInterface* mi,
 					gemini::physics::IPhysicsInterface* pi,
 					IExperimental* ei,
-					//SceneLink& scene_link,
 					render2::Device* render_device,
 					platform::window::NativeWindow* window)
 		: engine_allocator(_allocator)
 		, entity_manager(em)
-		//, model_interface(mi)
-		//, id_to_instance(_allocator)
 		, physics_interface(pi)
 		, experimental_interface(ei)
 		, main_window(window)
 		, device(render_device)
-		//, scenelink(scene_link)
-		//, render_stream_data(_allocator)
-		//, render_commands(_allocator)
 	{
-		//render_stream_data.resize(GEMINI_MAX_RENDERSTREAM_BYTES);
-		//render_commands.resize(GEMINI_MAX_RENDER_STREAM_COMMANDS);
-
 		render2::PipelineDescriptor desc;
 		render2::VertexDescriptor& vertex_format = desc.vertex_description;
 		vertex_format.add("in_position", render2::VD_FLOAT, 3);
@@ -484,56 +463,15 @@ public:
 	virtual void* allocate(size_t size)
 	{
 		return MEMORY2_ALLOC(engine_allocator, size);
-		//return game_allocator.allocate(size, sizeof(void*), __FILE__, __LINE__);
 	}
 
 	virtual void deallocate(void* pointer)
 	{
 		MEMORY2_DEALLOC(engine_allocator, pointer);
-		//game_allocator.deallocate(pointer);
 	}
 
 	virtual void render_view(const View& view, const Color& clear_color)
 	{
-		// old rendering code
-#if 0
-		// TODO: need to validate this origin/orientation is allowed.
-		// otherwise, client could ask us to render from anyone's POV.
-		EntityManager* em = static_cast<EntityManager*>(engine::instance()->entities());
-
-		gemini::IEngineEntity** entity_list = em->get_entity_list();
-
-
-		::renderer::RenderStream rs((char*)&render_stream_data[0], GEMINI_MAX_RENDERSTREAM_BYTES, (::renderer::RenderState*)&render_commands[0], GEMINI_MAX_RENDER_STREAM_COMMANDS);
-		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
-//		rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
-		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
-		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
-		rs.add_clearcolor(clear_color.red, clear_color.green, clear_color.blue, 1.0f);
-		rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER );
-		rs.run_commands();
-
-		View newview = view;
-		platform::window::Frame frame = platform::window::get_render_frame(main_window);
-		newview.width = frame.width;
-		newview.height = frame.height;
-
-		render_scene_from_camera(rs, entity_list, newview, scenelink);
-#endif
-		//EntityManager* entity_manager = static_cast<EntityManager*>(engine::instance()->entities());
-		//IEngineEntity** entity_list = entity_manager->get_entity_list();
-
-		//for (uint32_t entity_index = 0; entity_index < MAX_ENTITIES; ++entity_index)
-		//{
-		//	gemini::IEngineEntity* entity = entity_list[entity_index];
-
-		//	// draw visible entities
-		//	if (!entity)
-		//	{
-		//		continue;
-		//	}
-		//}
-
 		render_scene_draw(render_scene, device, view.modelview, view.projection);
 	}
 
@@ -543,6 +481,11 @@ public:
 		{
 			_compositor->draw();
 		}
+	}
+
+	virtual float get_physics_step_seconds() const
+	{
+		return kernel::parameters().step_interval_seconds;
 	}
 
 	virtual Allocator& allocator()
@@ -566,7 +509,6 @@ public:
 		render_width = frame.width;
 		render_height = frame.height;
 	}
-
 
 	virtual void center_cursor()
 	{
@@ -705,27 +647,22 @@ private:
 
 	platform::window::NativeWindow* main_window;
 
-
 	Array<gemini::GameMessage>* queued_messages;
-
 
 	// Kernel State variables
 	double accumulator;
 	uint64_t last_time;
 
 	// rendering
-	//SceneLink* scenelink;
 	render2::Device* device;
 
 	// game library
 	platform::DynamicLibrary* gamelib;
 	disconnect_engine_fn disconnect_engine;
 	EntityManager entity_manager;
-	//ModelInterface model_interface;
 	Experimental experimental;
 	IEngineInterface* engine_interface;
 	IGameInterface* game_interface;
-
 
 	// GUI stuff
 	GUIRenderer* gui_renderer;
@@ -831,10 +768,6 @@ private:
 #endif
 	}
 
-	glm::vec3 last_p;
-	glm::vec3 p;
-
-
 public:
 	EngineKernel() :
 		active(true),
@@ -846,7 +779,6 @@ public:
 		engine_interface(0),
 		game_interface(0)
 		, engine_allocator(memory_allocator_default(MEMORY_ZONE_DEFAULT))
-		//, model_interface(engine_allocator)
 		, queued_messages(nullptr)
 	{
 		game_path = "";
@@ -854,8 +786,6 @@ public:
 		gui_renderer = nullptr;
 		resource_cache = nullptr;
 
-		last_p = glm::vec3(0.0f, 0.0f, 0.0f);
-		p = glm::vec3(0.0f, 0.0f, 0.0f);
 	}
 
 	virtual ~EngineKernel()
@@ -930,16 +860,6 @@ public:
 
 	virtual void event(kernel::GameControllerEvent& event)
 	{
-		//if (game_interface)
-		//{
-		//	//if (event.subtype == kernel::JoystickButton && event.is_down)
-		//	//{
-		//	//	gemini::audio::SoundHandle_t sound_handle = gemini::audio::play_sound(test_sound, 0);
-		//	//}
-
-		//	game_interface->on_event(event);
-		//}
-
 		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
 	}
 
@@ -1210,14 +1130,9 @@ Options:
 		//y += 12;
 
 		uint32_t reset_queue = 0;
-		static glm::vec3 poz;
-		static float t = 0.0f;
-		static bool fwd = false;
-		static bool back = false;
 
 		while (accumulator > params.step_interval_seconds)
 		{
-			last_p = p;
 			// iterate over queued messages and play until we hit the time cap
 			for (size_t index = 0; index < queued_messages->size(); ++index)
 			{
@@ -1225,19 +1140,6 @@ Options:
 				{
 					if (game_interface)
 					{
-						GameMessage& message = (*queued_messages)[index];
-						if (message.type == GameMessage::KeyboardEvent)
-						{
-							if (message.button == BUTTON_W)
-							{
-								fwd = message.params[0] ? true : false;
-							}
-							else if (message.button == BUTTON_S)
-							{
-								back = message.params[0] ? true : false;
-							}
-						}
-
 						game_interface->handle_game_message((*queued_messages)[index]);
 					}
 				} // execute
@@ -1246,14 +1148,6 @@ Options:
 			if (game_interface)
 			{
 				game_interface->fixed_step(params.current_physics_tick, params.step_interval_seconds, params.step_alpha);
-				if (fwd)
-				{
-					p.z -= 2.f * params.step_interval_seconds;
-				}
-				if (back)
-				{
-					p.z += 2.f * params.step_interval_seconds;
-				}
 			}
 
 			// subtract the interval from the accumulator
@@ -1263,7 +1157,6 @@ Options:
 			params.current_physics_tick++;
 
 			reset_queue = 1;
-			t = 0.0f;
 		}
 
 		if (reset_queue)
@@ -1281,15 +1174,6 @@ Options:
 			game_interface->tick(params.current_physics_tick, params.framedelta_seconds);
 		}
 
-
-
-
-
-
-		poz = lerp(last_p, p, t / 0.1f);
-
-		debugdraw::sphere(poz, Color::from_rgba(255, 0, 0, 255), 2.0f);
-
 		debugdraw::update(params.step_interval_seconds * MillisecondsPerSecond);
 
 		params.step_alpha = accumulator / params.step_interval_seconds;
@@ -1301,8 +1185,6 @@ Options:
 		EngineInterface* ei = reinterpret_cast<EngineInterface*>(engine_interface);
 		ei->tick();
 
-		/*debugdraw::update(kernel::parameters().framedelta_seconds * MillisecondsPerSecond);*/
-
 		animation::update(kernel::parameters().framedelta_seconds);
 		hotloading::tick();
 		post_tick();
@@ -1313,8 +1195,6 @@ Options:
 
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
-
-		t += params.framedelta_seconds;
 
 		// record the current frametime milliseconds
 #if defined(DEBUG_FRAMERATE)
