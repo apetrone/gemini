@@ -128,13 +128,13 @@ void entity_update_physics()
 	}
 }
 
-void entity_update(float delta_seconds, float alpha)
+void entity_update(float delta_seconds)
 {
 	for(auto& entity : entity_list().objects)
 	{
 		if ( !(entity->flags & Entity::EF_DELETE_INSTANCE) )
 		{
-			entity->update(delta_seconds, alpha);
+			entity->update(delta_seconds);
 		}
 	}
 	entity_deferred_delete( true );
@@ -228,7 +228,7 @@ void Entity::post_tick()
 	set_current_transform_from_physics(0);
 }
 
-void Entity::update(float delta_seconds, float /*alpha*/)
+void Entity::update(float delta_seconds)
 {
 	local_time += delta_seconds;
 } // update

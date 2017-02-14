@@ -1130,6 +1130,7 @@ Options:
 			if (game_interface)
 			{
 				game_interface->fixed_step(params.current_physics_tick, params.step_interval_seconds, params.step_alpha);
+				engine::instance()->physics()->step_simulation(params.step_interval_seconds);
 				interpolate_alpha = 0.0f;
 			}
 

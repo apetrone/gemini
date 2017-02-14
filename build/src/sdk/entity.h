@@ -134,7 +134,7 @@ public:
 	virtual void pre_tick();
 	virtual void post_tick();
 
-	virtual void update(float delta_seconds, float alpha);
+	virtual void update(float delta_seconds);
 	virtual void interpolate_state(float alpha);
 
 	virtual void remove();
@@ -229,6 +229,6 @@ void entity_startup();
 void entity_post_script_load();
 void entity_shutdown();
 void entity_update_physics();
-void entity_update(float delta_seconds, float alpha);
+void entity_update(float delta_seconds);
 void entity_interpolate(float alpha);
 gemini::Allocator& entity_allocator();
