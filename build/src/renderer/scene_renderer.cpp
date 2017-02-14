@@ -534,14 +534,7 @@ namespace gemini
 	} // render_animated_meshes
 
 
-
-
-
-
-
-
-
-	void anim_set_pose(AnimatedMeshComponent* component, animation::Pose& pose)
+	void _render_set_animation_pose(AnimatedMeshComponent* component, animation::Pose& pose)
 	{
 		// You've hit the upper bounds for skeletal bones for a single
 		// model. Congrats.
@@ -549,58 +542,41 @@ namespace gemini
 
 		//Hitbox* hitboxes = &mesh->hitboxes[0];
 
-		//size_t geometry_index = 0;
-		// we must update the transforms for each geometry instance
-		//for (const ::renderer::Geometry* geo : mesh->geometry)
+		Mesh* mesh = mesh_from_handle(component->mesh_handle);
+		if (!mesh)
 		{
-			// If you hit this assert, one mesh in this model didn't have
-			// blend weights.
-			//assert(!geo->bind_poses.empty());
-
-			//size_t transform_index;
-
-			Mesh* mesh = mesh_from_handle(component->mesh_handle);
-			if (!mesh)
-			{
-				return;
-			}
-
-			for (size_t index = 0; index < mesh->skeleton.size(); ++index)
-			{
-				Joint* joint = &mesh->skeleton[index];
-				glm::mat4& model_pose = component->bone_transforms[index];
-
-				glm::mat4 parent_pose;
-				glm::mat4 local_rotation = glm::toMat4(pose.rot[index]);
-				glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), pose.pos[index]);
-
-				const glm::mat4 local_pose = local_transform * local_rotation;
-				if (joint->parent_index > -1)
-				{
-					parent_pose = component->bone_transforms[joint->parent_index];
-				}
-
-				// this will be cached in local transforms
-				glm::mat4 local_bone_pose = mesh->bind_poses[index] * local_pose;
-
-				// this will be used for skinning in the vertex shader
-				model_pose = parent_pose * local_bone_pose;
-
-				// set the inverse_bind_pose
-				//inverse_bind_pose = geo->inverse_bind_poses[index];
-
-				//glm::mat4 local_bbox_xf = glm::toMat4(glm::angleAxis(glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
-				//Hitbox* hitbox = (hitboxes + index);
-				//glm::vec3 pos(0.0f, 0.0f, 0.0f);
-				//glm::vec3 dims(0.5f, 0.5f, 0.5f);
-				//pos = mathlib::transform_point(local_bone_pose, pos);
-				//debugdraw::box(-dims + pos, dims + pos, gemini::Color(0.0f, 1.0f, 1.0f));
-				//debugdraw::axes(glm::mat4(hitbox->rotation) * model_pose, 1.0f, 0.0f);
-			}
-
-			//++geometry_index;
+			return;
 		}
-	} // set_pose
+
+		for (size_t index = 0; index < mesh->skeleton.size(); ++index)
+		{
+			Joint* joint = &mesh->skeleton[index];
+
+			glm::mat4 parent_pose;
+			glm::mat4 local_rotation = glm::toMat4(pose.rot[index]);
+			glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), pose.pos[index]);
+
+			const glm::mat4 local_pose = local_transform * local_rotation;
+			if (joint->parent_index > -1)
+			{
+				parent_pose = component->bone_transforms[joint->parent_index];
+			}
+
+			// this will be cached in local transforms
+			glm::mat4 local_bone_pose = mesh->bind_poses[index] * local_pose;
+
+			// this will be used for skinning in the vertex shader
+			component->bone_transforms[index] = parent_pose * local_bone_pose;
+
+			//glm::mat4 local_bbox_xf = glm::toMat4(glm::angleAxis(glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+			//Hitbox* hitbox = (hitboxes + index);
+			//glm::vec3 pos(0.0f, 0.0f, 0.0f);
+			//glm::vec3 dims(0.5f, 0.5f, 0.5f);
+			//pos = mathlib::transform_point(local_bone_pose, pos);
+			//debugdraw::box(-dims + pos, dims + pos, gemini::Color(0.0f, 1.0f, 1.0f));
+			//debugdraw::axes(glm::mat4(hitbox->rotation) * model_pose, 1.0f, 0.0f);
+		}
+	} // _render_set_animation_pose
 
 	void render_scene_extract(RenderScene* scene, RenderExtractionInterface* interface)
 	{
@@ -630,7 +606,7 @@ namespace gemini
 				return;
 			}
 
-			anim_set_pose(component, pose);
+			_render_set_animation_pose(component, pose);
 		}
 	} // render_scene_extract
 } // namespace gemini

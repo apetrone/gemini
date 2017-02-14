@@ -1063,7 +1063,7 @@ Options:
 		render_params["multisample"] = "4";
 
 		render_params["gamma_correct"] = "false";
-		render_params["vsync"] = "false";
+		render_params["vsync"] = "true";
 
 		// set opengl specific options
 		render_params["rendering_backend"] = "opengl";
