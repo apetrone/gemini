@@ -277,33 +277,9 @@ void EntityManager::shutdown()
 
 class Experimental : public gemini::IExperimental
 {
-	gui::Panel* root;
-	gui::Compositor* compositor;
-
 public:
-	Experimental(gui::Panel* root) : root(root), compositor(0)
+	Experimental()
 	{
-	}
-
-
-	void set_root(gui::Panel* rootpanel)
-	{
-		root = rootpanel;
-	}
-
-	void set_compositor(gui::Compositor* c)
-	{
-		compositor = c;
-	}
-
-	virtual gui::Panel* root_panel() const
-	{
-		return root;
-	}
-
-	virtual gui::Compositor* get_compositor() const
-	{
-		return compositor;
 	}
 
 	virtual void navmesh_find_poly(gemini::NavMeshPolyRef* poly, const glm::vec3& position, const glm::vec3& extents)
@@ -360,9 +336,6 @@ struct SharedState
 
 static SharedState _sharedstate;
 
-//const size_t GEMINI_MAX_RENDERSTREAM_BYTES = 8192;
-//const size_t GEMINI_MAX_RENDER_STREAM_COMMANDS = 512;
-
 class AudioInterface : public IAudioInterface
 {
 public:
@@ -401,12 +374,9 @@ class EngineInterface : public IEngineInterface, public IModelInterface, public 
 	IExperimental* experimental_interface;
 
 	platform::window::NativeWindow* main_window;
-	//SceneLink& scenelink;
 	render2::Device* device;
-	render2::Pipeline* pipeline;
 
 	gemini::Allocator& engine_allocator;
-	unsigned int diffuse_unit;
 
 	RenderScene* render_scene;
 
@@ -429,25 +399,12 @@ public:
 		, main_window(window)
 		, device(render_device)
 	{
-		render2::PipelineDescriptor desc;
-		render2::VertexDescriptor& vertex_format = desc.vertex_description;
-		vertex_format.add("in_position", render2::VD_FLOAT, 3);
-		vertex_format.add("in_normal", render2::VD_FLOAT, 3);
-		vertex_format.add("in_uv", render2::VD_FLOAT, 2);
-		desc.shader = shader_load("rendertest");
-		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
-		pipeline = device->create_pipeline(desc);
-
-		diffuse_unit = 0;
-
 		render_scene = render_scene_create(_allocator, device);
 	}
 
 
 	virtual ~EngineInterface()
 	{
-		device->destroy_pipeline(pipeline);
-
 		render_scene_destroy(render_scene, device);
 	}
 
@@ -593,8 +550,7 @@ public:
 	virtual int32_t create_instance_data(uint16_t entity_index, const char* model_path);
 	virtual void destroy_instance_data(int32_t index);
 	virtual IModelInstanceData* get_instance_data(int32_t index);
-
-};
+}; // EngineInterface
 
 int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char* model_path)
 {
@@ -766,7 +722,7 @@ private:
 			assert(game_interface != 0);
 		}
 
-		game_interface->startup();
+		game_interface->startup(compositor, root);
 #endif
 	}
 
@@ -798,15 +754,14 @@ private:
 	}
 
 public:
-	EngineKernel() :
-		active(true),
-		draw_physics_debug(false),
-		draw_navigation_debug(false),
-		accumulator(0.0f),
-		last_time(0),
-		experimental(0),
-		engine_interface(0),
-		game_interface(0)
+	EngineKernel()
+		: active(true)
+		, draw_physics_debug(false)
+		, draw_navigation_debug(false)
+		, accumulator(0.0f)
+		, last_time(0)
+		, engine_interface(0)
+		, game_interface(0)
 		, engine_allocator(memory_allocator_default(MEMORY_ZONE_DEFAULT))
 		, queued_messages(nullptr)
 	{
@@ -814,7 +769,6 @@ public:
 		compositor = nullptr;
 		gui_renderer = nullptr;
 		resource_cache = nullptr;
-
 	}
 
 	virtual ~EngineKernel()
@@ -911,9 +865,6 @@ public:
 
 		root = new gui::Panel(compositor);
 		root->set_name("root");
-
-		experimental.set_root(root);
-		experimental.set_compositor(compositor);
 
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		root->set_origin(0, 0);
@@ -1060,7 +1011,6 @@ Options:
 		render2::RenderParameters render_params(renderer_allocator);
 
 		// set some options
-		render_params["vsync"] = "true";
 		render_params["double_buffer"] = "true";
 		render_params["depth_size"] = "24";
 		render_params["multisample"] = "4";
@@ -1080,7 +1030,6 @@ Options:
 
 		device->init(config.window_width, config.window_height);
 
-		//scenelink = MEMORY2_NEW(renderer_allocator, SceneLink)(renderer_allocator);
 		assets::startup(device);
 
 		render_scene_startup(device, renderer_allocator);
@@ -1119,7 +1068,7 @@ Options:
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		setup_gui(device, renderer_allocator, frame.width, frame.height);
 
-		 open_gamelibrary();
+		open_gamelibrary();
 
 		//navigation::startup();
 
@@ -1337,9 +1286,6 @@ Options:
 #endif
 
 		gemini::runtime_shutdown();
-
-
-		//MEMORY2_DELETE(renderer_allocator, scenelink);
 	} // shutdown
 }; // EngineKernel
 

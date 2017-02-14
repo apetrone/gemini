@@ -41,6 +41,12 @@ namespace input
 	class InputState;
 } // namespace input
 
+namespace gui
+{
+	class Compositor;
+	class Panel;
+};
+
 namespace gemini
 {
 	struct UserCommand;
@@ -155,7 +161,7 @@ namespace gemini
 		virtual ~IGameInterface() {};
 
 		// called when the engine connects to the game library
-		virtual bool startup() = 0;
+		virtual bool startup(gui::Compositor* compositor, gui::Panel* root) = 0;
 
 		// called just before the engine disconnects from the game library
 		virtual void shutdown() = 0;
