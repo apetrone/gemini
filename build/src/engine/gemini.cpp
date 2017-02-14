@@ -62,7 +62,6 @@
 
 #include "input.h"
 
-#include "scenelink.h"
 #include "audio.h"
 #include "animation.h"
 #include "physics/physics.h"
@@ -831,7 +830,7 @@ public:
 		{
 			queued_messages->push_back(message);
 		}
-	}
+	} // queue_game_message
 
 	virtual void event(kernel::KeyboardEvent& event)
 	{
@@ -850,12 +849,13 @@ public:
 		}
 
 		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
-	}
+	} // event
 
 	virtual void event(kernel::MouseEvent& event)
 	{
 		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
-	}
+	} // event
+
 
 	virtual void event(kernel::SystemEvent& event)
 	{
@@ -886,12 +886,14 @@ public:
 		}
 
 		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
-	}
+	} // event
+
 
 	virtual void event(kernel::GameControllerEvent& event)
 	{
 		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
-	}
+	} // event
+
 
 	void setup_gui(render2::Device* device, gemini::Allocator& renderer_allocator, uint32_t width, uint32_t height)
 	{
@@ -932,7 +934,8 @@ public:
 		graph->set_range(0.0f, 33.3f);
 		graph->enable_baseline(true, 16.6f, Color::from_rgba(255, 0, 255, 255));
 #endif
-	}
+	} // setup_gui
+
 
 	virtual kernel::Error startup()
 	{
@@ -1106,11 +1109,9 @@ Options:
 		engine_interface = MEMORY2_NEW(engine_allocator, EngineInterface)
 			(engine_allocator,
 			&entity_manager,
-			//&model_interface,
 			physics::instance(),
 			&experimental,
 			device,
-			//*scenelink,
 			main_window
 		);
 		gemini::engine::set_instance(engine_interface);
@@ -1135,7 +1136,7 @@ Options:
 		last_time = current_time;
 
 		return kernel::NoError;
-	}
+	} // startup
 
 
 	virtual void tick()
@@ -1239,7 +1240,7 @@ Options:
 
 		//gemini::profiler::report();
 		//gemini::profiler::reset();
-	}
+	} // tick
 
 	void post_tick()
 	{
@@ -1274,7 +1275,7 @@ Options:
 		{
 			platform::window::swap_buffers(main_window);
 		}
-	}
+	} // post_tick
 
 	virtual void shutdown()
 	{
@@ -1292,8 +1293,6 @@ Options:
 		{
 			MEMORY2_DELETE(renderer_allocator, gui_renderer);
 		}
-
-
 
 		// since the game can create gui elements, we need to shutdown
 		// the gui before shutting down the game library.
@@ -1341,8 +1340,8 @@ Options:
 
 
 		//MEMORY2_DELETE(renderer_allocator, scenelink);
-	}
-};
+	} // shutdown
+}; // EngineKernel
 
 PLATFORM_MAIN
 {
@@ -1391,63 +1390,5 @@ public:
 //		InputRenameMe irm;
 //		irm.load_input_table("conf/input.conf");
 
-
-#endif
-
-
-
-#if 0
-
-		struct TempVertex
-		{
-			glm::vec2 pos;
-			Color color;
-			glm::vec2 uv;
-		};
-
-		// create the render target and texture for the gui
-		image::Image image;
-		image.width = 512;
-		image.height = 512;
-		image.channels = 3;
-		gui_texture = ::renderer::driver()->texture_create(image);
-
-		gui_render_target = ::renderer::driver()->render_target_create(image.width, image.height);
-		::renderer::driver()->render_target_set_attachment(gui_render_target, ::renderer::RenderTarget::COLOR, 0, gui_texture);
-		::renderer::driver()->render_target_set_attachment(gui_render_target, ::renderer::RenderTarget::DEPTHSTENCIL, 0, 0);
-
-
-		if (alt_window)
-		{
-			alt_vs.desc.add(::renderer::VD_FLOAT2);
-			alt_vs.desc.add(::renderer::VD_FLOAT4);
-			alt_vs.desc.add(::renderer::VD_FLOAT2);
-
-
-			alt_vs.create(6, 10, ::renderer::DRAW_INDEXED_TRIANGLES);
-
-			platform::window::Frame frame = platform::window::get_render_frame(alt_window);
-			float cx = frame.width / 2.0f;
-			float cy = frame.height / 2.0f;
-
-			if (alt_vs.has_room(4, 6))
-			{
-				TempVertex* v = (TempVertex*)alt_vs.request(4);
-
-				const float RECT_SIZE = 150.0f;
-
-
-				// this is intentionally inverted along the y
-				// so that texture renderered appears correctly.
-				v[0].pos = glm::vec2(cx-RECT_SIZE, cy-RECT_SIZE); v[0].uv = glm::vec2(0,0); v[0].color = Color::from_rgba(255, 255, 255, 255);
-				v[1].pos = glm::vec2(cx-RECT_SIZE, cy+RECT_SIZE); v[1].uv = glm::vec2(0,1); v[1].color = Color::from_rgba(255, 255, 255, 255);
-				v[2].pos = glm::vec2(cx+RECT_SIZE, cy+RECT_SIZE); v[2].uv = glm::vec2(1,1); v[2].color = Color::from_rgba(255, 255, 255, 255);
-				v[3].pos = glm::vec2(cx+RECT_SIZE, cy-RECT_SIZE); v[3].uv = glm::vec2(1,0); v[3].color = Color::from_rgba(255, 255, 255, 255);
-
-				::renderer::IndexType indices[] = {0, 1, 2, 2, 3, 0};
-				alt_vs.append_indices(indices, 6);
-				alt_vs.update();
-			}
-		}
 
 #endif
