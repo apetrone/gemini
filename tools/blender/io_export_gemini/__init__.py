@@ -958,6 +958,10 @@ class GeminiModel(object):
 		normals = []
 		indices = []
 
+		if not collision_meshes:
+			print('No collision meshes. Skipping.')
+			return
+
 		if len(collision_meshes) > 1:
 			print("Found more than one collision mesh. Ignoring all but the first, {}".format(collision_meshes[0].name))
 
@@ -984,6 +988,7 @@ class GeminiModel(object):
 		for index, obj in enumerate(bpy.context.scene.objects):
 			#print("index: %i, object: %s, type: %s" % (index, obj.name, obj.type))
 			if '_collision' in obj.name:
+				print('Found collision mesh {}'.format(obj.name))
 				self.collision_meshes.append(obj)
 			else:
 				self.add_object(obj)
