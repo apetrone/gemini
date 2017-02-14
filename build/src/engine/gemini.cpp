@@ -611,6 +611,27 @@ extern "C"
 }
 #endif
 
+
+
+struct EntityRenderState
+{
+	glm::vec3 origins[MAX_ENTITIES];
+};
+
+void interpolate_entities(EntityRenderState* ers, IEngineEntity** entities, float interpolate_alpha)
+{
+	for (size_t index = 0; index < MAX_ENTITIES; ++index)
+	{
+		IEngineEntity* entity = entities[index];
+		if (entity)
+		{
+			entity->get_render_position(ers->origins[index]);
+		}
+	}
+}
+
+
+
 class EngineKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -1113,6 +1134,9 @@ Options:
 
 		uint32_t reset_queue = 0;
 
+		EngineInterface* ei = reinterpret_cast<EngineInterface*>(engine_interface);
+
+
 		while (accumulator > params.step_interval_seconds)
 		{
 			// iterate over queued messages and play until we hit the time cap
@@ -1145,6 +1169,7 @@ Options:
 
 		if (reset_queue)
 		{
+			ei->tick();
 			queued_messages->resize(0);
 
 			if (game_interface)
@@ -1165,9 +1190,6 @@ Options:
 		{
 			params.step_alpha -= 1.0f;
 		}
-
-		EngineInterface* ei = reinterpret_cast<EngineInterface*>(engine_interface);
-		ei->tick();
 
 		animation::update(kernel::parameters().framedelta_seconds);
 		hotloading::tick();
@@ -1210,6 +1232,10 @@ Options:
 		if (game_interface)
 		{
 			float alpha = glm::clamp(static_cast<float>(interpolate_alpha / kernel::parameters().step_interval_seconds), 0.0f, 1.0f);
+
+			EntityRenderState ent_render_state;
+			interpolate_entities(&ent_render_state, entity_manager.get_entity_list(), alpha);
+
 			game_interface->render_frame(alpha);
 		}
 
