@@ -77,8 +77,6 @@ namespace gemini
 		virtual void render_debug(const View& view) = 0;
 		virtual void render_gui() = 0;
 
-		virtual float get_physics_step_seconds() const = 0;
-
 		virtual Allocator& allocator() = 0;
 
 //		virtual void render_world(const glm::vec3& origin, const glm::vec2& view_angles) = 0;

@@ -438,11 +438,6 @@ public:
 		}
 	}
 
-	virtual float get_physics_step_seconds() const
-	{
-		return kernel::parameters().step_interval_seconds;
-	}
-
 	virtual Allocator& allocator()
 	{
 		return engine_allocator;
@@ -663,6 +658,8 @@ private:
 	gemini::Allocator gui_allocator;
 	gemini::Allocator engine_allocator;
 
+	float interpolate_alpha;
+
 	void open_gamelibrary()
 	{
 #if !defined(GEMINI_STATIC_GAME)
@@ -764,6 +761,7 @@ public:
 		, game_interface(0)
 		, engine_allocator(memory_allocator_default(MEMORY_ZONE_DEFAULT))
 		, queued_messages(nullptr)
+		, interpolate_alpha(0.0f)
 	{
 		game_path = "";
 		compositor = nullptr;
@@ -1132,6 +1130,7 @@ Options:
 			if (game_interface)
 			{
 				game_interface->fixed_step(params.current_physics_tick, params.step_interval_seconds, params.step_alpha);
+				interpolate_alpha = 0.0f;
 			}
 
 			// subtract the interval from the accumulator
@@ -1205,9 +1204,12 @@ Options:
 			physics::debug_draw();
 		}
 
+		interpolate_alpha += kernel::parameters().framedelta_milliseconds;
+
 		if (game_interface)
 		{
-			game_interface->render_frame();
+			float alpha = glm::clamp(static_cast<float>(interpolate_alpha / kernel::parameters().step_interval_seconds), 0.0f, 1.0f);
+			game_interface->render_frame(alpha);
 		}
 
 		//if (draw_navigation_debug)

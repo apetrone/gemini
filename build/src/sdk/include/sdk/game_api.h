@@ -181,7 +181,8 @@ namespace gemini
 		virtual void fixed_step(uint64_t current_tick, float step_interval_seconds, float step_alpha) = 0;
 
 		/// @brief Render a frame
-		virtual void render_frame() = 0;
+		/// @param alpha interpolation alpha
+		virtual void render_frame(float alpha) = 0;
 
 		// event handling
 		virtual void handle_game_message(GameMessage& message) = 0;
