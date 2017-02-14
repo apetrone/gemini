@@ -415,6 +415,7 @@ Options:
 		render2::RenderParameters render_parameters(render_allocator);
 		render_parameters["rendering_backend"] = "default";
 		render_parameters["gamma_correct"] = "false";
+		render_parameters["vsync"] = "true";
 
 		state.device = render2::create_device(render_allocator, render_parameters);
 		assert(state.device != nullptr);
@@ -672,7 +673,7 @@ Options:
 			accumulator -= params.step_interval_seconds;
 
 			// increment tick counter
-			params.current_tick++;
+			params.current_frame++;
 		}
 
 		params.step_alpha = accumulator / params.step_interval_seconds;
@@ -685,7 +686,7 @@ Options:
 	virtual void tick()
 	{
 		update();
-		countdown -= kernel::parameters().step_interval_seconds;
+		countdown -= kernel::parameters().framedelta_milliseconds;
 
 		platform::update(kernel::parameters().framedelta_milliseconds);
 

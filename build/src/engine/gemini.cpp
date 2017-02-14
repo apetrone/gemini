@@ -1063,6 +1063,7 @@ Options:
 		render_params["multisample"] = "4";
 
 		render_params["gamma_correct"] = "false";
+		render_params["vsync"] = "false";
 
 		// set opengl specific options
 		render_params["rendering_backend"] = "opengl";
@@ -1152,7 +1153,10 @@ Options:
 		// set the baseline for the font
 		int x = 250;
 		int y = 16;
-		debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", params.framedelta_milliseconds), Color());
+		debugdraw::text(x, y, core::str::format("frame delta = %2.2fms (%i fps)\n",
+												params.framedelta_milliseconds,
+												static_cast<uint32_t>(1000.0f / params.framedelta_milliseconds)),
+												Color());
 		y += 12;
 		//debugdraw::text(x, y, core::str::format("allocations = %i, total %2.2f MB\n",
 		//	core::memory::global_allocator().get_zone()->get_active_allocations(),

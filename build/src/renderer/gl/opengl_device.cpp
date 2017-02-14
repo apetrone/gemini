@@ -77,10 +77,6 @@ namespace render2
 	{
 		default_target->width = static_cast<uint32_t>(backbuffer_width);
 		default_target->height = static_cast<uint32_t>(backbuffer_height);
-
-#if defined(PLATFORM_WINDOWS)
-		gl.SwapInterval(1);
-#endif
 		frame_allocator = gemini::memory_allocator_linear(gemini::MEMORY_ZONE_RENDERER, frame_memory, RENDERER_FRAME_MEMORY_SIZE);
 	}
 
@@ -331,6 +327,21 @@ namespace render2
 				parameters.flags |= RF_GAMMA_CORRECT;
 			}
 		}
+
+		if (render_params.has_key("vsync"))
+		{
+			param_string value = render_params["vsync"];
+			uint32_t enable_vsync = 0;
+			if (value == "true")
+			{
+				enable_vsync = 1;
+			}
+
+#if defined(PLATFORM_WINDOWS)
+			gl.SwapInterval(enable_vsync);
+#endif
+		}
+
 
 		default_target->framebuffer_srgb(parameters.flags & RF_GAMMA_CORRECT);
 	}
