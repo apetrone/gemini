@@ -78,6 +78,7 @@ namespace gemini
 		}
 	} // render_scene_startup
 
+
 	void render_scene_shutdown()
 	{
 		assert(render_scene_state);
@@ -98,6 +99,7 @@ namespace gemini
 		MEMORY2_DELETE(*render_scene_state->allocator, render_scene_state);
 	} // render_scene_shutdown
 
+
 	void interleave_static_mesh(char* vertex_data, Mesh* mesh, uint32_t total_vertices)
 	{
 		for (size_t vertex_index = 0; vertex_index < total_vertices; ++vertex_index)
@@ -108,6 +110,7 @@ namespace gemini
 			vertex->uvs = mesh->uvs[vertex_index];
 		}
 	}
+
 
 	void interleave_animated_mesh(char* vertex_data, Mesh* mesh, uint32_t total_vertices)
 	{
@@ -121,6 +124,7 @@ namespace gemini
 			vertex->blend_weights = mesh->blend_weights[vertex_index];
 		}
 	}
+
 
 	void render_scene_track_mesh(RenderScene* scene, AssetHandle mesh_handle)
 	{
@@ -277,6 +281,7 @@ namespace gemini
 		return instance_index;
 	}
 
+
 	bool render_scene_animation_is_playing(RenderScene* scene, uint32_t component_id, uint32_t instance_id)
 	{
 		// If you hit this, an invalid component id was passed in
@@ -289,7 +294,6 @@ namespace gemini
 		assert(0);
 		return false;
 	}
-
 
 
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device)
@@ -327,6 +331,7 @@ namespace gemini
 		return scene;
 	} // render_scene_create
 
+
 	void render_scene_destroy(RenderScene* scene, render2::Device* device)
 	{
 		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
@@ -352,6 +357,7 @@ namespace gemini
 
 		MEMORY2_DELETE(*scene->allocator, scene);
 	} // render_scene_destroy
+
 
 	void render_scene_draw(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::RenderTarget* render_target)
 	{
@@ -381,6 +387,7 @@ namespace gemini
 		render_animated_meshes(scene, device, view, projection, animated_pass);
 	} // render_scene_draw
 
+
 	void _render_setup_material(render2::CommandSerializer* serializer, AssetHandle material_handle)
 	{
 		Material* material = material_from_handle(material_handle);
@@ -398,7 +405,8 @@ namespace gemini
 				LOGV("Unhandled material parameter: %i\n", parameter->type);
 			}
 		}
-	}
+	} // _render_setup_material
+
 
 	void render_static_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass)
 	{
@@ -444,6 +452,7 @@ namespace gemini
 		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
 	} // render_static_meshes
+
 
 	void render_animated_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass)
 	{

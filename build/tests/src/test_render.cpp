@@ -608,10 +608,8 @@ Options:
 		}
 		state.device->buffer_upload(state.font_buffer, &tvf, sizeof(TexturedVertex)*TOTAL_FONT_VERTICES);
 
-
 		// hit this assert if we couldn't load the font
 		assert(state.font_handle != InvalidAssetHandle);
-
 
 		// ---------------------------------------------------------------------
 		// line buffer

@@ -31,6 +31,7 @@
 #include <runtime/asset_handle.h>
 #include <runtime/animation.h>
 
+
 namespace render2
 {
 	class Device;
@@ -113,10 +114,8 @@ namespace gemini
 
 	// check to see if an animation is playing
 	bool render_scene_animation_is_playing(RenderScene* scene, uint32_t component_id, uint32_t instance_id);
-
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device);
 	void render_scene_destroy(RenderScene* scene, render2::Device* device);
-
 	void render_scene_draw(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::RenderTarget* render_target = nullptr);
 	void render_static_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 	void render_animated_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);

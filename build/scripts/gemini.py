@@ -1263,8 +1263,6 @@ def products(arguments, **kwargs):
 		"src/engine/gemini.cpp",
 		"src/engine/navigation.cpp",
 		"src/engine/navigation.h",
-		"src/engine/scenelink.cpp",
-		"src/engine/scenelink.h",
 		# "src/engine/script.cpp",
 		# "src/engine/script.h",
 
