@@ -50,7 +50,7 @@ namespace gui
 namespace gemini
 {
 	struct UserCommand;
-
+	struct View;
 
 	struct GameMessage
 	{
@@ -188,6 +188,9 @@ namespace gemini
 		virtual void handle_game_message(GameMessage& message) = 0;
 
 		virtual void reset_events() = 0;
+
+		// get view and projection matrices to render from
+		virtual void get_render_view(gemini::View& view) = 0;
 	}; // GameInterface
 
 

@@ -73,10 +73,6 @@ namespace gemini
 		virtual void* allocate(size_t bytes) = 0;
 		virtual void deallocate(void* pointer) = 0;
 
-		virtual void render_view(const View& view, const gemini::Color& clear_color) = 0;
-		virtual void render_debug(const View& view) = 0;
-		virtual void render_gui() = 0;
-
 		virtual Allocator& allocator() = 0;
 
 //		virtual void render_world(const glm::vec3& origin, const glm::vec2& view_angles) = 0;

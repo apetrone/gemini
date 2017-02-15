@@ -366,7 +366,7 @@ public:
 
 struct ModelInstanceData;
 
-class EngineInterface : public IEngineInterface, public IModelInterface, public RenderExtractionInterface
+class EngineInterface : public IEngineInterface, public IModelInterface
 {
 	IEntityManager* entity_manager;
 	IModelInterface* model_interface;
@@ -378,13 +378,12 @@ class EngineInterface : public IEngineInterface, public IModelInterface, public 
 
 	gemini::Allocator& engine_allocator;
 
-	RenderScene* render_scene;
-
 	// model instance data
 	typedef std::map<int32_t, gemini::ModelInstanceData> ModelInstanceMap;
 	ModelInstanceMap id_to_instance;
 
 public:
+	RenderScene* render_scene;
 
 	EngineInterface(gemini::Allocator& _allocator,
 					IEntityManager* em,
@@ -398,14 +397,13 @@ public:
 		, experimental_interface(ei)
 		, main_window(window)
 		, device(render_device)
+		, render_scene(nullptr)
 	{
-		render_scene = render_scene_create(_allocator, device);
 	}
 
 
 	virtual ~EngineInterface()
 	{
-		render_scene_destroy(render_scene, device);
 	}
 
 	virtual IEntityManager* entities() { return entity_manager; }
@@ -425,31 +423,9 @@ public:
 		MEMORY2_DEALLOC(engine_allocator, pointer);
 	}
 
-	virtual void render_view(const View& view, const Color& clear_color)
-	{
-		render_scene_draw(render_scene, device, view.modelview, view.projection);
-	}
-
-	virtual void render_gui()
-	{
-		if (_compositor)
-		{
-			_compositor->draw();
-		}
-	}
-
 	virtual Allocator& allocator()
 	{
 		return engine_allocator;
-	}
-
-	virtual void render_debug(const View& view) override
-	{
-		View newview = view;
-		platform::window::Frame frame = platform::window::get_render_frame(main_window);
-		newview.width = frame.width;
-		newview.height = frame.height;
-		debugdraw::render(newview.modelview, newview.projection, newview.width, newview.height);
 	}
 
 	virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height)
@@ -504,41 +480,7 @@ public:
 	virtual void play_animation(IModelInstanceData* model, const char* animation_name)
 	{
 		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
-
 		render_scene_animation_play(render_scene, instance->get_component_index(), animation_name);
-	}
-
-	virtual void extract_matrix(uint16_t entity_index, glm::mat4& model_matrix)
-	{
-		gemini::IEngineEntity* e = entity_manager->at_index(entity_index);
-
-		glm::mat4 transform;
-		glm::vec3 position;
-		glm::quat orientation;
-		glm::vec3 pivot_point;
-
-		glm::vec3 physics_position;
-
-		e->get_world_transform(physics_position, orientation);
-		e->get_render_position(position);
-		e->get_pivot_point(pivot_point);
-
-		glm::mat4 rotation = glm::toMat4(orientation);
-		glm::mat4 translation = glm::translate(transform, position);
-		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
-		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
-		model_matrix = translation * from_pivot * rotation * to_pivot;
-	}
-
-	void tick()
-	{
-		static float the_time = 0.0f;
-		render_scene->light_position_world.x = cosf(the_time);
-		render_scene->light_position_world.y = 2.0f;
-		render_scene->light_position_world.z = sinf(the_time);
-		the_time += 0.01f;
-
-		render_scene_extract(render_scene, this);
 	}
 
 	// IModelInterface
@@ -636,7 +578,8 @@ class EngineKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
 public kernel::IEventListener<kernel::SystemEvent>,
-public kernel::IEventListener<kernel::GameControllerEvent>
+public kernel::IEventListener<kernel::GameControllerEvent>,
+public RenderExtractionInterface
 {
 
 private:
@@ -680,6 +623,7 @@ private:
 	gemini::Allocator engine_allocator;
 
 	float interpolate_alpha;
+	RenderScene* render_scene;
 
 	void open_gamelibrary()
 	{
@@ -1084,6 +1028,12 @@ Options:
 		);
 		gemini::engine::set_instance(engine_interface);
 
+		// create the render scene
+		render_scene = render_scene_create(engine_allocator, device);
+
+		EngineInterface* engine_instance = static_cast<EngineInterface*>(engine_interface);
+		engine_instance->render_scene = render_scene;
+
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		setup_gui(device, renderer_allocator, frame.width, frame.height);
 
@@ -1169,7 +1119,14 @@ Options:
 
 		if (reset_queue)
 		{
-			ei->tick();
+			static float the_time = 0.0f;
+			render_scene->light_position_world.x = cosf(the_time);
+			render_scene->light_position_world.y = 2.0f;
+			render_scene->light_position_world.z = sinf(the_time);
+			the_time += 0.01f;
+
+			render_scene_extract(render_scene, this);
+
 			queued_messages->resize(0);
 
 			if (game_interface)
@@ -1236,6 +1193,23 @@ Options:
 			EntityRenderState ent_render_state;
 			interpolate_entities(&ent_render_state, entity_manager.get_entity_list(), alpha);
 
+			// render the main view
+			gemini::View view;
+			const gemini::Color background_color = gemini::Color::from_rgba(128, 128, 128, 255);
+
+			platform::window::Frame frame = platform::window::get_render_frame(main_window);
+			view.width = frame.width;
+			view.height = frame.height;
+
+			game_interface->get_render_view(view);
+
+			render_scene_draw(render_scene, device, view.modelview, view.projection);
+			debugdraw::render(view.modelview, view.projection, view.width, view.height);
+			if (_compositor)
+			{
+				_compositor->draw();
+			}
+
 			game_interface->render_frame(alpha);
 		}
 
@@ -1254,6 +1228,30 @@ Options:
 			platform::window::swap_buffers(main_window);
 		}
 	} // post_tick
+
+
+	virtual void extract_matrix(uint16_t entity_index, glm::mat4& model_matrix)
+	{
+		gemini::IEngineEntity* e = entity_manager.at_index(entity_index);
+
+		glm::mat4 transform;
+		glm::vec3 position;
+		glm::quat orientation;
+		glm::vec3 pivot_point;
+
+		glm::vec3 physics_position;
+
+		e->get_world_transform(physics_position, orientation);
+		e->get_render_position(position);
+		e->get_pivot_point(pivot_point);
+
+		glm::mat4 rotation = glm::toMat4(orientation);
+		glm::mat4 translation = glm::translate(transform, position);
+		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
+		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
+		model_matrix = translation * from_pivot * rotation * to_pivot;
+	}
+
 
 	virtual void shutdown()
 	{
@@ -1283,14 +1281,15 @@ Options:
 			MEMORY2_DELETE(renderer_allocator, resource_cache);
 		}
 
+		render_scene_destroy(render_scene, device);
+		render_scene_shutdown();
+
 		// shutdown subsystems
 		hotloading::shutdown();
 		animation::shutdown();
 		gemini::physics::shutdown();
 		debugdraw::shutdown();
 		audio::shutdown();
-
-		render_scene_shutdown();
 
 		assets::shutdown();
 
