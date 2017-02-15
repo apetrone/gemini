@@ -555,19 +555,30 @@ extern "C"
 
 
 
-struct EntityRenderState
-{
-	glm::vec3 origins[MAX_ENTITIES];
-};
 
-void interpolate_entities(EntityRenderState* ers, IEngineEntity** entities, float interpolate_alpha)
+void extract_entities(EntityRenderState* ers, IEngineEntity** entities)
 {
 	for (size_t index = 0; index < MAX_ENTITIES; ++index)
 	{
 		IEngineEntity* entity = entities[index];
 		if (entity)
 		{
-			entity->get_render_position(ers->origins[index]);
+			glm::mat4 transform;
+			glm::vec3 position;
+			glm::quat orientation;
+			glm::vec3 pivot_point;
+
+			glm::vec3 physics_position;
+
+			entity->get_world_transform(physics_position, orientation);
+			entity->get_render_position(position);
+			entity->get_pivot_point(pivot_point);
+
+			glm::mat4 rotation = glm::toMat4(orientation);
+			glm::mat4 translation = glm::translate(transform, position);
+			glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
+			glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
+			ers->model_matrix[index] = translation * from_pivot * rotation * to_pivot;
 		}
 	}
 }
@@ -578,8 +589,7 @@ class EngineKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
 public kernel::IEventListener<kernel::SystemEvent>,
-public kernel::IEventListener<kernel::GameControllerEvent>,
-public RenderExtractionInterface
+public kernel::IEventListener<kernel::GameControllerEvent>
 {
 
 private:
@@ -624,6 +634,7 @@ private:
 
 	float interpolate_alpha;
 	RenderScene* render_scene;
+	EntityRenderState entity_render_state;
 
 	void open_gamelibrary()
 	{
@@ -1125,7 +1136,7 @@ Options:
 			render_scene->light_position_world.z = sinf(the_time);
 			the_time += 0.01f;
 
-			render_scene_extract(render_scene, this);
+			extract_entities(&entity_render_state, entity_manager.get_entity_list());
 
 			queued_messages->resize(0);
 
@@ -1190,8 +1201,7 @@ Options:
 		{
 			float alpha = glm::clamp(static_cast<float>(interpolate_alpha / kernel::parameters().step_interval_seconds), 0.0f, 1.0f);
 
-			EntityRenderState ent_render_state;
-			interpolate_entities(&ent_render_state, entity_manager.get_entity_list(), alpha);
+			game_interface->render_frame(alpha);
 
 			// render the main view
 			gemini::View view;
@@ -1203,14 +1213,13 @@ Options:
 
 			game_interface->get_render_view(view);
 
+			render_scene_update(render_scene, &entity_render_state);
 			render_scene_draw(render_scene, device, view.modelview, view.projection);
 			debugdraw::render(view.modelview, view.projection, view.width, view.height);
 			if (_compositor)
 			{
 				_compositor->draw();
 			}
-
-			game_interface->render_frame(alpha);
 		}
 
 		//if (draw_navigation_debug)
@@ -1228,30 +1237,6 @@ Options:
 			platform::window::swap_buffers(main_window);
 		}
 	} // post_tick
-
-
-	virtual void extract_matrix(uint16_t entity_index, glm::mat4& model_matrix)
-	{
-		gemini::IEngineEntity* e = entity_manager.at_index(entity_index);
-
-		glm::mat4 transform;
-		glm::vec3 position;
-		glm::quat orientation;
-		glm::vec3 pivot_point;
-
-		glm::vec3 physics_position;
-
-		e->get_world_transform(physics_position, orientation);
-		e->get_render_position(position);
-		e->get_pivot_point(pivot_point);
-
-		glm::mat4 rotation = glm::toMat4(orientation);
-		glm::mat4 translation = glm::translate(transform, position);
-		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
-		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
-		model_matrix = translation * from_pivot * rotation * to_pivot;
-	}
-
 
 	virtual void shutdown()
 	{

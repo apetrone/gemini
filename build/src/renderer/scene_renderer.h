@@ -103,6 +103,12 @@ namespace gemini
 		}
 	}; // RenderScene
 
+	struct EntityRenderState
+	{
+		glm::mat4 model_matrix[256];
+	}; // EntityRenderState
+
+
 	void render_scene_startup(render2::Device* device, Allocator& allocator);
 	void render_scene_shutdown();
 
@@ -120,11 +126,5 @@ namespace gemini
 	void render_static_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 	void render_animated_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 
-	struct RenderExtractionInterface
-	{
-		virtual ~RenderExtractionInterface() {}
-		virtual void extract_matrix(uint16_t entity_index, glm::mat4& model_matrix) = 0;
-	};
-
-	void render_scene_extract(RenderScene* scene, RenderExtractionInterface* interface);
+	void render_scene_update(RenderScene* scene, EntityRenderState* state);
 } // namespace gemini

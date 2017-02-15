@@ -215,13 +215,6 @@ struct EditorEnvironment
 	Project* project;
 };
 
-class OrionTransformExtract : public RenderExtractionInterface
-{
-	virtual void extract_matrix(uint16_t entity_index, glm::mat4& model_matrix)
-	{
-	}
-};
-
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -315,6 +308,8 @@ private:
 	NotificationServer notify_server;
 	NotificationClient notify_client;
 	PathDelayHashSet* queued_asset_changes;
+
+	EntityRenderState entity_render_state;
 
 public:
 	EditorKernel()
@@ -1050,14 +1045,17 @@ Options:
 
 		for (size_t index = 0; index < TOTAL_STATIC_MESHES; ++index)
 		{
-			render_scene_add_static_mesh(render_scene, test_mesh, 0, transform);
+			uint16_t entity_index = index;
+			render_scene_add_static_mesh(render_scene, test_mesh, entity_index, transform);
+			entity_render_state.model_matrix[entity_index] = transform;
 			transform = glm::translate(transform, glm::vec3(1.5f, 0.0f, 0.0f));
 		}
 
 		transform = glm::rotate(transform, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		for (size_t index = 0; index < 4; ++index)
 		{
-			uint32_t component_id = render_scene_add_animated_mesh(render_scene, animated_mesh, 0, transform);
+			uint16_t entity_index = TOTAL_STATIC_MESHES + index;
+			uint32_t component_id = render_scene_add_animated_mesh(render_scene, animated_mesh, entity_index, transform);
 			if (index == 2)
 			{
 				render_scene_animation_play(render_scene, component_id, "wiggle");
@@ -1066,6 +1064,7 @@ Options:
 			{
 				render_scene_animation_play(render_scene, component_id, "idle");
 			}
+			entity_render_state.model_matrix[entity_index] = transform;
 			transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
 		}
 
@@ -1374,8 +1373,7 @@ Options:
 
 		animation::update(kernel::parameters().framedelta_seconds);
 
-		OrionTransformExtract extract;
-		render_scene_extract(render_scene, &extract);
+		render_scene_update(render_scene, &entity_render_state);
 
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
