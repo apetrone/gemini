@@ -158,8 +158,13 @@ namespace gemini
 					}
 					else
 					{
+						// This assumes that the animation is evenly sampled
+						// across key frames by frame_delay_seconds.
+						// If it isn't, we could use
+						// (keyframe->seconds - prev_keyframe->seconds) as
+						// the denominator instead of frame_delay_seconds.
 						Keyframe* prev_keyframe = &keyframelist->keys[key - 1];
-						float alpha = (keyframe->seconds - prev_keyframe->seconds) / frame_delay_seconds;
+						float alpha = (t_seconds - prev_keyframe->seconds) / frame_delay_seconds;
 						return gemini::lerp(prev_keyframe->value, keyframe->value, alpha);
 					}
 				}
@@ -176,12 +181,6 @@ namespace gemini
 			return 0.0f;
 		} // evaluate
 
-		//float Channel::operator()() const
-		//{
-		//	return *value;
-		//} // operator()
-
-
 		// Sequence
 		Sequence::Sequence(gemini::Allocator& _allocator)
 			: allocator(_allocator)
@@ -190,7 +189,6 @@ namespace gemini
 		}
 
 		// AnimatedInstance
-
 		AnimatedInstance::AnimatedInstance(gemini::Allocator& allocator)
 			: local_time_seconds(0.0)
 			, enabled(false)
@@ -230,14 +228,6 @@ namespace gemini
 		void AnimatedInstance::reset_channels()
 		{
 			local_time_seconds = 0.0f;
-
-			//Sequence* sequence = animation::get_sequence_by_index(sequence_index);
-			//assert(sequence != 0);
-
-			//for (auto& channel : channel_set)
-			//{
-			//	channel.reset();
-			//}
 		}
 
 		//
