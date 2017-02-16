@@ -105,9 +105,12 @@ namespace gemini
 
 	struct EntityRenderState
 	{
+		glm::vec3 position[256];
+		glm::quat orientation[256];
+		glm::vec3 pivot_point[256];
+
 		glm::mat4 model_matrix[256];
 	}; // EntityRenderState
-
 
 	void render_scene_startup(render2::Device* device, Allocator& allocator);
 	void render_scene_shutdown();

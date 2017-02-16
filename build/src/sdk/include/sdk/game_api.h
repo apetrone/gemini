@@ -177,8 +177,7 @@ namespace gemini
 		/// @brief Perform a fixed step at regular interval.
 		/// @param current_ticks The tick counter
 		/// @param step_interval_seconds The fixed step interval (in seconds).
-		/// @param step_alpha Lerp value between ticks.
-		virtual void fixed_step(uint64_t current_tick, float step_interval_seconds, float step_alpha) = 0;
+		virtual void fixed_step(uint64_t current_tick, float step_interval_seconds) = 0;
 
 		/// @brief Render a frame
 		/// @param alpha interpolation alpha

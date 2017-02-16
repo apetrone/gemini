@@ -563,26 +563,39 @@ void extract_entities(EntityRenderState* ers, IEngineEntity** entities)
 		IEngineEntity* entity = entities[index];
 		if (entity)
 		{
-			glm::mat4 transform;
-			glm::vec3 position;
-			glm::quat orientation;
-			glm::vec3 pivot_point;
-
-			glm::vec3 physics_position;
-
-			entity->get_world_transform(physics_position, orientation);
-			entity->get_render_position(position);
-			entity->get_pivot_point(pivot_point);
-
-			glm::mat4 rotation = glm::toMat4(orientation);
-			glm::mat4 translation = glm::translate(transform, position);
-			glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
-			glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
-			ers->model_matrix[index] = translation * from_pivot * rotation * to_pivot;
+			entity->get_world_transform(ers->position[index], ers->orientation[index]);
+			entity->get_render_position(ers->position[index]);
+			entity->get_pivot_point(ers->pivot_point[index]);
 		}
 	}
 }
 
+void interpolate_states(EntityRenderState* out, EntityRenderState* a, EntityRenderState* b, float alpha)
+{
+	for (size_t index = 0; index < MAX_ENTITIES; ++index)
+	{
+		glm::quat orientation = gemini::slerp(a->orientation[index], b->orientation[index], alpha);
+		glm::vec3 position = gemini::lerp(a->position[index], b->position[index], alpha);
+		glm::vec3 pivot_point = gemini::lerp(a->pivot_point[index], b->pivot_point[index], alpha);
+
+		glm::mat4 rotation = glm::toMat4(orientation);
+		glm::mat4 translation = glm::translate(glm::mat4(1.0f), position);
+		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
+		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
+
+		out->model_matrix[index] = translation * from_pivot * rotation * to_pivot;
+	}
+}
+
+void copy_state(EntityRenderState* out, EntityRenderState* in)
+{
+	for (size_t index = 0; index < MAX_ENTITIES; ++index)
+	{
+		out->orientation[index] = in->orientation[index];
+		out->position[index] = in->position[index];
+		out->pivot_point[index] = in->pivot_point[index];
+	}
+}
 
 
 class EngineKernel : public kernel::IKernel,
@@ -634,7 +647,8 @@ private:
 
 	float interpolate_alpha;
 	RenderScene* render_scene;
-	EntityRenderState entity_render_state;
+	EntityRenderState* entity_render_state;
+
 
 	void open_gamelibrary()
 	{
@@ -979,6 +993,8 @@ Options:
 		engine_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		renderer_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
 
+		entity_render_state = static_cast<EntityRenderState*>(MEMORY2_ALLOC(engine_allocator, sizeof(EntityRenderState) * 2));
+		memset(entity_render_state, 0, sizeof(EntityRenderState) * 2);
 		queued_messages = MEMORY2_NEW(engine_allocator, Array<GameMessage>)(engine_allocator);
 
 		// initialize rendering subsystems
@@ -1077,6 +1093,22 @@ Options:
 		platform::update(kernel::parameters().framedelta_milliseconds);
 		PROFILE_END("platform_update");
 
+
+		// calculate delta ticks in milliseconds
+		params.framedelta_milliseconds = (current_time - last_time) * MillisecondsPerMicrosecond;
+
+		// cache the value in seconds
+		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
+
+		interpolate_alpha += kernel::parameters().framedelta_seconds;
+
+		// record the current frametime milliseconds
+#if defined(DEBUG_FRAMERATE)
+		graph->record_value(params.framedelta_milliseconds, 0);
+#endif
+
+		last_time = current_time;
+
 		// update accumulator
 		accumulator += params.framedelta_seconds;
 
@@ -1114,9 +1146,8 @@ Options:
 
 			if (game_interface)
 			{
-				game_interface->fixed_step(params.current_physics_tick, params.step_interval_seconds, params.step_alpha);
+				game_interface->fixed_step(params.current_physics_tick, params.step_interval_seconds);
 				engine::instance()->physics()->step_simulation(params.step_interval_seconds);
-				interpolate_alpha = 0.0f;
 			}
 
 			// subtract the interval from the accumulator
@@ -1136,12 +1167,16 @@ Options:
 			render_scene->light_position_world.z = sinf(the_time);
 			the_time += 0.01f;
 
-			extract_entities(&entity_render_state, entity_manager.get_entity_list());
+			copy_state(&entity_render_state[0], &entity_render_state[1]);
+
+			extract_entities(&entity_render_state[1], entity_manager.get_entity_list());
+			interpolate_alpha = 0.0f;
 
 			queued_messages->resize(0);
 
 			if (game_interface)
 			{
+				game_interface->render_frame(0.0f);
 				game_interface->reset_events();
 			}
 		}
@@ -1164,19 +1199,6 @@ Options:
 		post_tick();
 		kernel::parameters().current_frame++;
 
-		// calculate delta ticks in milliseconds
-		params.framedelta_milliseconds = (current_time - last_time) * MillisecondsPerMicrosecond;
-
-		// cache the value in seconds
-		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
-
-		// record the current frametime milliseconds
-#if defined(DEBUG_FRAMERATE)
-		graph->record_value(params.framedelta_milliseconds, 0);
-#endif
-
-		last_time = current_time;
-
 		//gemini::profiler::report();
 		//gemini::profiler::reset();
 	} // tick
@@ -1195,13 +1217,11 @@ Options:
 			physics::debug_draw();
 		}
 
-		interpolate_alpha += kernel::parameters().framedelta_milliseconds;
-
 		if (game_interface)
 		{
-			float alpha = glm::clamp(static_cast<float>(interpolate_alpha / kernel::parameters().step_interval_seconds), 0.0f, 1.0f);
+			float alpha = glm::clamp(static_cast<float>(accumulator / kernel::parameters().step_interval_seconds), 0.0f, 1.0f);
 
-			game_interface->render_frame(alpha);
+			/*game_interface->render_frame(alpha);*/
 
 			// render the main view
 			gemini::View view;
@@ -1213,7 +1233,12 @@ Options:
 
 			game_interface->get_render_view(view);
 
-			render_scene_update(render_scene, &entity_render_state);
+			// interpolate
+			EntityRenderState ers;
+
+			interpolate_states(&ers, &entity_render_state[0], &entity_render_state[1], alpha);
+
+			render_scene_update(render_scene, &ers);
 			render_scene_draw(render_scene, device, view.modelview, view.projection);
 			debugdraw::render(view.modelview, view.projection, view.width, view.height);
 			if (_compositor)
@@ -1281,6 +1306,9 @@ Options:
 		IAudioInterface* interface = audio::instance();
 		MEMORY2_DELETE(audio_allocator, interface);
 		audio::set_instance(nullptr);
+
+		MEMORY2_DEALLOC(engine_allocator, entity_render_state);
+		entity_render_state = nullptr;
 
 		MEMORY2_DELETE(engine_allocator, queued_messages);
 		queued_messages = nullptr;
