@@ -325,7 +325,13 @@ void base64_encode(const void* data, size_t data_size, Array<char>& output)
 {
 	size_t triplets = data_size / 3;
 	size_t extra_bytes = data_size % 3;
-	size_t total_triplets = (triplets + extra_bytes);
+	size_t total_triplets = triplets;
+
+	// If there is an uneven number of triplets, we increment the total.
+	if (extra_bytes > 0)
+	{
+		total_triplets++;
+	}
 	output.resize(total_triplets * 4);
 
 	size_t output_index = 0;
@@ -402,14 +408,14 @@ UNITTEST(base64_encoding)
 		bool matches = true;
 		for (size_t byte = 0; byte < output.size(); ++byte)
 		{
-			matches = matches && encoded[index][byte] == output[byte];
+			matches = matches && (encoded[index][byte] == output[byte]);
 		}
 		TEST_ASSERT_TRUE(matches);
 
 		// string is not NULL terminated, so we use this format.
 		if (!matches)
 		{
-			LOGV("[%s] -> output is %.*s\n", input[index], output.size(), &output[0]);
+			LOGV("[%s] -> output is '%.*s'\n", input[index], output.size(), &output[0]);
 		}
 	}
 } // base64_encoding
