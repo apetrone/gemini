@@ -28,7 +28,7 @@ def get_library_type(target_platform):
 libglm = Dependency(file="glm.py")
 librecastnavigation = Dependency(file="recastnavigation.py")
 libfreetype = Dependency(file="freetype.py")
-#rapidjson = Dependency(file="rapidjson.py")
+rapidjson = Dependency(file="rapidjson.py")
 
 def assert_dependency(found, message):
 	if not found:
@@ -924,10 +924,10 @@ def get_unit_tests(arguments, libcore, librenderer, libruntime, libglm, **kwargs
 	return [
 		create_unit_test(target_platform, arguments, "test_core", [libcore, libglm], "tests/src/test_core.cpp"),
 		create_unit_test(target_platform, arguments, "test_platform", [libcore, libglm], "tests/src/test_platform.cpp"),
-		create_unit_test(target_platform, arguments, "test_runtime", [libruntime, librenderer, libfreetype, libcore, libglm], "tests/src/test_runtime.cpp"),
-		create_unit_test(target_platform, arguments, "test_render", [libruntime, librenderer, libfreetype, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_ui", [librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_window", [librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
+		create_unit_test(target_platform, arguments, "test_runtime", [libruntime, librenderer, libfreetype, libcore, libglm, rapidjson], "tests/src/test_runtime.cpp"),
+		create_unit_test(target_platform, arguments, "test_render", [libruntime, librenderer, libfreetype, libcore, libglm, rapidjson], "tests/src/test_render.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_ui", [librenderer, libfreetype, libruntime, libcore, libglm, rapidjson], "tests/src/test_ui.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_window", [librenderer, libfreetype, libruntime, libcore, libglm, rapidjson], "tests/src/test_window.cpp", ProductType.Application)
 	]
 
 def get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs):
@@ -1121,7 +1121,7 @@ def products(arguments, **kwargs):
 	librenderer.dependencies += [libcore, Dependency(file="glm.py")]
 
 	libruntime = get_libruntime(arguments, target_platform, libcore)
-	libruntime.dependencies += [libcore, Dependency(file="glm.py")]
+	libruntime.dependencies += [libcore, Dependency(file="glm.py"), rapidjson]
 
 	# don't add this until we clean up the shaderconfig dependency on libruntime
 	#libruntime.dependencies.append(librenderer)

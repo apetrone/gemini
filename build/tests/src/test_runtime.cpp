@@ -44,6 +44,7 @@
 
 using namespace gemini;
 
+#if 0
 // ---------------------------------------------------------------------
 // asset library
 // ---------------------------------------------------------------------
@@ -267,7 +268,9 @@ UNITTEST(filesystem)
 	//	platform::PathString absolute_path;
 	//	TEST_ASSERT(fs->get_absolute_path_for_content(absolute_path, "conf/shaders.conf") == false, get_absolute_path_for_content_missing);
 }
+#endif
 
+#include <rapidjson/rapidjson.h>
 
 // ---------------------------------------------------------------------
 // http
@@ -278,6 +281,7 @@ UNITTEST(http)
 
 	gemini::http_startup();
 
+	gemini::http_get_request("http://localhost:5000/api/v1.0/test/30");
 	//gemini::http_request_file("https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png", "./downloads/download.jpg", "httplib");
 	//while (gemini::http_active_download_count() > 0)
 	//{
@@ -289,7 +293,7 @@ UNITTEST(http)
 	platform::net_shutdown();
 }
 
-
+#if 0
 // ---------------------------------------------------------------------
 // logging
 // ---------------------------------------------------------------------
@@ -419,7 +423,7 @@ UNITTEST(base64_encoding)
 		}
 	}
 } // base64_encoding
-
+#endif
 
 int main(int, char**)
 {

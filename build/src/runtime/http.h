@@ -26,6 +26,7 @@
 
 #include <core/typedefs.h>
 #include <platform/network.h>
+#include <rapidjson/rapidjson.h>
 
 namespace gemini
 {
@@ -84,8 +85,8 @@ namespace gemini
 
 	http_download_state* http_request_file(const char* url, const char* temp_path, const char* user_agent);
 	int32_t http_process_headers(http_download_state* state, const char* lines, size_t header_length, http_request* request);
-
 	uint32_t http_active_download_count();
 
+	uint32_t http_get_request(const char* url);
 
 } // namespace gemini

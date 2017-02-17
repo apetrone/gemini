@@ -370,4 +370,93 @@ namespace gemini
 
 		return active_downloads;
 	} // http_active_download_count
+
+	uint32_t http_get_request(const char* url)
+	{
+		LOGV("trying to send a get request...\n");
+
+		char service[32] 		= { 0 };
+		char filename[256] 		= { 0 };
+		char hostname[1024] 	= { 0 };
+		char host[1024] 		= { 0 };
+
+		char ip_address[16] 	= { 0 };
+		uint16_t port 			= 0;
+
+		// decompose the entered URL into hostname, port, service type, and filename.
+		runtime_decompose_url(url, filename, hostname, service, &port);
+
+		// convert hostname to an ipv4 address.
+		net_ipv4_by_hostname(hostname, "http", ip_address);
+
+		net_socket socket;
+
+		// create a socket
+		socket = net_socket_open(net_socket_type::TCP);
+		if (!socket)
+		{
+			LOGW("Unable to create a socket.\n");
+			return 0;
+		}
+
+		net_address target_address;
+		net_address_set(&target_address, ip_address, port);
+
+		if (net_socket_connect(socket, &target_address) < 0)
+		{
+			LOGW("Failed to connect to server '%s:%i'\n",
+				ip_address, port);
+			return 0;
+		}
+
+		LOGV("socket created\n");
+
+		// compose the get request
+		char get_request[1024] 	= { 0 };
+		const char user_agent[] = "gemini.http";
+
+		// send a GET request to the server...
+		core::str::sprintf(get_request,
+			1024,
+			"GET %s HTTP/1.1\r\n"
+			"User-Agent: %s\r\n"
+			"Accept: */*\r\n"
+			"Host: %s\r\n"
+			"Connection: close\r\n\r\n",
+			filename,
+			user_agent,
+			hostname
+		);
+
+		LOGV("request = '%s'\n", get_request);
+		int32_t bytes_sent = net_socket_send(socket, get_request, core::str::len(get_request));
+		if (bytes_sent < 0)
+		{
+			LOGW("Error sending data to server.\n");
+			// state->flags &= ~HTTP_FLAG_ACTIVE;
+			net_socket_close(socket);
+			socket = 0;
+			return 0;
+		}
+		LOGV("sent %i bytes to server.\n", bytes_sent);
+
+		// wait for response
+		const size_t BUFFER_SIZE = 1024;
+		char buffer[BUFFER_SIZE] = {0};
+
+		// block
+		LOGV("waiting for a response...\n");
+		int32_t recv_bytes = 0;
+		while (recv_bytes = net_socket_recv(socket, buffer, BUFFER_SIZE))
+		{
+			LOGV("received %i bytes\n", recv_bytes);
+			LOGV("-> %.*s\n", recv_bytes, buffer);
+		}
+
+
+		// state->bytes_sent = bytes_sent;
+		net_socket_close(socket);
+
+		return 0;
+	} // http_request
 } // namespace gemini
