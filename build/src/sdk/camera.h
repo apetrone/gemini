@@ -143,6 +143,13 @@ public:
 
 class QuaternionFollowCamera : public GameCamera
 {
+public:
+	glm::quat orientation;
+
+
+	glm::quat yaw_rot;
+	glm::quat pitch_rot;
+
 private:
 
 	// truck: up and down
@@ -197,6 +204,11 @@ private:
 public:
 	QuaternionFollowCamera();
 	virtual ~QuaternionFollowCamera();
+
+	const glm::quat& get_rotation() const
+	{
+		return orientation;
+	}
 
 	virtual glm::vec3 get_origin() const override;
 	virtual glm::vec3 get_target() const override;

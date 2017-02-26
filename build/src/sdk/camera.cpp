@@ -233,6 +233,22 @@ void QuaternionFollowCamera::move_view(float yaw_delta, float pitch_delta)
 #endif
 
 	glm::quat rotation = mathlib::orientation_from_yaw_pitch(move_sensitivity.x * yaw_delta, move_sensitivity.y * -pitch_delta, YUP_DIRECTION, camera_right);
+	static float yaw = 0.0f;
+	static float pitch = 0.0f;
+	yaw += yaw_delta;
+	pitch += pitch_delta;
+
+	//yaw_rot = yaw_rot * glm::quat(glm::vec3(0.0f, glm::radians(move_sensitivity.x * -yaw_delta), 0.0f));
+	//pitch_rot = pitch_rot * glm::quat(glm::vec3(glm::radians(move_sensitivity.y * pitch_delta), 0.0f, 0.0f));
+
+	//orientation = mathlib::orientation_from_yaw_pitch(move_sensitivity.x * yaw, move_sensitivity.y * -pitch, YUP_DIRECTION, glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::quat qyaw = glm::angleAxis(glm::radians(-yaw), YUP_DIRECTION);
+	glm::quat qpitch = glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+	orientation = glm::normalize(qpitch * qyaw);
+
+	//glm::quat rotation = orientation = glm::normalize(pitch_rot * yaw_rot);
+
+	//orientation = glm::normalize(rotation * orientation); // mathlib::orientation_from_yaw_pitch(yaw, pitch, YUP_DIRECTION, camera_right);
 	camera_direction = glm::normalize(mathlib::rotate_vector(camera_direction, rotation));
 	camera_right = glm::normalize(glm::cross(camera_direction, YUP_DIRECTION));
 	collision_correct();

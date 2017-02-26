@@ -649,6 +649,10 @@ private:
 	RenderScene* render_scene;
 	EntityRenderState* entity_render_state;
 
+	glm::vec3 camera_pos[2];
+	glm::quat camera_rot[2];
+	glm::vec3 target_pos[2];
+
 
 	void open_gamelibrary()
 	{
@@ -1006,7 +1010,7 @@ Options:
 		render_params["multisample"] = "4";
 
 		render_params["gamma_correct"] = "false";
-		render_params["vsync"] = "true";
+		render_params["vsync"] = "false";
 
 		// set opengl specific options
 		render_params["rendering_backend"] = "opengl";
@@ -1159,6 +1163,11 @@ Options:
 			reset_queue = 1;
 		}
 
+		if (game_interface)
+		{
+			game_interface->tick(params.current_physics_tick, params.framedelta_seconds);
+		}
+
 		if (reset_queue)
 		{
 			static float the_time = 0.0f;
@@ -1172,6 +1181,11 @@ Options:
 			extract_entities(&entity_render_state[1], entity_manager.get_entity_list());
 			interpolate_alpha = 0.0f;
 
+			camera_pos[0] = camera_pos[1];
+			camera_rot[0] = camera_rot[1];
+			target_pos[0] = target_pos[1];
+			game_interface->extract_camera(&camera_pos[1], &camera_rot[1], &target_pos[1]);
+
 			queued_messages->resize(0);
 
 			if (game_interface)
@@ -1181,10 +1195,6 @@ Options:
 			}
 		}
 
-		if (game_interface)
-		{
-			game_interface->tick(params.current_physics_tick, params.framedelta_seconds);
-		}
 
 		debugdraw::update(params.step_interval_seconds * MillisecondsPerSecond);
 
@@ -1237,6 +1247,30 @@ Options:
 			EntityRenderState ers;
 
 			interpolate_states(&ers, &entity_render_state[0], &entity_render_state[1], alpha);
+
+			glm::vec3 interpolated_camera_pos;
+			glm::vec3 interpolated_target_pos;
+			glm::quat interpolated_camera_rot;
+			const uint32_t enable_interpolation = 1;
+			if (enable_interpolation)
+			{
+				interpolated_camera_pos = gemini::lerp(camera_pos[0], camera_pos[1], alpha);
+				interpolated_target_pos = gemini::lerp(target_pos[0], target_pos[1], alpha);
+				interpolated_camera_rot = gemini::slerp(camera_rot[0], camera_rot[1], alpha);
+			}
+			else
+			{
+				interpolated_camera_pos = camera_pos[1];
+				interpolated_target_pos = target_pos[1];
+				interpolated_camera_rot = camera_rot[1];
+			}
+
+			// compute modelview
+			const glm::vec3 player_offset = glm::vec3(0.0f, -5.0f, 0.0f);
+			view.modelview = glm::translate(glm::mat4(1.0f), -interpolated_camera_pos) * glm::toMat4(interpolated_camera_rot);
+
+			// this is what happens when we interpolate the vectors; but suffers artifacts from lerping vector used as orientation.
+			//view.modelview = glm::lookAt(interpolated_camera_pos, interpolated_camera_pos + interpolated_target_pos, glm::vec3(0.0f, 1.0f, 0.0f));
 
 			render_scene_update(render_scene, &ers);
 			render_scene_draw(render_scene, device, view.modelview, view.projection);

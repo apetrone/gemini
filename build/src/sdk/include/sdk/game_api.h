@@ -190,6 +190,8 @@ namespace gemini
 
 		// get view and projection matrices to render from
 		virtual void get_render_view(gemini::View& view) = 0;
+
+		virtual void extract_camera(glm::vec3* camera_pos, glm::quat* camera_rot, glm::vec3* target) = 0;
 	}; // GameInterface
 
 
