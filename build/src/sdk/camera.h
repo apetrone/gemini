@@ -149,6 +149,8 @@ public:
 
 	glm::quat yaw_rot;
 	glm::quat pitch_rot;
+	float yaw;
+	float pitch;
 
 private:
 
@@ -227,6 +229,7 @@ public:
 
 	void set_follow_distance(float target_distance);
 	void set_view(const glm::vec3& view_direction);
+	void update_view_orientation();
 private:
 	glm::vec2 move_sensitivity;
 };

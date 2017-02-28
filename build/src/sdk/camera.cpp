@@ -144,6 +144,8 @@ const float kAutoOrientWaitTime = 0.5f;
 const glm::vec3 YUP_DIRECTION(0.0f, 1.0f, 0.0f);
 
 QuaternionFollowCamera::QuaternionFollowCamera()
+	: yaw(0.0f)
+	, pitch(0.0f)
 {
 	target_position = glm::vec3(0.0f, 0.0f, 0.0f);
 	position = glm::vec3(0.0f, 3.0f, 3.0f);
@@ -236,25 +238,25 @@ void QuaternionFollowCamera::move_view(float yaw_delta, float pitch_delta)
 	float scaled_yaw = (move_sensitivity.x * yaw_delta);
 	float scaled_pitch = (move_sensitivity.y * -pitch_delta);
 
-	glm::quat rotation = mathlib::orientation_from_yaw_pitch(scaled_yaw, scaled_pitch, YUP_DIRECTION, camera_right);
-	static float yaw = 0.0f;
-	static float pitch = 0.0f;
+	const float MIN_PITCH = -85.0f;
+	const float MAX_PITCH = 8.0f;
+
+	if (pitch + scaled_pitch <= MIN_PITCH)
+	{
+		scaled_pitch = MIN_PITCH - pitch;
+	}
+	else if (pitch + scaled_pitch >= MAX_PITCH)
+	{
+		scaled_pitch = MAX_PITCH - pitch;
+	}
+
 	yaw += scaled_yaw;
 	pitch += scaled_pitch;
 
-	//LOGV("yaw is %2.2f, pitch is %2.2f\n", yaw, pitch);
-
-	static glm::quat qyaw;
-	static glm::quat qpitch;
-	qyaw = glm::angleAxis(glm::radians(yaw), YUP_DIRECTION);
-
+	glm::quat rotation = mathlib::orientation_from_yaw_pitch(scaled_yaw, scaled_pitch, YUP_DIRECTION, camera_right);
 	camera_direction = glm::normalize(mathlib::rotate_vector(camera_direction, rotation));
-	camera_right = glm::normalize(glm::cross(camera_direction, YUP_DIRECTION));
 
-	qpitch = glm::angleAxis(glm::radians(pitch), camera_right);
-	orientation = glm::normalize(qpitch * qyaw);
-
-	//collision_correct();
+	update_view_orientation();
 }
 
 void QuaternionFollowCamera::set_yaw_pitch(float yaw, float pitch)
@@ -345,7 +347,7 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 		glm::quat rot = gemini::slerp(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), interpolation_rotation, t);
 		camera_direction = mathlib::rotate_vector(interpolation_vector, rot);
 
-		//collision_correct();
+		collision_correct();
 
 		//LOGV("t = %2.2f %2.2f\n", t, interpolation_time);
 		interpolation_time -= step_interval_seconds;
@@ -444,6 +446,30 @@ void QuaternionFollowCamera::set_follow_distance(float target_distance)
 void QuaternionFollowCamera::set_view(const glm::vec3& view_direction)
 {
 	camera_direction = view_direction;
+
+	float new_yaw = glm::dot(glm::vec3(1.0f, 0.0f, 0.0f), view_direction);
+	float new_pitch = glm::dot(glm::vec3(0.0f, 1.0f, 0.0f), view_direction);
+
+	yaw = glm::degrees(new_yaw);
+	pitch = glm::degrees(new_pitch);
+
+	update_view_orientation();
+}
+
+void QuaternionFollowCamera::update_view_orientation()
+{
+	LOGV("yaw is %2.2f, pitch is %2.2f\n", yaw, pitch);
+
+	static glm::quat qyaw;
+	static glm::quat qpitch;
+	qyaw = glm::angleAxis(glm::radians(yaw), YUP_DIRECTION);
+
+	camera_right = glm::normalize(glm::cross(camera_direction, YUP_DIRECTION));
+
+	qpitch = glm::angleAxis(glm::radians(pitch), camera_right);
+	orientation = glm::normalize(qpitch * qyaw);
+
+	collision_correct();
 }
 
 // --------------------------------------------------------
