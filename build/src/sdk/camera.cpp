@@ -232,8 +232,9 @@ void QuaternionFollowCamera::move_view(float yaw_delta, float pitch_delta)
 	LOGV("pitch: %2.2f\n", pitch);
 #endif
 
+	// yaw and pitch can be inverted here depending on axis inversions.
 	float scaled_yaw = (move_sensitivity.x * yaw_delta);
-	float scaled_pitch = (move_sensitivity.y * pitch_delta);
+	float scaled_pitch = (move_sensitivity.y * -pitch_delta);
 
 	glm::quat rotation = mathlib::orientation_from_yaw_pitch(scaled_yaw, scaled_pitch, YUP_DIRECTION, camera_right);
 	static float yaw = 0.0f;
@@ -242,7 +243,7 @@ void QuaternionFollowCamera::move_view(float yaw_delta, float pitch_delta)
 	pitch += scaled_pitch;
 
 	//LOGV("yaw is %2.2f, pitch is %2.2f\n", yaw, pitch);
-	// yaw and pitch can be inverted here depending on axis inversions.
+
 	static glm::quat qyaw;
 	static glm::quat qpitch;
 	qyaw = glm::angleAxis(glm::radians(yaw), YUP_DIRECTION);
@@ -308,11 +309,17 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 	position = (-camera_direction * distance_to_target);
 	collision_object->set_world_transform(target_position + position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 
-	debugdraw::camera(
-		target_position + position,
-		glm::normalize(-position), // facing direction
-		0.0f
-	);
+	//debugdraw::camera(
+	//	target_position + position,
+	//	glm::normalize(-position), // facing direction
+	//	0.0f
+	//);
+
+	//debugdraw::line(
+	//	target_position,
+	//	(target_position + (target_facing_direction * 1.0f)),
+	//	gemini::Color(0.0f, 1.0f, 1.0f)
+	//);
 
 	//debugdraw::line(
 	//	target_position,
@@ -322,21 +329,15 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 
 	//debugdraw::line(
 	//	target_position,
-	//	(target_position + (target_facing_direction * 1.0f)),
-	//	gemini::Color(0.0f, 1.0f, 1.0f)
+	//	(target_position + (camera_direction * 1.0f)),
+	//	gemini::Color(0.0f, 0.0f, 1.0f)
 	//);
 
-	debugdraw::line(
-		target_position,
-		(target_position + (camera_direction * 1.0f)),
-		gemini::Color(0.0f, 0.0f, 1.0f)
-	);
-
-	debugdraw::line(
-		target_position,
-		(target_position + (camera_right * 1.0f)),
-		gemini::Color(1.0f, 0.0f, 0.0f)
-	);
+	//debugdraw::line(
+	//	target_position,
+	//	(target_position + (camera_right * 1.0f)),
+	//	gemini::Color(1.0f, 0.0f, 0.0f)
+	//);
 
 	if ((view_moved == 0) && (auto_orienting == 1) && (interpolation_time > 0.0f))
 	{
