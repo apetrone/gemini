@@ -157,7 +157,7 @@ QuaternionFollowCamera::QuaternionFollowCamera()
 	desired_distance = distance_to_target;
 	desired_distance_to_target = distance_to_target;
 
-	field_of_view = 50.0f;
+	field_of_view = 70.0f;
 
 	view_moved = 0;
 
@@ -232,26 +232,28 @@ void QuaternionFollowCamera::move_view(float yaw_delta, float pitch_delta)
 	LOGV("pitch: %2.2f\n", pitch);
 #endif
 
-	glm::quat rotation = mathlib::orientation_from_yaw_pitch(move_sensitivity.x * yaw_delta, move_sensitivity.y * -pitch_delta, YUP_DIRECTION, camera_right);
+	float scaled_yaw = (move_sensitivity.x * yaw_delta);
+	float scaled_pitch = (move_sensitivity.y * pitch_delta);
+
+	glm::quat rotation = mathlib::orientation_from_yaw_pitch(scaled_yaw, scaled_pitch, YUP_DIRECTION, camera_right);
 	static float yaw = 0.0f;
 	static float pitch = 0.0f;
-	yaw += yaw_delta;
-	pitch += pitch_delta;
+	yaw += scaled_yaw;
+	pitch += scaled_pitch;
 
-	//yaw_rot = yaw_rot * glm::quat(glm::vec3(0.0f, glm::radians(move_sensitivity.x * -yaw_delta), 0.0f));
-	//pitch_rot = pitch_rot * glm::quat(glm::vec3(glm::radians(move_sensitivity.y * pitch_delta), 0.0f, 0.0f));
+	//LOGV("yaw is %2.2f, pitch is %2.2f\n", yaw, pitch);
+	// yaw and pitch can be inverted here depending on axis inversions.
+	static glm::quat qyaw;
+	static glm::quat qpitch;
+	qyaw = glm::angleAxis(glm::radians(yaw), YUP_DIRECTION);
 
-	//orientation = mathlib::orientation_from_yaw_pitch(move_sensitivity.x * yaw, move_sensitivity.y * -pitch, YUP_DIRECTION, glm::vec3(1.0f, 0.0f, 0.0f));
-	glm::quat qyaw = glm::angleAxis(glm::radians(-yaw), YUP_DIRECTION);
-	glm::quat qpitch = glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-	orientation = glm::normalize(qpitch * qyaw);
-
-	//glm::quat rotation = orientation = glm::normalize(pitch_rot * yaw_rot);
-
-	//orientation = glm::normalize(rotation * orientation); // mathlib::orientation_from_yaw_pitch(yaw, pitch, YUP_DIRECTION, camera_right);
 	camera_direction = glm::normalize(mathlib::rotate_vector(camera_direction, rotation));
 	camera_right = glm::normalize(glm::cross(camera_direction, YUP_DIRECTION));
-	collision_correct();
+
+	qpitch = glm::angleAxis(glm::radians(pitch), camera_right);
+	orientation = glm::normalize(qpitch * qyaw);
+
+	//collision_correct();
 }
 
 void QuaternionFollowCamera::set_yaw_pitch(float yaw, float pitch)
@@ -306,35 +308,35 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 	position = (-camera_direction * distance_to_target);
 	collision_object->set_world_transform(target_position + position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 
-	//renderer::debugdraw::camera(
-	//	target_position + position,
-	//	glm::normalize(-position), // facing direction
-	//	0.0f
-	//);
+	debugdraw::camera(
+		target_position + position,
+		glm::normalize(-position), // facing direction
+		0.0f
+	);
 
-	//renderer::debugdraw::line(
+	//debugdraw::line(
 	//	target_position,
 	//	(target_position + (target_facing_direction * 1.0f)),
 	//	gemini::Color(0.0f, 1.0f, 1.0f)
 	//);
 
-	//renderer::debugdraw::line(
+	//debugdraw::line(
 	//	target_position,
 	//	(target_position + (target_facing_direction * 1.0f)),
 	//	gemini::Color(0.0f, 1.0f, 1.0f)
 	//);
 
-	//renderer::debugdraw::line(
-	//	target_position,
-	//	(target_position + (camera_direction * 1.0f)),
-	//	gemini::Color(0.0f, 0.0f, 1.0f)
-	//);
+	debugdraw::line(
+		target_position,
+		(target_position + (camera_direction * 1.0f)),
+		gemini::Color(0.0f, 0.0f, 1.0f)
+	);
 
-	//renderer::debugdraw::line(
-	//	target_position,
-	//	(target_position + (camera_right * 1.0f)),
-	//	gemini::Color(1.0f, 0.0f, 0.0f)
-	//);
+	debugdraw::line(
+		target_position,
+		(target_position + (camera_right * 1.0f)),
+		gemini::Color(1.0f, 0.0f, 0.0f)
+	);
 
 	if ((view_moved == 0) && (auto_orienting == 1) && (interpolation_time > 0.0f))
 	{
@@ -342,7 +344,7 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 		glm::quat rot = gemini::slerp(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), interpolation_rotation, t);
 		camera_direction = mathlib::rotate_vector(interpolation_vector, rot);
 
-		collision_correct();
+		//collision_correct();
 
 		//LOGV("t = %2.2f %2.2f\n", t, interpolation_time);
 		interpolation_time -= step_interval_seconds;

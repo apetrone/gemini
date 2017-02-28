@@ -1266,8 +1266,18 @@ Options:
 			}
 
 			// compute modelview
-			const glm::vec3 player_offset = glm::vec3(0.0f, -5.0f, 0.0f);
-			view.modelview = glm::translate(glm::mat4(1.0f), -interpolated_camera_pos) * glm::toMat4(interpolated_camera_rot);
+			const glm::vec3 player_offset = glm::vec3(0.0f, -1.0f, 0.0f);
+			// setup the inverse camera transform.
+
+			// fixed cam
+			//interpolated_camera_pos = glm::vec3(0.0f, -2.0f, 0.0f);
+			//interpolated_camera_rot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+
+			//view.modelview = glm::toMat4(interpolated_camera_rot) * glm::translate(glm::mat4(1.0f), -interpolated_camera_pos);
+			//view.modelview = glm::toMat4(interpolated_camera_rot) * glm::inverse(glm::translate(glm::mat4(), interpolated_camera_pos - interpolated_target_pos + player_offset));
+
+
+			view.modelview = glm::inverse(glm::translate(glm::mat4(), interpolated_camera_pos) * glm::toMat4(interpolated_camera_rot));
 
 			// this is what happens when we interpolate the vectors; but suffers artifacts from lerping vector used as orientation.
 			//view.modelview = glm::lookAt(interpolated_camera_pos, interpolated_camera_pos + interpolated_target_pos, glm::vec3(0.0f, 1.0f, 0.0f));
