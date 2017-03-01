@@ -505,24 +505,27 @@ public:
 			}
 			else if (event.subtype == kernel::MouseButton)
 			{
-				if (event.is_down)
+				bool handled = compositor->cursor_button(input_to_gui[event.button], event.is_down);
+				if (!handled)
 				{
-					if (event.button == MouseButton::MOUSE_LEFT)
+					if (event.is_down)
 					{
-						should_move_view = true;
-					}
+						if (event.button == MouseButton::MOUSE_LEFT)
+						{
+							should_move_view = true;
+						}
 
-					platform::window::set_mouse_tracking(true);
-				}
-				else
-				{
-					if (event.button == MouseButton::MOUSE_LEFT)
-					{
-						should_move_view = false;
+						platform::window::set_mouse_tracking(true);
 					}
-					platform::window::set_mouse_tracking(false);
+					else
+					{
+						if (event.button == MouseButton::MOUSE_LEFT)
+						{
+							should_move_view = false;
+						}
+						platform::window::set_mouse_tracking(false);
+					}
 				}
-				compositor->cursor_button(input_to_gui[event.button], event.is_down);
 			}
 			else if (event.subtype == kernel::MouseWheelMoved)
 			{

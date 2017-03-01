@@ -99,7 +99,7 @@ namespace gui
 
 		// events: returns true if event was handled by a Panel.
 		bool cursor_move_absolute(ScreenInt x, ScreenInt y);
-		void cursor_button(CursorButton::Type button, bool is_down);
+		bool cursor_button(CursorButton::Type button, bool is_down);
 		void cursor_scroll(int32_t direction);
 		void key_event(uint32_t unicode, bool is_down, uint32_t character, uint16_t modifiers);
 

@@ -458,10 +458,8 @@ void QuaternionFollowCamera::set_view(const glm::vec3& view_direction)
 
 void QuaternionFollowCamera::update_view_orientation()
 {
-	LOGV("yaw is %2.2f, pitch is %2.2f\n", yaw, pitch);
-
-	static glm::quat qyaw;
-	static glm::quat qpitch;
+	glm::quat qyaw;
+	glm::quat qpitch;
 	qyaw = glm::angleAxis(glm::radians(yaw), YUP_DIRECTION);
 
 	camera_right = glm::normalize(glm::cross(camera_direction, YUP_DIRECTION));
