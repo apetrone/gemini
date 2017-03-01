@@ -1060,7 +1060,7 @@ class GeminiModel(object):
 class export_gemini(bpy.types.Operator):
 	'''Export Skeleton Mesh / Animation Data file(s)'''
 	bl_idname = "gemini_export.test" # this is important since its how bpy.ops.export.udk_anim_data is constructed
-	bl_label = "Export gemini .model"
+	bl_label = "Export gemini (.model)"
 	# List of operator properties, the attributes will be assigned
 	# to the class instance from the operator settings before calling.
 
@@ -1130,7 +1130,7 @@ class export_gemini(bpy.types.Operator):
 # startup / blender specific interface functions
 #
 def menu_func(self, context):
-	self.layout.operator(export_gemini.bl_idname, text="gemini .model")
+	self.layout.operator(export_gemini.bl_idname, text="gemini (.model)")
 	#self.layout.operator(export_animation.bl_idname, text="gemini .animation")
 
 def register():
