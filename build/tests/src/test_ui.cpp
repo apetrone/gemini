@@ -891,7 +891,7 @@ Options:
 			accumulator -= static_cast<float>(params.step_interval_seconds);
 
 			// increment tick counter
-			params.current_tick++;
+			params.current_frame++;
 		}
 
 		params.step_alpha = static_cast<float>(accumulator / params.step_interval_seconds);
