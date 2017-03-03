@@ -345,11 +345,12 @@ namespace render2
 	{
 		GLenum primitive_enum[] = {
 			GL_LINES,
-			GL_TRIANGLES
+			GL_TRIANGLES,
+			GL_TRIANGLE_STRIP,
 		};
 
 		draw_type = primitive_enum[static_cast<size_t>(descriptor.primitive_type)];
-		assert(draw_type == GL_LINES || draw_type == GL_TRIANGLES);
+		assert(draw_type == GL_LINES || draw_type == GL_TRIANGLES || draw_type == GL_TRIANGLE_STRIP);
 	}
 
 	GLPipeline::~GLPipeline()

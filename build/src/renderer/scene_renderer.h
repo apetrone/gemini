@@ -36,6 +36,7 @@ namespace render2
 {
 	class Device;
 	class Pipeline;
+	struct Buffer;
 	struct Pass;
 	struct RenderTarget;
 } // namespace render2
@@ -87,11 +88,18 @@ namespace gemini
 
 		render2::Pipeline* static_mesh_pipeline;
 		render2::Pipeline* animated_mesh_pipeline;
+		render2::Pipeline* sky_pipeline;
+
+		render2::Buffer* screen_quad;
 
 		// additional scene-specific uniforms
 		glm::vec3 light_position_world;
 		glm::vec3 camera_position_world;
 		glm::vec3 camera_view_direction;
+
+		glm::vec2 viewport;
+		glm::mat4 inverse_projection;
+		glm::mat3 inverse_view_rotation;
 
 		RenderScene(Allocator& _allocator)
 			: static_meshes(_allocator)
@@ -99,6 +107,8 @@ namespace gemini
 			, allocator(&_allocator)
 			, static_mesh_pipeline(nullptr)
 			, animated_mesh_pipeline(nullptr)
+			, sky_pipeline(nullptr)
+			, screen_quad(nullptr)
 		{
 		}
 	}; // RenderScene
@@ -128,6 +138,8 @@ namespace gemini
 	void render_scene_draw(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::RenderTarget* render_target = nullptr);
 	void render_static_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 	void render_animated_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
+
+	void render_sky(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 
 	void render_scene_update(RenderScene* scene, EntityRenderState* state);
 } // namespace gemini

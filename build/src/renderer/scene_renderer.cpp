@@ -24,8 +24,10 @@
 // -------------------------------------------------------------
 #include <core/logging.h>
 
+#include <renderer/commandbuffer.h>
 #include <renderer/debug_draw.h>
 #include <renderer/renderer.h>
+#include <renderer/rendertarget.h>
 #include <renderer/scene_renderer.h>
 #include <renderer/vertexdescriptor.h>
 
@@ -328,6 +330,67 @@ namespace gemini
 			scene->animated_mesh_pipeline = device->create_pipeline(desc);
 		}
 
+		// sky pipeline
+		{
+			render2::PipelineDescriptor desc;
+			render2::VertexDescriptor& vertex_format = desc.vertex_description;
+			vertex_format.add("in_position", render2::VD_FLOAT, 3);
+			vertex_format.add("in_uv", render2::VD_FLOAT, 2);
+			desc.shader = shader_load("sky");
+			desc.primitive_type = render2::PrimitiveType::TriangleStrip;
+			desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
+			scene->sky_pipeline = device->create_pipeline(desc);
+		}
+
+		struct TestVertex
+		{
+			glm::vec3 position;
+			glm::vec2 uv;
+		};
+
+		{
+			const size_t total_vertex_bytes = sizeof(TestVertex) * 4;
+			scene->screen_quad = device->create_vertex_buffer(total_vertex_bytes);
+
+			const float width = static_cast<float>(device->default_render_target()->width);
+			const float height = static_cast<float>(device->default_render_target()->height);
+
+			//TestVertex vertex[6];
+			//vertex[0].position = glm::vec3(-1.0, -1.0, 0.1f);
+			//vertex[0].uv = glm::vec2(0.0f, 0.0f);
+
+			//vertex[1].position = glm::vec3(1.0, -1.0, 0.1f);
+			//vertex[1].uv = glm::vec2(width, 0.0f);
+
+			//vertex[2].position = glm::vec3(1.0, 1.0, 0.1f);
+			//vertex[2].uv = glm::vec2(width, height);
+
+			//vertex[3].position = glm::vec3(1.0, 1.0, 0.1f);
+			//vertex[3].uv = glm::vec2(height, height);
+
+			//vertex[4].position = glm::vec3(-1.0, 1.0, 0.1f);
+			//vertex[4].uv = glm::vec2(0.0f, height);
+
+			//vertex[5].position = glm::vec3(-1.0, -1.0, 0.1f);
+			//vertex[5].uv = glm::vec2(0.0f, 0.0f);
+
+			TestVertex vertex[4];
+			vertex[0].position = glm::vec3(-1.0, 1.0, 0.1f);
+			vertex[0].uv = glm::vec2(0.0f, height);
+
+			vertex[1].position = glm::vec3(-1.0, -1.0, 0.1f);
+			vertex[1].uv = glm::vec2(0.0f, 0.0f);
+
+			vertex[2].position = glm::vec3(1.0, 1.0, 0.1f);
+			vertex[2].uv = glm::vec2(width, 0.0f);
+
+			vertex[3].position = glm::vec3(1.0, -1.0, 0.1f);
+			vertex[3].uv = glm::vec2(width, height);
+
+
+			device->buffer_upload(scene->screen_quad, vertex, total_vertex_bytes);
+		}
+
 		return scene;
 	} // render_scene_create
 
@@ -354,6 +417,9 @@ namespace gemini
 
 		device->destroy_pipeline(scene->static_mesh_pipeline);
 		device->destroy_pipeline(scene->animated_mesh_pipeline);
+		device->destroy_pipeline(scene->sky_pipeline);
+
+		device->destroy_buffer(scene->screen_quad);
 
 		MEMORY2_DELETE(*scene->allocator, scene);
 	} // render_scene_destroy
@@ -367,11 +433,26 @@ namespace gemini
 		}
 
 		Color clear_color = Color::from_rgba(128, 128, 128, 255);
+
+		// compute inverse projection and inverse view rotation matrix
+		scene->inverse_view_rotation = glm::inverse(glm::mat3(view));
+		scene->inverse_projection = glm::inverse(projection);
+
+		render2::Pass sky_pass;
+		sky_pass.target = render_target;
+		sky_pass.color(clear_color.red, clear_color.blue, clear_color.green, clear_color.alpha);
+		sky_pass.clear_color = true;
+		sky_pass.clear_depth = true;
+		sky_pass.depth_test = false;
+		sky_pass.depth_write = true;
+		sky_pass.cull_mode = render2::CullMode::None;
+		render_sky(scene, device, view, projection, sky_pass);
+
 		render2::Pass render_pass;
 		render_pass.target = render_target;
 		render_pass.color(clear_color.red, clear_color.blue, clear_color.green, clear_color.alpha);
-		render_pass.clear_color = true;
-		render_pass.clear_depth = true;
+		render_pass.clear_color = false;
+		render_pass.clear_depth = false;
 		render_pass.depth_test = true;
 		render_pass.depth_write = true;
 		render_pass.cull_mode = render2::CullMode::Backface;
@@ -542,6 +623,27 @@ namespace gemini
 		device->destroy_serializer(serializer);
 	} // render_animated_meshes
 
+
+	void render_sky(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass)
+	{
+		render2::CommandQueue* queue = device->create_queue(pass);
+		render2::CommandSerializer* serializer = device->create_serializer(queue);
+
+		scene->viewport = glm::vec2(pass.target->width, pass.target->height);
+
+		// render static meshes
+		// setup the static mesh pipeline
+		serializer->pipeline(scene->sky_pipeline);
+		scene->sky_pipeline->constants().set("inverse_view_matrix", &scene->inverse_view_rotation);
+		scene->sky_pipeline->constants().set("inverse_projection_matrix", &scene->inverse_projection);
+		scene->sky_pipeline->constants().set("viewport", &scene->viewport);
+
+		serializer->vertex_buffer(scene->screen_quad);
+		serializer->draw(0, 4);
+
+		device->queue_buffers(queue, 1);
+		device->destroy_serializer(serializer);
+	} // render_sky
 
 	void _render_set_animation_pose(AnimatedMeshComponent* component, animation::Pose& pose)
 	{

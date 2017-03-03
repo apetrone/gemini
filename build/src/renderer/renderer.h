@@ -160,7 +160,8 @@ namespace render2
 	enum class PrimitiveType
 	{
 		Lines,		// treat elements as pairs
-		Triangles	// treat elements as triplets
+		Triangles,	// treat elements as triplets
+		TriangleStrip // treat elements as triangle strips
 	};
 
 	typedef image::Image Image;
