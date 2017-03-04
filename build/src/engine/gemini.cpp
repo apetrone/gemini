@@ -727,7 +727,7 @@ private:
 			assert(game_interface != 0);
 		}
 
-		game_interface->startup(compositor, root);
+		game_interface->startup();
 #endif
 	}
 

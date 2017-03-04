@@ -1261,6 +1261,8 @@ def products(arguments, **kwargs):
 		"src/engine/audio.cpp",
 		"src/engine/audio.h",
 		"src/engine/gemini.cpp",
+		"src/engine/model_instance_data.cpp",
+		"src/engine/model_instance_data.h",
 		"src/engine/navigation.cpp",
 		"src/engine/navigation.h",
 		# "src/engine/script.cpp",
