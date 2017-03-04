@@ -394,6 +394,22 @@ namespace gemini
 		return scene;
 	} // render_scene_create
 
+	void _render_scene_remove_animated_instances(RenderScene* scene, AnimatedMeshComponent* component)
+	{
+		if (!component)
+		{
+			return;
+		}
+
+		for (size_t sequence_index = 0; sequence_index < component->sequence_instances.size(); ++sequence_index)
+		{
+			animation::AnimatedInstance* instance = component->sequence_instances[sequence_index];
+			animation::destroy_sequence_instance(*scene->allocator, instance);
+		}
+
+		MEMORY2_DEALLOC(*scene->allocator, component->bone_transforms);
+	} // _render_scene_remove_animated_instances
+
 
 	void render_scene_destroy(RenderScene* scene, render2::Device* device)
 	{
@@ -405,13 +421,7 @@ namespace gemini
 		for (size_t index = 0; index < scene->animated_meshes.size(); ++index)
 		{
 			AnimatedMeshComponent* component = scene->animated_meshes[index];
-			for (size_t sequence_index = 0; sequence_index < component->sequence_instances.size(); ++sequence_index)
-			{
-				animation::AnimatedInstance* instance = component->sequence_instances[sequence_index];
-				animation::destroy_sequence_instance(*scene->allocator, instance);
-			}
-
-			MEMORY2_DEALLOC(*scene->allocator, component->bone_transforms);
+			_render_scene_remove_animated_instances(scene, component);
 			MEMORY2_DELETE(*scene->allocator, component);
 		}
 
@@ -510,6 +520,10 @@ namespace gemini
 		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
 		{
 			StaticMeshComponent* static_mesh = scene->static_meshes[index];
+			if (!static_mesh)
+			{
+				continue;
+			}
 
 			Mesh* mesh = mesh_from_handle(static_mesh->mesh_handle);
 			if (mesh)
@@ -556,6 +570,10 @@ namespace gemini
 		for (size_t index = 0; index < scene->animated_meshes.size(); ++index)
 		{
 			AnimatedMeshComponent* instance = scene->animated_meshes[index];
+			if (!instance)
+			{
+				continue;
+			}
 
 			Mesh* mesh = mesh_from_handle(instance->mesh_handle);
 			if (mesh)
@@ -629,16 +647,19 @@ namespace gemini
 
 	void render_scene_remove_static_mesh(RenderScene* scene, uint32_t component_id)
 	{
-		StaticMeshComponent* component = scene->static_meshes[--component_id];
-		//scene->static_meshes.erase(component);
-		//MEMORY2_DELETE(*scene->allocator, component);
+		StaticMeshComponent* component = scene->static_meshes[component_id - 1];
+		scene->static_meshes[component_id - 1] = nullptr;
+		MEMORY2_DELETE(*scene->allocator, component);
 	} // remove_static_mesh
 
 	void render_scene_remove_animated_mesh(RenderScene* scene, uint32_t component_id)
 	{
-		AnimatedMeshComponent* component = scene->animated_meshes[--component_id];
-		//scene->animated_meshes.erase(component);
-		//MEMORY2_DELETE(*scene->allocator, component);
+		// We probably need to cleanup any instance associated with the component
+		// as well. Implement that when you need it.
+		AnimatedMeshComponent* component = scene->animated_meshes[component_id - 1];
+		_render_scene_remove_animated_instances(scene, component);
+		scene->animated_meshes[component_id - 1] = nullptr;
+		MEMORY2_DELETE(*scene->allocator, component);
 	} // remove_animated_mesh
 
 	void render_sky(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass)
@@ -712,29 +733,35 @@ namespace gemini
 		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
 		{
 			StaticMeshComponent* component = scene->static_meshes[index];
-			component->model_matrix = state->model_matrix[component->entity_index];
-			component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
+			if (component)
+			{
+				component->model_matrix = state->model_matrix[component->entity_index];
+				component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
+			}
 		}
 
 		// extract data from animated meshes
 		for (size_t index = 0; index < scene->animated_meshes.size(); ++index)
 		{
 			AnimatedMeshComponent* component = scene->animated_meshes[index];
-			animation::Pose pose;
-
-			component->model_matrix = state->model_matrix[component->entity_index];
-			component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
-
-			// TODO: determine how to get the blended pose; for now just use the first animated instance.
-			animated_instance_get_pose(component->sequence_instances[component->current_sequence_index], pose);
-
-			Mesh* mesh = mesh_from_handle(component->mesh_handle);
-			if (!mesh)
+			if (component)
 			{
-				return;
-			}
+				animation::Pose pose;
 
-			_render_set_animation_pose(component, pose);
+				component->model_matrix = state->model_matrix[component->entity_index];
+				component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
+
+				// TODO: determine how to get the blended pose; for now just use the first animated instance.
+				animated_instance_get_pose(component->sequence_instances[component->current_sequence_index], pose);
+
+				Mesh* mesh = mesh_from_handle(component->mesh_handle);
+				if (!mesh)
+				{
+					return;
+				}
+
+				_render_set_animation_pose(component, pose);
+			}
 		}
 	} // render_scene_update
 } // namespace gemini
