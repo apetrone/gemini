@@ -119,14 +119,6 @@ namespace gemini
 
 			btCompoundShape* compound = new btCompoundShape();
 
-			// Use the collision geometry from the mesh.
-			assert(mesh->collision_geometry);
-			assert(mesh->collision_geometry->vertices);
-			assert(mesh->collision_geometry->normals);
-			assert(mesh->collision_geometry->indices);
-
-			glm::vec3* vertices = mesh->collision_geometry->vertices;
-
 			// this shape's transform
 			btTransform local_transform;
 			local_transform.setIdentity();
@@ -144,6 +136,13 @@ namespace gemini
 			}
 			else
 			{
+				// Use the collision geometry from the mesh.
+				assert(mesh->collision_geometry);
+				assert(mesh->collision_geometry->vertices);
+				assert(mesh->collision_geometry->normals);
+				assert(mesh->collision_geometry->indices);
+
+				glm::vec3* vertices = mesh->collision_geometry->vertices;
 				// NOTE: Triangle shapes can ONLY be static objects.
 				// TODO: look into an alternative with btGImpactMeshShape or
 				// btCompoundShape + convex decomposition.
@@ -263,8 +262,6 @@ namespace gemini
 				body->setCollisionFlags( body_flags );
 				body->setFriction(0.75f);
 			}
-
-
 
 			bullet::get_world()->addRigidBody(body);
 

@@ -23,6 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include <core/logging.h>
+#include <core/linearfreelist.h>
 
 #include <renderer/commandbuffer.h>
 #include <renderer/debug_draw.h>
@@ -240,16 +241,17 @@ namespace gemini
 			return 0;
 		}
 
-		StaticMeshComponent* component = MEMORY2_NEW(*scene->allocator, StaticMeshComponent);
+		LinearFreeList<StaticMeshComponent>::Handle component_handle = scene->static_meshes.acquire();
+		StaticMeshComponent* component = scene->static_meshes.from_handle(component_handle);
+		assert(component);
 		component->entity_index = entity_index;
 		component->mesh_handle = mesh_handle;
 		component->model_matrix = model_transform;
 		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
-		scene->static_meshes.push_back(component);
 
 		render_scene_track_mesh(scene, mesh_handle);
 
-		return scene->static_meshes.size();
+		return component_handle;
 	} // render_scene_add_static_mesh
 
 
@@ -415,7 +417,11 @@ namespace gemini
 	{
 		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
 		{
-			MEMORY2_DELETE(*scene->allocator, scene->static_meshes[index]);
+			if (scene->static_meshes.is_valid(index))
+			{
+				StaticMeshComponent* component = scene->static_meshes.from_handle(index);
+				MEMORY2_DELETE(*scene->allocator, component);
+			}
 		}
 
 		for (size_t index = 0; index < scene->animated_meshes.size(); ++index)
@@ -441,6 +447,9 @@ namespace gemini
 		{
 			render_target = device->default_render_target();
 		}
+
+		scene->stat_static_meshes_drawn = 0;
+		scene->stat_animated_meshes_drawn = 0;
 
 		Color clear_color = Color::from_rgba(128, 128, 128, 255);
 
@@ -519,12 +528,12 @@ namespace gemini
 
 		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
 		{
-			StaticMeshComponent* static_mesh = scene->static_meshes[index];
-			if (!static_mesh)
+			if (!scene->static_meshes.is_valid(index))
 			{
 				continue;
 			}
-
+			StaticMeshComponent* static_mesh = scene->static_meshes.from_handle(index);
+			assert(static_mesh);
 			Mesh* mesh = mesh_from_handle(static_mesh->mesh_handle);
 			if (mesh)
 			{
@@ -545,6 +554,8 @@ namespace gemini
 					_render_setup_material(serializer, geometry->material_handle);
 					serializer->draw_indexed_primitives(mesh_info->index_buffer, geometry->index_offset, geometry->total_indices);
 				}
+
+				++scene->stat_static_meshes_drawn;
 			}
 		}
 
@@ -598,6 +609,8 @@ namespace gemini
 					serializer->draw_indexed_primitives(mesh_info->index_buffer, geometry->index_offset, geometry->total_indices);
 				}
 
+				++scene->stat_animated_meshes_drawn;
+
 				// Enable this to debug bone transforms
 #if 0
 				if (mesh->skeleton.size() > 0)
@@ -647,9 +660,12 @@ namespace gemini
 
 	void render_scene_remove_static_mesh(RenderScene* scene, uint32_t component_id)
 	{
-		StaticMeshComponent* component = scene->static_meshes[component_id - 1];
-		scene->static_meshes[component_id - 1] = nullptr;
-		MEMORY2_DELETE(*scene->allocator, component);
+		if (!scene->static_meshes.is_valid(component_id))
+		{
+			return;
+		}
+
+		scene->static_meshes.release(component_id);
 	} // remove_static_mesh
 
 	void render_scene_remove_animated_mesh(RenderScene* scene, uint32_t component_id)
@@ -732,12 +748,13 @@ namespace gemini
 		// extract data from static meshes
 		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
 		{
-			StaticMeshComponent* component = scene->static_meshes[index];
-			if (component)
+			if (!scene->static_meshes.is_valid(index))
 			{
-				component->model_matrix = state->model_matrix[component->entity_index];
-				component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
+				continue;
 			}
+			StaticMeshComponent* component = scene->static_meshes.from_handle(index);
+			component->model_matrix = state->model_matrix[component->entity_index];
+			component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
 		}
 
 		// extract data from animated meshes

@@ -26,6 +26,8 @@
 
 #include "typedefs.h"
 
+#include <core/array.h>
+
 #if 0
 // USAGE
 LinearFreeList<int> abc;

@@ -819,6 +819,22 @@ UNITTEST(linearfreelist)
 	}
 
 	TEST_ASSERT(valid_handles == 1, is_valid);
+
+	// stress test
+	for (size_t index = 0; index < 10000; ++index)
+	{
+		LinearFreeList<int>::Handle handle = abc.acquire();
+		if ((index % 10) == 0)
+		{
+			// delete every 10th item.
+			abc.release(handle);
+		}
+	}
+
+	LinearFreeList<int>::Handle last_handle = abc.acquire();
+	TEST_ASSERT_EQUALS(last_handle, 9001);
+
+	abc.clear();
 }
 
 // ---------------------------------------------------------------------

@@ -242,6 +242,10 @@ public:
 uint16_t EntityManager::add(IEngineEntity* entity)
 {
 	uint16_t entity_index = index;
+
+	// If you hit this, more entities have been created than will fit
+	// in a short.
+	assert(index < USHRT_MAX);
 	entity_list[index++] = entity;
 	return entity_index;
 }
@@ -1289,6 +1293,10 @@ Options:
 
 			render_scene_update(render_scene, &ers);
 			render_scene_draw(render_scene, device, view.modelview, view.projection);
+
+			debugdraw::text(30, 230, core::str::format("static meshes: %i", render_scene->stat_static_meshes_drawn), Color(1.0f, 1.0f, 0.5f));
+			debugdraw::text(30, 244, core::str::format("animated meshes: %i", render_scene->stat_animated_meshes_drawn), Color(1.0f, 1.0f, 0.5f));
+
 			debugdraw::render(view.modelview, view.projection, view.width, view.height);
 			if (_compositor)
 			{

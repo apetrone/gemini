@@ -27,6 +27,7 @@
 #include <core/array.h>
 #include <core/mathlib.h>
 #include <core/typedefs.h>
+#include <core/linearfreelist.h>
 
 #include <runtime/asset_handle.h>
 #include <runtime/animation.h>
@@ -83,8 +84,12 @@ namespace gemini
 	struct RenderScene
 	{
 		Allocator* allocator;
-		Array<StaticMeshComponent*> static_meshes;
+		LinearFreeList<StaticMeshComponent> static_meshes;
 		Array<AnimatedMeshComponent*> animated_meshes;
+
+
+		uint32_t stat_static_meshes_drawn;
+		uint32_t stat_animated_meshes_drawn;
 
 		render2::Pipeline* static_mesh_pipeline;
 		render2::Pipeline* animated_mesh_pipeline;
