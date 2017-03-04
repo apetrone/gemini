@@ -717,7 +717,7 @@ private:
 				assert(game_interface != 0);
 			}
 
-			game_interface->startup();
+			game_interface->startup(compositor, root);
 		}
 #else
 		game_interface = ::connect_engine(gemini::engine::instance());
@@ -727,7 +727,7 @@ private:
 			assert(game_interface != 0);
 		}
 
-		game_interface->startup();
+		game_interface->startup(compositor, root);
 #endif
 	}
 
