@@ -72,6 +72,7 @@ namespace gemini
 		ModelInstanceData(gemini::Allocator& allocator);
 
 		void set_mesh_index(AssetHandle in_mesh_handle);
+		AssetHandle get_mesh_handle() const;
 		void set_component_index(uint32_t component_index);
 		uint32_t get_component_index() const { return component_index; }
 		virtual AssetHandle asset_index() const;

@@ -218,6 +218,7 @@ public:
 
 	// functions for this script object
 	virtual void set_model(const char* path);
+	virtual void remove_model();
 
 
 	Array<gemini::physics::ICollisionObject*> colliders;

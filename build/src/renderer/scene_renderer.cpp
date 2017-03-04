@@ -438,6 +438,10 @@ namespace gemini
 		scene->inverse_view_rotation = glm::inverse(glm::mat3(view));
 		scene->inverse_projection = glm::inverse(projection);
 
+
+		//glm::vec3 xaxis = scene->inverse_view_rotation * glm::vec3(1.0f, 0.0f, 0.0f);
+		//PRINT_VEC3(xaxis);
+
 		render2::Pass sky_pass;
 		sky_pass.target = render_target;
 		sky_pass.color(clear_color.red, clear_color.blue, clear_color.green, clear_color.alpha);
@@ -623,6 +627,19 @@ namespace gemini
 		device->destroy_serializer(serializer);
 	} // render_animated_meshes
 
+	void render_scene_remove_static_mesh(RenderScene* scene, uint32_t component_id)
+	{
+		StaticMeshComponent* component = scene->static_meshes[--component_id];
+		//scene->static_meshes.erase(component);
+		//MEMORY2_DELETE(*scene->allocator, component);
+	} // remove_static_mesh
+
+	void render_scene_remove_animated_mesh(RenderScene* scene, uint32_t component_id)
+	{
+		AnimatedMeshComponent* component = scene->animated_meshes[--component_id];
+		//scene->animated_meshes.erase(component);
+		//MEMORY2_DELETE(*scene->allocator, component);
+	} // remove_animated_mesh
 
 	void render_sky(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass)
 	{

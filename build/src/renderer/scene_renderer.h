@@ -139,6 +139,9 @@ namespace gemini
 	void render_static_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 	void render_animated_meshes(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 
+	void render_scene_remove_static_mesh(RenderScene* scene, uint32_t component_id);
+	void render_scene_remove_animated_mesh(RenderScene* scene, uint32_t component_id);
+
 	void render_sky(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 
 	void render_scene_update(RenderScene* scene, EntityRenderState* state);

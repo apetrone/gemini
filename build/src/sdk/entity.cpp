@@ -185,6 +185,12 @@ Entity::~Entity()
 	entity_list().remove( this );
 	engine::instance()->entities()->remove(this);
 
+	if (model_index != -1)
+	{
+		remove_model();
+	}
+
+
 	remove_colliders();
 } // ~Entity
 
@@ -435,4 +441,9 @@ void Entity::set_model(const char* path)
 //	engine::instance()->models()->destroy_instance_data(model_index);
 	model_index = engine::instance()->models()->create_instance_data(entity_index(), path);
 //	LOGV("set model index: %i, for model: %s\n", model_index, path);
+}
+
+void Entity::remove_model()
+{
+	engine::instance()->models()->destroy_instance_data(model_index);
 }

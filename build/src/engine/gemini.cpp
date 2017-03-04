@@ -524,6 +524,20 @@ void EngineInterface::destroy_instance_data(int32_t index)
 	if (it != id_to_instance.end())
 	{
 		gemini::ModelInstanceData& data = it->second;
+
+		AssetHandle mesh_handle = data.get_mesh_handle();
+		Mesh* mesh = mesh_from_handle(mesh_handle);
+
+		uint32_t component_id = data.get_component_index();
+		if (mesh->skeleton.empty())
+		{
+			render_scene_remove_static_mesh(render_scene, component_id);
+		}
+		else
+		{
+			render_scene_remove_animated_mesh(render_scene, component_id);
+		}
+
 		id_to_instance.erase(it);
 	}
 }

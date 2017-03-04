@@ -1552,6 +1552,9 @@ Options:
 
 		debugdraw::update(kernel::parameters().framedelta_seconds);
 
+
+		debugdraw::axes(glm::mat4(1.0f), 1.0f);
+
 		if (compositor)
 		{
 			compositor->tick(static_cast<float>(kernel::parameters().step_interval_seconds));

@@ -54,6 +54,11 @@ namespace gemini
 		mesh = mesh_from_handle(mesh_handle);
 	}
 
+	AssetHandle ModelInstanceData::get_mesh_handle() const
+	{
+		return mesh_handle;
+	}
+
 	void ModelInstanceData::set_component_index(uint32_t in_component_index)
 	{
 		component_index = in_component_index;
