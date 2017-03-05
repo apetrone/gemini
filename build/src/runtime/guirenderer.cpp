@@ -241,8 +241,8 @@ size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string,
 	{
 		FontVertex& v = vertex_cache[index];
 		gui::render::Vertex& out = buffer[index];
-		out.x = v.position.x + bounds.origin.x;
-		out.y = v.position.y + bounds.origin.y;
+		out.x = v.position.x; // + bounds.origin.x;
+		out.y = v.position.y; // + bounds.origin.y;
 		out.uv[0] = v.uv.x;
 		out.uv[1] = v.uv.y;
 		out.color = color;

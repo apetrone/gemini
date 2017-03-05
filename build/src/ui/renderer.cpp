@@ -208,8 +208,26 @@ namespace render
 		Command& command = commands.back();
 		command.texture = texture;
 		command.type = CommandType_Font;
+
 		size_t vertices_drawn = compositor->get_renderer()->font_draw(font, utf8, string_length, bounds, color, write_pointer, max_vertices);
 		assert(vertices_drawn > 0);
+
+		float radians = mathlib::degrees_to_radians(0.0f);
+		glm::mat3 rot = glm::mat3(
+			cos(radians), -sin(radians), 0,
+			sin(radians), cos(radians), 0,
+			0, 0, 1
+	  	);
+
+		for (size_t index = 0; index < vertices_drawn; ++index)
+		{
+			gui::render::Vertex* vertex = write_pointer + index;
+			glm::vec3 pos(vertex->x, vertex->y, 0.0f);
+
+			pos = rot * pos;
+			vertex->x = pos.x + bounds.origin.x;
+			vertex->y = pos.y + bounds.origin.y;
+		}
 	}
 } // namespace render
 } // namespace gui

@@ -69,6 +69,7 @@ using namespace renderer;
 #define GEMINI_TEST_BUTTON			1 // 6 draw calls (2 per button)
 #define GEMINI_TEST_SLIDER			1 // 5 draw calls
 #define GEMINI_TEST_LAYOUT			1
+#define GEMINI_TEST_ROTATED_LABEL	1 //
 
 // enable this to enable and test audio
 //#define TEST_AUDIO 1
@@ -539,6 +540,15 @@ public:
 		}
 #endif
 
+#if defined(GEMINI_TEST_ROTATED_LABEL) && GEMINI_TEST_ROTATED_LABEL
+	gui::Label* test_label = new gui::Label(compositor);
+	test_label->set_font("debug", 16);
+	test_label->set_text("Hello");
+	test_label->set_origin(250, 250);
+	test_label->set_size(200, 200);
+	test_label->set_rotation(mathlib::degrees_to_radians(45.0f));
+#endif
+
 #if defined(TEST_AUDIO) && 0
 		// load audio
 		music = gemini::audio::load_sound("sounds/time_travel.wav");
@@ -709,11 +719,6 @@ public:
 
 	virtual kernel::Error startup()
 	{
-
-
-
-
-
 		// parse command line values
 		std::vector<std::string> arguments;
 		core::argparse::ArgumentParser parser;
