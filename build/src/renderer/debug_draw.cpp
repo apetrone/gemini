@@ -203,7 +203,7 @@ namespace debugdraw
 				return &persistent_primitives[ next_primitive++ ];
 			}
 
-			void update(float delta_msec)
+			void update(float delta_seconds)
 			{
 				// run an update for each active primitive
 				for(size_t index = 0; index < persistent_primitives.size(); ++index)
@@ -220,7 +220,7 @@ namespace debugdraw
 					if ((primitive->type > 0) && (primitive->timeleft >= 0))
 					{
 						// timeleft has a value, subtract deltatime
-						primitive->timeleft -= delta_msec;
+						primitive->timeleft -= delta_seconds;
 					}
 				}
 			}
@@ -1094,31 +1094,31 @@ namespace debugdraw
 	//}
 
 
-	void axes(const glm::mat4& transform, float axis_length, float duration)
+	void axes(const glm::mat4& transform, float axis_length, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if ( primitive )
 		{
 			primitive->type = TYPE_AXES;
 			glm::vec4 col = glm::column( transform, 3 );
 			primitive->start = glm::vec3( col );
 			primitive->transform = transform;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 			primitive->radius = axis_length;
 		}
 	}
 
-	void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration)
+	void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if (primitive)
 		{
 			primitive->type = TYPE_AXES;
@@ -1129,145 +1129,145 @@ namespace debugdraw
 			transform[3] = glm::vec4(origin.x, origin.y, origin.z, 0);
 			primitive->start = origin;
 			primitive->transform = transform;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 			primitive->radius = axis_length;
 		}
 	}
 
-	void box(const glm::vec3& mins, const glm::vec3& maxs, const gemini::Color& color, float duration)
+	void box(const glm::vec3& mins, const glm::vec3& maxs, const gemini::Color& color, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if ( primitive )
 		{
 			primitive->type = TYPE_BOX;
 			primitive->start = mins;
 			primitive->end = maxs;
 			primitive->color = color;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 		}
 	}
 
-	void point(const glm::vec3& pt, const gemini::Color& color, float size, float duration)
+	void point(const glm::vec3& pt, const gemini::Color& color, float size, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if ( primitive )
 		{
 			primitive->type = TYPE_BOX;
 			primitive->start = glm::vec3( pt[0] - size, pt[1] - size, pt[2] - size );
 			primitive->end = glm::vec3( pt[0] + size, pt[1] + size, pt[2] + size );
 			primitive->color = color;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 		}
 	}
 
-	void line(const glm::vec3& start, const glm::vec3& end, const gemini::Color& color, float duration)
+	void line(const glm::vec3& start, const glm::vec3& end, const gemini::Color& color, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if ( primitive )
 		{
 			primitive->type = TYPE_LINE;
 			primitive->start = start;
 			primitive->end = end;
 			primitive->color = color;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 		}
 	}
 
-	void sphere(const glm::vec3& center, const gemini::Color& color, float radius, float duration)
+	void sphere(const glm::vec3& center, const gemini::Color& color, float radius, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if ( primitive )
 		{
 			primitive->type = TYPE_SPHERE;
 			primitive->start = center;
 			primitive->radius = radius;
 			primitive->color = color;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 		}
 	}
 
-	void text(int x, int y, const char* string, const gemini::Color& color, float duration)
+	void text(int x, int y, const char* string, const gemini::Color& color, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = text_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = text_list->request(duration_seconds > 0.0f);
 		if ( primitive )
 		{
 			primitive->type = TYPE_TEXT;
 			primitive->start = glm::vec3(x, y, 0);
 			primitive->color = color;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 			primitive->buffer = string;
 		}
 	}
 
-	void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const gemini::Color& color, float duration)
+	void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const gemini::Color& color, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = tris_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = tris_list->request(duration_seconds > 0.0f);
 		if (primitive)
 		{
 			primitive->type = TYPE_TRIANGLE;
 			primitive->start = v0;
 			primitive->end = v1;
 			primitive->color = color;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 			primitive->alt = v2;
 		}
 	}
 
-	void camera(const glm::vec3& origin, const glm::vec3& view, float duration)
+	void camera(const glm::vec3& origin, const glm::vec3& view, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if (primitive)
 		{
 			primitive->type = TYPE_CAMERA;
 			primitive->start = origin;
 			primitive->end = view;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 			primitive->radius = 1.0f;
 		}
 	}
 
-	void oriented_box(const glm::mat3& orientation, const glm::vec3& origin, const glm::vec3& extents, const gemini::Color& color, float duration)
+	void oriented_box(const glm::mat3& orientation, const glm::vec3& origin, const glm::vec3& extents, const gemini::Color& color, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if (primitive)
 		{
 			primitive->type = TYPE_OBB;
 			primitive->start = origin;
 			primitive->end = extents;
 			primitive->transform = glm::mat4(orientation);
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 			primitive->color = color;
 		}
 	} // oriented box
