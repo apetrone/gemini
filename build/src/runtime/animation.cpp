@@ -553,6 +553,8 @@ namespace gemini
 
 		void destroy_sequence_instance(gemini::Allocator& allocator, AnimatedInstance* instance)
 		{
+			//std::vector<AnimatedInstance*>::iterator it = instance->index + detail::_instances.begin();
+			//detail::_instances.erase(it);
 			MEMORY2_DELETE(allocator, instance);
 		}
 

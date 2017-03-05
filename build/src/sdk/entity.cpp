@@ -266,6 +266,10 @@ void Entity::use(Entity* /*user*/, const glm::vec3& /*in_vector*/)
 {
 }
 
+void Entity::hit(Entity* /*user*/, const glm::vec3& /*in_vector*/)
+{
+}
+
 void Entity::set_physics_from_current_transform()
 {
 	for (size_t index = 0; index < colliders.size(); ++index)

@@ -1172,6 +1172,8 @@ Options:
 				engine::instance()->physics()->step_simulation(params.step_interval_seconds);
 			}
 
+			debugdraw::update(params.step_interval_seconds);
+
 			// subtract the interval from the accumulator
 			accumulator -= params.step_interval_seconds;
 
@@ -1212,9 +1214,6 @@ Options:
 				game_interface->reset_events();
 			}
 		}
-
-
-		debugdraw::update(params.step_interval_seconds * MillisecondsPerSecond);
 
 		params.step_alpha = accumulator / params.step_interval_seconds;
 		if (params.step_alpha >= 1.0f)

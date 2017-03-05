@@ -147,6 +147,9 @@ public:
 	// Use is called on this entity
 	virtual void use(Entity* user, const glm::vec3& in_vector);
 
+	// This entity was 'hit' by means of a weapon
+	virtual void hit(Entity* user, const glm::vec3& in_vector);
+
 	virtual bool is_player() const { return false; }
 	virtual bool is_door() const { return false; }
 
