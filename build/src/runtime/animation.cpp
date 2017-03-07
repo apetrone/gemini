@@ -24,9 +24,8 @@
 // -------------------------------------------------------------
 #include "animation.h"
 
-//#include <assets/asset_mesh.h>
-
 #include <core/mem.h>
+#include <core/linearfreelist.h>
 #include <core/logging.h>
 #include <core/interpolation.h>
 #include <core/mathlib.h>
@@ -52,6 +51,24 @@ namespace gemini
 {
 	namespace animation
 	{
+		struct AnimationState
+		{
+			Allocator* allocator;
+			LinearFreeList<Sequence> sequences;
+			LinearFreeList<AnimatedInstance*> instances;
+
+			AnimationState(Allocator& in_allocator)
+				: allocator(&in_allocator)
+				, sequences(in_allocator)
+				, instances(in_allocator)
+			{
+			}
+		};
+
+		AnimationState* _animation_state = nullptr;
+
+
+
 		//
 		// KeyframeList
 		//
@@ -484,6 +501,8 @@ namespace gemini
 		{
 			_allocator = &allocator;
 			_sequences_by_name = MEMORY2_NEW(allocator, SequenceHash)(allocator);
+
+			_animation_state = MEMORY2_NEW(allocator, AnimationState)(allocator);
 		}
 
 		void shutdown()
@@ -496,6 +515,8 @@ namespace gemini
 			detail::_instances.clear();
 
 			MEMORY2_DELETE(*_allocator, _sequences_by_name);
+
+			MEMORY2_DELETE(*_animation_state->allocator, _animation_state);
 		}
 
 		void update(float delta_seconds)

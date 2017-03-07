@@ -30,6 +30,7 @@
 #include <core/datastream.h>
 #include <core/fixedarray.h>
 #include <core/fixedsizequeue.h>
+#include <core/freelist.h>
 #include <core/hashset.h>
 #include <core/mathlib.h>
 #include <core/mem.h>
@@ -229,6 +230,28 @@ UNITTEST(Array)
 		Array<int> temp = values;
 		TEST_ASSERT(temp == values, copy_and_equality);
 	}
+
+	// test array resizing
+	{
+		Array<int> test(default_allocator, 0);
+
+		test.resize(1);
+		test[0] = 72;
+
+		test.resize(2);
+		test[1] = 16;
+
+		TEST_ASSERT_EQUALS(test[0], 72);
+		TEST_ASSERT_EQUALS(test[1], 16);
+
+		test.push_back(24);
+		TEST_ASSERT_EQUALS(test[2], 24);
+
+		test.resize(4);
+		test.push_back(120);
+		TEST_ASSERT_EQUALS(test[4], 120);
+	}
+
 }
 
 
@@ -554,6 +577,54 @@ UNITTEST(CircularBuffer)
 	int d = cb.next();
 	TEST_ASSERT(d == a, circular_buffer);
 }
+
+
+UNITTEST(freelist)
+{
+	struct MyStructNoDefaultCtor
+	{
+		int x;
+
+		MyStructNoDefaultCtor(int value)
+			: x(value)
+		{
+		}
+	};
+
+	Allocator allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
+	Freelist<int> list1(allocator);
+	Freelist<int>::Handle handle1, handle2, handle3;
+	handle1 = list1.acquire();
+	handle2 = list1.acquire();
+	handle3 = list1.acquire();
+
+	list1.set(handle1, 20);
+	list1.set(handle2, 40);
+	list1.set(handle3, 60);
+
+	TEST_ASSERT_EQUALS(list1.size(), 3);
+
+	list1.release(handle2);
+
+	int v1 = list1.from_handle(handle1);
+	TEST_ASSERT_EQUALS(v1, 20);
+
+	int v2 = list1.from_handle(handle3);
+	TEST_ASSERT_EQUALS(v2, 60);
+
+	Freelist<MyStructNoDefaultCtor*> list2(allocator);
+	Freelist<MyStructNoDefaultCtor*>::Handle handle = list2.acquire();
+	list2.set(handle, new MyStructNoDefaultCtor(72));
+
+	Freelist<MyStructNoDefaultCtor*>::Iterator iter;
+	for (iter = list2.begin(); iter != list2.end(); ++iter)
+	{
+		MyStructNoDefaultCtor* instance = iter.data();
+		delete instance;
+	}
+}
+
 
 // ---------------------------------------------------------------------
 // interpolation
@@ -1005,7 +1076,8 @@ UNITTEST(util)
 int main(int, char**)
 {
 	gemini::core_startup();
-	unittest::UnitTest::execute();
+	//unittest::UnitTest::execute();
+	UNITTEST_EXECUTE(freelist);
 	gemini::core_shutdown();
 	return 0;
 }
