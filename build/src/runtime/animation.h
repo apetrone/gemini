@@ -130,7 +130,7 @@ namespace gemini
 			bool enabled;
 
 			AnimatedInstance(gemini::Allocator& allocator);
-			virtual ~AnimatedInstance() {}
+			virtual ~AnimatedInstance();
 
 			virtual void initialize(Sequence* sequence);
 			virtual void advance(float delta_seconds);

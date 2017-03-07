@@ -72,16 +72,20 @@ namespace gemini
 		typedef T value_type;
 		typedef T* value_pointer;
 		typedef size_t Handle;
-		uint32_t used_handles;
 
-		Freelist(Allocator& in_allocator, const T& in_default_value = T())
+		Freelist(Allocator& in_allocator)
 			: allocator(in_allocator)
 			, elements(in_allocator)
 			, freelist(in_allocator)
 			, handles(in_allocator)
-			, default_value(in_default_value)
 		{
-			used_handles = 0;
+		}
+
+		~Freelist()
+		{
+			elements.clear();
+			freelist.clear();
+			handles.clear();
 		}
 
 		Handle acquire()
@@ -90,16 +94,15 @@ namespace gemini
 			if (freelist.empty())
 			{
 				handle = elements.size();
-				elements.push_back(default_value);
+				elements.push_back(T());
 				handles.push_back(handle);
 			}
 			else
 			{
 				handle = freelist.pop_back();
 				handles[handle] = handle;
-				elements[handle] = default_value;
+				elements[handle] = T();
 			}
-			++used_handles;
 			return handle;
 		}
 
@@ -109,7 +112,6 @@ namespace gemini
 			if (handles[handle] != InvalidHandle)
 			{
 				handles[handle] = InvalidHandle;
-				--used_handles;
 			}
 		}
 
@@ -127,7 +129,12 @@ namespace gemini
 
 		size_t size() const
 		{
-			return used_handles;
+		return elements.size();
+		}
+
+		T& at(size_t index)
+		{
+			return elements[index];
 		}
 
 		struct Iterator
@@ -203,8 +210,6 @@ namespace gemini
 		Array<T> elements;
 		Array<size_t> freelist;
 		Array<size_t> handles;
-
-		T default_value;
 		value_pointer data;
 	}; // Freelist
 } // namespace gemini

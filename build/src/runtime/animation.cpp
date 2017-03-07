@@ -217,6 +217,12 @@ namespace gemini
 		{
 		}
 
+		AnimatedInstance::~AnimatedInstance()
+		{
+			animation_set.clear();
+			channel_set.clear();
+		}
+
 		void AnimatedInstance::initialize(Sequence* sequence)
 		{
 			sequence_index = sequence->index;
@@ -265,8 +271,6 @@ namespace gemini
 
 		namespace detail
 		{
-			typedef std::vector<AnimatedInstance*> InstanceArray;
-			InstanceArray _instances;
 
 			static bool validate_node(const Json::Value& node, const char* error_message)
 			{
@@ -507,24 +511,28 @@ namespace gemini
 
 		void shutdown()
 		{
-			SequenceFreelist::Iterator iter = _animation_state->sequences.begin();
-			for (; iter != _animation_state->sequences.end(); ++iter)
+			for (size_t index = 0; index < _animation_state->sequences.size(); ++index)
 			{
-				Sequence* instance = iter.data();
+				Sequence* instance = _animation_state->sequences.at(index);
 				MEMORY2_DELETE(*_allocator, instance);
 			}
 
-			detail::_instances.clear();
+			for (size_t index = 0; index < _animation_state->instances.size(); ++index)
+			{
+				AnimatedInstance* instance = _animation_state->instances.at(index);
+				MEMORY2_DELETE(*_allocator, instance);
+			}
 
 			MEMORY2_DELETE(*_allocator, _sequences_by_name);
-
 			MEMORY2_DELETE(*_animation_state->allocator, _animation_state);
 		}
 
 		void update(float delta_seconds)
 		{
-			for (AnimatedInstance* instance : detail::_instances)
+			AnimatedInstanceFreelist::Iterator anim = _animation_state->instances.begin();
+			for (; anim != _animation_state->instances.end(); ++anim)
 			{
+				AnimatedInstance* instance = anim.data();
 				if (instance->enabled)
 				{
 					instance->advance(delta_seconds);
@@ -566,24 +574,19 @@ namespace gemini
 			Sequence* source = get_sequence_by_index(index);
 			AnimatedInstance* instance = MEMORY2_NEW(allocator, AnimatedInstance)(allocator);
 			instance->initialize(source);
-
-			instance->index = detail::_instances.size();
-			detail::_instances.push_back(instance);
-
+			instance->index = _animation_state->instances.acquire();
+			_animation_state->instances.set(instance->index, instance);
 			return instance;
 		}
 
 		void destroy_sequence_instance(gemini::Allocator& allocator, AnimatedInstance* instance)
 		{
-			//std::vector<AnimatedInstance*>::iterator it = instance->index + detail::_instances.begin();
-			//detail::_instances.erase(it);
-			MEMORY2_DELETE(allocator, instance);
+			_animation_state->instances.release(instance->index);
 		}
 
 		AnimatedInstance* get_instance_by_index(SequenceId index)
 		{
-			assert(static_cast<size_t>(index) < detail::_instances.size());
-			return detail::_instances[index];
+			return _animation_state->instances.from_handle(index);
 		}
 
 
