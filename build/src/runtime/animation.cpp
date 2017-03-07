@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 #include "animation.h"
 
+#include <core/freelist.h>
 #include <core/mem.h>
 #include <core/linearfreelist.h>
 #include <core/logging.h>
@@ -51,11 +52,13 @@ namespace gemini
 {
 	namespace animation
 	{
+		typedef Freelist<Sequence*> SequenceFreelist;
+		typedef Freelist<AnimatedInstance*> AnimatedInstanceFreelist;
 		struct AnimationState
 		{
 			Allocator* allocator;
-			LinearFreeList<Sequence> sequences;
-			LinearFreeList<AnimatedInstance*> instances;
+			SequenceFreelist sequences;
+			AnimatedInstanceFreelist instances;
 
 			AnimationState(Allocator& in_allocator)
 				: allocator(&in_allocator)
@@ -262,10 +265,7 @@ namespace gemini
 
 		namespace detail
 		{
-			typedef std::vector<Sequence*> SequenceArray;
 			typedef std::vector<AnimatedInstance*> InstanceArray;
-
-			SequenceArray _sequences;
 			InstanceArray _instances;
 
 			static bool validate_node(const Json::Value& node, const char* error_message)
@@ -485,9 +485,9 @@ namespace gemini
 			LOGV("loading animation %s\n", filepath());
 			if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(filepath(), detail::load_animation_from_json, &data, true))
 			{
-				sequence->index = detail::_sequences.size();
+				sequence->index = _animation_state->sequences.acquire();
 				_sequences_by_name->insert(SequenceHash::value_type(name, sequence));
-				detail::_sequences.push_back(sequence);
+				_animation_state->sequences.set(sequence->index, sequence);
 			}
 			else
 			{
@@ -507,11 +507,13 @@ namespace gemini
 
 		void shutdown()
 		{
-			for (Sequence* sequence : detail::_sequences)
+			SequenceFreelist::Iterator iter = _animation_state->sequences.begin();
+			for (; iter != _animation_state->sequences.end(); ++iter)
 			{
-				MEMORY2_DELETE(*_allocator, sequence);
+				Sequence* instance = iter.data();
+				MEMORY2_DELETE(*_allocator, instance);
 			}
-			detail::_sequences.clear();
+
 			detail::_instances.clear();
 
 			MEMORY2_DELETE(*_allocator, _sequences_by_name);
@@ -556,8 +558,7 @@ namespace gemini
 
 		Sequence* get_sequence_by_index(SequenceId index)
 		{
-			assert(static_cast<size_t>(index) < detail::_sequences.size());
-			return detail::_sequences[index];
+			return _animation_state->sequences.from_handle(index);
 		}
 
 		AnimatedInstance* create_sequence_instance(gemini::Allocator& allocator, SequenceId index)
@@ -609,7 +610,9 @@ namespace gemini
 			// If you hit this, there are more joints than expected in this animation_set.
 			assert(total_joints < MAX_BONES);
 
-			float frame_delay_seconds = detail::_sequences[instance->sequence_index]->frame_delay_seconds;
+			Sequence* sequence = _animation_state->sequences.from_handle(instance->sequence_index);
+			assert(sequence);
+			float frame_delay_seconds = sequence->frame_delay_seconds;
 
 			for (size_t bone_index = 0; bone_index < total_joints; ++bone_index)
 			{

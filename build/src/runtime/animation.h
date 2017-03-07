@@ -39,7 +39,6 @@ namespace gemini
 
 	const size_t ANIMATION_KEYFRAME_VALUES_MAX = 7;
 
-
 	namespace animation
 	{
 		struct Keyframe
