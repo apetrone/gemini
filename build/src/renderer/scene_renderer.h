@@ -25,9 +25,9 @@
 #pragma once
 
 #include <core/array.h>
+#include <core/freelist.h>
 #include <core/mathlib.h>
 #include <core/typedefs.h>
-#include <core/linearfreelist.h>
 
 #include <runtime/asset_handle.h>
 #include <runtime/animation.h>
@@ -84,7 +84,7 @@ namespace gemini
 	struct RenderScene
 	{
 		Allocator* allocator;
-		LinearFreeList<StaticMeshComponent> static_meshes;
+		Freelist<StaticMeshComponent*> static_meshes;
 		Array<AnimatedMeshComponent*> animated_meshes;
 
 

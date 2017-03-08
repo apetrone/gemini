@@ -1646,6 +1646,10 @@ Options:
 		notify_client_destroy(&notify_client);
 		notify_server_destroy(&notify_server);
 
+		// must be shut down before the animations; as they're referenced.
+		render_scene_destroy(render_scene, device);
+		render_scene_shutdown();
+
 		animation::shutdown();
 
 		MEMORY2_DELETE(asset_allocator, queued_asset_changes);
@@ -1673,9 +1677,6 @@ Options:
 
 
 		assets::shutdown();
-
-		render_scene_destroy(render_scene, device);
-		render_scene_shutdown();
 
 		// shutdown the render device
 		device->destroy_buffer(vertex_buffer);

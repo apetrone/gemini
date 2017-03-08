@@ -22,8 +22,8 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#include <core/freelist.h>
 #include <core/logging.h>
-#include <core/linearfreelist.h>
 
 #include <renderer/commandbuffer.h>
 #include <renderer/debug_draw.h>
@@ -241,9 +241,10 @@ namespace gemini
 			return 0;
 		}
 
-		LinearFreeList<StaticMeshComponent>::Handle component_handle = scene->static_meshes.acquire();
-		StaticMeshComponent* component = scene->static_meshes.from_handle(component_handle);
+		Freelist<StaticMeshComponent*>::Handle component_handle = scene->static_meshes.acquire();
+		StaticMeshComponent* component = MEMORY2_NEW(*scene->allocator, StaticMeshComponent);
 		assert(component);
+		scene->static_meshes.set(component_handle, component);
 		component->entity_index = entity_index;
 		component->mesh_handle = mesh_handle;
 		component->model_matrix = model_transform;
@@ -415,13 +416,11 @@ namespace gemini
 
 	void render_scene_destroy(RenderScene* scene, render2::Device* device)
 	{
-		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
+		Freelist<StaticMeshComponent*>::Iterator iter = scene->static_meshes.begin();
+		for (; iter != scene->static_meshes.end(); ++iter)
 		{
-			if (scene->static_meshes.is_valid(index))
-			{
-				StaticMeshComponent* component = scene->static_meshes.from_handle(index);
-				MEMORY2_DELETE(*scene->allocator, component);
-			}
+			StaticMeshComponent* component = iter.data();
+			MEMORY2_DELETE(*scene->allocator, component);
 		}
 
 		for (size_t index = 0; index < scene->animated_meshes.size(); ++index)
@@ -526,13 +525,11 @@ namespace gemini
 		scene->static_mesh_pipeline->constants().set("camera_position_world", &scene->camera_position_world);
 		scene->static_mesh_pipeline->constants().set("camera_view_direction", &scene->camera_view_direction);
 
-		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
+
+		Freelist<StaticMeshComponent*>::Iterator iter = scene->static_meshes.begin();
+		for (; iter != scene->static_meshes.end(); ++iter)
 		{
-			if (!scene->static_meshes.is_valid(index))
-			{
-				continue;
-			}
-			StaticMeshComponent* static_mesh = scene->static_meshes.from_handle(index);
+			StaticMeshComponent* static_mesh = iter.data();
 			assert(static_mesh);
 			Mesh* mesh = mesh_from_handle(static_mesh->mesh_handle);
 			if (mesh)
@@ -660,11 +657,6 @@ namespace gemini
 
 	void render_scene_remove_static_mesh(RenderScene* scene, uint32_t component_id)
 	{
-		if (!scene->static_meshes.is_valid(component_id))
-		{
-			return;
-		}
-
 		scene->static_meshes.release(component_id);
 	} // remove_static_mesh
 
@@ -746,13 +738,10 @@ namespace gemini
 	void render_scene_update(RenderScene* scene, EntityRenderState* state)
 	{
 		// extract data from static meshes
-		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
+		Freelist<StaticMeshComponent*>::Iterator iter = scene->static_meshes.begin();
+		for (; iter != scene->static_meshes.end(); ++iter)
 		{
-			if (!scene->static_meshes.is_valid(index))
-			{
-				continue;
-			}
-			StaticMeshComponent* component = scene->static_meshes.from_handle(index);
+			StaticMeshComponent* component = iter.data();
 			component->model_matrix = state->model_matrix[component->entity_index];
 			component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
 		}
