@@ -90,6 +90,11 @@ void Project::set_root_path(const String& in_root_path)
 	root_path = in_root_path;
 }
 
+const String& Project::get_root_path() const
+{
+	return root_path;
+}
+
 Project* Project::create_project()
 {
 	Project* project = new Project();

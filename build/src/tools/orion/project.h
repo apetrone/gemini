@@ -45,6 +45,7 @@ public:
 	platform::Result save_project_as(const String& absolute_path);
 
 	void set_root_path(const String& root_path);
+	const String& get_root_path() const;
 
 	static Project* create_project();
 	static Project* open_project(const String& absolute_path);

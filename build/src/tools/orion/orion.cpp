@@ -646,6 +646,19 @@ public:
 		set_active(false);
 	}
 
+	void on_project_build(void)
+	{
+		if (environment.project)
+		{
+			const String& path = environment.project->get_root_path();
+			LOGV("project root path is: %s\n", path.c_str());
+		}
+		else
+		{
+			LOGV("BUILD: No project loaded.\n");
+		}
+	}
+
 	void on_record_start(void)
 	{
 		if (is_recording_frames == false)
@@ -1182,6 +1195,9 @@ Options:
 				filemenu->add_item("Quit", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_quit, this));
 				menubar->add_menu(filemenu);
 
+				gui::Menu* project = new gui::Menu("Project", menubar);
+				project->add_item("Build", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_project_build, this));
+				menubar->add_menu(project);
 
 				gui::Menu* record = new gui::Menu("Sensor", menubar);
 				record->add_item("Save New Stream...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_record_start, this));
@@ -1189,7 +1205,6 @@ Options:
 				record->add_item("Open Stream...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_playback_start, this));
 				record->add_item("Stop Playback", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_playback_stop, this));
 				menubar->add_menu(record);
-
 
 				gui::Menu* windowmenu = new gui::Menu("Window", menubar);
 				windowmenu->add_item("Show Asset Processor", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_window_toggle_asset_processor, this));
