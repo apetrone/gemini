@@ -416,10 +416,9 @@ namespace gemini
 
 	void render_scene_destroy(RenderScene* scene, render2::Device* device)
 	{
-		Freelist<StaticMeshComponent*>::Iterator iter = scene->static_meshes.begin();
-		for (; iter != scene->static_meshes.end(); ++iter)
+		for (size_t index = 0; index < scene->static_meshes.size(); ++index)
 		{
-			StaticMeshComponent* component = iter.data();
+			StaticMeshComponent* component = scene->static_meshes.at(index);
 			MEMORY2_DELETE(*scene->allocator, component);
 		}
 
