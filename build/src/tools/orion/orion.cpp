@@ -652,6 +652,17 @@ public:
 		{
 			const String& path = environment.project->get_root_path();
 			LOGV("project root path is: %s\n", path.c_str());
+
+			// 1. Define source / destination folders.
+			//    platform specific versions, including shader types, etc.
+			// 2. Determine what processes to perform.
+			//	  Copy, Convert, Compress, etc.
+
+			// copy: conf, fonts, materials, shaders
+			// copy now, convert later: models
+			// convert: sounds, textures
+
+			// create a file watcher for the project root.
 		}
 		else
 		{
