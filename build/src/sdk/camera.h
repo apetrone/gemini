@@ -179,7 +179,7 @@ private:
 	float distance_to_target;
 	float desired_distance_to_target;
 	float desired_distance;
-
+	uint32_t distance_truncated; // set to 1 if the camera ran into something
 	float field_of_view;
 
 	glm::vec3 camera_direction;

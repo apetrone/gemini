@@ -158,7 +158,7 @@ QuaternionFollowCamera::QuaternionFollowCamera()
 	distance_to_target = 5.0f;
 	desired_distance = distance_to_target;
 	desired_distance_to_target = distance_to_target;
-
+	distance_truncated = 0;
 	field_of_view = 70.0f;
 
 	view_moved = 0;
@@ -239,7 +239,7 @@ void QuaternionFollowCamera::move_view(float yaw_delta, float pitch_delta)
 	float scaled_pitch = (move_sensitivity.y * -pitch_delta);
 
 	const float MIN_PITCH = -85.0f;
-	const float MAX_PITCH = 8.0f;
+	const float MAX_PITCH = 15.0f;
 
 	if (pitch + scaled_pitch <= MIN_PITCH)
 	{
@@ -273,9 +273,17 @@ void QuaternionFollowCamera::set_yaw_pitch(float yaw, float pitch)
 
 void QuaternionFollowCamera::tick(float step_interval_seconds)
 {
-	// exponential camera chase to desired_distance
-	float vel = (desired_distance - distance_to_target);
-	distance_to_target = desired_distance - vel * exp(-step_interval_seconds / 0.25f);
+	if (distance_truncated)
+	{
+		// snap to collision
+		distance_to_target = desired_distance;
+	}
+	else
+	{
+		// exponential camera chase to desired_distance; gracefully zoom
+		float vel = (desired_distance - distance_to_target);
+		distance_to_target = desired_distance - (vel * exp(-step_interval_seconds / 0.45f));
+	}
 
 	if (view_moved == 0)
 	{
@@ -305,8 +313,6 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 		interpolation_time = 0.0f;
 		auto_orienting = 0;
 	}
-
-
 
 	position = (-camera_direction * distance_to_target);
 	collision_object->set_world_transform(target_position + position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
@@ -370,12 +376,15 @@ glm::vec3 QuaternionFollowCamera::perform_raycast(const glm::vec3& start, const 
 	if (result.object)
 	{
 		// we hit something
-		//debugdraw::line(start, result.hit, color);
-		point = direction * glm::length(result.hit - start);
+		debugdraw::line(start, result.hit, color, 3.0f);
+		point = direction * (glm::length(result.hit - start) * 0.85f);
+		distance_truncated = 1;
+		//debugdraw::line(start, start + point, gemini::Color(1.0f, 0.0f, 0.0f), 3.0f);
 	}
 	else
 	{
 		point = (direction * desired_distance_to_target);
+		distance_truncated = 0;
 		//debugdraw::line(start, start + (direction * desired_distance_to_target), color);
 	}
 
@@ -385,12 +394,19 @@ glm::vec3 QuaternionFollowCamera::perform_raycast(const glm::vec3& start, const 
 void QuaternionFollowCamera::collision_correct()
 {
 	const float MIN_CAMERA_DISTANCE = 0.25f;
+
+	//debugdraw::line(target_position, glm::vec3(0.0f), gemini::Color(0.0f, 0.0f, 1.0f));
+	//debugdraw::line(target_position, target_position + (-camera_direction * glm::vec3(1.0f)), gemini::Color(0.0f, 0.0f, 1.0f), 1.0);
+
 	glm::vec3 far_point = perform_raycast(target_position, -camera_direction, gemini::Color(0.0f, 1.0f, 0.0f));
 	desired_distance = glm::length(far_point);
+
+	//debugdraw::line(target_position, target_position + far_point, gemini::Color(1.0f, 0.0f, 0.0f), 3.0f);
 
 	if (desired_distance < MIN_CAMERA_DISTANCE)
 	{
 		desired_distance = MIN_CAMERA_DISTANCE;
+		distance_truncated = 1;
 	}
 }
 

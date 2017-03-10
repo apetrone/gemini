@@ -41,7 +41,7 @@ using namespace gemini;
 
 namespace debugdraw
 {
-	const size_t DEBUGDRAW_PERSISTENT_PRIMITIVE_MAX = 16;
+	const size_t DEBUGDRAW_PERSISTENT_PRIMITIVE_MAX = 64;
 
 	// if you modify this, you must also update the buffer_primitive_table.
 	enum

@@ -1172,7 +1172,6 @@ Options:
 				engine::instance()->physics()->step_simulation(params.step_interval_seconds);
 			}
 
-			debugdraw::update(params.step_interval_seconds);
 
 			// subtract the interval from the accumulator
 			accumulator -= params.step_interval_seconds;
@@ -1186,6 +1185,11 @@ Options:
 		if (game_interface)
 		{
 			game_interface->tick(params.current_physics_tick, params.framedelta_seconds);
+
+			if (reset_queue)
+			{
+				debugdraw::update(params.step_interval_seconds);
+			}
 		}
 
 		if (reset_queue)
@@ -1286,6 +1290,8 @@ Options:
 			const glm::vec3 player_offset = glm::vec3(0.0f, -1.0f, 0.0f);
 			// setup the inverse camera transform.
 			view.modelview = glm::inverse(glm::translate(glm::mat4(), interpolated_camera_pos) * glm::toMat4(interpolated_camera_rot));
+
+			//view.modelview = glm::mat4(1.0f);
 
 			// this is what happens when we interpolate the vectors; but suffers artifacts from lerping vector used as orientation.
 			//view.modelview = glm::lookAt(interpolated_camera_pos, interpolated_camera_pos + interpolated_target_pos, glm::vec3(0.0f, 1.0f, 0.0f));
