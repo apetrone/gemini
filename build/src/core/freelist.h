@@ -194,7 +194,16 @@ namespace gemini
 		Iterator begin()
 		{
 			Iterator iter(this);
-			iter.last_index = 0;
+
+			// find the first valid index
+			for (iter.last_index = 0; iter.last_index < handles.size(); ++iter.last_index)
+			{
+				if (handles[iter.last_index] != InvalidHandle)
+				{
+					break;
+				}
+			}
+
 			return iter;
 		}
 
@@ -210,6 +219,5 @@ namespace gemini
 		Array<T> elements;
 		Array<size_t> freelist;
 		Array<size_t> handles;
-		value_pointer data;
 	}; // Freelist
 } // namespace gemini
