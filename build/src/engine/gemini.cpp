@@ -1286,8 +1286,6 @@ Options:
 				interpolated_camera_rot = camera_rot[1];
 			}
 
-			// compute modelview
-			const glm::vec3 player_offset = glm::vec3(0.0f, -1.0f, 0.0f);
 			// setup the inverse camera transform.
 			view.modelview = glm::inverse(glm::translate(glm::mat4(), interpolated_camera_pos) * glm::toMat4(interpolated_camera_rot));
 

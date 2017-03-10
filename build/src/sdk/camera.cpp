@@ -239,7 +239,7 @@ void QuaternionFollowCamera::move_view(float yaw_delta, float pitch_delta)
 	float scaled_pitch = (move_sensitivity.y * -pitch_delta);
 
 	const float MIN_PITCH = -85.0f;
-	const float MAX_PITCH = 15.0f;
+	const float MAX_PITCH = 35.0f;
 
 	if (pitch + scaled_pitch <= MIN_PITCH)
 	{
@@ -376,7 +376,7 @@ glm::vec3 QuaternionFollowCamera::perform_raycast(const glm::vec3& start, const 
 	if (result.object)
 	{
 		// we hit something
-		debugdraw::line(start, result.hit, color, 3.0f);
+		//debugdraw::line(start, result.hit, color, 3.0f);
 		point = direction * (glm::length(result.hit - start) * 0.85f);
 		distance_truncated = 1;
 		//debugdraw::line(start, start + point, gemini::Color(1.0f, 0.0f, 0.0f), 3.0f);
