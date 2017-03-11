@@ -140,6 +140,12 @@ public:
 // distance and field of view driven from pitch.
 
 #include <sdk/physics_collisionobject.h>
+#if 0
+// yaw, pitch, roll
+// distance from pivot
+// horizontal / vertical offset
+// field of view
+#endif
 
 class QuaternionFollowCamera : public GameCamera
 {
