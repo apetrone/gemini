@@ -68,17 +68,12 @@ from math import (
 	degrees
 )
 
-import math
-import operator
-import json
-import os
-import platform
 import select
 import socket
 import struct
-import sys
 
 from datetime import datetime
+from mathutils import Quaternion
 from threading import Thread
 
 #
@@ -87,6 +82,7 @@ from threading import Thread
 IMOCAP_DATA_SIZE = 20
 QUANTIZE_VALUE = (1.0 / 16384.0)
 
+# TODO: Need to flip Z and Y into Blender's coordinate frame.
 
 #
 # utility functions
@@ -107,7 +103,7 @@ class imocap_packet(object):
 
 	def quaternion(self, index):
 		offset = (1 + index * IMOCAP_DATA_SIZE)
-		values = struct.unpack_from('HHHH', self.data, offset)
+		values = struct.unpack_from('<hhhh', self.data, offset)
 		return [v * QUANTIZE_VALUE for v in values]
 
 class imocap_client(object):
@@ -132,6 +128,8 @@ class imocap_client(object):
 		self.listen_port = 27015
 		self.last_client_ping_msec = 0
 		self.last_client_contact_msec = 0
+		self.device_rotations = [Quaternion((1.0, 0.0, 0.0, 0.0))] * self.IMOCAP_TOTAL_SENSORS
+		self.zeroed_rotations = [Quaternion((1.0, 0.0, 0.0, 0.0))] * self.IMOCAP_TOTAL_SENSORS
 
 	def connect(self):
 		# The client responds to UDP broadcasts transmitted
@@ -152,6 +150,22 @@ class imocap_client(object):
 		self.thread = None
 		self.data_socket = None
 		self.client_address = None
+
+	def get_local_rotation(self, index):
+		return self.zeroed_rotations[index].inverted() * self.device_rotations[index]
+
+	def on_received_new_data(self):
+		if 'Cube' in bpy.context.scene.objects:
+			obj = bpy.context.scene.objects['Cube']
+			obj.rotation_mode = 'QUATERNION'
+			obj.rotation_quaternion = self.get_local_rotation(0)
+			obj.rotation_mode = 'XYZ'
+		else:
+			print('No Cube found in scene')
+
+	def freeze_rotations(self):
+		for index in range(0, self.IMOCAP_TOTAL_SENSORS):
+			self.zeroed_rotations[index] = self.device_rotations[index]
 
 	def wait_for_data(self, *args):
 		current_state = self.STATE_WAITING
@@ -177,7 +191,6 @@ class imocap_client(object):
 					packet = struct.pack('<i', self.CLIENT_PING_VALUE)
 					self.data_socket.sendto(packet, self.client_address)
 
-
 			read_fds = [self.data_socket]
 			write_fds = [self.data_socket]
 
@@ -195,9 +208,13 @@ class imocap_client(object):
 						# get just the quaternion data out for now.
 						for index in range(0, self.IMOCAP_TOTAL_SENSORS):
 							values = packet.quaternion(index)
-							print('{} {}, {}, {}, {}'.format(
-								index,
-								values[0], values[1], values[2], values[3]))
+							rotation = Quaternion((values[0],
+												   values[1],
+												   values[2],
+												   values[3]))
+							self.device_rotations[index] = rotation
+
+						self.on_received_new_data()
 				elif current_state == self.STATE_WAITING:
 					request_value = struct.unpack('<i', data)[0]
 					if request_value == self.CONNECTION_REQUEST_VALUE:
@@ -225,6 +242,7 @@ class imocap_client(object):
 						self.client_address = address
 						self.last_client_contact_msec = get_milliseconds()
 						current_state = self.STATE_STREAMING
+						print('Connected to imocap device. {}'.format(address))
 					else:
 						print('Handshake did not match! '
 							'(received: {}, expected: {})'.format(
@@ -239,10 +257,6 @@ class imocap_connect(bpy.types.Operator):
 
 	def execute(self, context):
 		if not global_client.is_connected:
-			print('connect to {}:{}'.format(
-				context.scene.imocap_host,
-				context.scene.imocap_port)
-			)
 			global_client.connect()
 			self.report({'INFO'}, 'Connected to host.')
 		else:
@@ -256,19 +270,17 @@ class imocap_freeze(bpy.types.Operator):
 
 	def execute(self, context):
 		print('Freeze Transforms')
+		global_client.freeze_rotations()
 		return {'FINISHED'}
 
 class UIPanel(bpy.types.Panel):
-	bl_label = 'Hello from UI panel'
+	bl_label = 'imocap control'
 	bl_space_type = 'VIEW_3D'
 	bl_region_type = 'UI'
 
 	def draw(self, context):
 		layout = self.layout
 		scene = context.scene
-
-		layout.prop(scene, 'imocap_host')
-		layout.prop(scene, 'imocap_port')
 
 		action_text = 'Connect' if not global_client.is_connected else 'Disconnect'
 		self.layout.operator('io_import_imocap.connect', text=action_text)
