@@ -84,8 +84,9 @@ from threading import Thread
 #
 # constants
 #
-COORDINATE_SYSTEM_ZUP = "ZUP"
-COORDINATE_SYSTEM_YUP = "YUP"
+IMOCAP_DATA_SIZE = 20
+QUANTIZE_VALUE = (1.0 / 16384.0)
+
 
 #
 # utility functions
@@ -95,8 +96,6 @@ def get_milliseconds():
 	# http://stackoverflow.com/questions/5998245/get-current-time-in-milliseconds-in-python/21858377#21858377
 	return int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds() * 1000.0)
 
-IMOCAP_DATA_SIZE = 20
-QUANTIZE_VALUE = (1.0 / 16384.0)
 class imocap_packet(object):
 	def __init__(self, data):
 		self.data = data
@@ -104,9 +103,6 @@ class imocap_packet(object):
 		self.footer = struct.unpack_from('B', data, 61)[0]
 
 	def is_valid(self):
-		# A valid packet is identified by:
-		# header == 0xba
-		# footer == 0xff
 		return self.header == 0xba and self.footer == 0xff
 
 	def quaternion(self, index):
@@ -138,6 +134,9 @@ class imocap_client(object):
 		self.last_client_contact_msec = 0
 
 	def connect(self):
+		# The client responds to UDP broadcasts transmitted
+		# by the device. This just needs to open the correct
+		# port and wait.
 		self.thread = Thread(target=self.wait_for_data, args=(1,0))
 		self.is_connected = True
 
@@ -234,10 +233,9 @@ class imocap_client(object):
 
 global_client = imocap_client()
 
-class hello(bpy.types.Operator):
-	bl_idname = "io_import_imocap.hello"
-	bl_label = "hello"
-	bl_context = 'scene'
+class imocap_connect(bpy.types.Operator):
+	bl_idname = "io_import_imocap.connect"
+	bl_label = "connect"
 
 	def execute(self, context):
 		if not global_client.is_connected:
@@ -252,6 +250,13 @@ class hello(bpy.types.Operator):
 			global_client.disconnect()
 		return {'FINISHED'}
 
+class imocap_freeze(bpy.types.Operator):
+	bl_idname = 'io_import_imocap.freeze'
+	bl_label = 'Freeze'
+
+	def execute(self, context):
+		print('Freeze Transforms')
+		return {'FINISHED'}
 
 class UIPanel(bpy.types.Panel):
 	bl_label = 'Hello from UI panel'
@@ -266,22 +271,18 @@ class UIPanel(bpy.types.Panel):
 		layout.prop(scene, 'imocap_port')
 
 		action_text = 'Connect' if not global_client.is_connected else 'Disconnect'
-		self.layout.operator('io_import_imocap.hello', text=action_text)
+		self.layout.operator('io_import_imocap.connect', text=action_text)
+
+		self.layout.operator('io_import_imocap.freeze', text='Freeze Transforms')
 
 #
 # startup / blender specific interface functions
 #
 def register():
-	bpy.types.Scene.imocap_host = StringProperty(name='host')
-	bpy.types.Scene.imocap_port = IntProperty(name='port')
-	bpy.utils.register_class(hello)
-	bpy.utils.register_class(UIPanel)
+	bpy.utils.register_module(__name__)
 
 def unregister():
-	bpy.utils.unregister_class(hello)
-	bpy.utils.unregister_class(UIPanel)
-	del bpy.types.Scene.imocap_host
-	del bpy.types.Scene.imocap_port
+	bpy.utils.unregister_module(__name__)
 
 if __name__ == "__main__":
 	register()
