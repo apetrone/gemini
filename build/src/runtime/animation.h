@@ -73,9 +73,6 @@ namespace gemini
 			// source key frame list
 			KeyframeList* keyframelist;
 
-			// value by reference
-			//float* value;
-
 			// is this a loopable anim; if so, we ignore the last keyframe and wrap
 			// because keyframe[first] == keyframe[last]
 			bool wrap;
@@ -88,8 +85,6 @@ namespace gemini
 
 			// evaluate this channel at time t_seconds
 			float evaluate(float t_seconds, float frame_delay_seconds) const;
-
-			//float operator()() const;
 		}; // Channel
 
 
@@ -119,7 +114,6 @@ namespace gemini
 			Sequence(gemini::Allocator& allocator);
 		}; // Sequence
 
-
 		struct AnimatedInstance
 		{
 			SequenceId index;
@@ -138,7 +132,6 @@ namespace gemini
 			virtual void reset_channels();
 		}; // AnimatedInstance
 
-
 		//
 		// animation system
 		//
@@ -147,9 +140,6 @@ namespace gemini
 		void update(float delta_seconds);
 
 		Sequence* load_sequence_from_file(gemini::Allocator& allocator, const char* name, Mesh* mesh);
-
-
-
 		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, Mesh* mesh);
 		SequenceId find_sequence(const char* name);
 		Sequence* get_sequence_by_index(SequenceId index);

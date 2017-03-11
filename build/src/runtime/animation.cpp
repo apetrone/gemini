@@ -118,24 +118,8 @@ namespace gemini
 		}
 
 		Channel::~Channel()
-		{}
-
-		//void Channel::set_target(float *target)
-		//{
-		//	value = target;
-		//}
-
-#if 0
-		animation::SequenceId instance_index = animations[index];
-		animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
-
-		// reset all the channels
-		instance->reset_channels();
-
-		// force an advance, to fetch the first frame
-		// but don't advance time.
-		instance->advance(0.0f);
-#endif
+		{
+		}
 
 		void Channel::set_keyframe_list(KeyframeList* source_keyframe_list)
 		{
@@ -306,12 +290,6 @@ namespace gemini
 				Sequence* sequence = load_data->sequence;
 
 				core::util::ConfigLoadStatus result = core::util::ConfigLoad_Failure;
-
-				//if (!mesh->has_skeletal_animation)
-				//{
-				//	LOGW("Tried to attach an animation to a non-animated model!\n");
-				//	return result;
-				//}
 
 				if (root.isNull())
 				{
@@ -589,18 +567,7 @@ namespace gemini
 			return _animation_state->instances.from_handle(index);
 		}
 
-
-
-
-
-
-
-
 //#define GEMINI_DEBUG_BONES 1
-
-
-
-
 
 		void animated_instance_get_pose(AnimatedInstance* instance, Pose& pose)
 		{
@@ -650,24 +617,13 @@ namespace gemini
 			}
 		} // animation_instance_get_pose
 
-
 		void animation_interpolate_pose(Pose& out, Pose& last_pose, Pose& curr_pose, float t)
 		{
-#if 1
 			for (size_t index = 0; index < MAX_BONES; ++index)
 			{
 				out.pos[index] = lerp(last_pose.pos[index], curr_pose.pos[index], t);
 				out.rot[index] = slerp(last_pose.rot[index], curr_pose.rot[index], t);
-
-				//				LOGV("out.rot[%i] = %2.2f, %2.2f, %2.2f, %2.2f | curr = %2.2f, %2.2f, %2.2f, %2.2f\n",
-				//					 index,
-				//					 out.rot[index].x, out.rot[index].y, out.rot[index].z, out.rot[index].w,
-				//					 curr.rot[index].x, curr.rot[index].y, curr.rot[index].z, curr.rot[index].w
-				//					 );
 			}
-#else
-			out = curr_pose;
-#endif
 		} // animation_interpolate_pose
 
 	} // namespace animation
