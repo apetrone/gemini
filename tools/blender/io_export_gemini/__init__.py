@@ -837,12 +837,11 @@ class GeminiModel(object):
 
 			if self.armature.animation_data is not None:
 				print("Exporting action '%s'" % action.name)
-				self.armature.animation_data.action = action
 				bpy.context.scene.objects.active = self.armature
 				bpy.ops.object.select_pattern(pattern=self.armature.name)
 				bpy.ops.object.mode_set(mode='POSE')
 				bpy.ops.pose.select_all(action='SELECT')
-				bpy.ops.pose.transforms_clear()
+				self.armature.animation_data.action = action
 				bpy.ops.object.mode_set(mode='OBJECT')
 
 			for bone_data in self.bone_data.ordered_items:
