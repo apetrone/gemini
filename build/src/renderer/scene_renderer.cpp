@@ -278,14 +278,30 @@ namespace gemini
 
 		uint32_t instance_index = mesh->sequence_index_by_name[animation_name];
 		animation::AnimatedInstance* instance = component->sequence_instances[instance_index];
-		instance->enabled = 1;
+		instance->flags = animation::AnimatedInstance::Flags::Playing;
 		instance->reset_channels();
-
+		LOGV("playing animation: %s\n", animation_name);
 		component->current_sequence_index = instance_index;
 
 		return instance_index;
 	}
 
+	bool render_scene_animation_finished(RenderScene* scene, uint32_t component_id)
+	{
+		// If you hit this, an invalid component id was passed in
+		assert(component_id > 0);
+		component_id--;
+
+		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
+		animation::AnimatedInstance* instance = component->sequence_instances[component->current_sequence_index];
+		assert(instance);
+		if (instance)
+		{
+			return instance->is_finished();
+		}
+
+		return false;
+	}
 
 	bool render_scene_animation_is_playing(RenderScene* scene, uint32_t component_id, uint32_t instance_id)
 	{

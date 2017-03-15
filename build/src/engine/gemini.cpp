@@ -487,6 +487,13 @@ public:
 		render_scene_animation_play(render_scene, instance->get_component_index(), animation_name);
 	}
 
+	virtual bool is_animation_finished(IModelInstanceData* model)
+	{
+		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
+
+		return render_scene_animation_finished(render_scene, instance->get_component_index());
+	}
+
 	// IModelInterface
 	virtual int32_t create_instance_data(uint16_t entity_index, const char* model_path);
 	virtual void destroy_instance_data(int32_t index);
@@ -594,6 +601,9 @@ void interpolate_states(EntityRenderState* out, EntityRenderState* a, EntityRend
 	{
 		glm::quat orientation = gemini::slerp(a->orientation[index], b->orientation[index], alpha);
 		glm::vec3 position = gemini::lerp(a->position[index], b->position[index], alpha);
+
+		// Wait, since when does a pivot point get interpolated ?
+		// I have no idea what this produces.
 		glm::vec3 pivot_point = gemini::lerp(a->pivot_point[index], b->pivot_point[index], alpha);
 
 		glm::mat4 rotation = glm::toMat4(orientation);
@@ -1287,6 +1297,10 @@ Options:
 			}
 
 			// setup the inverse camera transform.
+			glm::vec3 pivot_offset(0.2f, 0.0f, 0.0f);
+			// glm::translate(glm::mat4(), pivot_offset) *
+			// * glm::translate(glm::mat4(), -pivot_offset)
+
 			view.modelview = glm::inverse(glm::translate(glm::mat4(), interpolated_camera_pos) * glm::toMat4(interpolated_camera_rot));
 
 			//view.modelview = glm::mat4(1.0f);

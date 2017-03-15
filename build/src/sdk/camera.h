@@ -145,6 +145,10 @@ public:
 // distance from pivot
 // horizontal / vertical offset
 // field of view
+
+// there's also horizontal screen offset; as modern games are composing
+// the shots with characters off-center. this isn't interpolated however,
+// so it can be omitted for now.
 #endif
 
 class QuaternionFollowCamera : public GameCamera

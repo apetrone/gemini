@@ -80,12 +80,13 @@ namespace gemini
 
 	void ModelInstanceData::set_animation_enabled(int32_t index, bool enabled)
 	{
+		assert(0); // I don't think this is used anymore.
 		animation::SequenceId global_instance_index = animations[index];
 		animation::AnimatedInstance* instance = animation::get_instance_by_index(global_instance_index);
 		assert(instance != 0);
 		if (instance)
 		{
-			instance->enabled = enabled;
+			instance->flags = animation::AnimatedInstance::Flags::Playing;
 		}
 	}
 

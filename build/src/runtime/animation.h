@@ -116,19 +116,27 @@ namespace gemini
 
 		struct AnimatedInstance
 		{
+			enum class Flags
+			{
+				Idle,		// has not played yet
+				Playing,	// enabled
+				Finished	// finished playing
+			};
+
 			SequenceId index;
 			float local_time_seconds;
 			SequenceId sequence_index;
 			FixedArray<float> animation_set;
 			FixedArray<Channel> channel_set;
-			bool enabled;
+			Flags flags;
 
 			AnimatedInstance(gemini::Allocator& allocator);
 			virtual ~AnimatedInstance();
 
 			virtual void initialize(Sequence* sequence);
 			virtual void advance(float delta_seconds);
-			virtual bool is_playing() const { return enabled; }
+			virtual bool is_playing() const;
+			virtual bool is_finished() const;
 			virtual void reset_channels();
 		}; // AnimatedInstance
 
@@ -151,7 +159,6 @@ namespace gemini
 
 		void animated_instance_get_pose(AnimatedInstance* instance, Pose& pose);
 
-
-		void animation_interpolate_pose(Pose& out, Pose& last_pose, Pose& curr_pose, float t);
+		//void animation_interpolate_pose(Pose& out, Pose& last_pose, Pose& curr_pose, float t);
 	}
 } // namespace gemini

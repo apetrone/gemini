@@ -136,6 +136,9 @@ namespace gemini
 	// returns the instance id for an animation
 	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name);
 
+	// returns true if the current animation has finished playing
+	bool render_scene_animation_finished(RenderScene* scene, uint32_t component_id);
+
 	// check to see if an animation is playing
 	bool render_scene_animation_is_playing(RenderScene* scene, uint32_t component_id, uint32_t instance_id);
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device);

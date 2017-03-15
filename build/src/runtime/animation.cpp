@@ -195,7 +195,7 @@ namespace gemini
 		// AnimatedInstance
 		AnimatedInstance::AnimatedInstance(gemini::Allocator& allocator)
 			: local_time_seconds(0.0)
-			, enabled(false)
+			, flags(Flags::Idle)
 			, animation_set(allocator)
 			, channel_set(allocator)
 		{
@@ -231,8 +231,20 @@ namespace gemini
 
 			if (local_time_seconds > sequence->duration_seconds)
 			{
-				local_time_seconds -= sequence->duration_seconds;
+				//local_time_seconds -= sequence->duration_seconds;
+				local_time_seconds = 0;
+				flags = Flags::Finished;
 			}
+		}
+
+		bool AnimatedInstance::is_playing() const
+		{
+			return flags == Flags::Playing;
+		}
+
+		bool AnimatedInstance::is_finished() const
+		{
+			return flags == Flags::Finished;
 		}
 
 		void AnimatedInstance::reset_channels()
@@ -511,7 +523,7 @@ namespace gemini
 			for (; anim != _animation_state->instances.end(); ++anim)
 			{
 				AnimatedInstance* instance = anim.data();
-				if (instance->enabled)
+				if (instance->is_playing())
 				{
 					instance->advance(delta_seconds);
 				}
@@ -569,6 +581,11 @@ namespace gemini
 
 //#define GEMINI_DEBUG_BONES 1
 
+		float animated_instance_get_local_time(AnimatedInstance* instance)
+		{
+			return instance->local_time_seconds;
+		}
+
 		void animated_instance_get_pose(AnimatedInstance* instance, Pose& pose)
 		{
 #if defined(GEMINI_DEBUG_BONES)
@@ -617,14 +634,14 @@ namespace gemini
 			}
 		} // animation_instance_get_pose
 
-		void animation_interpolate_pose(Pose& out, Pose& last_pose, Pose& curr_pose, float t)
-		{
-			for (size_t index = 0; index < MAX_BONES; ++index)
-			{
-				out.pos[index] = lerp(last_pose.pos[index], curr_pose.pos[index], t);
-				out.rot[index] = slerp(last_pose.rot[index], curr_pose.rot[index], t);
-			}
-		} // animation_interpolate_pose
+		//void animation_interpolate_pose(Pose& out, Pose& last_pose, Pose& curr_pose, float t)
+		//{
+		//	for (size_t index = 0; index < MAX_BONES; ++index)
+		//	{
+		//		out.pos[index] = lerp(last_pose.pos[index], curr_pose.pos[index], t);
+		//		out.rot[index] = slerp(last_pose.rot[index], curr_pose.rot[index], t);
+		//	}
+		//} // animation_interpolate_pose
 
 	} // namespace animation
 } // namespace gemini

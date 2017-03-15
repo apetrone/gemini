@@ -95,6 +95,7 @@ namespace gemini
 		virtual void set_relative_mouse_mode(bool enable) = 0;
 
 		virtual void play_animation(class IModelInstanceData* model, const char* name) = 0;
+		virtual bool is_animation_finished(IModelInstanceData* model) = 0;
 	};
 
 	namespace engine
