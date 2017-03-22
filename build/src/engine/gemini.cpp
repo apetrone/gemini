@@ -677,9 +677,7 @@ private:
 	RenderScene* render_scene;
 	EntityRenderState* entity_render_state;
 
-	glm::vec3 camera_pos[2];
-	glm::quat camera_rot[2];
-	glm::vec3 target_pos[2];
+	CameraState camera_state[2];
 
 
 	void open_gamelibrary()
@@ -1215,10 +1213,8 @@ Options:
 			extract_entities(&entity_render_state[1], entity_manager.get_entity_list());
 			interpolate_alpha = 0.0f;
 
-			camera_pos[0] = camera_pos[1];
-			camera_rot[0] = camera_rot[1];
-			target_pos[0] = target_pos[1];
-			game_interface->extract_camera(&camera_pos[1], &camera_rot[1], &target_pos[1]);
+			camera_state[0] = camera_state[1];
+			game_interface->extract_camera(&camera_state[1]);
 
 			queued_messages->resize(0);
 
@@ -1285,15 +1281,15 @@ Options:
 			const uint32_t enable_interpolation = 1;
 			if (enable_interpolation)
 			{
-				interpolated_camera_pos = gemini::lerp(camera_pos[0], camera_pos[1], alpha);
-				interpolated_target_pos = gemini::lerp(target_pos[0], target_pos[1], alpha);
-				interpolated_camera_rot = gemini::slerp(camera_rot[0], camera_rot[1], alpha);
+				interpolated_camera_pos = gemini::lerp(camera_state[0].position, camera_state[1].position, alpha);
+				interpolated_target_pos = gemini::lerp(camera_state[0].distance_from_pivot, camera_state[1].distance_from_pivot, alpha);
+				interpolated_camera_rot = gemini::slerp(camera_state[0].rotation, camera_state[1].rotation, alpha);
 			}
 			else
 			{
-				interpolated_camera_pos = camera_pos[1];
-				interpolated_target_pos = target_pos[1];
-				interpolated_camera_rot = camera_rot[1];
+				interpolated_camera_pos = camera_state[1].position;
+				interpolated_target_pos = camera_state[1].distance_from_pivot;
+				interpolated_camera_rot = camera_state[1].rotation;
 			}
 
 			// setup the inverse camera transform.

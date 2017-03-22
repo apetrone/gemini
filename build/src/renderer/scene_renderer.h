@@ -127,6 +127,7 @@ namespace gemini
 		glm::mat4 model_matrix[256];
 	}; // EntityRenderState
 
+
 	void render_scene_startup(render2::Device* device, Allocator& allocator);
 	void render_scene_shutdown();
 

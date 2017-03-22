@@ -154,6 +154,27 @@ namespace gemini
 		}
 	};
 
+	// Camera state which can be interpolated.
+#if 0
+	// yaw, pitch, roll
+	// distance from pivot
+	// horizontal / vertical offset
+	// field of view
+
+	// there's also horizontal screen offset; as modern games are composing
+	// the shots with characters off-center. this isn't interpolated however,
+	// so it can be omitted for now.
+#endif
+	struct CameraState
+	{
+		glm::vec3 position;
+		glm::quat rotation; // or yaw, pitch, and roll.
+		glm::vec3 distance_from_pivot;
+		float horizontal_offset;
+		float vertical_offset;
+		float field_of_view;
+	};
+
 	// Describes the interface exposed to the engine from the game.
 	class IGameInterface
 	{
@@ -191,7 +212,7 @@ namespace gemini
 		// get view and projection matrices to render from
 		virtual void get_render_view(gemini::View& view) = 0;
 
-		virtual void extract_camera(glm::vec3* camera_pos, glm::quat* camera_rot, glm::vec3* target) = 0;
+		virtual void extract_camera(CameraState* state) = 0;
 	}; // GameInterface
 
 

@@ -579,6 +579,10 @@ void CameraMixer::normalize_weights(float top_weight)
 
 CameraMixer::CameraMixer(gemini::Allocator& _allocator)
 	: allocator(_allocator)
+	, action(CameraMixAction::Idle)
+	, blend_alpha(0.0f)
+	, current_time_sec(0.0f)
+	, total_time_sec(0.0f)
 {
 	// default camera
 	DefaultCamera* camera = MEMORY2_NEW(allocator, DefaultCamera);
@@ -599,26 +603,37 @@ CameraMixer::~CameraMixer()
 	}
 }
 
-void CameraMixer::push_camera(GameCamera* camera, float weight)
+void CameraMixer::push_camera(GameCamera* camera, float delay_msec)
 {
-	CameraBlend blend(camera, weight);
+	// set interval to delay_msec
+
+	CameraBlend blend(camera, 1.0f);
 	cameras.push_back(blend);
 
-	normalize_weights(weight);
+	total_time_sec = delay_msec;
+	current_time_sec = 0.0f;
+	blend_alpha = 0.0f;
+	action = CameraMixAction::Blend_Push;
+
+	//normalize_weights(weight);
 
 	// force an update of the origin/view
 	tick(0.0f, 0.0f);
 }
 
-void CameraMixer::pop_camera(float weight)
+void CameraMixer::pop_camera(float delay_msec)
 {
-	CameraBlend blend = cameras.pop();
-	MEMORY2_DELETE(allocator, blend.camera);
+	total_time_sec = delay_msec;
+	current_time_sec = 0.0f;
+	blend_alpha = 0.0f;
+	action = CameraMixAction::Blend_Pop;
+	//CameraBlend blend = cameras.pop();
+	//MEMORY2_DELETE(allocator, blend.camera);
 
-	normalize_weights(weight);
+	//normalize_weights(weight);
 
 	// re-normalize
-	tick(0.0f, 0.0f);
+	//tick(0.0f, 0.0f);
 }
 
 GameCamera* CameraMixer::get_top_camera()
@@ -658,6 +673,59 @@ void CameraMixer::tick(float step_interval_seconds, float step_alpha)
 	view = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	const size_t total_cameras = cameras.size();
+	bool finished_transition = false;
+
+	assert(total_cameras > 0);
+
+	if (action != CameraMixAction::Idle)
+	{
+		current_time_sec += step_interval_seconds;
+		blend_alpha = (current_time_sec / total_time_sec);
+		if (blend_alpha >= 1.0f)
+		{
+			action = CameraMixAction::Idle;
+			current_time_sec = 0.0f;
+			total_time_sec = 0.0f;
+			finished_transition = true;
+			LOGV("finished animation\n");
+		}
+		else
+		{
+			LOGV("blend_alpha is %2.2f\n", blend_alpha);
+		}
+	}
+
+	if (action == CameraMixAction::Blend_Push)
+	{
+		// blend the current top camera in; blend second out.
+
+		CameraBlend& top = cameras[0];
+		top.weight = blend_alpha;
+
+		CameraBlend& second = cameras[1];
+		second.weight = 1.0f - blend_alpha;
+
+		LOGV("weights: %2.2f, %2.f\n", top.weight, second.weight);
+	}
+	else if (action == CameraMixAction::Blend_Pop)
+	{
+		CameraBlend& second = cameras[1];
+		second.weight = blend_alpha;
+
+		CameraBlend& top = cameras[0];
+		top.weight = 1.0f - blend_alpha;
+
+		LOGV("weights: %2.2f, %2.f\n", top.weight, second.weight);
+		if (finished_transition)
+		{
+			CameraBlend blend = cameras.pop();
+			MEMORY2_DELETE(allocator, blend.camera);
+			// re-normalize
+			tick(0.0f, 0.0f);
+		}
+	}
+
+
 	for (size_t index = 0; index < total_cameras; ++index)
 	{
 		CameraBlend& blend = cameras[index];

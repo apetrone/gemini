@@ -140,16 +140,6 @@ public:
 // distance and field of view driven from pitch.
 
 #include <sdk/physics_collisionobject.h>
-#if 0
-// yaw, pitch, roll
-// distance from pivot
-// horizontal / vertical offset
-// field of view
-
-// there's also horizontal screen offset; as modern games are composing
-// the shots with characters off-center. this isn't interpolated however,
-// so it can be omitted for now.
-#endif
 
 class QuaternionFollowCamera : public GameCamera
 {
@@ -285,6 +275,13 @@ private:
 		}
 	};
 
+	enum class CameraMixAction
+	{
+		Idle,
+		Blend_Push,
+		Blend_Pop
+	};
+
 	FixedSizeQueue<CameraBlend, 4> cameras;
 
 	glm::vec3 origin;
@@ -293,16 +290,21 @@ private:
 
 	gemini::Allocator& allocator;
 
+	float blend_alpha;
+	float current_time_sec;
+	float total_time_sec;
+	CameraMixAction action;
+
 	void normalize_weights(float top_weight);
 public:
 	CameraMixer(gemini::Allocator& allocator);
 	~CameraMixer();
 
-	// push a new camera onto the stack with the desired blend weight
-	void push_camera(GameCamera* new_camera, float weight);
+	// push a new camera onto the stack
+	void push_camera(GameCamera* new_camera, float delay_msec);
 
-	// pop the current camera off the stack and set the new blend weight
-	void pop_camera(float weight);
+	// pop the current camera off the stack
+	void pop_camera(float delay_msec);
 
 	GameCamera* get_top_camera();
 
