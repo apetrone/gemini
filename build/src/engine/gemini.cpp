@@ -1278,18 +1278,21 @@ Options:
 			glm::vec3 interpolated_camera_pos;
 			glm::vec3 interpolated_target_pos;
 			glm::quat interpolated_camera_rot;
+			float interpolated_fov;
 			const uint32_t enable_interpolation = 1;
 			if (enable_interpolation)
 			{
 				interpolated_camera_pos = gemini::lerp(camera_state[0].position, camera_state[1].position, alpha);
 				interpolated_target_pos = gemini::lerp(camera_state[0].distance_from_pivot, camera_state[1].distance_from_pivot, alpha);
 				interpolated_camera_rot = gemini::slerp(camera_state[0].rotation, camera_state[1].rotation, alpha);
+				interpolated_fov = gemini::lerp(camera_state[0].field_of_view, camera_state[1].field_of_view, alpha);
 			}
 			else
 			{
 				interpolated_camera_pos = camera_state[1].position;
 				interpolated_target_pos = camera_state[1].distance_from_pivot;
 				interpolated_camera_rot = camera_state[1].rotation;
+				interpolated_fov = camera_state[1].field_of_view;
 			}
 
 			// setup the inverse camera transform.
@@ -1303,6 +1306,12 @@ Options:
 
 			// this is what happens when we interpolate the vectors; but suffers artifacts from lerping vector used as orientation.
 			//view.modelview = glm::lookAt(interpolated_camera_pos, interpolated_camera_pos + interpolated_target_pos, glm::vec3(0.0f, 1.0f, 0.0f));
+
+			const float nearz = 0.01f;
+			const float farz = 4096.0f;
+			const float screen_aspect_ratio = (view.width / (float)view.height);
+			view.projection = glm::perspective(glm::radians(interpolated_fov), screen_aspect_ratio, nearz, farz);
+
 
 			render_scene_update(render_scene, &ers);
 			render_scene_draw(render_scene, device, view.modelview, view.projection);

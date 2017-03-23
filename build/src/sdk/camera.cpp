@@ -101,6 +101,10 @@ public:
 	{
 	}
 
+	virtual void set_fov(float new_fov) override
+	{
+	}
+
 	virtual void set_target_position(const glm::vec3& target_worldspace_position) override
 	{
 	}
@@ -347,6 +351,9 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 	//	gemini::Color(1.0f, 0.0f, 0.0f)
 	//);
 
+	// adjust fov
+	anim_fov.update(field_of_view, step_interval_seconds);
+
 	if ((view_moved == 0) && (auto_orienting == 1) && (interpolation_time > 0.0f))
 	{
 		float t = (kInterpolationTime - interpolation_time) / kInterpolationTime;
@@ -367,6 +374,11 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 	}
 
 	view_moved = 0;
+}
+
+void QuaternionFollowCamera::set_fov(float new_fov)
+{
+	field_of_view = new_fov;
 }
 
 glm::vec3 QuaternionFollowCamera::perform_raycast(const glm::vec3& start, const glm::vec3& direction, const gemini::Color& color)
@@ -486,6 +498,11 @@ void QuaternionFollowCamera::update_view_orientation()
 	collision_correct();
 }
 
+void QuaternionFollowCamera::set_target_fov(float new_fov)
+{
+	anim_fov.start(field_of_view, new_fov, 0.15f);
+}
+
 // --------------------------------------------------------
 // FixedCamera
 // --------------------------------------------------------
@@ -531,6 +548,10 @@ void FixedCamera::set_yaw_pitch(float yaw, float pitch)
 
 
 void FixedCamera::tick(float step_interval_seconds)
+{
+}
+
+void FixedCamera::set_fov(float new_fov)
 {
 }
 
@@ -603,14 +624,14 @@ CameraMixer::~CameraMixer()
 	}
 }
 
-void CameraMixer::push_camera(GameCamera* camera, float delay_msec)
+void CameraMixer::push_camera(GameCamera* camera, float delay_sec)
 {
 	// set interval to delay_msec
 
 	CameraBlend blend(camera, 1.0f);
 	cameras.push_back(blend);
 
-	total_time_sec = delay_msec;
+	total_time_sec = delay_sec;
 	current_time_sec = 0.0f;
 	blend_alpha = 0.0f;
 	action = CameraMixAction::Blend_Push;
@@ -618,12 +639,12 @@ void CameraMixer::push_camera(GameCamera* camera, float delay_msec)
 	//normalize_weights(weight);
 
 	// force an update of the origin/view
-	tick(0.0f, 0.0f);
+	//tick(0.0f, 0.0f);
 }
 
-void CameraMixer::pop_camera(float delay_msec)
+void CameraMixer::pop_camera(float delay_sec)
 {
-	total_time_sec = delay_msec;
+	total_time_sec = delay_sec;
 	current_time_sec = 0.0f;
 	blend_alpha = 0.0f;
 	action = CameraMixAction::Blend_Pop;
@@ -663,7 +684,8 @@ glm::vec3 CameraMixer::get_right() const
 
 float CameraMixer::get_field_of_view() const
 {
-	return cameras.top().camera->get_fov();
+	return gemini::lerp(cameras[0].camera->get_fov(), cameras[1].camera->get_fov(), cameras[1].weight);
+	//return cameras.top().camera->get_fov();
 }
 
 void CameraMixer::tick(float step_interval_seconds, float step_alpha)
@@ -672,10 +694,7 @@ void CameraMixer::tick(float step_interval_seconds, float step_alpha)
 	origin = glm::vec3(0.0f, 0.0f, 0.0f);
 	view = glm::vec3(0.0f, 0.0f, 0.0f);
 
-	const size_t total_cameras = cameras.size();
 	bool finished_transition = false;
-
-	assert(total_cameras > 0);
 
 	if (action != CameraMixAction::Idle)
 	{
@@ -683,16 +702,12 @@ void CameraMixer::tick(float step_interval_seconds, float step_alpha)
 		blend_alpha = (current_time_sec / total_time_sec);
 		if (blend_alpha >= 1.0f)
 		{
-			action = CameraMixAction::Idle;
-			current_time_sec = 0.0f;
-			total_time_sec = 0.0f;
 			finished_transition = true;
-			LOGV("finished animation\n");
 		}
-		else
-		{
-			LOGV("blend_alpha is %2.2f\n", blend_alpha);
-		}
+		//else
+		//{
+		//	LOGV("blend_alpha is %2.2f\n", blend_alpha);
+		//}
 	}
 
 	if (action == CameraMixAction::Blend_Push)
@@ -705,7 +720,7 @@ void CameraMixer::tick(float step_interval_seconds, float step_alpha)
 		CameraBlend& second = cameras[1];
 		second.weight = 1.0f - blend_alpha;
 
-		LOGV("weights: %2.2f, %2.f\n", top.weight, second.weight);
+		//LOGV("weights: %2.2f, %2.f\n", top.weight, second.weight);
 	}
 	else if (action == CameraMixAction::Blend_Pop)
 	{
@@ -715,17 +730,23 @@ void CameraMixer::tick(float step_interval_seconds, float step_alpha)
 		CameraBlend& top = cameras[0];
 		top.weight = 1.0f - blend_alpha;
 
-		LOGV("weights: %2.2f, %2.f\n", top.weight, second.weight);
+		//LOGV("weights: %2.2f, %2.f\n", top.weight, second.weight);
 		if (finished_transition)
 		{
 			CameraBlend blend = cameras.pop();
 			MEMORY2_DELETE(allocator, blend.camera);
-			// re-normalize
-			tick(0.0f, 0.0f);
 		}
 	}
 
+	if (finished_transition)
+	{
+		current_time_sec = 0.0f;
+		total_time_sec = 0.0f;
+		action = CameraMixAction::Idle;
+	}
 
+	const size_t total_cameras = cameras.size();
+	assert(total_cameras > 0);
 	for (size_t index = 0; index < total_cameras; ++index)
 	{
 		CameraBlend& blend = cameras[index];

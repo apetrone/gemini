@@ -120,6 +120,9 @@ public:
 	// Called each frame
 	virtual void tick(float step_interval_seconds) = 0;
 
+	// set the vertical field of view
+	virtual void set_fov(float new_fov) = 0;
+
 	// Called when the target object's position changed
 	virtual void set_target_position(const glm::vec3& position) = 0;
 
@@ -140,6 +143,39 @@ public:
 // distance and field of view driven from pitch.
 
 #include <sdk/physics_collisionobject.h>
+
+
+template <class T>
+struct AnimatedTargetValue
+{
+	T target_value;
+	T original_value;
+	float target_time_seconds;
+	float current_time_seconds;
+
+	void start(const T& start_value, const T& desired_value, float lerp_duration_seconds)
+	{
+		target_value = desired_value;
+		current_time_seconds = 0.0f;
+		target_time_seconds = lerp_duration_seconds;
+		original_value = start_value;
+	}
+
+	void update(T& value, float delta_seconds)
+	{
+		if (target_time_seconds > 0.0f)
+		{
+			current_time_seconds += delta_seconds;
+			float alpha = glm::clamp(current_time_seconds / target_time_seconds, 0.0f, 1.0f);
+			if (current_time_seconds > target_time_seconds)
+			{
+				target_time_seconds = 0.0f;
+			}
+
+			value = gemini::lerp(original_value, target_value, alpha);
+		}
+	}
+};
 
 class QuaternionFollowCamera : public GameCamera
 {
@@ -165,6 +201,8 @@ private:
 	float pitch_min;
 	float pitch_max;
 #endif
+
+	AnimatedTargetValue<float> anim_fov;
 
 	glm::vec3 position;
 	glm::vec3 target_position;
@@ -221,6 +259,7 @@ public:
 	virtual void move_view(float yaw, float pitch) override;
 	virtual void set_yaw_pitch(float yaw, float pitch) override;
 	virtual void tick(float step_interval_seconds) override;
+	virtual void set_fov(float new_fov) override;
 	virtual void set_target_position(const glm::vec3& player_position) override;
 	virtual void set_target_direction(const glm::vec3& direction) override;
 	virtual glm::vec3 get_target_direction() const override;
@@ -230,6 +269,8 @@ public:
 	void set_follow_distance(float target_distance);
 	void set_view(const glm::vec3& view_direction);
 	void update_view_orientation();
+
+	void set_target_fov(float new_fov);
 private:
 	glm::vec2 move_sensitivity;
 };
@@ -253,6 +294,7 @@ public:
 	virtual void move_view(float yaw, float pitch) override;
 	virtual void set_yaw_pitch(float yaw, float pitch) override;
 	virtual void tick(float step_interval_seconds) override;
+	virtual void set_fov(float new_fov) override;
 	virtual void set_target_position(const glm::vec3& player_position) override;
 	virtual void set_target_direction(const glm::vec3& direction) override;
 	virtual glm::vec3 get_target_direction() const override;
@@ -301,10 +343,10 @@ public:
 	~CameraMixer();
 
 	// push a new camera onto the stack
-	void push_camera(GameCamera* new_camera, float delay_msec);
+	void push_camera(GameCamera* new_camera, float delay_sec);
 
 	// pop the current camera off the stack
-	void pop_camera(float delay_msec);
+	void pop_camera(float delay_sec);
 
 	GameCamera* get_top_camera();
 
