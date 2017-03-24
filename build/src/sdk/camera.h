@@ -150,18 +150,28 @@ struct AnimatedTargetValue
 {
 	T target_value;
 	T original_value;
+	T current_value;
 	float target_time_seconds;
 	float current_time_seconds;
 
-	void start(const T& start_value, const T& desired_value, float lerp_duration_seconds)
+	void set(const T& desired_value, float lerp_duration_seconds)
 	{
-		target_value = desired_value;
-		current_time_seconds = 0.0f;
-		target_time_seconds = lerp_duration_seconds;
-		original_value = start_value;
+		if (lerp_duration_seconds > 0.0f)
+		{
+			// lerp to this value over time
+			target_value = desired_value;
+			current_time_seconds = 0.0f;
+			target_time_seconds = lerp_duration_seconds;
+		}
+		else
+		{
+			// snap to this value
+			current_value = desired_value;
+		}
+		original_value = current_value;
 	}
 
-	void update(T& value, float delta_seconds)
+	void update(float delta_seconds)
 	{
 		if (target_time_seconds > 0.0f)
 		{
@@ -172,8 +182,13 @@ struct AnimatedTargetValue
 				target_time_seconds = 0.0f;
 			}
 
-			value = gemini::lerp(original_value, target_value, alpha);
+			current_value = gemini::lerp(original_value, target_value, alpha);
 		}
+	}
+
+	T value() const
+	{
+		return current_value;
 	}
 };
 
@@ -202,7 +217,9 @@ private:
 	float pitch_max;
 #endif
 
-	AnimatedTargetValue<float> anim_fov;
+	AnimatedTargetValue<float> field_of_view;
+	AnimatedTargetValue<float> vertical_offset;
+	AnimatedTargetValue<float> horizontal_offset;
 
 	glm::vec3 position;
 	glm::vec3 target_position;
@@ -218,7 +235,6 @@ private:
 	float desired_distance_to_target;
 	float desired_distance;
 	uint32_t distance_truncated; // set to 1 if the camera ran into something
-	float field_of_view;
 
 	glm::vec3 camera_direction;
 	glm::vec3 camera_right;
@@ -271,6 +287,11 @@ public:
 	void update_view_orientation();
 
 	void set_target_fov(float new_fov);
+	float get_vertical_offset() const;
+	void set_vertical_offset(float new_offset);
+
+	float get_horizontal_offset() const;
+	void set_horizontal_offset(float new_offset);
 private:
 	glm::vec2 move_sensitivity;
 };

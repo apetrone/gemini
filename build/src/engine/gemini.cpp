@@ -1275,32 +1275,25 @@ Options:
 
 			interpolate_states(&ers, &entity_render_state[0], &entity_render_state[1], alpha);
 
-			glm::vec3 interpolated_camera_pos;
-			glm::vec3 interpolated_target_pos;
-			glm::quat interpolated_camera_rot;
-			float interpolated_fov;
+			CameraState interpolated_camera_state;
+
 			const uint32_t enable_interpolation = 1;
 			if (enable_interpolation)
 			{
-				interpolated_camera_pos = gemini::lerp(camera_state[0].position, camera_state[1].position, alpha);
-				interpolated_target_pos = gemini::lerp(camera_state[0].distance_from_pivot, camera_state[1].distance_from_pivot, alpha);
-				interpolated_camera_rot = gemini::slerp(camera_state[0].rotation, camera_state[1].rotation, alpha);
-				interpolated_fov = gemini::lerp(camera_state[0].field_of_view, camera_state[1].field_of_view, alpha);
+				interpolated_camera_state.position = gemini::lerp(camera_state[0].position, camera_state[1].position, alpha);
+				interpolated_camera_state.distance_from_pivot = gemini::lerp(camera_state[0].distance_from_pivot, camera_state[1].distance_from_pivot, alpha);
+				interpolated_camera_state.rotation = gemini::slerp(camera_state[0].rotation, camera_state[1].rotation, alpha);
+				interpolated_camera_state.field_of_view = gemini::lerp(camera_state[0].field_of_view, camera_state[1].field_of_view, alpha);
+				interpolated_camera_state.vertical_offset = gemini::lerp(camera_state[0].vertical_offset, camera_state[1].vertical_offset, alpha);
+				interpolated_camera_state.horizontal_offset = gemini::lerp(camera_state[0].horizontal_offset, camera_state[1].horizontal_offset, alpha);
 			}
 			else
 			{
-				interpolated_camera_pos = camera_state[1].position;
-				interpolated_target_pos = camera_state[1].distance_from_pivot;
-				interpolated_camera_rot = camera_state[1].rotation;
-				interpolated_fov = camera_state[1].field_of_view;
+				interpolated_camera_state = camera_state[1];
 			}
 
 			// setup the inverse camera transform.
-			glm::vec3 pivot_offset(0.2f, 0.0f, 0.0f);
-			// glm::translate(glm::mat4(), pivot_offset) *
-			// * glm::translate(glm::mat4(), -pivot_offset)
-
-			view.modelview = glm::inverse(glm::translate(glm::mat4(), interpolated_camera_pos) * glm::toMat4(interpolated_camera_rot));
+			view.modelview = camera_state_to_transform(interpolated_camera_state);
 
 			//view.modelview = glm::mat4(1.0f);
 
@@ -1310,7 +1303,7 @@ Options:
 			const float nearz = 0.01f;
 			const float farz = 4096.0f;
 			const float screen_aspect_ratio = (view.width / (float)view.height);
-			view.projection = glm::perspective(glm::radians(interpolated_fov), screen_aspect_ratio, nearz, farz);
+			view.projection = glm::perspective(glm::radians(interpolated_camera_state.field_of_view), screen_aspect_ratio, nearz, farz);
 
 
 			render_scene_update(render_scene, &ers);

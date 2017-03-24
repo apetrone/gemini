@@ -175,6 +175,13 @@ namespace gemini
 		float field_of_view;
 	};
 
+	// generate camera space transform from camera_state
+	glm::mat4 camera_state_to_transform(const CameraState& camera_state);
+
+	// given a camera state, transform input vector
+	// to camera space.
+	glm::vec3 transform_to_camera_space(const CameraState& camera_state, const glm::vec3& input);
+
 	// Describes the interface exposed to the engine from the game.
 	class IGameInterface
 	{

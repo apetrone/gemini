@@ -163,7 +163,9 @@ QuaternionFollowCamera::QuaternionFollowCamera()
 	desired_distance = distance_to_target;
 	desired_distance_to_target = distance_to_target;
 	distance_truncated = 0;
-	field_of_view = 70.0f;
+	field_of_view.set(70.0f, 0.0f);
+	vertical_offset.set(0.0f, 0.0f);
+	horizontal_offset.set(0.0f, 0.0f);
 
 	view_moved = 0;
 
@@ -218,7 +220,7 @@ glm::vec3 QuaternionFollowCamera::get_right() const
 
 float QuaternionFollowCamera::get_fov() const
 {
-	return field_of_view;
+	return field_of_view.value();
 }
 
 void QuaternionFollowCamera::move_view(float yaw_delta, float pitch_delta)
@@ -352,7 +354,9 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 	//);
 
 	// adjust fov
-	anim_fov.update(field_of_view, step_interval_seconds);
+	field_of_view.update(step_interval_seconds);
+	vertical_offset.update(step_interval_seconds);
+	horizontal_offset.update(step_interval_seconds);
 
 	if ((view_moved == 0) && (auto_orienting == 1) && (interpolation_time > 0.0f))
 	{
@@ -378,7 +382,7 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 
 void QuaternionFollowCamera::set_fov(float new_fov)
 {
-	field_of_view = new_fov;
+	field_of_view.set(new_fov, 0.0f);
 }
 
 glm::vec3 QuaternionFollowCamera::perform_raycast(const glm::vec3& start, const glm::vec3& direction, const gemini::Color& color)
@@ -500,7 +504,27 @@ void QuaternionFollowCamera::update_view_orientation()
 
 void QuaternionFollowCamera::set_target_fov(float new_fov)
 {
-	anim_fov.start(field_of_view, new_fov, 0.15f);
+	field_of_view.set(new_fov, 0.15f);
+}
+
+float QuaternionFollowCamera::get_vertical_offset() const
+{
+	return vertical_offset.value();
+}
+
+void QuaternionFollowCamera::set_vertical_offset(float new_offset)
+{
+	vertical_offset.set(new_offset, 0.15f);
+}
+
+float QuaternionFollowCamera::get_horizontal_offset() const
+{
+	return horizontal_offset.value();
+}
+
+void QuaternionFollowCamera::set_horizontal_offset(float new_offset)
+{
+	horizontal_offset.set(new_offset, 0.15f);
 }
 
 // --------------------------------------------------------
