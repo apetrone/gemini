@@ -1214,7 +1214,7 @@ Options:
 			interpolate_alpha = 0.0f;
 
 			camera_state[0] = camera_state[1];
-			game_interface->extract_camera(&camera_state[1]);
+			game_interface->extract_camera(&camera_state[1], nullptr);
 
 			queued_messages->resize(0);
 
@@ -1286,6 +1286,7 @@ Options:
 				interpolated_camera_state.field_of_view = gemini::lerp(camera_state[0].field_of_view, camera_state[1].field_of_view, alpha);
 				interpolated_camera_state.vertical_offset = gemini::lerp(camera_state[0].vertical_offset, camera_state[1].vertical_offset, alpha);
 				interpolated_camera_state.horizontal_offset = gemini::lerp(camera_state[0].horizontal_offset, camera_state[1].horizontal_offset, alpha);
+				interpolated_camera_state.view = gemini::lerp(camera_state[0].view, camera_state[1].view, alpha);
 			}
 			else
 			{
@@ -1293,7 +1294,8 @@ Options:
 			}
 
 			// setup the inverse camera transform.
-			view.modelview = camera_state_to_transform(interpolated_camera_state);
+			//glm::mat4 to_world = glm::translate(glm::mat4(), -interpolated_camera_state.position);
+			view.modelview = glm::inverse(camera_state_to_transform(interpolated_camera_state));// *to_world;
 
 			//view.modelview = glm::mat4(1.0f);
 

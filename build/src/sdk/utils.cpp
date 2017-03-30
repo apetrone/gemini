@@ -73,14 +73,19 @@ namespace gemini
 	// from game_api: create the inverse camera transform matrix
 	glm::mat4 camera_state_to_transform(const CameraState& camera_state)
 	{
-		glm::mat4 pivot_offset = glm::translate(glm::mat4(1.0f), glm::vec3(-camera_state.horizontal_offset, -camera_state.vertical_offset, 0.0f));
-		return pivot_offset * glm::inverse(glm::translate(glm::mat4(1.0f), camera_state.position) * glm::toMat4(camera_state.rotation));
+		glm::mat4 pivot_offset = glm::translate(glm::mat4(1.0f), glm::vec3(camera_state.horizontal_offset, camera_state.vertical_offset, 0.0f));
+		glm::vec3 position = camera_state.position; // (-camera_state.view * camera_state.distance_from_pivot);
+		return glm::translate(glm::mat4(1.0f), position) * glm::toMat4(camera_state.rotation) * pivot_offset;
 	}
 
 	// given a camera state, transform input vector
 	// to camera space.
 	glm::vec3 transform_to_camera_space(const CameraState& camera_state, const glm::vec3& input)
 	{
-		return glm::vec3(camera_state_to_transform(camera_state) * glm::vec4(input, 1.0f));
-	}
+		glm::mat4 pivot_offset = glm::translate(glm::mat4(1.0f), glm::vec3(camera_state.horizontal_offset, camera_state.vertical_offset, 0.0f));
+		glm::mat4 world_transform = glm::translate(glm::mat4(), input);
+		glm::mat4 result = world_transform * glm::toMat4(camera_state.rotation) * pivot_offset;
+
+		return glm::vec3(glm::column(result, 3));
+	} // transform_to_camera_sapce
 } // namespace gemini

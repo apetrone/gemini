@@ -169,7 +169,8 @@ namespace gemini
 	{
 		glm::vec3 position;
 		glm::quat rotation; // or yaw, pitch, and roll.
-		glm::vec3 distance_from_pivot;
+		glm::vec3 view; // view direction of camera
+		float distance_from_pivot;
 		float horizontal_offset;
 		float vertical_offset;
 		float field_of_view;
@@ -219,7 +220,7 @@ namespace gemini
 		// get view and projection matrices to render from
 		virtual void get_render_view(gemini::View& view) = 0;
 
-		virtual void extract_camera(CameraState* state) = 0;
+		virtual void extract_camera(CameraState* state, glm::vec3* position) = 0;
 	}; // GameInterface
 
 

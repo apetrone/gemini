@@ -320,14 +320,15 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 		auto_orienting = 0;
 	}
 
-	position = (-camera_direction * distance_to_target);
-	collision_object->set_world_transform(target_position + position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+	position = (-camera_direction * distance_to_target) + glm::vec3(horizontal_offset.current_value, vertical_offset.current_value, 0.0f);
+	const glm::vec3 camera_world_position = target_position + position;
+	collision_object->set_world_transform(camera_world_position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 
-	//debugdraw::camera(
-	//	target_position + position,
-	//	glm::normalize(-position), // facing direction
-	//	0.0f
-	//);
+	debugdraw::camera(
+		camera_world_position + glm::vec3(0.0f, 1.0f, 0.0),
+		glm::normalize(camera_direction), // facing direction
+		0.0f
+	);
 
 	//debugdraw::line(
 	//	target_position,
@@ -525,6 +526,11 @@ float QuaternionFollowCamera::get_horizontal_offset() const
 void QuaternionFollowCamera::set_horizontal_offset(float new_offset)
 {
 	horizontal_offset.set(new_offset, 0.15f);
+}
+
+float QuaternionFollowCamera::get_distance_from_pivot() const
+{
+	return distance_to_target;
 }
 
 // --------------------------------------------------------

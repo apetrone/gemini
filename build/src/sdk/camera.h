@@ -292,6 +292,8 @@ public:
 
 	float get_horizontal_offset() const;
 	void set_horizontal_offset(float new_offset);
+
+	float get_distance_from_pivot() const;
 private:
 	glm::vec2 move_sensitivity;
 };
