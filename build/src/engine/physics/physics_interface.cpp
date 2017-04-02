@@ -448,11 +448,17 @@ namespace gemini
 			btVector3 ray_start(start.x, start.y, start.z);
 			btVector3 ray_end(destination.x, destination.y, destination.z);
 
-			// Ignored object must be valid!
-			assert(ignored_object);
+			//// Ignored object must be valid!
+			//assert(ignored_object);
 
-			BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object);
-			btCollisionObject* obj = bullet_object->get_collision_object();
+
+			btCollisionObject* obj = nullptr;
+
+			if (ignored_object)
+			{
+				BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object);
+				obj = bullet_object->get_collision_object();
+			}
 
 			ClosestNotMeRayResultCallback callback(obj, ray_start, ray_end);
 

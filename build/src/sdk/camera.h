@@ -220,6 +220,7 @@ private:
 	AnimatedTargetValue<float> field_of_view;
 	AnimatedTargetValue<float> vertical_offset;
 	AnimatedTargetValue<float> horizontal_offset;
+	float desired_horizontal_offset;
 
 	glm::vec3 position;
 	glm::vec3 target_position;
@@ -249,10 +250,14 @@ private:
 
 	gemini::physics::ICollisionObject* collision_object;
 	gemini::physics::ICollisionShape* collision_shape;
+
+	// physics for the offset position test
+	gemini::physics::ICollisionObject* offset_collision_object;
+	gemini::physics::ICollisionShape* offset_collision_shape;
 	glm::vec3 cam_vertices[6];
 
 
-	glm::vec3 perform_raycast(const glm::vec3& start, const glm::vec3& direction, const gemini::Color& color);
+	glm::vec3 perform_raycast(const glm::vec3& start, const glm::vec3& direction, const gemini::Color& color, float max_distance);
 
 	// correct camera position by testing collision
 	void collision_correct();
@@ -294,6 +299,7 @@ public:
 	void set_horizontal_offset(float new_offset);
 
 	float get_distance_from_pivot() const;
+	void simulate(float delta_time_seconds);
 private:
 	glm::vec2 move_sensitivity;
 };

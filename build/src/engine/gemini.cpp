@@ -1295,9 +1295,9 @@ Options:
 
 			// setup the inverse camera transform.
 			//glm::mat4 to_world = glm::translate(glm::mat4(), -interpolated_camera_state.position);
-			view.modelview = glm::inverse(camera_state_to_transform(interpolated_camera_state));// *to_world;
+			//view.modelview = glm::inverse(camera_state_to_transform(interpolated_camera_state));// *to_world;
 
-			//view.modelview = glm::mat4(1.0f);
+			view.modelview = glm::inverse(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f)) * glm::toMat4(glm::angleAxis(glm::radians(-35.0f), glm::vec3(1.0f, 0.0f, 0.0f))));
 
 			// this is what happens when we interpolate the vectors; but suffers artifacts from lerping vector used as orientation.
 			//view.modelview = glm::lookAt(interpolated_camera_pos, interpolated_camera_pos + interpolated_target_pos, glm::vec3(0.0f, 1.0f, 0.0f));
