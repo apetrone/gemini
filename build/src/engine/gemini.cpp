@@ -639,6 +639,7 @@ private:
 	StackString<MAX_PATH_SIZE> game_path;
 	bool draw_physics_debug;
 	bool draw_navigation_debug;
+	bool debug_camera;
 
 	platform::window::NativeWindow* main_window;
 
@@ -775,6 +776,7 @@ public:
 		: active(true)
 		, draw_physics_debug(false)
 		, draw_navigation_debug(false)
+		, debug_camera(false)
 		, accumulator(0.0f)
 		, last_time(0)
 		, engine_interface(0)
@@ -817,6 +819,11 @@ public:
 			{
 				draw_navigation_debug = !draw_navigation_debug;
 				LOGV("draw_navigation_debug = %s\n", draw_navigation_debug?"ON":"OFF");
+			}
+			else if (event.key == gemini::BUTTON_SPACE)
+			{
+				debug_camera = !debug_camera;
+				LOGV("debug_camera = %s\n", debug_camera ? "ON" : "OFF");
 			}
 		}
 
@@ -1295,9 +1302,13 @@ Options:
 
 			// setup the inverse camera transform.
 			//glm::mat4 to_world = glm::translate(glm::mat4(), -interpolated_camera_state.position);
-			//view.modelview = glm::inverse(camera_state_to_transform(interpolated_camera_state));// *to_world;
 
-			view.modelview = glm::inverse(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f)) * glm::toMat4(glm::angleAxis(glm::radians(-35.0f), glm::vec3(1.0f, 0.0f, 0.0f))));
+			view.modelview = glm::inverse(camera_state_to_transform(interpolated_camera_state));// *to_world;
+
+			if (debug_camera)
+			{
+				view.modelview = glm::inverse(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f)) * glm::toMat4(glm::angleAxis(glm::radians(-35.0f), glm::vec3(1.0f, 0.0f, 0.0f))));
+			}
 
 			// this is what happens when we interpolate the vectors; but suffers artifacts from lerping vector used as orientation.
 			//view.modelview = glm::lookAt(interpolated_camera_pos, interpolated_camera_pos + interpolated_target_pos, glm::vec3(0.0f, 1.0f, 0.0f));

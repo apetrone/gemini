@@ -49,14 +49,21 @@ namespace gemini
 			bool ignore_ghosts;
 			bool ignore_static;
 
-		public:
-			ClosestNotMeRayResultCallback (btCollisionObject* me, const btVector3& start, const btVector3& direction, bool ignore_ghost_objects = false, bool ignore_static_objects = false) :
-				btCollisionWorld::ClosestRayResultCallback(start, direction),
-				ignore_ghosts(ignore_ghost_objects),
-				ignore_static(ignore_static_objects)
 
+
+		public:
+			ClosestNotMeRayResultCallback (const btVector3& start,
+										   const btVector3& direction,
+										   bool ignore_ghost_objects = false,
+										   bool ignore_static_objects = false,
+										   btCollisionObject* ignored_object0 = nullptr,
+										   btCollisionObject* ignored_object1 = nullptr) :
+				btCollisionWorld::ClosestRayResultCallback(start, direction)
+				, ignore_ghosts(ignore_ghost_objects)
+				, ignore_static(ignore_static_objects)
+				, ignored0(ignored_object0)
+				, ignored1(ignored_object1)
 			{
-				m_me = me;
 			}
 
 			virtual bool needsCollision(btBroadphaseProxy* /*proxy*/) const
@@ -68,7 +75,7 @@ namespace gemini
 			{
 //				LOGV("testing result\n");
 
-				if (rayResult.m_collisionObject == m_me)
+				if (rayResult.m_collisionObject == ignored0 || rayResult.m_collisionObject == ignored1)
 				{
 //					LOGV("ignoring me\n");
 					return btScalar(1.0);
@@ -92,7 +99,8 @@ namespace gemini
 				return ClosestRayResultCallback::addSingleResult (rayResult, normalInWorldSpace);
 			}
 		protected:
-			btCollisionObject* m_me;
+			btCollisionObject* ignored0;
+			btCollisionObject* ignored1;
 		};
 //
 		class ClosestNotMeConvexResultCallback : public btCollisionWorld::ClosestConvexResultCallback

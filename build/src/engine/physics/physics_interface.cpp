@@ -442,7 +442,11 @@ namespace gemini
 			bullet::step(step_interval_seconds);
 		}
 
-		RaycastInfo PhysicsInterface::raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance)
+		RaycastInfo PhysicsInterface::raycast(const glm::vec3& start,
+											  const glm::vec3& direction,
+											  float max_distance,
+											  ICollisionObject* ignored_object0,
+											  ICollisionObject* ignored_object1)
 		{
 			glm::vec3 destination = start + (direction * max_distance);
 			btVector3 ray_start(start.x, start.y, start.z);
@@ -452,15 +456,22 @@ namespace gemini
 			//assert(ignored_object);
 
 
-			btCollisionObject* obj = nullptr;
+			btCollisionObject* obj0 = nullptr;
+			btCollisionObject* obj1 = nullptr;
 
-			if (ignored_object)
+			if (ignored_object0)
 			{
-				BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object);
-				obj = bullet_object->get_collision_object();
+				BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object0);
+				obj0 = bullet_object->get_collision_object();
 			}
 
-			ClosestNotMeRayResultCallback callback(obj, ray_start, ray_end);
+			if (ignored_object1)
+			{
+				BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object1);
+				obj1 = bullet_object->get_collision_object();
+			}
+
+			ClosestNotMeRayResultCallback callback(ray_start, ray_end, obj0, obj1);
 
 			// rayTest accepts a line segment from start to end
 			bullet::get_world()->rayTest(ray_start, ray_end, callback);
