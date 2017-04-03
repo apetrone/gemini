@@ -119,6 +119,10 @@ public:
 		else if (event.subtype == kernel::WindowResized)
 		{
 			LOGV("resolution_changed %i %i\n", event.render_width, event.render_height);
+			if (device)
+			{
+				device->backbuffer_resized(event.render_width, event.render_height);
+			}
 		}
 		else if (event.subtype == kernel::WindowClosed)
 		{
