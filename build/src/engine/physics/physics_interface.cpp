@@ -471,7 +471,7 @@ namespace gemini
 				obj1 = bullet_object->get_collision_object();
 			}
 
-			ClosestNotMeRayResultCallback callback(ray_start, ray_end, obj0, obj1);
+			ClosestNotMeRayResultCallback callback(ray_start, ray_end, false, false, obj0, obj1);
 
 			// rayTest accepts a line segment from start to end
 			bullet::get_world()->rayTest(ray_start, ray_end, callback);

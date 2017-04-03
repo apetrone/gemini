@@ -28,7 +28,9 @@
 #include <core/typedefs.h>
 #include <renderer/color.h>
 #include <core/interpolation.h>
+#include <runtime/debugvar.h>
 #include <runtime/runtime.h>
+
 
 // REFERENCE LINKS
 
@@ -114,6 +116,13 @@ private:
 	AnimatedTargetValue<float> field_of_view;
 	AnimatedTargetValue<float> vertical_offset;
 	AnimatedTargetValue<float> horizontal_offset;
+	gemini::DebugVar<float> dbg_distance_to_target;
+	gemini::DebugVar<float> dbg_horizontal_offset;
+	gemini::DebugVar<glm::vec3> dbg_position;
+	gemini::DebugVar<glm::vec3> dbg_target_position;
+	gemini::DebugVar<float> dbg_desired_distance;
+	gemini::DebugVar<float> dbg_desired_distance_to_target;
+
 	float desired_horizontal_offset;
 
 	glm::vec3 position;

@@ -73,9 +73,8 @@ namespace gemini
 	// from game_api: create the inverse camera transform matrix
 	glm::mat4 camera_state_to_transform(const CameraState& camera_state)
 	{
-		glm::mat4 pivot_offset = glm::translate(glm::mat4(1.0f), glm::vec3(camera_state.horizontal_offset, camera_state.vertical_offset, 0.0f));
-		glm::vec3 position = camera_state.position; // (-camera_state.view * camera_state.distance_from_pivot);
-		return glm::translate(glm::mat4(1.0f), position) * glm::toMat4(camera_state.rotation) * pivot_offset;
+		glm::vec3 position = camera_state.position;
+		return glm::translate(glm::mat4(1.0f), position) * glm::toMat4(camera_state.rotation);
 	}
 
 	// given a camera state, transform input vector

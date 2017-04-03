@@ -45,6 +45,7 @@
 #include <renderer/debug_draw.h>
 #include <renderer/scene_renderer.h>
 
+#include <runtime/debugvar.h>
 #include <runtime/keyframechannel.h>
 #include <runtime/mesh.h>
 #include <runtime/mesh_library.h>
@@ -1322,8 +1323,23 @@ Options:
 			render_scene_update(render_scene, &ers);
 			render_scene_draw(render_scene, device, view.modelview, view.projection);
 
-			debugdraw::text(30, 230, core::str::format("static meshes: %i", render_scene->stat_static_meshes_drawn), Color(1.0f, 1.0f, 0.5f));
-			debugdraw::text(30, 244, core::str::format("animated meshes: %i", render_scene->stat_animated_meshes_drawn), Color(1.0f, 1.0f, 0.5f));
+			//debugdraw::text(30, 230, core::str::format("static meshes: %i", render_scene->stat_static_meshes_drawn), Color(1.0f, 1.0f, 0.5f));
+			//debugdraw::text(30, 244, core::str::format("animated meshes: %i", render_scene->stat_animated_meshes_drawn), Color(1.0f, 1.0f, 0.5f));
+
+			// draw all render vars...
+			uint32_t x_offset = 10;
+			uint32_t y_offset = 150;
+
+			for (DebugVarBase* variable = debugvar_first(); variable != nullptr;)
+			{
+				debugdraw::text(x_offset,
+								y_offset,
+								variable->to_string(),
+								gemini::Color(1.0f, 1.0f, 1.0f));
+				variable = variable->next;
+				y_offset += 12;
+			}
+
 
 			debugdraw::render(view.modelview, view.projection, view.width, view.height);
 			if (_compositor)
