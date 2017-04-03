@@ -515,28 +515,28 @@ void QuaternionFollowCamera::simulate(float delta_time_seconds)
 	glm::vec3 camera_world_position = pos1 + offset_vector;
 
 
-	//int i;
-	//for (i = 0; (i < 3) && (remaining_time > 0.0f); ++i)
-	//{
-	//	gemini::physics::SweepTestResult sweep = gemini::physics::instance()->sweep(collision_object, collision_shape, pos1, pos1 + offset_vector, 0.0f);
-	//	if (sweep.hit_items() > 0)
-	//	{
-	//		LOGV("sweep hit something at %2.2f\n", sweep.closest_hit_fraction);
-	//		offset_vector *= sweep.closest_hit_fraction;
-	//		camera_world_position = pos1 + offset_vector;
-	//		break;
-	//	}
-	//	else
-	//	{
-	//		/*target_position = new_position;*/
+	int i;
+	for (i = 0; (i < 3) && (remaining_time > 0.0f); ++i)
+	{
+		gemini::physics::SweepTestResult sweep = gemini::physics::instance()->sweep(collision_object, collision_shape, pos1, pos1 + offset_vector, 0.0f);
+		if (sweep.hit_items() > 0)
+		{
+			LOGV("sweep hit something at %2.2f\n", sweep.closest_hit_fraction);
+			offset_vector *= sweep.closest_hit_fraction;
+			camera_world_position = pos1 + offset_vector;
+			break;
+		}
+		else
+		{
+			/*target_position = new_position;*/
 
-	//		break;
-	//	}
-	//}
-	//if (i == 3)
-	//{
-	//	LOGV("max iterations hit\n");
-	//}
+			break;
+		}
+	}
+	if (i == 3)
+	{
+		LOGV("max iterations hit\n");
+	}
 
 	collision_object->set_world_transform(camera_world_position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 }
