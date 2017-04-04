@@ -65,6 +65,11 @@ namespace gemini
 		return core::str::format("%s: %2.2f", name, *data);
 	}
 
+	template <>
+	const char* DebugVar<glm::vec2>::to_string()
+	{
+		return core::str::format("%s: [%2.2f, %2.2f]", name, (*data).x, (*data).y);
+	}
 
 	template <>
 	const char* DebugVar<glm::vec3>::to_string()

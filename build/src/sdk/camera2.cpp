@@ -64,6 +64,7 @@ QuaternionFollowCamera::QuaternionFollowCamera()
 	, dbg_target_position("target_position", &target_position)
 	, dbg_desired_distance("desired_distance", &desired_distance)
 	, dbg_desired_distance_to_target("desired_distance_to_target", &desired_distance_to_target)
+	, dbg_current_pivot_offset("current_pivot_offset", &current_pivot_offset)
 {
 	target_position = glm::vec3(0.0f, 0.0f, 0.0f);
 	position = glm::vec3(0.0f, 3.0f, 3.0f);
@@ -120,9 +121,9 @@ QuaternionFollowCamera::~QuaternionFollowCamera()
 
 glm::vec3 QuaternionFollowCamera::get_origin() const
 {
-	glm::vec3 offset_vector(desired_horizontal_offset, vertical_offset.value(), distance_to_target);
-	offset_vector = mathlib::rotate_vector(offset_vector, orientation);
-	return target_position + offset_vector;
+	glm::vec3 distance(0.0f, 0.0f, distance_to_target);
+
+	return target_position + get_rotated_pivot_offset() + mathlib::rotate_vector(distance, orientation);
 }
 
 glm::vec3 QuaternionFollowCamera::get_target() const
@@ -246,10 +247,13 @@ void QuaternionFollowCamera::tick(float step_interval_seconds)
 	//const glm::vec3 camera_world_position = target_position + position;
 
 
-	glm::vec3 offset_vector(desired_horizontal_offset, vertical_offset.value(), 0.0f);
+	//glm::vec3 offset_vector(desired_horizontal_offset, vertical_offset.value(), 0.0f);
 
 	////float offset_length = glm::length(offset_vector);
-	position += mathlib::rotate_vector(offset_vector, orientation);
+	//position += mathlib::rotate_vector(offset_vector, orientation);
+
+
+	position += get_rotated_pivot_offset();
 
 	////collision_object->set_world_transform(camera_world_position + offset_vector, glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 
@@ -329,7 +333,7 @@ glm::vec3 QuaternionFollowCamera::perform_raycast(const glm::vec3& start, const 
 		//debugdraw::line(start, result.hit, color, 3.0f);
 		point = direction * (glm::length(result.hit - start) * 0.85f);
 		distance_truncated = 1;
-		//debugdraw::line(start, start + point, gemini::Color(1.0f, 0.0f, 0.0f), 3.0f);
+		debugdraw::line(start, start + point, color, 3.0f);
 	}
 	else
 	{
@@ -376,10 +380,45 @@ void QuaternionFollowCamera::collision_correct()
 	//}
 
 	// step 2: raycast to desired distance from pivot
-	glm::vec3 far_point = perform_raycast(target_position, -camera_direction, gemini::Color(0.0f, 1.0f, 0.0f), desired_distance_to_target);
+	//glm::vec3 far_point = perform_raycast(target_position, -camera_direction, gemini::Color(0.0f, 1.0f, 0.0f), desired_distance_to_target);
+	//desired_distance = glm::length(far_point);
+
+	////debugdraw::line(target_position, target_position + far_point, gemini::Color(1.0f, 0.0f, 0.0f), 3.0f);
+
+	//if (desired_distance < MIN_CAMERA_DISTANCE)
+	//{
+	//	desired_distance = MIN_CAMERA_DISTANCE;
+	//	distance_truncated = 1;
+	//}
+
+	float offset_length = glm::length(desired_pivot_offset);
+	glm::vec3 offset_vector;
+	if (offset_length > 0.0f)
+	{
+		offset_vector = glm::vec3(desired_pivot_offset, 0.0f);
+
+		// rotate offset_vector to be in the coordinate frame of the camera
+		offset_vector = mathlib::rotate_vector(offset_vector, orientation);
+
+		glm::vec3 test_pivot_point = perform_raycast(target_position, glm::normalize(offset_vector), gemini::Color(0.0f, 1.0f, 0.0f), offset_length);
+		LOGV("len: %2.2f\n", glm::length(test_pivot_point));
+		current_pivot_offset = glm::length(test_pivot_point) * desired_pivot_offset;
+		// 1. desired horizontal offset (shouldn't change frame by frame)
+		// 2. current_target_horizontal_offset (varies frame by frame)
+	}
+	else
+	{
+		desired_pivot_offset = glm::vec2(0.0f);
+		current_pivot_offset = desired_pivot_offset;
+	}
+
+	// step 2: raycast to desired distance from pivot
+	offset_vector = get_rotated_pivot_offset();
+	debugdraw::point(target_position + offset_vector, gemini::Color(1.0f, 1.0f, 1.0f), 0.1f, 0.2f);
+	glm::vec3 far_point = perform_raycast(target_position + offset_vector, -camera_direction, gemini::Color(0.0f, 1.0f, 1.0f), desired_distance_to_target);
 	desired_distance = glm::length(far_point);
 
-	//debugdraw::line(target_position, target_position + far_point, gemini::Color(1.0f, 0.0f, 0.0f), 3.0f);
+	debugdraw::line(target_position + offset_vector, target_position + offset_vector + far_point, gemini::Color(1.0f, 0.0f, 0.0f), 3.0f);
 
 	if (desired_distance < MIN_CAMERA_DISTANCE)
 	{
@@ -493,6 +532,8 @@ void QuaternionFollowCamera::set_horizontal_offset(float new_offset)
 {
 	desired_horizontal_offset = new_offset;
 	horizontal_offset.set(new_offset, 0.15f);
+
+	desired_pivot_offset.x = new_offset;
 }
 
 float QuaternionFollowCamera::get_distance_from_pivot() const
@@ -503,40 +544,34 @@ float QuaternionFollowCamera::get_distance_from_pivot() const
 void QuaternionFollowCamera::simulate(float delta_time_seconds)
 {
 	// use the offset vector and rotate it by the camera rotation
-	glm::vec3 offset_vector(desired_horizontal_offset, vertical_offset.value(), distance_to_target);
-	offset_vector = mathlib::rotate_vector(offset_vector, orientation);
-	//offset_vector = glm::vec3(0.0f);
 
 	float remaining_time = delta_time_seconds;
 
-	//float offset_length = glm::length(offset_vector);
-
-	glm::vec3 pos1 = target_position;
-	glm::vec3 camera_world_position = pos1 + offset_vector;
+	glm::vec3 camera_world_position = target_position + position;
 
 
-	int i;
-	for (i = 0; (i < 3) && (remaining_time > 0.0f); ++i)
-	{
-		gemini::physics::SweepTestResult sweep = gemini::physics::instance()->sweep(collision_object, collision_shape, pos1, pos1 + offset_vector, 0.0f);
-		if (sweep.hit_items() > 0)
-		{
-			LOGV("sweep hit something at %2.2f\n", sweep.closest_hit_fraction);
-			offset_vector *= sweep.closest_hit_fraction;
-			camera_world_position = pos1 + offset_vector;
-			break;
-		}
-		else
-		{
-			/*target_position = new_position;*/
+	//int i;
+	//for (i = 0; (i < 3) && (remaining_time > 0.0f); ++i)
+	//{
+	//	gemini::physics::SweepTestResult sweep = gemini::physics::instance()->sweep(collision_object, collision_shape, pos1, pos1 + offset_vector, 0.0f);
+	//	if (sweep.hit_items() > 0)
+	//	{
+	//		LOGV("sweep hit something at %2.2f\n", sweep.closest_hit_fraction);
+	//		offset_vector *= sweep.closest_hit_fraction;
+	//		camera_world_position = pos1 + offset_vector;
+	//		break;
+	//	}
+	//	else
+	//	{
+	//		/*target_position = new_position;*/
 
-			break;
-		}
-	}
-	if (i == 3)
-	{
-		LOGV("max iterations hit\n");
-	}
+	//		break;
+	//	}
+	//}
+	//if (i == 3)
+	//{
+	//	LOGV("max iterations hit\n");
+	//}
 
 	collision_object->set_world_transform(camera_world_position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 }
@@ -545,3 +580,10 @@ gemini::physics::ICollisionObject* QuaternionFollowCamera::get_collider()
 {
 	return collision_object;
 }
+
+glm::vec3 QuaternionFollowCamera::get_rotated_pivot_offset() const
+{
+	//glm::vec3 offset_vector(desired_horizontal_offset, vertical_offset.value(), distance_to_target);
+	glm::vec3 offset_vector(current_pivot_offset, 0.0f);
+	return mathlib::rotate_vector(offset_vector, orientation);
+} // get_rotated_pivot_offset

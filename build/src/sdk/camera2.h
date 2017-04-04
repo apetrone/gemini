@@ -122,6 +122,7 @@ private:
 	gemini::DebugVar<glm::vec3> dbg_target_position;
 	gemini::DebugVar<float> dbg_desired_distance;
 	gemini::DebugVar<float> dbg_desired_distance_to_target;
+	gemini::DebugVar<glm::vec2> dbg_current_pivot_offset;
 
 	float desired_horizontal_offset;
 
@@ -139,6 +140,9 @@ private:
 	float desired_distance_to_target;
 	float desired_distance;
 	uint32_t distance_truncated; // set to 1 if the camera ran into something
+
+	glm::vec2 desired_pivot_offset;
+	glm::vec2 current_pivot_offset;
 
 	glm::vec3 camera_direction;
 	glm::vec3 camera_right;
@@ -208,6 +212,10 @@ public:
 
 	gemini::physics::ICollisionObject* get_collider();
 private:
+
+	glm::vec3 get_rotated_pivot_offset() const;
+
+
 	glm::vec2 move_sensitivity;
 };
 
