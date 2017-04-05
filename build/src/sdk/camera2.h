@@ -139,6 +139,7 @@ private:
 	float distance_to_target;
 	float desired_distance_to_target;
 	float desired_distance;
+	float minimum_distance;
 	uint32_t distance_truncated; // set to 1 if the camera ran into something
 
 	glm::vec2 desired_pivot_offset;
@@ -211,6 +212,8 @@ public:
 	void simulate(float delta_time_seconds);
 
 	gemini::physics::ICollisionObject* get_collider();
+
+	void set_minimum_distance(float min_distance);
 private:
 
 	glm::vec3 get_rotated_pivot_offset() const;
