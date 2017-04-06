@@ -288,10 +288,6 @@ private:
 
 	imocap::MocapDevice* mocap_device;
 
-	// development interface
-	RapidInterface rapid;
-	platform::DynamicLibrary* rapid_library;
-
 	gemini::MonitorHandle monitor_zero;
 	gemini::MonitorHandle monitor_one;
 	gemini::MonitorHandle monitor_materials;
@@ -324,7 +320,6 @@ public:
 		, is_playing_frames(false)
 		, app_in_focus(true)
 		, mocap_device(nullptr)
-		, rapid_library(nullptr)
 		, lines(nullptr)
 		, current_line_index(0)
 		, mocap_frames(sensor_allocator, 0)
@@ -389,13 +384,13 @@ public:
 
 			if (event.key == BUTTON_F2)
 			{
-				unload_rapid_interface();
-
+				runtime_unload_rapid();
 				LOGV("unloaded rapid interface\n");
+
 			}
 			else if (event.key == BUTTON_F3)
 			{
-				load_rapid_interface();
+				runtime_load_rapid();
 				LOGV("loading rapid interface\n");
 			}
 
@@ -1291,9 +1286,6 @@ Options:
 
 		mocap_device = imocap::device_create();
 
-		load_rapid_interface();
-
-
 		notify_server_create(&notify_server);
 		notify_client_create(&notify_client);
 
@@ -1309,50 +1301,6 @@ Options:
 		last_time = platform::microseconds();
 
 		return kernel::NoError;
-	}
-
-	void load_rapid_interface()
-	{
-		if (rapid_library)
-		{
-			unload_rapid_interface();
-		}
-
-		PathString program_directory = platform::get_program_directory();
-		PathString lib_directory = program_directory;
-		core::str::directory_up(&lib_directory[0]);
-		core::str::directory_up(&lib_directory[0]);
-		lib_directory.append(PATH_SEPARATOR_STRING);
-		lib_directory.append("lib");
-		lib_directory.append(PATH_SEPARATOR_STRING);
-		lib_directory.append("debug_x86_64");
-		lib_directory.append(PATH_SEPARATOR_STRING);
-#if defined(PLATFORM_LINUX)
-		lib_directory.append("lib");
-#endif
-		lib_directory.append("rapid");
-		lib_directory.append(platform::dylib_extension());
-
-		LOGV("rapid lib = %s\n", lib_directory());
-		rapid_library = platform::dylib_open(lib_directory());
-		assert(rapid_library);
-
-		populate_interface_fn pif = reinterpret_cast<populate_interface_fn>(platform::dylib_find(rapid_library, "populate_interface"));
-		assert(pif);
-
-		pif(rapid);
-		status->set_text("PLUGIN LOADED");
-	}
-
-	void unload_rapid_interface()
-	{
-		if (rapid_library)
-		{
-			memset(&rapid, 0, sizeof(RapidInterface));
-			platform::dylib_close(rapid_library);
-			rapid_library = nullptr;
-			status->set_text("PLUGIN NOT LOADED");
-		}
 	}
 
 	void tick_queued_asset_changes(PathDelayHashSet& hashset, float tick_seconds)
@@ -1406,6 +1354,15 @@ Options:
 
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
+
+		if (runtime_rapid())
+		{
+			status->set_text("PLUGIN LOADED");
+		}
+		else
+		{
+			status->set_text("PLUGIN NOT LOADED");
+		}
 
 		value += 0.01f * multiplifer;
 		value = glm::clamp(value, 0.0f, 1.0f);
@@ -1478,13 +1435,13 @@ Options:
 			}
 		}
 
-
+		RapidInterface* rapid = runtime_rapid();
 		for (size_t index = 0; index < IMOCAP_TOTAL_SENSORS; ++index)
 		{
 			glm::mat4& world_pose = world_poses[index];
-			if (rapid_library && rapid.compute_pose)
+			if (rapid)
 			{
-				rapid.compute_pose(world_pose, world_poses, local_rotations, joint_offsets, index);
+				rapid->compute_pose(world_pose, world_poses, local_rotations, joint_offsets, index);
 			}
 
 			debugdraw::axes(world_pose, 0.1f);
@@ -1661,7 +1618,6 @@ Options:
 	{
 		delete [] lines;
 		lines = nullptr;
-		unload_rapid_interface();
 
 		imocap::device_destroy(mocap_device);
 		mocap_device = nullptr;

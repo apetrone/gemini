@@ -360,4 +360,8 @@ namespace gemini
 	// Returns true if timeout_msec has passed since target_msec.
 	// If true, sets target_msec to the current time.
 	bool runtime_msec_assign_if_timedout(uint64_t& target_msec, uint32_t timeout_msec);
+
+	void runtime_load_rapid();
+	void runtime_unload_rapid();
+	struct RapidInterface* runtime_rapid();
 } // namespace gemini

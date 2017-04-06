@@ -74,6 +74,8 @@
 // for MAX_BONES
 #include <shared/shared_constants.h>
 
+#include <rapid/rapid.h>
+
 // uncomment this to draw bone debug information
 //#define GEMINI_DEBUG_BONES
 
@@ -84,6 +86,7 @@
 using namespace platform;
 using namespace core;
 using namespace gemini; // for renderer
+
 
 #include <ui/ui.h>
 #include <ui/compositor.h>
@@ -825,6 +828,17 @@ public:
 			{
 				debug_camera = !debug_camera;
 				LOGV("debug_camera = %s\n", debug_camera ? "ON" : "OFF");
+			}
+
+			if (event.key == BUTTON_F2)
+			{
+				runtime_unload_rapid();
+				LOGV("unloaded rapid interface\n");
+			}
+			else if (event.key == BUTTON_F3)
+			{
+				runtime_load_rapid();
+				LOGV("loading rapid interface\n");
 			}
 		}
 

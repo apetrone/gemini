@@ -41,6 +41,7 @@
 
 #include "filesystem_interface.h"
 
+#include <rapid/rapid.h>
 
 
 
@@ -172,12 +173,16 @@ namespace gemini
 
 		// asset startup
 
+		runtime_load_rapid();
+
 		return platform::Result::success();
 	}
 
 	void runtime_shutdown()
 	{
 		// asset shutdown
+
+		runtime_unload_rapid();
 
 		core::filesystem::instance()->shutdown();
 
@@ -867,5 +872,60 @@ namespace gemini
 
 		return false;
 	} // runtime_msec_assign_if_timedout
+
+	static RapidInterface rapid;
+	static platform::DynamicLibrary* rapid_library = nullptr;
+
+	void runtime_load_rapid()
+	{
+		if (rapid_library)
+		{
+			runtime_unload_rapid();
+		}
+
+		PathString program_directory = platform::get_program_directory();
+		PathString lib_directory = program_directory;
+		core::str::directory_up(&lib_directory[0]);
+		core::str::directory_up(&lib_directory[0]);
+		lib_directory.append(PATH_SEPARATOR_STRING);
+		lib_directory.append("lib");
+		lib_directory.append(PATH_SEPARATOR_STRING);
+		lib_directory.append("debug_x86_64");
+		lib_directory.append(PATH_SEPARATOR_STRING);
+#if defined(PLATFORM_LINUX)
+		lib_directory.append("lib");
+#endif
+		lib_directory.append("rapid");
+		lib_directory.append(platform::dylib_extension());
+
+		LOGV("rapid lib = %s\n", lib_directory());
+		rapid_library = platform::dylib_open(lib_directory());
+		assert(rapid_library);
+
+		populate_interface_fn pif = reinterpret_cast<populate_interface_fn>(platform::dylib_find(rapid_library, "populate_interface"));
+		assert(pif);
+
+		pif(rapid);
+	}
+
+	void runtime_unload_rapid()
+	{
+		if (rapid_library)
+		{
+			memset(&rapid, 0, sizeof(RapidInterface));
+			platform::dylib_close(rapid_library);
+			rapid_library = nullptr;
+		}
+	}
+
+	RapidInterface* runtime_rapid()
+	{
+		if (!rapid_library)
+		{
+			return nullptr;
+		}
+
+		return &rapid;
+	}
 
 } // namespace gemini
