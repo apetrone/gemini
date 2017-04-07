@@ -137,6 +137,11 @@ public:
 
 	// Reset this camera's view.
 	virtual void reset_view() = 0;
+
+
+	virtual void set_minimum_distance(float value) = 0;
+	virtual void set_follow_distance(float value) = 0;
+
 }; // GameCamera
 
 

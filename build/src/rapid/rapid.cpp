@@ -42,6 +42,24 @@ namespace gemini
 		glm::mat4 local_pose = glm::toMat4(glm::inverse(parent_quat) * local_rotations[index]);
 		world_pose = parent_pose * joint_offsets[index] * local_pose;
 	}
+
+	glm::mat4 rapid_camera_test(const glm::vec3& position, const glm::quat& rotation)
+	{
+		//return glm::toMat4(rotation) * glm::translate(glm::mat4(1.0f), position);
+		// positive values for left side; negative for right.
+		float offset_value = -0.5f;
+		const glm::vec3 offset(offset_value, 0.0f, 0.0f);
+
+
+		glm::mat4 x1 = glm::translate(glm::mat4(1.0f), -offset);
+		glm::mat4 x2 = glm::translate(glm::mat4(1.0f), offset);
+
+
+		glm::mat4 rot = glm::toMat4(rotation);
+
+		return glm::translate(glm::mat4(1.0f), position + glm::vec3(-offset_value, 1.7f, 0.0f)) * x2 * rot * x1;
+		//return glm::mat4(1.0f);
+	}
 } // namespace gemini
 
 
@@ -50,6 +68,7 @@ extern "C"
 	void populate_interface(gemini::RapidInterface& interface)
 	{
 		interface.compute_pose = gemini::rapid_compute_pose;
+		interface.camera_test = gemini::rapid_camera_test;
 	}
 }
 

@@ -231,8 +231,8 @@ CameraMixer::CameraMixer(gemini::Allocator& _allocator)
 	, total_time_sec(0.0f)
 {
 	// default camera
-	DefaultCamera* camera = MEMORY2_NEW(allocator, DefaultCamera);
-	push_camera(camera, 1.0f);
+	//DefaultCamera* camera = MEMORY2_NEW(allocator, DefaultCamera);
+	//push_camera(camera, 1.0f);
 
 	origin = glm::vec3(0.0f, 0.0f, 0.0f);
 	view = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -309,7 +309,9 @@ glm::vec3 CameraMixer::get_right() const
 
 float CameraMixer::get_field_of_view() const
 {
-	return gemini::lerp(cameras[0].camera->get_fov(), cameras[1].camera->get_fov(), cameras[1].weight);
+	assert(cameras.size() > 0);
+	return cameras.top().camera->get_fov();
+	//return gemini::lerp(cameras[0].camera->get_fov(), cameras[1].camera->get_fov(), cameras[1].weight);
 	//return cameras.top().camera->get_fov();
 }
 

@@ -1318,7 +1318,15 @@ Options:
 			// setup the inverse camera transform.
 			//glm::mat4 to_world = glm::translate(glm::mat4(), -interpolated_camera_state.position);
 
-			view.modelview = glm::inverse(camera_state_to_transform(interpolated_camera_state));// *to_world;
+			RapidInterface* rapid = runtime_rapid();
+			if (rapid)
+			{
+				view.modelview = glm::inverse(rapid->camera_test(interpolated_camera_state.position, interpolated_camera_state.rotation));
+			}
+			else
+			{
+				view.modelview = glm::inverse(camera_state_to_transform(interpolated_camera_state));// *to_world;
+			}
 
 			if (debug_camera)
 			{
