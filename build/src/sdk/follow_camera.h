@@ -66,7 +66,6 @@ public:
 	virtual void move_view(float yaw, float pitch) override;
 	virtual void set_yaw_pitch(float yaw, float pitch) override;
 	virtual void tick(float step_interval_seconds) override;
-	virtual void set_target_position(const glm::vec3& target_worldspace_position) override;
 	virtual void set_target_direction(const glm::vec3& direction) override;
 	virtual glm::vec3 get_target_direction() const override;
 	virtual void reset_view() override;

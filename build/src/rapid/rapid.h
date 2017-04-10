@@ -34,7 +34,9 @@ namespace gemini
 	{
 		void(*compute_pose)(glm::mat4& world_pose, glm::mat4* world_poses, glm::quat* local_rotations, glm::mat4* joint_offsets, size_t index);
 
-		glm::mat4 (*camera_test)(const glm::vec3& position, const glm::quat& rotation);
+		glm::mat4 (*camera_test)(const glm::vec3& world_position,
+								const glm::vec3& position,
+								const glm::quat& rotation);
 	};
 } // namespace gemini
 

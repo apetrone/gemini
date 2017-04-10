@@ -167,6 +167,7 @@ namespace gemini
 #endif
 	struct CameraState
 	{
+		glm::vec3 world_position;
 		glm::vec3 position;
 		glm::quat rotation; // or yaw, pitch, and roll.
 		glm::vec3 view; // view direction of camera
@@ -214,7 +215,7 @@ namespace gemini
 		virtual void reset_events() = 0;
 
 		// get view and projection matrices to render from
-		virtual void get_render_view(gemini::View& view) = 0;
+		virtual void get_render_view(gemini::View& view, glm::vec3& player_offset) = 0;
 
 		virtual void extract_camera(CameraState* state, glm::vec3* position) = 0;
 	}; // GameInterface

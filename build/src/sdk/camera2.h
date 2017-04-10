@@ -119,7 +119,7 @@ private:
 	gemini::DebugVar<float> dbg_distance_to_target;
 	gemini::DebugVar<float> dbg_horizontal_offset;
 	gemini::DebugVar<glm::vec3> dbg_position;
-	gemini::DebugVar<glm::vec3> dbg_target_position;
+	gemini::DebugVar<glm::vec3> dbg_world_position;
 	gemini::DebugVar<float> dbg_desired_distance;
 	gemini::DebugVar<float> dbg_desired_distance_to_target;
 	gemini::DebugVar<glm::vec2> dbg_current_pivot_offset;
@@ -127,7 +127,6 @@ private:
 	float desired_horizontal_offset;
 
 	glm::vec3 position;
-	glm::vec3 target_position;
 	glm::vec3 target_facing_direction;
 
 	// did the view move this tick?
@@ -151,6 +150,8 @@ private:
 	float interpolation_time;
 	glm::quat interpolation_rotation;
 	glm::vec3 interpolation_vector;
+
+	glm::vec3 world_position;
 
 	float auto_orient_seconds;
 	size_t auto_orienting;
@@ -189,7 +190,6 @@ public:
 	virtual void set_yaw_pitch(float yaw, float pitch) override;
 	virtual void tick(float step_interval_seconds) override;
 	virtual void set_fov(float new_fov) override;
-	virtual void set_target_position(const glm::vec3& player_position) override;
 	virtual void set_target_direction(const glm::vec3& direction) override;
 	virtual glm::vec3 get_target_direction() const override;
 	virtual glm::vec3 get_camera_direction() const override;
@@ -214,6 +214,9 @@ public:
 	gemini::physics::ICollisionObject* get_collider();
 
 	void set_minimum_distance(float min_distance);
+	virtual void set_initial_state(const gemini::CameraState& state);
+	virtual void get_current_state(gemini::CameraState& state);
+	virtual void set_world_position(const glm::vec3& world_position);
 private:
 
 	glm::vec3 get_rotated_pivot_offset() const;

@@ -43,21 +43,25 @@ namespace gemini
 		world_pose = parent_pose * joint_offsets[index] * local_pose;
 	}
 
-	glm::mat4 rapid_camera_test(const glm::vec3& position, const glm::quat& rotation)
+	glm::mat4 rapid_camera_test(const glm::vec3& world_position,
+								const glm::vec3& position,
+								const glm::quat& rotation)
 	{
 		//return glm::toMat4(rotation) * glm::translate(glm::mat4(1.0f), position);
 		// positive values for left side; negative for right.
 		float offset_value = -0.5f;
 		const glm::vec3 offset(offset_value, 0.0f, 0.0f);
 
+		const glm::mat4 world_tx = glm::translate(glm::mat4(1.0f), world_position + glm::vec3(0.0f, 0.0f, 0.0f));
 
 		glm::mat4 x1 = glm::translate(glm::mat4(1.0f), -offset);
 		glm::mat4 x2 = glm::translate(glm::mat4(1.0f), offset);
 
-
 		glm::mat4 rot = glm::toMat4(rotation);
 
-		return glm::translate(glm::mat4(1.0f), position + glm::vec3(-offset_value, 1.7f, 0.0f)) * x2 * rot * x1;
+		glm::vec3 inverse_rotated_offset = mathlib::rotate_vector(glm::vec3(0.0f, 0.0f, 2.0f), rotation);
+
+		return glm::translate(glm::mat4(1.0f), inverse_rotated_offset + glm::vec3(-offset_value, 0.7f, 0.0f)) * x2 * world_tx * rot * x1;
 		//return glm::mat4(1.0f);
 	}
 } // namespace gemini

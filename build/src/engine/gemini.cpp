@@ -1238,6 +1238,12 @@ Options:
 			camera_state[0] = camera_state[1];
 			game_interface->extract_camera(&camera_state[1], nullptr);
 
+			// 1. Assess camera position
+			// 2. Correct camera position
+			// 3. Determine if camera is too close to the player
+			// 4. optionally: fade out player when too close
+			LOGV("Collision Correct the camera position?\n");
+
 			queued_messages->resize(0);
 
 			if (game_interface)
@@ -1290,7 +1296,8 @@ Options:
 			view.width = frame.width;
 			view.height = frame.height;
 
-			game_interface->get_render_view(view);
+			glm::vec3 player_offset;
+			game_interface->get_render_view(view, player_offset);
 
 			// interpolate
 			EntityRenderState ers;
@@ -1302,6 +1309,7 @@ Options:
 			const uint32_t enable_interpolation = 1;
 			if (enable_interpolation)
 			{
+				interpolated_camera_state.world_position = gemini::lerp(camera_state[0].world_position, camera_state[1].world_position, alpha);
 				interpolated_camera_state.position = gemini::lerp(camera_state[0].position, camera_state[1].position, alpha);
 				interpolated_camera_state.distance_from_pivot = gemini::lerp(camera_state[0].distance_from_pivot, camera_state[1].distance_from_pivot, alpha);
 				interpolated_camera_state.rotation = gemini::slerp(camera_state[0].rotation, camera_state[1].rotation, alpha);
@@ -1318,15 +1326,29 @@ Options:
 			// setup the inverse camera transform.
 			//glm::mat4 to_world = glm::translate(glm::mat4(), -interpolated_camera_state.position);
 
+			glm::vec3 cam_origin;
+
 			RapidInterface* rapid = runtime_rapid();
 			if (rapid)
 			{
-				view.modelview = glm::inverse(rapid->camera_test(interpolated_camera_state.position, interpolated_camera_state.rotation));
+				view.modelview = rapid->camera_test(interpolated_camera_state.world_position,
+																interpolated_camera_state.position,
+																interpolated_camera_state.rotation);
 			}
 			else
 			{
-				view.modelview = glm::inverse(camera_state_to_transform(interpolated_camera_state));// *to_world;
+				view.modelview = camera_state_to_transform(interpolated_camera_state);// *to_world;
 			}
+
+			cam_origin = glm::vec3(glm::column(view.modelview, 3));
+			view.modelview = glm::inverse(view.modelview);
+
+			//glm::mat4 tx = glm::translate(glm::mat4(1.0f), player_offset);
+
+			//debugdraw::axes(glm::inverse(tx) * view.modelview, 1.0f, 0.0f);
+
+			debugdraw::camera(cam_origin,
+				interpolated_camera_state.view, 0.0f);
 
 			if (debug_camera)
 			{

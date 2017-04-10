@@ -31,8 +31,10 @@
 
 #include <renderer/debug_draw.h>
 
-#include <sdk/utils.h>
+#include <sdk/game_api.h>
 #include <sdk/physics_api.h>
+#include <sdk/utils.h>
+
 
 const char* cameratype_to_string(CameraType type)
 {
@@ -102,10 +104,6 @@ public:
 	}
 
 	virtual void set_fov(float new_fov) override
-	{
-	}
-
-	virtual void set_target_position(const glm::vec3& target_worldspace_position) override
 	{
 	}
 
@@ -180,10 +178,6 @@ void FixedCamera::set_fov(float new_fov)
 {
 }
 
-void FixedCamera::set_target_position(const glm::vec3& target_worldspace_position)
-{
-}
-
 void FixedCamera::set_target_direction(const glm::vec3& direction)
 {
 }
@@ -252,8 +246,17 @@ CameraMixer::~CameraMixer()
 void CameraMixer::push_camera(GameCamera* camera, float delay_sec)
 {
 	// set interval to delay_msec
-
 	CameraBlend blend(camera, 1.0f);
+	if (!cameras.empty())
+	{
+		// If there's a prior camera, copy its state
+		// to the new camera as a basis for interpolation.
+		gemini::CameraState camera_state;
+		GameCamera* top_camera = get_top_camera();
+		top_camera->get_current_state(camera_state);
+		camera->set_initial_state(camera_state);
+	}
+
 	cameras.push_back(blend);
 
 	total_time_sec = delay_sec;
@@ -317,6 +320,7 @@ float CameraMixer::get_field_of_view() const
 
 void CameraMixer::tick(float step_interval_seconds, float step_alpha)
 {
+#if 0
 	// aggregate values for origin and view.
 	origin = glm::vec3(0.0f, 0.0f, 0.0f);
 	view = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -382,6 +386,17 @@ void CameraMixer::tick(float step_interval_seconds, float step_alpha)
 		origin += (blend.weight * camera->get_origin());
 		view += (blend.weight * camera->get_target());
 	}
+#endif
+
+
+	if (cameras.empty())
+	{
+		return;
+	}
+
+	CameraBlend& blend = cameras[0];
+	blend.camera->set_world_position(world_position);
+	blend.camera->tick(step_interval_seconds);
 }
 
 void CameraMixer::move_view(float yaw_delta, float pitch_delta)
@@ -404,15 +419,15 @@ void CameraMixer::set_yaw_pitch(float yaw, float pitch)
 	}
 }
 
-void CameraMixer::set_target_position(const glm::vec3& target_worldspace_position)
-{
-	const size_t total_cameras = cameras.size();
-	for (size_t index = 0; index < total_cameras; ++index)
-	{
-		CameraBlend& blend = cameras[index];
-		blend.camera->set_target_position(target_worldspace_position);
-	}
-}
+//void CameraMixer::set_target_position(const glm::vec3& target_worldspace_position)
+//{
+//	const size_t total_cameras = cameras.size();
+//	for (size_t index = 0; index < total_cameras; ++index)
+//	{
+//		CameraBlend& blend = cameras[index];
+//		blend.camera->set_target_position(target_worldspace_position);
+//	}
+//}
 
 void CameraMixer::set_target_direction(const glm::vec3& direction)
 {
@@ -434,6 +449,11 @@ glm::vec3 CameraMixer::get_camera_direction() const
 {
 	const CameraBlend& blend = cameras.top();
 	return blend.camera->get_camera_direction();
+}
+
+void CameraMixer::set_world_position(const glm::vec3& new_world_position)
+{
+	world_position = new_world_position;
 }
 
 // --------------------------------------------------------

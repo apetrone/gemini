@@ -94,6 +94,11 @@ enum class CameraType
 
 const char* cameratype_to_string(CameraType type);
 
+namespace gemini
+{
+	struct CameraState;
+}
+
 class GameCamera
 {
 public:
@@ -123,9 +128,6 @@ public:
 	// set the vertical field of view
 	virtual void set_fov(float new_fov) = 0;
 
-	// Called when the target object's position changed
-	virtual void set_target_position(const glm::vec3& position) = 0;
-
 	// Set the target object's moved direction.
 	virtual void set_target_direction(const glm::vec3& direction) = 0;
 
@@ -142,6 +144,15 @@ public:
 	virtual void set_minimum_distance(float value) = 0;
 	virtual void set_follow_distance(float value) = 0;
 
+	// Copy CameraState to internal state
+	virtual void set_initial_state(const gemini::CameraState& state) = 0;
+	virtual void get_current_state(gemini::CameraState& state) = 0;
+
+	// Sets the world position of the camera.
+	// This allows the camera to perform its own collision detection and
+	// response as well as allowing it to form the view matrix when parameters
+	// are extracted from the camera.
+	virtual void set_world_position(const glm::vec3& world_position) = 0;
 }; // GameCamera
 
 
@@ -217,7 +228,6 @@ public:
 	virtual void set_yaw_pitch(float yaw, float pitch) override;
 	virtual void tick(float step_interval_seconds) override;
 	virtual void set_fov(float new_fov) override;
-	virtual void set_target_position(const glm::vec3& player_position) override;
 	virtual void set_target_direction(const glm::vec3& direction) override;
 	virtual glm::vec3 get_target_direction() const override;
 	virtual glm::vec3 get_camera_direction() const override;
@@ -251,6 +261,7 @@ private:
 	glm::vec3 origin;
 	glm::vec3 view;
 	glm::vec3 offset;
+	glm::vec3 world_position;
 
 	gemini::Allocator& allocator;
 
@@ -291,14 +302,14 @@ public:
 	void move_view(float yaw, float pitch);
 	void set_yaw_pitch(float yaw, float pitch);
 
-	// Update the target's position (in worldspace)
-	void set_target_position(const glm::vec3& position);
-
 	// Set the direction of travel for the target object.
 	void set_target_direction(const glm::vec3& direction);
 
 	glm::vec3 get_target_direction() const;
 	glm::vec3 get_camera_direction() const;
+
+	// sets the world position of the camera mixer "node"
+	void set_world_position(const glm::vec3& world_position);
 };
 
 struct Camera
