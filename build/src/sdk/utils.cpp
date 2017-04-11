@@ -74,6 +74,5 @@ namespace gemini
 	glm::mat4 camera_state_to_transform(const CameraState& camera_state)
 	{
 		return glm::translate(glm::mat4(1.0f), camera_state.position) * glm::toMat4(camera_state.rotation);
-		//return glm::toMat4(camera_state.rotation) * glm::translate(glm::mat4(1.0f), camera_state.position);
 	}
 } // namespace gemini

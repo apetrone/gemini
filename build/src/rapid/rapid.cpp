@@ -23,9 +23,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include <runtime/geometry.h>
-
 #include <rapid/rapid.h>
-//#include <core/logging.h>
+
 
 namespace gemini
 {
@@ -41,29 +40,33 @@ namespace gemini
 
 		glm::mat4 local_pose = glm::toMat4(glm::inverse(parent_quat) * local_rotations[index]);
 		world_pose = parent_pose * joint_offsets[index] * local_pose;
-	}
+	} // rapid_compute_pose
 
 	glm::mat4 rapid_camera_test(const glm::vec3& world_position,
 								const glm::vec3& position,
 								const glm::quat& rotation)
 	{
-		//return glm::toMat4(rotation) * glm::translate(glm::mat4(1.0f), position);
+#if 1
 		// positive values for left side; negative for right.
-		float offset_value = -0.5f;
-		const glm::vec3 offset(offset_value, 0.0f, 0.0f);
 
-		const glm::mat4 world_tx = glm::translate(glm::mat4(1.0f), world_position + glm::vec3(0.0f, 0.0f, 0.0f));
+		// The horizontal offset also needs to be flipped.
+		float offset_value = 0.5f;
+		const glm::vec3 offset(0.0f, 0.0f, 0.0f);
+
+		const glm::mat4 world_tx = glm::translate(glm::mat4(1.0f), position);
+		const glm::vec3 local_offset = mathlib::rotate_vector(glm::vec3(offset_value, 0.0f, 0.0f), rotation);
 
 		glm::mat4 x1 = glm::translate(glm::mat4(1.0f), -offset);
 		glm::mat4 x2 = glm::translate(glm::mat4(1.0f), offset);
 
 		glm::mat4 rot = glm::toMat4(rotation);
 
-		glm::vec3 inverse_rotated_offset = mathlib::rotate_vector(glm::vec3(0.0f, 0.0f, 2.0f), rotation);
-
-		return glm::translate(glm::mat4(1.0f), inverse_rotated_offset + glm::vec3(-offset_value, 0.7f, 0.0f)) * x2 * world_tx * rot * x1;
-		//return glm::mat4(1.0f);
-	}
+		const glm::vec3 world_offset(0.0f, 0.0f, 0.0f);
+		return glm::translate(glm::mat4(1.0f), local_offset + world_offset) * x2 * world_tx * rot * x1;
+#else
+		return glm::translate(glm::mat4(1.0f), position) * glm::toMat4(rotation);
+#endif
+	} // rapid_camera_test
 } // namespace gemini
 
 

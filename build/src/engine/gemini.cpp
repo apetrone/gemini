@@ -1242,7 +1242,7 @@ Options:
 			// 2. Correct camera position
 			// 3. Determine if camera is too close to the player
 			// 4. optionally: fade out player when too close
-			LOGV("Collision Correct the camera position?\n");
+			//LOGV("Collision Correct the camera position?\n");
 
 			queued_messages->resize(0);
 
