@@ -155,6 +155,7 @@ public:
 	virtual void set_world_position(const glm::vec3& world_position) = 0;
 
 	virtual void set_target_fov(float new_fov) = 0;
+	virtual void set_horizontal_offset(float new_horizontal_offset) = 0;
 }; // GameCamera
 
 

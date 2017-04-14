@@ -217,7 +217,9 @@ public:
 	virtual void set_initial_state(const gemini::CameraState& state);
 	virtual void get_current_state(gemini::CameraState& state);
 	virtual void set_world_position(const glm::vec3& world_position);
+
 private:
+	glm::mat4 compute_view_matrix() const;
 
 	glm::vec3 get_rotated_pivot_offset() const;
 

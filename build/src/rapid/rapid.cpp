@@ -50,19 +50,19 @@ namespace gemini
 		// positive values for left side; negative for right.
 
 		// The horizontal offset also needs to be flipped.
-		float offset_value = 0.5f;
-		const glm::vec3 offset(0.0f, 0.0f, 0.0f);
+		float offset_value = 0.0f;
+		//const glm::vec3 offset(0.0f, 0.0f, 0.0f);
 
 		const glm::mat4 world_tx = glm::translate(glm::mat4(1.0f), position);
 		const glm::vec3 local_offset = mathlib::rotate_vector(glm::vec3(offset_value, 0.0f, 0.0f), rotation);
 
-		glm::mat4 x1 = glm::translate(glm::mat4(1.0f), -offset);
-		glm::mat4 x2 = glm::translate(glm::mat4(1.0f), offset);
+		//glm::mat4 x1 = glm::translate(glm::mat4(1.0f), -offset);
+		//glm::mat4 x2 = glm::translate(glm::mat4(1.0f), offset);
 
 		glm::mat4 rot = glm::toMat4(rotation);
 
-		const glm::vec3 world_offset(0.0f, 0.0f, 0.0f);
-		return glm::translate(glm::mat4(1.0f), local_offset + world_offset) * x2 * world_tx * rot * x1;
+		//const glm::vec3 world_offset(0.0f, 0.0f, 0.0f);
+		return glm::translate(glm::mat4(1.0f), position + local_offset) * rot;
 #else
 		return glm::translate(glm::mat4(1.0f), position) * glm::toMat4(rotation);
 #endif
