@@ -201,7 +201,7 @@ public:
 	void set_view(const glm::vec3& view_direction);
 	void update_view_orientation();
 
-	void set_target_fov(float new_fov);
+	virtual void set_target_fov(float new_fov) override;
 	float get_vertical_offset() const;
 	void set_vertical_offset(float new_offset);
 

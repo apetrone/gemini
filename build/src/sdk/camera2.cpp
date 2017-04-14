@@ -123,9 +123,22 @@ QuaternionFollowCamera::~QuaternionFollowCamera()
 
 glm::vec3 QuaternionFollowCamera::get_origin() const
 {
-	glm::vec3 distance(0.0f, 0.0f, distance_to_target);
+	//glm::vec3 distance(current_pivot_offset, distance_to_target);
+	//return world_position + mathlib::rotate_vector(distance, orientation);
 
-	return world_position + get_rotated_pivot_offset() + mathlib::rotate_vector(distance, orientation);
+
+	float offset_value = 0.5f;
+	const glm::vec3 offset(0.0f, 0.0f, 0.0f);
+
+	const glm::mat4 world_tx = glm::translate(glm::mat4(1.0f), position);
+	const glm::vec3 local_offset = mathlib::rotate_vector(glm::vec3(offset_value, 0.0f, 0.0f), orientation);
+
+	glm::mat4 x1 = glm::translate(glm::mat4(1.0f), -offset);
+	glm::mat4 x2 = glm::translate(glm::mat4(1.0f), offset);
+
+	glm::mat4 rot = glm::toMat4(orientation);
+
+	return world_position + glm::vec3((glm::translate(glm::mat4(1.0f), local_offset) * x2 * world_tx * rot * x1) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
 glm::vec3 QuaternionFollowCamera::get_target() const
@@ -204,6 +217,8 @@ void QuaternionFollowCamera::set_yaw_pitch(float yaw, float pitch)
 
 void QuaternionFollowCamera::tick(float step_interval_seconds)
 {
+	collision_correct();
+
 	if (distance_truncated)
 	{
 		// snap to collision
@@ -507,12 +522,26 @@ void QuaternionFollowCamera::reset_view()
 
 glm::vec3 QuaternionFollowCamera::get_eye_position() const
 {
-	return world_position + position;
+	//return world_position + position;
+	float offset_value = 0.5f;
+	const glm::vec3 offset(0.0f, 0.0f, 0.0f);
+
+	glm::vec3 pivot_offset_vector(current_pivot_offset, 0.0f);
+
+	const glm::mat4 world_tx = glm::translate(glm::mat4(1.0f), position + pivot_offset_vector);
+	const glm::vec3 local_offset = mathlib::rotate_vector(glm::vec3(offset_value + 0.5f, 0.0f, 0.0f), orientation);
+
+	glm::mat4 x1 = glm::translate(glm::mat4(1.0f), -offset);
+	glm::mat4 x2 = glm::translate(glm::mat4(1.0f), offset);
+
+	glm::mat4 rot = glm::toMat4(orientation);
+
+	return world_position + glm::vec3((glm::translate(glm::mat4(1.0f), local_offset) * x2 * world_tx * rot * x1) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
 void QuaternionFollowCamera::set_follow_distance(float target_distance)
 {
-	distance_to_target = target_distance;
+	//distance_to_target = target_distance;
 	desired_distance_to_target = target_distance;
 }
 

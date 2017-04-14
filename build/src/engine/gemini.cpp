@@ -1338,6 +1338,7 @@ Options:
 			else
 			{
 				view.modelview = camera_state_to_transform(interpolated_camera_state);// *to_world;
+				glm::vec4 row = glm::column(view.modelview, 3);
 			}
 
 			cam_origin = glm::vec3(glm::column(view.modelview, 3));
