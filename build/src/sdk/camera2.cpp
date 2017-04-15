@@ -418,7 +418,7 @@ void QuaternionFollowCamera::collision_correct()
 		distance_truncated = 1;
 	}
 
-	glm::vec3 desired_pivot_offset(desired_horizontal_offset, vertical_offset.current_value, 0.0f);
+	glm::vec3 desired_pivot_offset(desired_horizontal_offset, 0.0f, 0.0f);
 	float offset_length = glm::length(desired_pivot_offset);
 	glm::vec3 offset_vector;
 	if (offset_length > 0.0f)
@@ -447,9 +447,13 @@ void QuaternionFollowCamera::collision_correct()
 		{
 			test_pivot_point = offset_length * offset_direction;
 		}
+
 		//glm::vec3 test_pivot_point = perform_raycast(target_position, glm::normalize(offset_vector), gemini::Color(0.0f, 1.0f, 0.0f), offset_length);
-		//LOGV("len: %2.2f\n", glm::length(test_pivot_point));
-		glm::vec3 current_pivot_offset = glm::length(test_pivot_point) * desired_pivot_offset;
+
+		float test_len = glm::length(test_pivot_point);
+		//LOGV("len: %2.2f\n", test_len);
+
+		glm::vec3 current_pivot_offset = test_len * glm::normalize(desired_pivot_offset);
 
 		//LOGV("pv %2.2f\n", current_pivot_offset.x);
 		horizontal_offset.target_value = current_pivot_offset.x;
