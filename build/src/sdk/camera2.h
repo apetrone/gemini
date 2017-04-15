@@ -116,15 +116,16 @@ private:
 	AnimatedTargetValue<float> field_of_view;
 	AnimatedTargetValue<float> vertical_offset;
 	AnimatedTargetValue<float> horizontal_offset;
+	AnimatedTargetValue<float> distance_to_target;
 	gemini::DebugVar<float> dbg_distance_to_target;
 	gemini::DebugVar<float> dbg_horizontal_offset;
 	gemini::DebugVar<glm::vec3> dbg_position;
 	gemini::DebugVar<glm::vec3> dbg_world_position;
-	gemini::DebugVar<float> dbg_desired_distance;
-	gemini::DebugVar<float> dbg_desired_distance_to_target;
-	gemini::DebugVar<glm::vec2> dbg_current_pivot_offset;
+	//gemini::DebugVar<float> dbg_desired_distance;
+	//gemini::DebugVar<float> dbg_desired_distance_to_target;
+	//gemini::DebugVar<glm::vec2> dbg_current_pivot_offset;
 
-	float desired_horizontal_offset;
+	//float desired_horizontal_offset;
 
 	glm::vec3 position;
 	glm::vec3 target_facing_direction;
@@ -135,14 +136,15 @@ private:
 	//float follow_distance;
 	//float player_height;
 
-	float distance_to_target;
+	//float distance_to_target;
 	float desired_distance_to_target;
-	float desired_distance;
+	float desired_horizontal_offset;
+	//float desired_distance;
 	float minimum_distance;
-	uint32_t distance_truncated; // set to 1 if the camera ran into something
+	//uint32_t distance_truncated; // set to 1 if the camera ran into something
 
-	glm::vec2 desired_pivot_offset;
-	glm::vec2 current_pivot_offset;
+	//glm::vec2 desired_pivot_offset;
+	//glm::vec2 current_pivot_offset;
 
 	glm::vec3 camera_direction;
 	glm::vec3 camera_right;
@@ -166,7 +168,7 @@ private:
 	glm::vec3 cam_vertices[6];
 
 
-	glm::vec3 perform_raycast(const glm::vec3& start, const glm::vec3& direction, const gemini::Color& color, float max_distance);
+	glm::vec3 perform_raycast(const glm::vec3& start, const glm::vec3& direction, const gemini::Color& color, float max_distance, bool* hit_object);
 
 	// correct camera position by testing collision
 	void collision_correct();

@@ -186,12 +186,16 @@ struct AnimatedTargetValue
 		{
 			// snap to this value
 			current_value = desired_value;
+			target_value = desired_value;
+			current_time_seconds = 0.0f;
+			target_time_seconds = 0.0f;
 		}
 		original_value = current_value;
 	}
 
 	void update(float delta_seconds)
 	{
+#if 0
 		if (target_time_seconds > 0.0f)
 		{
 			current_time_seconds += delta_seconds;
@@ -203,6 +207,18 @@ struct AnimatedTargetValue
 
 			current_value = gemini::lerp(original_value, target_value, alpha);
 		}
+#endif
+		// exponential camera chase to desired_distance; gracefully zoom
+		float vel = (current_value - target_value);
+		//F = - k (p - r)
+
+		current_value += -10.0 * (vel * delta_seconds);
+		//current_value = target_value - (vel * exp(-delta_seconds / 0.45f));
+
+		//float vel = (desired_distance - distance_to_target);
+		//distance_to_target = desired_distance - (vel * exp(-step_interval_seconds / 0.45f));
+
+		//current_value = target_value;
 	}
 
 	T value() const
