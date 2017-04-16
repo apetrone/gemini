@@ -1348,8 +1348,11 @@ Options:
 
 			//debugdraw::axes(glm::inverse(tx) * view.modelview, 1.0f, 0.0f);
 
-			debugdraw::camera(cam_origin,
-				interpolated_camera_state.view, 0.0f);
+			//debugdraw::camera(
+			//	cam_origin,
+			//	interpolated_camera_state.view,
+			//	0.0f
+			//);
 
 			if (debug_camera)
 			{

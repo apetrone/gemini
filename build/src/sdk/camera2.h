@@ -158,15 +158,7 @@ private:
 	float auto_orient_seconds;
 	size_t auto_orienting;
 
-
-	gemini::physics::ICollisionObject* collision_object;
-	gemini::physics::ICollisionShape* collision_shape;
-
-	// physics for the offset position test
-	gemini::physics::ICollisionObject* offset_collision_object;
-	gemini::physics::ICollisionShape* offset_collision_shape;
 	glm::vec3 cam_vertices[6];
-
 
 	glm::vec3 perform_raycast(const glm::vec3& start, const glm::vec3& direction, const gemini::Color& color, float max_distance, bool* hit_object);
 
@@ -211,9 +203,6 @@ public:
 	void set_horizontal_offset(float new_offset);
 
 	float get_distance_from_pivot() const;
-	void simulate(float delta_time_seconds);
-
-	gemini::physics::ICollisionObject* get_collider();
 
 	void set_minimum_distance(float min_distance);
 	virtual void set_initial_state(const gemini::CameraState& state);
