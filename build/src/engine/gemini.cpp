@@ -1356,7 +1356,8 @@ Options:
 
 			if (debug_camera)
 			{
-				view.modelview = glm::inverse(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f)) * glm::toMat4(glm::angleAxis(glm::radians(-35.0f), glm::vec3(1.0f, 0.0f, 0.0f))));
+				const glm::vec3 wall_collision_offset(5.0f, 0.0f, 0.0f);
+				view.modelview = glm::inverse(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f) + wall_collision_offset) * glm::toMat4(glm::angleAxis(glm::radians(-35.0f), glm::vec3(1.0f, 0.0f, 0.0f))));
 			}
 
 			// this is what happens when we interpolate the vectors; but suffers artifacts from lerping vector used as orientation.
