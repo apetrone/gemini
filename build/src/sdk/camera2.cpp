@@ -286,7 +286,7 @@ void QuaternionFollowCamera::set_fov(float new_fov)
 glm::vec3 QuaternionFollowCamera::perform_raycast(const glm::vec3& start, const glm::vec3& direction, float max_distance, bool* hit_object)
 {
 #if 1
-	gemini::physics::SweepTestResult result = gemini::physics::instance()->sweep(collision_object, collision_shape, start, start + (direction * max_distance), glm::radians(45.0f), -direction);
+	gemini::physics::SweepTestResult result = gemini::physics::instance()->sweep(collision_object, collision_shape, start, start + (direction * max_distance), glm::radians(0.0f), -direction);
 
 	glm::vec3 point;
 	if (result.hit_items() > 0)
@@ -457,14 +457,16 @@ void QuaternionFollowCamera::collision_correct()
 	{
 		glm::vec3 corrected_position = far_point;// +(camera_direction * 0.25f);
 
-		//debugdraw::sphere(corrected_position, gemini::Color(1.0f, 0.5f, 0.0f), SPHERE_RADIUS, 0.5f);
+		debugdraw::sphere(corrected_position, gemini::Color(1.0f, 0.5f, 0.0f), SPHERE_RADIUS, 0.5f);
+		debugdraw::line(world_position, corrected_position, gemini::Color(1.0f, 0.0f, 0.0f), 0.5f);
 		desired_distance = glm::length(corrected_position - (world_position + offset_vector));
 		distance_truncated = 1;
 	}
 	else
 	{
 		glm::vec3 sphere_pos = world_position + offset_vector + (-camera_direction * desired_distance_to_target);
-		//debugdraw::sphere(sphere_pos, gemini::Color(0.0f, 1.0f, 0.0f), SPHERE_RADIUS, 0.5f);
+		debugdraw::sphere(sphere_pos, gemini::Color(0.0f, 1.0f, 0.0f), SPHERE_RADIUS, 0.5f);
+		debugdraw::line(world_position, sphere_pos, gemini::Color(0.0f, 1.0f, 0.0f), 0.5f);
 		desired_distance = desired_distance_to_target;
 	}
 

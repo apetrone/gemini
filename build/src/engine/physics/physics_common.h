@@ -139,11 +139,11 @@ namespace gemini
 					hitNormalWorld = m_hitCollisionObject->getWorldTransform().getBasis()*convexResult.m_hitNormalLocal;
 				}
 
-				btScalar dotUp = m_up.dot(hitNormalWorld);
-				if (fabs(dotUp) < m_minSlopeDot) {
-//					LOGV("ignoring hit with invalid slope\n");
-					return btScalar(1.0);
-				}
+//				btScalar dotUp = m_up.dot(hitNormalWorld);
+//				if (fabs(dotUp) < m_minSlopeDot) {
+////					LOGV("ignoring hit with invalid slope\n");
+//					return btScalar(1.0);
+//				}
 
 				return ClosestConvexResultCallback::addSingleResult(convexResult, normalInWorldSpace);
 			}
