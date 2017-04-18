@@ -68,7 +68,7 @@ namespace gemini
 										float max_distance,
 										ICollisionObject* ignored_object0 = nullptr,
 										ICollisionObject* ignored_object1 = nullptr);
-			virtual SweepTestResult sweep(ICollisionObject* source_object, ICollisionShape* shape, const glm::vec3& start, const glm::vec3& end, float angle_threshold);
+			virtual SweepTestResult sweep(ICollisionObject* source_object, ICollisionShape* shape, const glm::vec3& start, const glm::vec3& end, float angle_threshold, const glm::vec3& angle);
 
 			virtual bool update_shape_geometry(ICollisionShape* shape, const glm::vec3* vertices, size_t total_vertices);
 		};

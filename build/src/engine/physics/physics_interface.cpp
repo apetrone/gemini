@@ -48,6 +48,7 @@
 #include <sdk/physics_api.h>
 
 #include <core/typedefs.h>
+#include <renderer/color.h>
 
 using namespace gemini;
 using namespace gemini::physics::bullet;
@@ -499,7 +500,7 @@ namespace gemini
 		}
 
 
-		SweepTestResult PhysicsInterface::sweep(ICollisionObject* source_object, ICollisionShape* shape_object, const glm::vec3& start, const glm::vec3& end, float angle_threshold)
+		SweepTestResult PhysicsInterface::sweep(ICollisionObject* source_object, ICollisionShape* shape_object, const glm::vec3& start, const glm::vec3& end, float angle_threshold, const glm::vec3& angle)
 		{
 			SweepTestResult result;
 
@@ -519,7 +520,7 @@ namespace gemini
 			source.setOrigin(fromglm(start));
 			destination.setOrigin(fromglm(end));
 
-			ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), angle_threshold);
+			ClosestNotMeConvexResultCallback callback(ghost, fromglm(angle), angle_threshold);
 			callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
 			callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
 
@@ -542,6 +543,7 @@ namespace gemini
 				result.hit_point_world = toglm(callback.m_hitPointWorld);
 
 				btVector3 normal = callback.m_hitNormalWorld.normalize();
+				debugdraw::sphere(toglm(callback.m_hitPointWorld), gemini::Color(1.0f, 0.0f, 0.0f), 0.005f, 2.0f);
 				//::renderer::debugdraw::sphere(toglm(callback.m_hitPointWorld), Color::from_rgba(255, 0, 0, 255), 0.005f, 2.0f);
 				//::renderer::debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+normal*0.1f), Color::from_rgba(0, 255, 255, 255), 2.0f);
 

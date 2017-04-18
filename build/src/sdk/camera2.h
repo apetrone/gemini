@@ -99,6 +99,8 @@ public:
 	float yaw;
 	float pitch;
 
+	gemini::physics::ICollisionShape* collision_shape;
+	gemini::physics::ICollisionObject* collision_object;
 private:
 
 	// truck: up and down
@@ -160,7 +162,7 @@ private:
 
 	glm::vec3 cam_vertices[6];
 
-	glm::vec3 perform_raycast(const glm::vec3& start, const glm::vec3& direction, const gemini::Color& color, float max_distance, bool* hit_object);
+	glm::vec3 perform_raycast(const glm::vec3& start, const glm::vec3& direction, float max_distance, bool* hit_object);
 
 	// correct camera position by testing collision
 	void collision_correct();

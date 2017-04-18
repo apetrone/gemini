@@ -116,12 +116,22 @@ namespace gemini
 
 			virtual void step_simulation(float step_interval_seconds) = 0;
 
-			virtual RaycastInfo raycast(const glm::vec3& start,
-										const glm::vec3& direction,
-										float max_distance,
-										ICollisionObject* ignored_object0 = nullptr,
-										ICollisionObject* ignored_object1 = nullptr) = 0;
-			virtual SweepTestResult sweep(ICollisionObject* source_object, ICollisionShape* shape, const glm::vec3& start, const glm::vec3& end, float min_angle_cosine = 0.0f) = 0;
+			virtual RaycastInfo raycast(
+				const glm::vec3& start,
+				const glm::vec3& direction,
+				float max_distance,
+				ICollisionObject* ignored_object0 = nullptr,
+				ICollisionObject* ignored_object1 = nullptr
+			) = 0;
+
+			virtual SweepTestResult sweep(
+				ICollisionObject* source_object,
+				ICollisionShape* shape,
+				const glm::vec3& start,
+				const glm::vec3& end,
+				float min_angle_cosine = 0.0f,
+				const glm::vec3& angle = glm::vec3(0.0f, 1.0f, 0.0f)
+			) = 0;
 
 			virtual bool update_shape_geometry(ICollisionShape* shape, const glm::vec3* vertices, size_t total_vertices) = 0;
 		};
