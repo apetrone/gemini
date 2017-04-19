@@ -168,6 +168,9 @@ private:
 	// correct camera position by testing collision
 	void collision_correct();
 
+	void collision_pivot_offset();
+	void collision_follow_distance();
+
 public:
 	QuaternionFollowCamera();
 	virtual ~QuaternionFollowCamera();
