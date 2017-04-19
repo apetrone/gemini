@@ -282,11 +282,6 @@ namespace mathlib
 		float far_height = 2.0f * tan(field_of_view * 0.5f) * farz;
 		float far_width = (far_height * aspect_ratio);
 
-		//camera_position = fc->get_origin();
-		//target_position = fc->get_target();
-		//up_vector = fc->get_up();
-		//right_vector = fc->get_right();
-
 		glm::vec3 near_point = (origin + view * nearz);
 		glm::vec3 far_point = (origin + view * farz);
 

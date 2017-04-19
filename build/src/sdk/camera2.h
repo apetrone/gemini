@@ -160,7 +160,8 @@ private:
 	float auto_orient_seconds;
 	size_t auto_orienting;
 
-	glm::vec3 cam_vertices[6];
+	glm::vec3 near_plane[4];
+	glm::vec3 far_plane[4];
 
 	glm::vec3 perform_raycast(const glm::vec3& start, const glm::vec3& direction, float max_distance, bool* hit_object);
 
