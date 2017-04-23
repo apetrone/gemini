@@ -140,7 +140,8 @@ private:
 
 	//float distance_to_target;
 	float desired_distance_to_target;
-	float desired_horizontal_offset;
+	glm::vec2 desired_pivot_offset;
+
 	//float desired_distance;
 	float minimum_distance;
 	//uint32_t distance_truncated; // set to 1 if the camera ran into something
@@ -164,9 +165,6 @@ private:
 	glm::vec3 far_plane[4];
 
 	glm::vec3 perform_raycast(const glm::vec3& start, const glm::vec3& direction, float max_distance, bool* hit_object);
-
-	// correct camera position by testing collision
-	void collision_correct();
 
 	void collision_pivot_offset();
 	void collision_follow_distance();
@@ -203,7 +201,7 @@ public:
 
 	virtual void set_target_fov(float new_fov) override;
 	float get_vertical_offset() const;
-	void set_vertical_offset(float new_offset);
+	virtual void set_vertical_offset(float new_offset) override;
 
 	float get_horizontal_offset() const;
 	void set_horizontal_offset(float new_offset);
@@ -214,6 +212,9 @@ public:
 	virtual void set_initial_state(const gemini::CameraState& state);
 	virtual void get_current_state(gemini::CameraState& state);
 	virtual void set_world_position(const glm::vec3& world_position);
+
+	// correct camera position by testing collision
+	virtual void collision_correct(float step_interval_seconds) override;
 
 private:
 	glm::mat4 compute_view_matrix() const;

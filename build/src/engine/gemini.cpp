@@ -1357,8 +1357,9 @@ Options:
 			if (debug_camera)
 			{
 				// 5 is centered
-				const glm::vec3 wall_collision_offset(4.5f, 0.0f, 0.0f);
-				view.modelview = glm::inverse(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f) + wall_collision_offset) * glm::toMat4(glm::angleAxis(glm::radians(-35.0f), glm::vec3(1.0f, 0.0f, 0.0f))));
+				const glm::vec3 wall_collision_offset(5.f, -1.1f, 0.0f);
+				const float pitch_degrees = 0.0f; // -35.0f
+				view.modelview = glm::inverse(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f) + wall_collision_offset) * glm::toMat4(glm::angleAxis(glm::radians(pitch_degrees), glm::vec3(1.0f, 0.0f, 0.0f))));
 			}
 
 			// this is what happens when we interpolate the vectors; but suffers artifacts from lerping vector used as orientation.

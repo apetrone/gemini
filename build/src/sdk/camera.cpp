@@ -456,6 +456,12 @@ void CameraMixer::set_world_position(const glm::vec3& new_world_position)
 	world_position = new_world_position;
 }
 
+void CameraMixer::collision_correct(float step_interval_seconds)
+{
+	CameraBlend& blend = cameras.top();
+	blend.camera->collision_correct(step_interval_seconds);
+}
+
 // --------------------------------------------------------
 // Camera
 // --------------------------------------------------------

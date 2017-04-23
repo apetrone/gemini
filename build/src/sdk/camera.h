@@ -156,6 +156,9 @@ public:
 
 	virtual void set_target_fov(float new_fov) = 0;
 	virtual void set_horizontal_offset(float new_horizontal_offset) = 0;
+	virtual void set_vertical_offset(float new_vertical_offset) = 0;
+
+	virtual void collision_correct(float step_interval_seconds) = 0;
 }; // GameCamera
 
 
@@ -212,13 +215,13 @@ struct AnimatedTargetValue
 		float vel = (current_value - target_value);
 		//F = - k (p - r)
 
-		current_value += -10.0 * (vel * delta_seconds);
+		current_value += -20.0 * (vel * delta_seconds);
 		//current_value = target_value - (vel * exp(-delta_seconds / 0.45f));
 
 		//float vel = (desired_distance - distance_to_target);
 		//distance_to_target = desired_distance - (vel * exp(-step_interval_seconds / 0.45f));
 
-		//current_value = target_value;
+		current_value = target_value;
 	}
 
 	T value() const
@@ -329,6 +332,8 @@ public:
 
 	// sets the world position of the camera mixer "node"
 	void set_world_position(const glm::vec3& world_position);
+
+	void collision_correct(float step_interval_seconds);
 };
 
 struct Camera

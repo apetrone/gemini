@@ -79,6 +79,7 @@ using namespace gemini;
 
 #define ENABLE_UI 1
 #define DRAW_SENSOR_GRAPHS 0
+#define TEST_SPRING_SYSTEM 1
 
 #define DRAW_LINES 0
 const size_t TOTAL_LINES = 256;
@@ -210,6 +211,98 @@ typedef HashSet<platform::PathString, ModifiedAssetData> PathDelayHashSet;
 size_t total_bytes = sizeof(MyVertex) * 4;
 
 
+class SpringPanel : public gui::Panel
+{
+public:
+
+	gui::Point tube[4];
+
+	struct Object
+	{
+		gui::Point position;
+		gui::Point velocity;
+	};
+
+	float k;
+	float x;
+	Object box;
+
+	gui::Point target;
+
+	SpringPanel(gui::Panel* parent)
+		: gui::Panel(parent)
+	{
+		set_background_color(gemini::Color(0.5f, 0.5f, 0.5f));
+
+		tube[0] = gui::Point(0.0f, 0.0f);
+		tube[1] = gui::Point(0.0f, 50.0f);
+		tube[2] = gui::Point(50.0f, 50.0f);
+		tube[3] = gui::Point(50.0f, 0.0f);
+
+
+		box.position = gui::Point(0.0f, 0.0f);
+		box.velocity = gui::Point(0.0f, 0.0f);
+		target = gui::Point(50.0f, 0.0f);
+	}
+
+	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
+};
+
+
+void SpringPanel::update(gui::Compositor* compositor, float delta_seconds)
+{
+	gui::Panel::update(compositor, delta_seconds);
+#if 0
+	// Simple harmonic oscillator
+	x = box.position.x - target.x;
+	k = 15.f;
+
+	const float mass_kgs = .045f;
+	//float w = sqrt(k / m);
+	//const float frequency = (w / (2 * mathlib::PI));
+	//const float period = 1.0f / frequency;
+	const float T = (mathlib::PI * 2.0) * (sqrt(mass_kgs / k));
+	const float frequency = (1.0f / T);
+	LOGV("freq: %2.2fHz\n", frequency);
+
+
+	box.velocity.x += -k*x * delta_seconds;
+	box.position += box.velocity * delta_seconds;
+#endif
+
+#if 1
+	// Damped harmonic oscillator
+	x = box.position.x - target.x;
+	k = 0.125f;
+	const float mass_kgs = .045f;
+	const float c = 0.19f;
+
+	//const float damping_ratio = (c / (2.0 * sqrt(mass_kgs * k)));
+	//LOGV("damping_ratio is %2.2f\n", damping_ratio);
+
+	//box.velocity += 0.75f * (-(box.position - target) * delta_seconds);
+	box.velocity.x += -k*x -c * box.velocity.x;
+	box.position += box.velocity;
+#endif
+}
+
+void SpringPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
+{
+	gui::Panel::render(compositor, renderer, render_commands);
+
+	render_commands.add_rectangle(
+		gui::transform_point(get_transform(0), box.position + tube[0]),
+		gui::transform_point(get_transform(0), box.position + tube[1]),
+		gui::transform_point(get_transform(0), box.position + tube[2]),
+		gui::transform_point(get_transform(0), box.position + tube[3]),
+		gui::render::WhiteTexture,
+		gemini::Color(1.0f, 0.5f, 0.0)
+	);
+}
+
+
+
 struct EditorEnvironment
 {
 	Project* project;
@@ -249,6 +342,7 @@ private:
 	gui::Label* log_window;
 	GUIRenderer* gui_renderer;
 	gui::Panel* main_panel;
+	SpringPanel* spring_panel;
 	::renderer::StandaloneResourceCache* resource_cache;
 	render2::RenderTarget* render_target;
 	render2::Texture* texture;
@@ -1054,6 +1148,7 @@ Options:
 
 		animation::startup(asset_allocator);
 
+#if 0
 		AssetHandle test_mesh = mesh_load("models/vault");
 		//AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
 		AssetHandle animated_mesh;
@@ -1089,6 +1184,7 @@ Options:
 			entity_render_state.model_matrix[entity_index] = transform;
 			transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
 		}
+#endif
 
 		// initialize debug draw
 		debugdraw::startup(debugdraw_allocator, device);
@@ -1140,6 +1236,12 @@ Options:
 			horizontal_layout->add_layout(center_layout);
 #endif
 
+#if TEST_SPRING_SYSTEM
+			spring_panel = new SpringPanel(compositor);
+			spring_panel->set_origin(100, 100);
+			spring_panel->set_size(400, 400);
+			spring_panel->set_name("spring_panel");
+#endif
 
 			const char dev_font[] = "debug";
 			const size_t dev_font_size = 16;
