@@ -292,8 +292,8 @@ void QuaternionFollowCamera::collision_correct(float step_interval_seconds)
 	horizontal_offset.update(step_interval_seconds);
 	distance_to_target.update(step_interval_seconds);
 
-	collision_pivot_offset();
-	//collision_follow_distance();
+	//collision_pivot_offset();
+	collision_follow_distance();
 	position = (-glm::normalize(camera_direction) * distance_to_target.current_value);
 
 	collision_object->set_world_transform(world_position + position + get_rotated_pivot_offset(), glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
@@ -304,7 +304,7 @@ void QuaternionFollowCamera::collision_pivot_offset()
 	glm::vec3 raycast_result;
 
 	// 1. Try to raycast from the pivot offset to the world first.
-	glm::vec3 pivot_offset(desired_pivot_offset, 0.0f);
+	glm::vec3 pivot_offset(horizontal_offset.target_value, 0.0f, 0.0f);
 	float offset_length = glm::length(pivot_offset);
 	glm::vec3 offset_vector;
 
@@ -332,9 +332,28 @@ void QuaternionFollowCamera::collision_pivot_offset()
 			&hit_object
 		);
 
+		gemini::physics::SweepTestResult sweep = gemini::physics::instance()->sweep(
+			collision_object,
+			collision_shape,
+			world_position,
+			world_position + (offset_direction * offset_length),
+			glm::radians(0.0f),
+			glm::vec3(0.0f, 0.0f, 0.0f)
+		);
+
+		if (sweep.hit_items() > 0)
+		{
+			debugdraw::sphere(sweep.hit_point_world, gemini::Color(1.0f, 0.0f, 0.0f), DEBUG_SPHERE_RADIUS, 0.5f);
+		}
+
 		//debugdraw::sphere(world_position, gemini::Color(0.5f, 0.5f, 0.5f), SPHERE_RADIUS, 0.5f);
 
 		float test_len;
+
+		// There are three cases to handle here:
+		// 1. Raycast hit with enough distance for offset
+		// 2. Raycast hit without enough distance for pivot
+		// 3. The raycast hit nothing
 
 		if (hit_object)
 		{
@@ -343,18 +362,41 @@ void QuaternionFollowCamera::collision_pivot_offset()
 			test_len = glm::length(player_to_hit);
 			LOGV("hit length: %2.2f\n", test_len);
 
-			// clamp to offset length
+			glm::vec3 adjust;
+
 			if (test_len > offset_length)
 			{
+				// 1. Raycast hit with enough distance for offset; clamp length.
 				test_len = offset_length;
 			}
 			else
 			{
-				test_len -= MINIMUM_PIVOT_OFFSET;
+				// 2. Raycast hit without enough distance for pivot
+				//else
+				//{
+				//	test_len -= MINIMUM_PIVOT_OFFSET;
+				//}
+
+				float ratio = (MINIMUM_PIVOT_OFFSET / test_len);
+				float pct = 1.0 - ratio;
+
+				test_len = (test_len * pct);
+				// scale back by the normal;
+
+				//const glm::vec3 normal(-1.0f, 0.0f, 0.0f);
+				//player_to_hit = (result + (normal * MINIMUM_PIVOT_OFFSET)) - world_position;
+				//test_len = glm::length(player_to_hit);
+
+				//adjust = (normal * MINIMUM_PIVOT_OFFSET);
 			}
+
+
 
 			LOGV("truncate: %2.2f\n", test_len);
 			test_pivot_point = glm::normalize(player_to_hit) * test_len;
+
+
+			//debugdraw::line(world_position, world_position + player_to_hit, gemini::Color(1.0f, 0.5f, 0.0f), 0.2f);
 
 			//glm::vec3 corrected_position = result - (world_position + desired_pivot_offset + SPHERE_COLLISION_RADIUS);
 			//test_pivot_point = corrected_position;
@@ -374,19 +416,21 @@ void QuaternionFollowCamera::collision_pivot_offset()
 			//test_pivot_point = (1.0f - pct) * len * corrected_position;
 			//test_pivot_point = ratio * corrected_position;
 
-			debugdraw::sphere(world_position + test_pivot_point, gemini::Color(1.0f, 0.0f, 0.0f), DEBUG_SPHERE_RADIUS, 0.5f);
+			//debugdraw::sphere(world_position + test_pivot_point, gemini::Color(1.0f, 0.0f, 0.0f), DEBUG_SPHERE_RADIUS, 0.5f);
 			debugdraw::line(world_position, world_position + test_pivot_point, gemini::Color(1.0f, 0.0f, 0.0f), 0.5f);
 		}
 		else
 		{
+			// 3. The raycast hit nothing.
 			const float corrected_length = offset_length;
 			test_pivot_point = corrected_length * offset_direction;
-			debugdraw::sphere(world_position + (offset_direction * offset_length), gemini::Color(0.0f, 1.0f, 0.0f), DEBUG_SPHERE_RADIUS, 0.5f);
+			//debugdraw::sphere(world_position + (offset_direction * offset_length), gemini::Color(0.0f, 1.0f, 0.0f), DEBUG_SPHERE_RADIUS, 0.5f);
 			debugdraw::line(world_position, world_position + (offset_direction * offset_length), gemini::Color(0.0f, 1.0f, 0.0f), 0.5f);
 		}
 
 		test_len = glm::length(test_pivot_point);
 		offset_vector = test_len * glm::normalize(pivot_offset);
+		//offset_vector.y = vertical_offset.target_value;
 
 		horizontal_offset.target_value = offset_vector.x;
 		vertical_offset.target_value = offset_vector.y;
