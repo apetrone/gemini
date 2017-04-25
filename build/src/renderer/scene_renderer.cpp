@@ -280,7 +280,7 @@ namespace gemini
 		animation::AnimatedInstance* instance = component->sequence_instances[instance_index];
 		instance->flags = animation::AnimatedInstance::Flags::Playing;
 		instance->reset_channels();
-		LOGV("playing animation: %s\n", animation_name);
+		//LOGV("playing animation: %s\n", animation_name);
 		component->current_sequence_index = instance_index;
 
 		return instance_index;

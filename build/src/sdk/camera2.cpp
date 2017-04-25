@@ -153,7 +153,7 @@ void QuaternionFollowCamera::move_view(float yaw_delta, float pitch_delta)
 	camera_direction = glm::normalize(mathlib::rotate_vector(camera_direction, rotation));
 
 	update_view_orientation();
-	collision_correct(0.0f);
+	//collision_correct(0.0f);
 }
 
 void QuaternionFollowCamera::set_yaw_pitch(float yaw, float pitch)
@@ -442,7 +442,7 @@ void QuaternionFollowCamera::collision_pivot_offset()
 		vertical_offset.target_value = pivot_offset.y;
 	}
 
-	LOGV("h: %2.2f, v: %2.2f\n", horizontal_offset.target_value, vertical_offset.target_value);
+	//LOGV("h: %2.2f, v: %2.2f\n", horizontal_offset.target_value, vertical_offset.target_value);
 
 	//glm::vec3 corrected_offset_vector(horizontal_offset.target_value, 0.0f, 0.0f);
 	//corrected_offset_vector = mathlib::rotate_vector(corrected_offset_vector, orientation);
@@ -678,8 +678,6 @@ void QuaternionFollowCamera::set_horizontal_offset(float new_offset)
 {
 	horizontal_offset.set(new_offset, 0.55f);
 	desired_pivot_offset.x = new_offset;
-
-	//collision_correct(0.0f);
 }
 
 float QuaternionFollowCamera::get_distance_from_pivot() const
@@ -713,19 +711,14 @@ void QuaternionFollowCamera::get_current_state(gemini::CameraState& state)
 void QuaternionFollowCamera::set_world_position(const glm::vec3& new_world_position)
 {
 	world_position = new_world_position;
-	collision_correct(0.0f);
+	//collision_correct(0.0f);
 }
 
 glm::mat4 QuaternionFollowCamera::compute_view_matrix() const
 {
-	glm::mat4 view;
-
 	const glm::vec3 local_offset = mathlib::rotate_vector(glm::vec3(horizontal_offset.current_value, vertical_offset.current_value, 0.0f), orientation);
 	const glm::mat4 world_tx = glm::translate(glm::mat4(1.0f), position + local_offset);
-	glm::mat4 rot = glm::toMat4(orientation);
-	view = /*glm::translate(glm::mat4(1.0), local_offset) * */world_tx * rot;
-
-	return view;
+	return world_tx * glm::toMat4(orientation);
 }
 
 glm::vec3 QuaternionFollowCamera::get_rotated_pivot_offset() const
