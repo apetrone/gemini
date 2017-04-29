@@ -721,6 +721,12 @@ def get_libruntime(arguments, target_platform, libcore):
 		"src/runtime/assets.cpp",
 		"src/runtime/assets.h",
 
+		"src/runtime/debug_event.cpp",
+		"src/runtime/debug_event.h",
+
+		"src/runtime/debugvar.cpp",
+		"src/runtime/debugvar.h",
+
 		"src/runtime/hotloading.cpp",
 		"src/runtime/hotloading.h",
 

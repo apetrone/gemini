@@ -61,6 +61,13 @@ namespace platform
 		TCP
 	};
 
+	enum class net_socket_how
+	{
+		READ,
+		WRITE,
+		READ_WRITE
+	};
+
 
 	typedef struct sockaddr_in net_address;
 
@@ -74,6 +81,9 @@ namespace platform
 
 	// socket functions
 
+	// returns the last error code if a function fails
+	int32_t net_last_error();
+
 	/// @returns 0 on success; -1 on failure
 	net_socket net_socket_open(net_socket_type type);
 
@@ -81,6 +91,11 @@ namespace platform
 	bool net_socket_is_valid(net_socket sock);
 
 	void net_socket_close(net_socket sock);
+	void net_socket_shutdown(net_socket sock, net_socket_how how);
+
+	// multi-cast group membership
+	int32_t net_socket_add_multicast_group(net_socket sock, const char* group_address);
+	int32_t net_socket_remove_multicast_group(net_socket sock, const char* group_address);
 
 	/// @brief Accept a connection (TCP-only)
 	/// @returns non-zero on success: file descriptor for the accepted socket.

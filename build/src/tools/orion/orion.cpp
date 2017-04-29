@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 #include <runtime/animation.h>
 #include <runtime/assets.h>
+#include <runtime/debug_event.h>
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
 #include <runtime/geometry.h>
@@ -67,8 +68,6 @@
 #include <sdk/utils.h>
 
 
-
-
 #include "project.h"
 
 using namespace platform;
@@ -76,10 +75,11 @@ using namespace renderer;
 using namespace gemini;
 
 #include <runtime/imocap.h>
+#include <runtime/debug_event.h>
 
 #define ENABLE_UI 1
 #define DRAW_SENSOR_GRAPHS 0
-#define TEST_SPRING_SYSTEM 1
+#define TEST_SPRING_SYSTEM 0
 
 #define DRAW_LINES 0
 const size_t TOTAL_LINES = 256;
@@ -354,6 +354,9 @@ private:
 	Array<imocap::mocap_frame_t> mocap_frames;
 	size_t current_mocap_frame;
 	PathString current_mocap_filename;
+
+	telemetry_viewer tel_viewer;
+	debug_server_t tel_source;
 
 	float value;
 
@@ -1383,6 +1386,10 @@ Options:
 		int32_t startup_result = net_startup();
 		assert(startup_result == 0);
 
+		telemetry_viewer_create(&tel_viewer, 120, "0.0.0.0", TELEMETRY_VIEWER_PORT);
+
+		debug_server_create(&tel_source, 4, "127.0.0.1", TELEMETRY_VIEWER_PORT);
+
 		sensor_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		imocap::startup(sensor_allocator);
 
@@ -1706,6 +1713,9 @@ Options:
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 		last_time = current_time;
 
+		debug_server_begin_frame(&tel_source);
+		debug_server_end_frame(&tel_source);
+
 		//params.step_alpha = accumulator / params.step_interval_seconds;
 		//if (params.step_alpha >= 1.0f)
 		//{
@@ -1733,6 +1743,9 @@ Options:
 		// must be shut down before the animations; as they're referenced.
 		render_scene_destroy(render_scene, device);
 		render_scene_shutdown();
+
+		debug_server_destroy(&tel_source);
+		telemetry_viewer_destroy(&tel_viewer);
 
 		animation::shutdown();
 

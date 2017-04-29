@@ -28,9 +28,10 @@
 #include <core/logging.h>
 #include <core/typedefs.h>
 
-#include <platform/platform.h>
-
 #include <platform/audio.h>
+#include <platform/platform.h>
+#include <platform/network.h>
+
 
 using namespace platform;
 
@@ -282,6 +283,49 @@ UNITTEST(filesystem)
 // ---------------------------------------------------------------------
 UNITTEST(network)
 {
+	net_startup();
+
+	// try to connect to a local machine
+	net_socket sock1 = net_socket_open(net_socket_type::TCP);
+	TEST_ASSERT(sock1 != -1, "sock1 is valid");
+	net_address host;
+	char ip_address[16];
+	net_ipv4_by_hostname("pi-zero", "http", ip_address);
+	net_address_set(&host, ip_address, 8010);
+	int32_t error_result = net_socket_connect(sock1, &host);
+	if (error_result == 0)
+	{
+		LOGV("connected.\n");
+		net_socket_shutdown(sock1, net_socket_how::READ_WRITE);
+		net_socket_close(sock1);
+	}
+	else
+	{
+		LOGW("Unable to connect to %s [%i]\n", ip_address, net_last_error());
+	}
+
+
+	// try to join/leave a multi-cast group
+	net_socket sock2 = net_socket_open(net_socket_type::UDP);
+	TEST_ASSERT(sock2 != -1, sock2_is_valid);
+
+	net_address source;
+
+	net_address_set(&source, "0.0.0.0", 12345);
+
+	net_socket_set_reuseaddr(sock2, 1);
+
+	int32_t multicast_bind_result = net_socket_bind(sock2, &source);
+	TEST_ASSERT(multicast_bind_result != -1, "multicast bind");
+
+	int32_t join_result = net_socket_add_multicast_group(sock2, "226.0.0.1");
+	TEST_ASSERT(join_result != -1, join_multicast_group);
+
+	int32_t leave_result = net_socket_remove_multicast_group(sock2, "226.0.0.1");
+	TEST_ASSERT(leave_result != -1, leave_multicast_group);
+	net_socket_shutdown(sock2, net_socket_how::READ_WRITE);
+	net_socket_close(sock2);
+	net_shutdown();
 }
 
 // ---------------------------------------------------------------------
