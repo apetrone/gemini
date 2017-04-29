@@ -170,6 +170,9 @@ namespace gui
 		const Point& get_origin() const { return origin; }
 		Panel* get_parent() { return parent; }
 		const Size& get_size() const { return size; }
+		Size get_client_size() const {
+			return Size(size.width, size.height - capture_rect.size.height);
+		}
 		glm::mat3 get_transform(size_t index) const;
 
 	protected:

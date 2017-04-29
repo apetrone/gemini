@@ -77,6 +77,8 @@ namespace gemini
 	/// @returns The value of destination post increment.
 	uint32_t atom_increment32(volatile uint32_t* destination);
 
+	uint64_t atom_add_64(volatile uint64_t* destination, uint64_t value);
+
 	// Use this to wrap atomic variables. Update as needed.
 	template <class T>
 	struct atomic

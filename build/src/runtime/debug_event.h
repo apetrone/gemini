@@ -64,6 +64,9 @@ namespace gemini
 	};
 
 	const uint16_t TELEMETRY_VIEWER_PORT = 12807;
+	const uint32_t TELEMETRY_MAX_RECORDS_PER_FRAME = 32;
+	const uint32_t TELEMETRY_MAX_VIEWER_FRAMES = 240;
+
 
 	struct debug_record_t
 	{
@@ -80,17 +83,17 @@ namespace gemini
 
 	struct debug_frame_t
 	{
-		debug_record_t records[4];
+		debug_record_t records[TELEMETRY_MAX_RECORDS_PER_FRAME];
 		//uint32_t total_records;
 	};
 
 	struct telemetry_viewer
 	{
-		debug_frame_t history[240];
-		//uint32_t total_frames;
+		debug_frame_t frames[TELEMETRY_MAX_VIEWER_FRAMES];
 		platform::net_socket connection;
 		uint32_t is_listening;
 		platform::Thread* listener_thread;
+		uint32_t current_index;
 	};
 
 	void telemetry_viewer_create(telemetry_viewer* client, uint32_t history_size_frames, const char* ip_address, uint16_t port);
@@ -101,8 +104,7 @@ namespace gemini
 
 	struct debug_server_t
 	{
-		debug_record_t* records;
-		uint32_t total_records;
+		debug_frame_t frame;
 		uint32_t current_record;
 		gemini::Allocator allocator;
 		platform::net_socket connection;
@@ -115,5 +117,33 @@ namespace gemini
 	void debug_server_destroy(debug_server_t* server);
 	void debug_server_begin_frame(debug_server_t* server);
 	void debug_server_end_frame(debug_server_t* server);
-	void debug_server_push_record(debug_server_t* server, debug_record_t* record);
+	void debug_server_push_record(debug_server_t* server, const char* function, const char* filename, uint64_t cycles, uint32_t line_number);
+
+	struct telemetry_timed_block
+	{
+		const char* function;
+		const char* filename;
+		uint64_t start_ticks;
+		uint32_t line_number;
+		debug_server_t* server;
+
+		telemetry_timed_block(debug_server_t* in_server,
+			const char* in_function,
+			const char* in_filename,
+			int in_line_number)
+		{
+			server = in_server;
+			filename = in_filename;
+			function = in_function;
+			line_number = in_line_number;
+			start_ticks = platform::time_ticks();
+		}
+
+		~telemetry_timed_block()
+		{
+			debug_server_push_record(server, function, filename, platform::time_ticks() - start_ticks, line_number);
+		}
+	};
+
+#define TELEMETRY_BLOCK(server, name) telemetry_timed_block telemetry_block_##_name(server, #name, __FILE__, __LINE__);
 } // namespace gemini

@@ -32,6 +32,7 @@
 #include <runtime/asset_handle.h>
 #include <runtime/asset_library.h>
 #include <runtime/assets.h>
+#include <runtime/debug_event.h>
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
 #include <runtime/jobqueue.h>
@@ -249,6 +250,36 @@ UNITTEST(jobqueue)
 	jq.destroy_workers();
 }
 
+// ---------------------------------------------------------------------
+// debug_event
+// ---------------------------------------------------------------------
+UNITTEST(debug_event)
+{
+	debug_server_t server;
+	debug_server_create(&server, 32);
+
+
+	debug_server_begin_frame(&server);
+
+	debug_record_t record;
+	//debug_record(&record, "test", 3.217f);
+	//float* x = reinterpret_cast<float*>(record.data);
+	//LOGV("value is %2.2f\n", *x);
+
+	debug_server_push_record(&server, &record);
+
+	debug_server_end_frame(&server);
+
+	debug_server_destroy(&server);
+	//	platform::PathString content_path;
+	//	content_path = fs->root_directory();
+	//	content_path.append(PATH_SEPARATOR_STRING).append("builds").append(PATH_SEPARATOR_STRING).append(PLATFORM_NAME);
+	//	fs->content_directory(content_path);
+
+
+	//	platform::PathString absolute_path;
+	//	TEST_ASSERT(fs->get_absolute_path_for_content(absolute_path, "conf/shaders.conf") == false, get_absolute_path_for_content_missing);
+}
 
 // ---------------------------------------------------------------------
 // filesystem
@@ -428,7 +459,8 @@ int main(int, char**)
 
 	using namespace gemini;
 
-	unittest::UnitTest::execute();
+	//unittest::UnitTest::execute();
+	UNITTEST_EXECUTE(debug_event);
 
 	gemini::runtime_shutdown();
 	gemini::core_shutdown();

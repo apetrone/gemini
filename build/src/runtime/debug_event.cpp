@@ -26,6 +26,7 @@
 #include <runtime/debug_event.h>
 
 #include <core/array.h>
+#include <core/atomic.h>
 #include <core/logging.h>
 #include <core/mem.h>
 
@@ -61,9 +62,22 @@ namespace gemini
 			if (FD_ISSET(viewer->connection, &receive))
 			{
 				net_address source;
-				debug_frame_t frame;
-				int32_t bytes_available = net_socket_recvfrom(viewer->connection, &source, (char*)&frame, sizeof(debug_frame_t));
-				LOGV("read %i bytes\n", bytes_available);
+
+				debug_frame_t* frame = &viewer->frames[viewer->current_index];
+
+				//debug_frame_t frame;
+				int32_t bytes_available = net_socket_recvfrom(viewer->connection, &source, (char*)frame, sizeof(debug_frame_t));
+				//LOGV("read %i bytes\n", bytes_available);
+
+				//LOGV("sequence: %i\n", record->hitcount);
+
+				// wrap
+				viewer->current_index++;
+				if (viewer->current_index >= 240)
+				{
+					viewer->current_index = 0;
+				}
+				//
 			}
 		}
 
@@ -91,6 +105,7 @@ namespace gemini
 			return;
 		}
 
+		viewer->current_index = 0;
 		viewer->is_listening = 1;
 
 		// now create a listener thread
@@ -125,8 +140,8 @@ namespace gemini
 	{
 		memset(server, 0, sizeof(debug_server_t));
 		server->allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
-		server->total_records = max_records;
-		server->records = static_cast<debug_record_t*>(MEMORY2_ALLOC(server->allocator, sizeof(debug_record_t) * max_records));
+		//server->total_records = max_records;
+		//server->records = static_cast<debug_record_t*>(MEMORY2_ALLOC(server->allocator, sizeof(debug_record_t) * max_records));
 
 		server->connection = net_socket_open(net_socket_type::UDP);
 		if (!net_socket_is_valid(server->connection))
@@ -147,13 +162,13 @@ namespace gemini
 			server->connection = -1;
 		}
 
-		MEMORY2_DEALLOC(server->allocator, server->records);
+		//MEMORY2_DEALLOC(server->allocator, server->records);
 
 	}
 
 	void debug_server_begin_frame(debug_server_t* server)
 	{
-
+		server->current_record = 0;
 	}
 
 	void debug_server_end_frame(debug_server_t* server)
@@ -161,14 +176,54 @@ namespace gemini
 		assert(net_socket_is_valid(server->connection));
 
 		// try and send some data.
-		char data[16] = { 0 };
-		core::str::copy(data, "hello", 0);
-		size_t data_length = 16;
-		int32_t bytes_sent = net_socket_sendto(server->connection, &server->destination, data, data_length);
-		LOGV("bytes_sent = %i\n", bytes_sent);
-	}
+		//char data[16] = { 0 };
+		//core::str::copy(data, "hello", 0);
+		//size_t data_length = 16;
+		//int32_t bytes_sent = net_socket_sendto(server->connection, &server->destination, data, data_length);
+		//LOGV("bytes_sent = %i\n", bytes_sent);
+		static uint32_t sequence = 0;
 
-	void debug_server_push_record(debug_server_t* server, debug_record_t* record)
+
+		//debug_frame_t frame;
+		//for (size_t index = 0; index < TELEMETRY_MAX_RECORDS_PER_FRAME; ++index)
+		//{
+		//	debug_record_t* record = &frame.records[index];
+		//	record->filename = __FILE__;
+		//	record->function = PLATFORM_FANCY_FUNCTION;
+		//	record->line_number = __LINE__;
+		//	record->cycles = rand() % 100;
+		//	record->hitcount = sequence++;
+		//}
+		int32_t bytes_sent = net_socket_sendto(server->connection, &server->destination, (const char*)&server->frame, sizeof(debug_frame_t));
+		//LOGV("bytes sent = %i\n", bytes_sent);
+
+		for (size_t index = 0; index < TELEMETRY_MAX_RECORDS_PER_FRAME; ++index)
+		{
+			debug_record_t* record = &server->frame.records[index];
+			record->filename = nullptr;
+			record->function = nullptr;
+			record->line_number = 0;
+			record->cycles = 0;
+			record->hitcount = 0;
+		}
+
+
+	} // debug_server_end_frame
+
+	void debug_server_push_record(debug_server_t* server, const char* function, const char* filename, uint64_t cycles, uint32_t line_number)
 	{
-	}
+		uint32_t current_record = server->current_record;
+		debug_record_t* record = &server->frame.records[current_record];
+		record->cycles = cycles;
+		record->filename = filename;
+		record->function = function;
+		record->line_number = line_number;
+		record->hitcount = 0;
+
+		current_record = atom_increment32(&server->current_record);
+		if (current_record >= TELEMETRY_MAX_RECORDS_PER_FRAME)
+		{
+			atom_compare_and_swap32(&server->current_record, 0, current_record);
+		}
+	} // debug_server_push_record
 } // namespace gemini

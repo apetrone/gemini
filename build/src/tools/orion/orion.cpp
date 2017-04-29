@@ -80,6 +80,7 @@ using namespace gemini;
 #define ENABLE_UI 1
 #define DRAW_SENSOR_GRAPHS 0
 #define TEST_SPRING_SYSTEM 0
+#define TEST_TELEMETRY_SYSTEM 1
 
 #define DRAW_LINES 0
 const size_t TOTAL_LINES = 256;
@@ -302,6 +303,146 @@ void SpringPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, g
 }
 
 
+#if TEST_TELEMETRY_SYSTEM
+class TelemetryPanel : public gui::Panel
+{
+public:
+
+	gui::Point tube[4];
+
+	telemetry_viewer* viewer;
+
+	gui::Point last_position;
+	uint32_t adaptive_cycles_max;
+	int32_t selected_frame;
+
+	TelemetryPanel(gui::Panel* parent, telemetry_viewer* telemetry_viewer)
+		: gui::Panel(parent)
+		, viewer(telemetry_viewer)
+	{
+		set_background_color(gemini::Color(0.5f, 0.5f, 0.5f));
+
+		tube[0] = gui::Point(0.0f, 0.0f);
+		tube[1] = gui::Point(0.0f, 50.0f);
+		tube[2] = gui::Point(50.0f, 50.0f);
+		tube[3] = gui::Point(50.0f, 0.0f);
+
+		flags |= gui::Panel::Flag_CanMove;
+		selected_frame = -1;
+	}
+
+	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
+	virtual void handle_event(gui::EventArgs& args) override;
+};
+
+void TelemetryPanel::update(gui::Compositor* compositor, float delta_seconds)
+{
+	gui::Panel::update(compositor, delta_seconds);
+
+	adaptive_cycles_max = 0;
+}
+
+void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
+{
+	gui::Panel::render(compositor, renderer, render_commands);
+
+	uint32_t width = get_client_size().width;
+	float rect_width = (width / static_cast<float>(TELEMETRY_MAX_VIEWER_FRAMES));
+
+	const gemini::Color current(1.0f, 1.0f, 1.0f);
+	const gemini::Color normal(0.7f, 0.7f, 0.7f);
+	const gemini::Color selected(1.0f, 0.5f, 0.0f);
+
+	float client_height = get_client_size().height;
+	float panel_height = get_size().height;
+
+	const glm::mat3& tx = get_transform(0);
+	for (size_t index = 0; index < TELEMETRY_MAX_VIEWER_FRAMES; ++index)
+	{
+		gui::Point origin = gui::Point((index * rect_width), 0.0f);
+
+		// just grab and graph the first record
+		debug_record_t* record = &viewer->frames[index].records[0];
+
+		if (record->cycles > adaptive_cycles_max)
+		{
+			adaptive_cycles_max = record->cycles;
+		}
+
+		float scale = record->cycles / static_cast<float>(adaptive_cycles_max);
+		float rect_height = scale * static_cast<float>(client_height);
+
+		tube[0] = gui::Point(0.0f, panel_height - rect_height);
+		tube[1] = gui::Point(0.0f, panel_height);
+		tube[2] = gui::Point(rect_width, panel_height);
+		tube[3] = gui::Point(rect_width, panel_height - rect_height);
+
+		gemini::Color current_color = normal;
+		if (selected_frame != -1 && index == selected_frame)
+		{
+			current_color = selected;
+		}
+		else if (index == viewer->current_index)
+		{
+			current_color = current;
+		}
+
+		render_commands.add_rectangle(
+			gui::transform_point(tx, origin + tube[0]),
+			gui::transform_point(tx, origin + tube[1]),
+			gui::transform_point(tx, origin + tube[2]),
+			gui::transform_point(tx, origin + tube[3]),
+			gui::render::WhiteTexture,
+			current_color
+		);
+	}
+}
+
+void TelemetryPanel::handle_event(gui::EventArgs& args)
+{
+	last_position = args.local;
+
+	// Allow the cursor to still drag by the title bar.
+	// TODO: Determine WHERE the capture was made. If it wasn't made in
+	// the capture rect, the inherited Panel shouldn't handle it. This panel should.
+	Panel::handle_event(args);
+	if (args.handled || point_in_capture_rect(args.local))
+	{
+		return;
+	}
+
+	if (args.type == gui::Event_CursorDrag || args.type == gui::Event_CursorButtonPressed)
+	{
+		if (args.type == gui::Event_CursorButtonPressed)
+		{
+			args.compositor->set_capture(this, args.cursor_button);
+		}
+
+		int next_frame = (((int)args.local.x) - 1) / (get_client_size().width / 240.0f);
+
+		selected_frame = next_frame;
+
+		LOGV("selected frame: %i\n", next_frame);
+		if (selected_frame >= 0 && selected_frame < TELEMETRY_MAX_VIEWER_FRAMES)
+		{
+			for (size_t index = 0; index < TELEMETRY_MAX_RECORDS_PER_FRAME; ++index)
+			{
+				debug_record_t* record = &viewer->frames[selected_frame].records[index];
+				if (record->filename != nullptr)
+				{
+					LOGV("filename@line: %s @ %i\n", record->filename, record->line_number);
+					LOGV("cycles: %i\n", record->cycles);
+					LOGV("hitcount: %i\n", record->hitcount);
+					LOGV("function: %s\n", record->function);
+				}
+			}
+		}
+
+		args.handled = true;
+	}
+}
+#endif
 
 struct EditorEnvironment
 {
@@ -343,6 +484,9 @@ private:
 	GUIRenderer* gui_renderer;
 	gui::Panel* main_panel;
 	SpringPanel* spring_panel;
+#if TEST_TELEMETRY_SYSTEM
+	TelemetryPanel* telemetry_panel;
+#endif
 	::renderer::StandaloneResourceCache* resource_cache;
 	render2::RenderTarget* render_target;
 	render2::Texture* texture;
@@ -1246,6 +1390,7 @@ Options:
 			spring_panel->set_name("spring_panel");
 #endif
 
+
 			const char dev_font[] = "debug";
 			const size_t dev_font_size = 16;
 #if DRAW_SENSOR_GRAPHS
@@ -1388,7 +1533,16 @@ Options:
 
 		telemetry_viewer_create(&tel_viewer, 120, "0.0.0.0", TELEMETRY_VIEWER_PORT);
 
+#if TEST_TELEMETRY_SYSTEM
+		telemetry_panel = new TelemetryPanel(compositor, &tel_viewer);
+		telemetry_panel->set_origin(100, 100);
+		telemetry_panel->set_size(600, 200);
+		telemetry_panel->set_name("telemetry_panel");
+#endif
+
 		debug_server_create(&tel_source, 4, "127.0.0.1", TELEMETRY_VIEWER_PORT);
+
+
 
 		sensor_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		imocap::startup(sensor_allocator);
@@ -1442,6 +1596,8 @@ Options:
 
 	virtual void tick()
 	{
+		debug_server_begin_frame(&tel_source);
+
 		uint64_t current_time = platform::microseconds();
 		platform::update(kernel::parameters().framedelta_milliseconds);
 
@@ -1687,14 +1843,18 @@ Options:
 
 		//debugdraw::render(camera.get_modelview(), camera.get_projection(), render_target->width, render_target->height, device->default_render_target());
 
+
 		if (compositor)
 		{
+			TELEMETRY_BLOCK(&tel_source, gui_draw);
 			compositor->draw();
 		}
 
-		device->submit();
-
-		platform::window::swap_buffers(main_window);
+		{
+			TELEMETRY_BLOCK(&tel_source, device_draw);
+			device->submit();
+			platform::window::swap_buffers(main_window);
+		}
 
 #if defined(GEMINI_ENABLE_PROFILER)
 		gemini::profiler::report();
@@ -1713,7 +1873,7 @@ Options:
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 		last_time = current_time;
 
-		debug_server_begin_frame(&tel_source);
+
 		debug_server_end_frame(&tel_source);
 
 		//params.step_alpha = accumulator / params.step_interval_seconds;

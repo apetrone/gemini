@@ -420,7 +420,8 @@ UNITTEST(datetime)
 int main(int, char**)
 {
 	gemini::core_startup();
-	unittest::UnitTest::execute();
+	//unittest::UnitTest::execute();
+	UNITTEST_EXECUTE(network);
 
 	gemini::core_shutdown();
 	return 0;

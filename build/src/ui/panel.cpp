@@ -193,7 +193,10 @@ namespace gui
 
 	void Panel::handle_event(EventArgs& args)
 	{
-		if (args.type == Event_CursorDrag && get_parent() && args.capture == this && (flags & Flag_CanMove))
+		if (args.type == Event_CursorDrag &&
+			get_parent() &&
+			args.capture == this &&
+			flags & Flag_CanMove)
 		{
 			origin.x += args.delta.x;
 			origin.y += args.delta.y;
