@@ -94,6 +94,8 @@ namespace gui
 		virtual void handle_event(EventArgs& args);
 		virtual void update(Compositor* compositor, float delta_seconds);
 		virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
+		virtual void render_capture_rect(gui::render::CommandList& render_commands);
+		virtual void render_background(gui::render::CommandList& render_commands);
 		virtual void render_children(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 		void render_geometry(gui::render::CommandList& render_commands, const gemini::Color& color);
 		virtual void set_background_image(Compositor* compositor, const char* path);

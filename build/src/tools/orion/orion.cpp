@@ -318,6 +318,52 @@ public:
 	float bar_width;
 	float min_bar_width;
 
+	class TelemetryInfo : public gui::Panel
+	{
+		gui::Label* profile_block;
+		gui::Label* variable_block;
+
+	public:
+		TelemetryInfo(gui::Panel* parent)
+			: gui::Panel(parent)
+		{
+			profile_block = new gui::Label(this);
+			profile_block->set_size(250, 100);
+			profile_block->set_font("debug", 16);
+			profile_block->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.5f));
+			profile_block->set_foreground_color(gemini::Color(1.0f, 0.0f, 1.0f));
+
+			variable_block = new gui::Label(this);
+			variable_block->set_size(250, 100);
+			variable_block->set_origin(0, 100);
+			variable_block->set_font("debug", 16);
+			variable_block->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.5f));
+			variable_block->set_foreground_color(gemini::Color(0.0f, 1.0f, 1.0f));
+		}
+
+		void set_profile_block(const char* text)
+		{
+			profile_block->set_text(text);
+		}
+
+		void set_variable_block(const char* text)
+		{
+			variable_block->set_text(text);
+		}
+
+		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
+		{
+			render_geometry(render_commands, background_color);
+			//render_capture_rect(render_commands);
+			render_background(render_commands);
+			render_children(compositor, renderer, render_commands);
+		}
+	};
+
+
+	TelemetryInfo* info_panel;
+
+
 	TelemetryPanel(gui::Panel* parent, telemetry_viewer* telemetry_viewer)
 		: gui::Panel(parent)
 		, viewer(telemetry_viewer)
@@ -333,6 +379,10 @@ public:
 		selected_frame = -1;
 
 		bar_width = 6.0f;
+
+		info_panel = new TelemetryInfo(this);
+		info_panel->set_size(250, 200);
+		info_panel->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.5f));
 	}
 
 	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
@@ -348,7 +398,9 @@ void TelemetryPanel::update(gui::Compositor* compositor, float delta_seconds)
 
 void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
 {
-	gui::Panel::render(compositor, renderer, render_commands);
+	render_geometry(render_commands, background_color);
+	render_capture_rect(render_commands);
+	render_background(render_commands);
 
 	uint32_t width = get_client_size().width;
 	float rect_width = bar_width;
@@ -397,6 +449,8 @@ void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer
 			current_color
 		);
 	}
+
+	render_children(compositor, renderer, render_commands);
 }
 
 void TelemetryPanel::handle_event(gui::EventArgs& args)
@@ -426,19 +480,39 @@ void TelemetryPanel::handle_event(gui::EventArgs& args)
 		LOGV("selected frame: %i\n", next_frame);
 		if (selected_frame >= 0 && selected_frame < TELEMETRY_MAX_VIEWER_FRAMES)
 		{
+			info_panel->set_visible(true);
+			float x_offset = args.cursor.x;
+			float x_origin = get_origin().x;
+
+			if ((x_origin + x_offset + info_panel->get_size().width) > args.compositor->get_size().width)
+			{
+				x_offset = (args.compositor->get_size().width - info_panel->get_size().width - x_origin);
+			}
+			gui::Point info_panel_offset = args.compositor->compositor_to_local(gui::Point(x_offset, 0.0f));
+
+			info_panel->set_origin(info_panel_offset.x, capture_rect.height());
+
+			String profile_block;
 			for (size_t index = 0; index < TELEMETRY_MAX_RECORDS_PER_FRAME; ++index)
 			{
 				debug_record_t* record = &viewer->frames[selected_frame].records[index];
 				if (record->filename != nullptr)
 				{
-					LOGV("filename@line: %s @ %i\n", record->filename, record->line_number);
-					LOGV("cycles: %i\n", record->cycles);
-					LOGV("hitcount: %i\n", record->hitcount);
-					LOGV("function: %s\n", record->function);
+					profile_block += core::str::format(
+						"Filename@Line: %s @ %i\n"
+						"Function: %s\n"
+						"Cycles: %i\n"
+						"Hitcount: %i\n",
+						record->filename,
+						record->line_number,
+						record->function,
+						record->cycles,
+						record->hitcount);
 				}
 			}
+			info_panel->set_profile_block(profile_block.c_str());
 
-			LOGV("variables:\n\n");
+			String variable_block;
 			for (size_t index = 0; index < TELEMETRY_MAX_VARIABLES; ++index)
 			{
 				debug_var_t* variable = &viewer->frames[selected_frame].variables[index];
@@ -447,25 +521,40 @@ void TelemetryPanel::handle_event(gui::EventArgs& args)
 					if (variable->type == DEBUG_RECORD_TYPE_FLOAT)
 					{
 						float* value = reinterpret_cast<float*>(variable->data);
-						LOGV("[%i] \"%s\": %2.2f\n", index, variable->name, *value);
+						variable_block += core::str::format("[%i] \"%s\": %2.2f\n", index, variable->name, *value);
+					}
+					else if (variable->type == DEBUG_RECORD_TYPE_FLOAT2)
+					{
+						glm::vec2* value = reinterpret_cast<glm::vec2*>(variable->data);
+						variable_block += core::str::format("[%i] \"%s\": [%2.2f, %2.2f]\n", index, variable->name, value->x, value->y);
 					}
 					else if (variable->type == DEBUG_RECORD_TYPE_FLOAT3)
 					{
 						glm::vec3* value = reinterpret_cast<glm::vec3*>(variable->data);
-						LOGV("[%i] \"%s\": [%2.2f, %2.2f, %2.2f]\n", index, variable->name, value->x, value->y, value->z);
+						variable_block += core::str::format("[%i] \"%s\": [%2.2f, %2.2f, %2.2f]\n", index, variable->name, value->x, value->y, value->z);
 					}
 					else if (variable->type == DEBUG_RECORD_TYPE_FLOAT4)
 					{
 						glm::vec4* value = reinterpret_cast<glm::vec4*>(variable->data);
-						LOGV("[%i] \"%s\": [%2.2f, %2.2f, %2.2f, %2.2f]\n", index, variable->name, value->x, value->y, value->z, value->w);
+						variable_block += core::str::format("[%i] \"%s\": [%2.2f, %2.2f, %2.2f, %2.2f]\n", index, variable->name, value->x, value->y, value->z, value->w);
 					}
 					else if (variable->type == DEBUG_RECORD_TYPE_UINT32)
 					{
 						uint32_t* value = reinterpret_cast<uint32_t*>(variable->data);
-						LOGV("[%i] \"%s\": %i\n", index, variable->name, *value);
+						variable_block += core::str::format("[%i] \"%s\": %u\n", index, variable->name, *value);
+					}
+					else if (variable->type == DEBUG_RECORD_TYPE_INT32)
+					{
+						int32_t* value = reinterpret_cast<int32_t*>(variable->data);
+						variable_block += core::str::format("[%i] \"%s\": %i\n", index, variable->name, *value);
 					}
 				}
 			}
+			info_panel->set_variable_block(variable_block.c_str());
+		}
+		else
+		{
+			info_panel->set_visible(false);
 		}
 
 		args.handled = true;
@@ -538,7 +627,6 @@ private:
 	PathString current_mocap_filename;
 
 	telemetry_viewer tel_viewer;
-	debug_server_t tel_source;
 
 	float value;
 
@@ -1578,8 +1666,7 @@ Options:
 		telemetry_panel->set_name("telemetry_panel");
 #endif
 
-		debug_server_create(&tel_source, 4, "127.0.0.1", TELEMETRY_VIEWER_PORT);
-
+		telemetry_host_startup("127.0.0.1", TELEMETRY_VIEWER_PORT);
 
 
 		sensor_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
@@ -1634,8 +1721,6 @@ Options:
 
 	virtual void tick()
 	{
-		debug_server_begin_frame(&tel_source);
-
 		uint64_t current_time = platform::microseconds();
 		platform::update(kernel::parameters().framedelta_milliseconds);
 
@@ -1841,8 +1926,8 @@ Options:
 
 		debugdraw::update(kernel::parameters().framedelta_seconds);
 
-		telemetry_record_variable(&tel_source, "light_position_world", &render_scene->light_position_world);
-		telemetry_record_variable(&tel_source, "framedelta_seconds", &kernel::parameters().framedelta_seconds);
+		TELEMETRY_VARIABLE("light_position_world", render_scene->light_position_world);
+		TELEMETRY_VARIABLE("time", the_time);
 
 		debugdraw::axes(glm::mat4(1.0f), 1.0f);
 
@@ -1889,12 +1974,12 @@ Options:
 
 		if (compositor)
 		{
-			TELEMETRY_BLOCK(&tel_source, gui_draw);
+			TELEMETRY_BLOCK(gui_draw);
 			compositor->draw();
 		}
 
 		{
-			TELEMETRY_BLOCK(&tel_source, device_draw);
+			TELEMETRY_BLOCK(device_draw);
 			device->submit();
 			platform::window::swap_buffers(main_window);
 		}
@@ -1916,8 +2001,7 @@ Options:
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 		last_time = current_time;
 
-
-		debug_server_end_frame(&tel_source);
+		telemetry_host_submit_frame();
 
 		//params.step_alpha = accumulator / params.step_interval_seconds;
 		//if (params.step_alpha >= 1.0f)
@@ -1947,7 +2031,7 @@ Options:
 		render_scene_destroy(render_scene, device);
 		render_scene_shutdown();
 
-		debug_server_destroy(&tel_source);
+		telemetry_host_shutdown();
 		telemetry_viewer_destroy(&tel_viewer);
 
 		animation::shutdown();

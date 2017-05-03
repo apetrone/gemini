@@ -238,10 +238,8 @@ namespace gui
 			color);
 	} // render_geometry
 
-	void Panel::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
+	void Panel::render_capture_rect(gui::render::CommandList& render_commands)
 	{
-		render_geometry(render_commands, background_color);
-
 		const uint32_t capture_flags = (Flag_CursorEnabled | Flag_CanMove);
 		if ((flags & (capture_flags)) == capture_flags)
 		{
@@ -265,10 +263,13 @@ namespace gui
 				render::WhiteTexture,
 				gemini::Color::from_rgba(32, 32, 32, 64));
 		}
+	} // render_capture_rect
 
+	void Panel::render_background(gui::render::CommandList& render_commands)
+	{
 		if (this->background.is_valid())
 		{
-//			renderer->draw_textured_bounds(frame, this->background);
+			//			renderer->draw_textured_bounds(frame, this->background);
 			render_commands.add_rectangle(
 				geometry[0],
 				geometry[1],
@@ -278,7 +279,13 @@ namespace gui
 				gemini::Color::from_rgba(255, 255, 255, 255)
 			);
 		}
+	} // render_background
 
+	void Panel::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
+	{
+		render_geometry(render_commands, background_color);
+		render_capture_rect(render_commands);
+		render_background(render_commands);
 		render_children(compositor, renderer, render_commands);
 	} // render
 

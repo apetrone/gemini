@@ -165,79 +165,52 @@ namespace gemini
 	//	record->type = DEBUG_RECORD_TYPE_FLOAT;
 	//}
 
-	void debug_server_create(debug_server_t* server, uint32_t max_records, const char* ip_address, uint16_t port)
+	static debug_server_t _telemetry_host_data;
+
+	debug_server_t* telemetry_host_data()
 	{
+		return &_telemetry_host_data;
+	} // telemetry_host_data
+
+	int32_t telemetry_host_startup(const char* ip_address, uint16_t port)
+	{
+		debug_server_t* server = telemetry_host_data();
 		memset(server, 0, sizeof(debug_server_t));
 		server->allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
-		//server->total_records = max_records;
-		//server->records = static_cast<debug_record_t*>(MEMORY2_ALLOC(server->allocator, sizeof(debug_record_t) * max_records));
-
 		server->connection = net_socket_open(net_socket_type::UDP);
 		if (!net_socket_is_valid(server->connection))
 		{
 			LOGW("Unable to create telemetry source socket.\n");
-			return;
+			return -1;
 		}
 
 		net_address_set(&server->destination, ip_address, port);
-	}
 
-	void debug_server_destroy(debug_server_t* server)
+		telemetry_host_reset();
+
+		return 0;
+	} // telemetry_host_startup
+
+	void telemetry_host_shutdown()
 	{
+		debug_server_t* server = telemetry_host_data();
 		if (net_socket_is_valid(server->connection))
 		{
 			net_socket_shutdown(server->connection, net_socket_how::READ_WRITE);
 			net_socket_close(server->connection);
 			server->connection = -1;
 		}
+	} // telemetry_host_shutdown
 
-		//MEMORY2_DEALLOC(server->allocator, server->records);
-
-	}
-
-	void debug_server_begin_frame(debug_server_t* server)
+	void telemetry_host_reset()
 	{
-		server->current_record = 0;
-		server->current_variable = 0;
-	}
-
-	void debug_server_end_frame(debug_server_t* server)
-	{
-		assert(net_socket_is_valid(server->connection));
-
-		// try and send some data.
-		//char data[16] = { 0 };
-		//core::str::copy(data, "hello", 0);
-		//size_t data_length = 16;
-		//int32_t bytes_sent = net_socket_sendto(server->connection, &server->destination, data, data_length);
-		//LOGV("bytes_sent = %i\n", bytes_sent);
-		static uint32_t sequence = 0;
-
-
-		//debug_frame_t frame;
-		//for (size_t index = 0; index < TELEMETRY_MAX_RECORDS_PER_FRAME; ++index)
-		//{
-		//	debug_record_t* record = &frame.records[index];
-		//	record->filename = __FILE__;
-		//	record->function = PLATFORM_FANCY_FUNCTION;
-		//	record->line_number = __LINE__;
-		//	record->cycles = rand() % 100;
-		//	record->hitcount = sequence++;
-		//}
-		int32_t bytes_sent = net_socket_sendto(server->connection, &server->destination, (const char*)&server->frame, sizeof(debug_frame_t));
-		//LOGV("bytes sent = %i\n", bytes_sent);
+		debug_server_t* server = telemetry_host_data();
 
 		for (size_t index = 0; index < TELEMETRY_MAX_RECORDS_PER_FRAME; ++index)
 		{
 			debug_record_t* record = &server->frame.records[index];
-			record->filename = nullptr;
-			record->function = nullptr;
-			record->line_number = 0;
-			record->cycles = 0;
-			record->hitcount = 0;
+			memset(record, 0, sizeof(debug_record_t));
 		}
-
-		server->frame.frame_index++;
 
 		for (size_t index = 0; index < TELEMETRY_MAX_VARIABLES; ++index)
 		{
@@ -245,17 +218,29 @@ namespace gemini
 			memset(var, 0, sizeof(debug_var_t));
 		}
 
-	} // debug_server_end_frame
+		server->current_record = 0;
+		server->current_variable = 0;
+	} // telemetry_host_reset
 
-	void debug_server_push_record(debug_server_t* server, const char* function, const char* filename, uint64_t cycles, uint32_t line_number)
+	void telemetry_host_submit_frame()
 	{
+		debug_server_t* server = telemetry_host_data();
+		assert(net_socket_is_valid(server->connection));
+		int32_t bytes_sent = net_socket_sendto(server->connection, &server->destination, (const char*)&server->frame, sizeof(debug_frame_t));
+		server->frame.frame_index++;
+		telemetry_host_reset();
+	} // telemetry_host_submit_frame
+
+	void debug_server_push_record(const char* function, const char* filename, uint64_t cycles, uint32_t line_number)
+	{
+		debug_server_t* server = telemetry_host_data();
 		uint32_t current_record = server->current_record;
 		debug_record_t* record = &server->frame.records[current_record];
 		record->cycles = cycles;
 		record->filename = filename;
 		record->function = function;
 		record->line_number = line_number;
-		record->hitcount = 0;
+		record->hitcount = 1;
 
 		current_record = atom_increment32(&server->current_record);
 		if (current_record >= TELEMETRY_MAX_RECORDS_PER_FRAME)
@@ -264,8 +249,9 @@ namespace gemini
 		}
 	} // debug_server_push_record
 
-	void debug_server_push_variable(debug_server_t* server, const char* name, void* data, size_t data_size, uint8_t var_type)
+	void debug_server_push_variable(const char* name, const void* data, size_t data_size, uint8_t var_type)
 	{
+		debug_server_t* server = telemetry_host_data();
 		uint32_t current_variable = server->current_variable;
 		debug_var_t* var = &server->frame.variables[current_variable];
 
@@ -283,30 +269,4 @@ namespace gemini
 			atom_compare_and_swap32(&server->current_variable, 0, current_variable);
 		}
 	} // debug_server_push_variable
-
-	template <>
-	void telemetry_record_variable(debug_server_t* server, const char* name, float* type)
-	{
-		debug_server_push_variable(server, name, type, sizeof(float), DEBUG_RECORD_TYPE_FLOAT);
-	} // telemetry_record_variable
-
-	template <>
-	void telemetry_record_variable(debug_server_t* server, const char* name, glm::vec3* type)
-	{
-		debug_server_push_variable(server, name, type, sizeof(glm::vec3), DEBUG_RECORD_TYPE_FLOAT3);
-	} // telemetry_record_variable
-
-	template <>
-	void telemetry_record_variable(debug_server_t* server, const char* name, glm::vec4* type)
-	{
-		debug_server_push_variable(server, name, type, sizeof(glm::vec4), DEBUG_RECORD_TYPE_FLOAT4);
-	} // telemetry_record_variable
-
-	template <>
-	void telemetry_record_variable(debug_server_t* server, const char* name, uint32_t* type)
-	{
-		debug_server_push_variable(server, name, type, sizeof(uint32_t), DEBUG_RECORD_TYPE_UINT32);
-	} // telemetry_record_variable
-
-
 } // namespace gemini

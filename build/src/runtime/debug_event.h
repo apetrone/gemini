@@ -132,12 +132,15 @@ namespace gemini
 		platform::Thread* transmit_thread;
 	};
 
-	void debug_server_create(debug_server_t* server, uint32_t max_records, const char* ip_address, uint16_t port);
-	void debug_server_destroy(debug_server_t* server);
-	void debug_server_begin_frame(debug_server_t* server);
-	void debug_server_end_frame(debug_server_t* server);
-	void debug_server_push_record(debug_server_t* server, const char* function, const char* filename, uint64_t cycles, uint32_t line_number);
-	void debug_server_push_variable(debug_server_t* server, const char* name, void* data, size_t data_size, uint8_t var_type);
+
+	debug_server_t* telemetry_host_data();
+	int32_t telemetry_host_startup(const char* ip_address, uint16_t port);
+	void telemetry_host_shutdown();
+	void telemetry_host_reset();
+	void telemetry_host_submit_frame();
+
+	void debug_server_push_record(const char* function, const char* filename, uint64_t cycles, uint32_t line_number);
+	void debug_server_push_variable(const char* name, const void* data, size_t data_size, uint8_t var_type);
 
 	struct telemetry_timed_block
 	{
@@ -145,14 +148,11 @@ namespace gemini
 		const char* filename;
 		uint64_t start_ticks;
 		uint32_t line_number;
-		debug_server_t* server;
 
-		telemetry_timed_block(debug_server_t* in_server,
-			const char* in_function,
+		telemetry_timed_block(const char* in_function,
 			const char* in_filename,
 			int in_line_number)
 		{
-			server = in_server;
 			filename = in_filename;
 			function = in_function;
 			line_number = in_line_number;
@@ -161,13 +161,73 @@ namespace gemini
 
 		~telemetry_timed_block()
 		{
-			debug_server_push_record(server, function, filename, platform::time_ticks() - start_ticks, line_number);
+			debug_server_push_record(function, filename, platform::time_ticks() - start_ticks, line_number);
 		}
 	};
 
-#define TELEMETRY_BLOCK(server, name) telemetry_timed_block telemetry_block_##_name(server, #name, __FILE__, __LINE__);
+	#define TELEMETRY_BLOCK(name) telemetry_timed_block telemetry_block_##_name(#name, __FILE__, __LINE__)
+	#define TELEMETRY_VARIABLE(name, variable) telemetry_record_variable(name, variable)
 
 	template <class T>
-	void telemetry_record_variable(debug_server_t* server, const char* name, T* type);
+	void telemetry_record_variable(const char* name, const T& data)
+	{
+		debug_server_push_variable(name, &data, sizeof(T), telemetry_type_to_enum<T>::value);
+	}
 
+	template <class T>
+	struct telemetry_type_to_enum;
+
+	template <>
+	struct telemetry_type_to_enum<float>
+	{
+		enum
+		{
+			value = DEBUG_RECORD_TYPE_FLOAT
+		};
+	};
+
+	template <>
+	struct telemetry_type_to_enum<glm::vec2>
+	{
+		enum
+		{
+			value = DEBUG_RECORD_TYPE_FLOAT2
+		};
+	};
+
+	template <>
+	struct telemetry_type_to_enum<glm::vec3>
+	{
+		enum
+		{
+			value = DEBUG_RECORD_TYPE_FLOAT3
+		};
+	};
+
+	template <>
+	struct telemetry_type_to_enum<glm::vec4>
+	{
+		enum
+		{
+			value = DEBUG_RECORD_TYPE_FLOAT4
+		};
+	};
+
+	template <>
+	struct telemetry_type_to_enum<uint32_t>
+	{
+		enum
+		{
+			value = DEBUG_RECORD_TYPE_UINT32
+		};
+	};
+
+	template <>
+	struct telemetry_type_to_enum<int32_t>
+	{
+		enum
+		{
+			value = DEBUG_RECORD_TYPE_INT32
+		};
+	};
 } // namespace gemini
