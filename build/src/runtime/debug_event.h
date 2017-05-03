@@ -59,6 +59,9 @@ namespace gemini
 	enum
 	{
 		DEBUG_RECORD_TYPE_FLOAT,
+		DEBUG_RECORD_TYPE_FLOAT2,
+		DEBUG_RECORD_TYPE_FLOAT3,
+		DEBUG_RECORD_TYPE_FLOAT4,
 		DEBUG_RECORD_TYPE_UINT32,
 		DEBUG_RECORD_TYPE_INT32
 	};
@@ -66,14 +69,10 @@ namespace gemini
 	const uint16_t TELEMETRY_VIEWER_PORT = 12807;
 	const uint32_t TELEMETRY_MAX_RECORDS_PER_FRAME = 32;
 	const uint32_t TELEMETRY_MAX_VIEWER_FRAMES = 240;
-
+	const uint32_t TELEMETRY_MAX_VARIABLES = 16;
 
 	struct debug_record_t
 	{
-		//char name[31];
-		//uint8_t type;
-		//char data[4];
-
 		const char* function;
 		const char* filename;
 		uint64_t cycles;
@@ -81,10 +80,25 @@ namespace gemini
 		uint32_t hitcount;
 	};
 
+
+	struct debug_var_t
+	{
+		uint8_t type;
+		char name[31];
+		char data[32];
+	};
+
 	struct debug_frame_t
 	{
 		debug_record_t records[TELEMETRY_MAX_RECORDS_PER_FRAME];
-		//uint32_t total_records;
+		debug_var_t variables[TELEMETRY_MAX_VARIABLES];
+
+		// accumulated cycles
+		uint64_t total_cycles;
+
+		// max cycle time
+		uint64_t max_cycles;
+		uint32_t frame_index;
 	};
 
 	struct telemetry_viewer
@@ -94,10 +108,14 @@ namespace gemini
 		uint32_t is_listening;
 		platform::Thread* listener_thread;
 		uint32_t current_index;
+		uint32_t bytes_received;
+		uint32_t bytes_per_second;
+		float last_tick;
 	};
 
 	void telemetry_viewer_create(telemetry_viewer* client, uint32_t history_size_frames, const char* ip_address, uint16_t port);
 	void telemetry_viewer_destroy(telemetry_viewer* client);
+	void telemetry_viewer_tick(telemetry_viewer* viewer, float delta_seconds);
 
 	//void debug_record(debug_record_t* record, const char* name, float input_value);
 
@@ -106,6 +124,7 @@ namespace gemini
 	{
 		debug_frame_t frame;
 		uint32_t current_record;
+		uint32_t current_variable;
 		gemini::Allocator allocator;
 		platform::net_socket connection;
 		platform::net_address destination;
@@ -118,6 +137,7 @@ namespace gemini
 	void debug_server_begin_frame(debug_server_t* server);
 	void debug_server_end_frame(debug_server_t* server);
 	void debug_server_push_record(debug_server_t* server, const char* function, const char* filename, uint64_t cycles, uint32_t line_number);
+	void debug_server_push_variable(debug_server_t* server, const char* name, void* data, size_t data_size, uint8_t var_type);
 
 	struct telemetry_timed_block
 	{
@@ -146,4 +166,8 @@ namespace gemini
 	};
 
 #define TELEMETRY_BLOCK(server, name) telemetry_timed_block telemetry_block_##_name(server, #name, __FILE__, __LINE__);
+
+	template <class T>
+	void telemetry_record_variable(debug_server_t* server, const char* name, T* type);
+
 } // namespace gemini

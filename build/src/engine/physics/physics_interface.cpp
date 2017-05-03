@@ -484,6 +484,10 @@ namespace gemini
 				info.hit = glm::vec3(hit_point_world.x(), hit_point_world.y(), hit_point_world.z());
 				info.object = static_cast<ICollisionObject*>(callback.m_collisionObject->getUserPointer());
 
+				const btVector3& hit_normal_world = callback.m_hitNormalWorld;
+				info.hit_normal = glm::vec3(hit_normal_world.x(), hit_normal_world.y(), hit_normal_world.z());
+
+				info.closest_hit_fraction = callback.m_closestHitFraction;
 //				LOGV("fraction: %2.2f\n", callback.m_closestHitFraction);
 //
 //				if (callback.m_collisionObject->getCollisionFlags() & btCollisionObject::CF_STATIC_OBJECT)

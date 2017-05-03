@@ -67,9 +67,28 @@ namespace gemini
 
 				//debug_frame_t frame;
 				int32_t bytes_available = net_socket_recvfrom(viewer->connection, &source, (char*)frame, sizeof(debug_frame_t));
+				viewer->bytes_received += bytes_available;
 				//LOGV("read %i bytes\n", bytes_available);
-
+				//LOGV("read frame: %i\n", frame->frame_index);
 				//LOGV("sequence: %i\n", record->hitcount);
+
+				{
+					debug_frame_t* leframe = frame;
+					uint64_t max_cycles = 0;
+					uint64_t total_cycles;
+					// sort the frame
+					for (size_t index = 0; index < TELEMETRY_MAX_RECORDS_PER_FRAME; ++index)
+					{
+						total_cycles += leframe->records[index].cycles;
+
+						if (leframe->records[index].cycles > max_cycles)
+						{
+							max_cycles = leframe->records[index].cycles;
+						}
+					}
+					leframe->total_cycles = total_cycles;
+					leframe->max_cycles = max_cycles;
+				}
 
 				// wrap
 				viewer->current_index++;
@@ -107,6 +126,7 @@ namespace gemini
 
 		viewer->current_index = 0;
 		viewer->is_listening = 1;
+		viewer->last_tick = 1.0f;
 
 		// now create a listener thread
 		viewer->listener_thread  = platform::thread_create(viewer_thread, viewer);
@@ -127,7 +147,16 @@ namespace gemini
 		platform::thread_destroy(viewer->listener_thread);
 	}
 
-
+	void telemetry_viewer_tick(telemetry_viewer* viewer, float delta_seconds)
+	{
+		viewer->last_tick -= delta_seconds;
+		if (viewer->last_tick <= 0.0f)
+		{
+			viewer->bytes_per_second = viewer->bytes_received;
+			viewer->bytes_received = 0;
+			viewer->last_tick = 1.0f;
+		}
+	}
 	//void debug_record(debug_record_t* record, const char* name, float input_value)
 	//{
 	//	core::str::copy(record->name, name, 0);
@@ -169,6 +198,7 @@ namespace gemini
 	void debug_server_begin_frame(debug_server_t* server)
 	{
 		server->current_record = 0;
+		server->current_variable = 0;
 	}
 
 	void debug_server_end_frame(debug_server_t* server)
@@ -207,6 +237,13 @@ namespace gemini
 			record->hitcount = 0;
 		}
 
+		server->frame.frame_index++;
+
+		for (size_t index = 0; index < TELEMETRY_MAX_VARIABLES; ++index)
+		{
+			debug_var_t* var = &server->frame.variables[index];
+			memset(var, 0, sizeof(debug_var_t));
+		}
 
 	} // debug_server_end_frame
 
@@ -226,4 +263,50 @@ namespace gemini
 			atom_compare_and_swap32(&server->current_record, 0, current_record);
 		}
 	} // debug_server_push_record
+
+	void debug_server_push_variable(debug_server_t* server, const char* name, void* data, size_t data_size, uint8_t var_type)
+	{
+		uint32_t current_variable = server->current_variable;
+		debug_var_t* var = &server->frame.variables[current_variable];
+
+		// truncate name to 31 bytes (including terminator)
+		core::str::copy(var->name, name, 30);
+
+		assert(data_size <= 32);
+		memcpy(var->data, data, data_size);
+
+		var->type = var_type;
+
+		current_variable = atom_increment32(&server->current_variable);
+		if (current_variable >= TELEMETRY_MAX_VARIABLES)
+		{
+			atom_compare_and_swap32(&server->current_variable, 0, current_variable);
+		}
+	} // debug_server_push_variable
+
+	template <>
+	void telemetry_record_variable(debug_server_t* server, const char* name, float* type)
+	{
+		debug_server_push_variable(server, name, type, sizeof(float), DEBUG_RECORD_TYPE_FLOAT);
+	} // telemetry_record_variable
+
+	template <>
+	void telemetry_record_variable(debug_server_t* server, const char* name, glm::vec3* type)
+	{
+		debug_server_push_variable(server, name, type, sizeof(glm::vec3), DEBUG_RECORD_TYPE_FLOAT3);
+	} // telemetry_record_variable
+
+	template <>
+	void telemetry_record_variable(debug_server_t* server, const char* name, glm::vec4* type)
+	{
+		debug_server_push_variable(server, name, type, sizeof(glm::vec4), DEBUG_RECORD_TYPE_FLOAT4);
+	} // telemetry_record_variable
+
+	template <>
+	void telemetry_record_variable(debug_server_t* server, const char* name, uint32_t* type)
+	{
+		debug_server_push_variable(server, name, type, sizeof(uint32_t), DEBUG_RECORD_TYPE_UINT32);
+	} // telemetry_record_variable
+
+
 } // namespace gemini

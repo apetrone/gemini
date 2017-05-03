@@ -55,7 +55,9 @@ namespace gemini
 		struct RaycastInfo
 		{
 			glm::vec3 hit;
+			glm::vec3 hit_normal;
 			ICollisionObject* object;
+			float closest_hit_fraction;
 
 			RaycastInfo() : object(0)
 			{

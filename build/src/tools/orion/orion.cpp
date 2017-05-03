@@ -313,8 +313,10 @@ public:
 	telemetry_viewer* viewer;
 
 	gui::Point last_position;
-	uint32_t adaptive_cycles_max;
 	int32_t selected_frame;
+
+	float bar_width;
+	float min_bar_width;
 
 	TelemetryPanel(gui::Panel* parent, telemetry_viewer* telemetry_viewer)
 		: gui::Panel(parent)
@@ -329,6 +331,8 @@ public:
 
 		flags |= gui::Panel::Flag_CanMove;
 		selected_frame = -1;
+
+		bar_width = 6.0f;
 	}
 
 	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
@@ -338,9 +342,8 @@ public:
 
 void TelemetryPanel::update(gui::Compositor* compositor, float delta_seconds)
 {
+	min_bar_width = (get_client_size().width / static_cast<float>(TELEMETRY_MAX_VIEWER_FRAMES));
 	gui::Panel::update(compositor, delta_seconds);
-
-	adaptive_cycles_max = 0;
 }
 
 void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
@@ -348,7 +351,7 @@ void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer
 	gui::Panel::render(compositor, renderer, render_commands);
 
 	uint32_t width = get_client_size().width;
-	float rect_width = (width / static_cast<float>(TELEMETRY_MAX_VIEWER_FRAMES));
+	float rect_width = bar_width;
 
 	const gemini::Color current(1.0f, 1.0f, 1.0f);
 	const gemini::Color normal(0.7f, 0.7f, 0.7f);
@@ -358,19 +361,16 @@ void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer
 	float panel_height = get_size().height;
 
 	const glm::mat3& tx = get_transform(0);
-	for (size_t index = 0; index < TELEMETRY_MAX_VIEWER_FRAMES; ++index)
+	uint32_t visible_frames = (width / bar_width);
+
+	for (size_t index = 0; index < visible_frames; ++index)
 	{
 		gui::Point origin = gui::Point((index * rect_width), 0.0f);
 
 		// just grab and graph the first record
 		debug_record_t* record = &viewer->frames[index].records[0];
 
-		if (record->cycles > adaptive_cycles_max)
-		{
-			adaptive_cycles_max = record->cycles;
-		}
-
-		float scale = record->cycles / static_cast<float>(adaptive_cycles_max);
+		float scale = record->cycles / static_cast<float>(viewer->frames[index].max_cycles);
 		float rect_height = scale * static_cast<float>(client_height);
 
 		tube[0] = gui::Point(0.0f, panel_height - rect_height);
@@ -419,7 +419,7 @@ void TelemetryPanel::handle_event(gui::EventArgs& args)
 			args.compositor->set_capture(this, args.cursor_button);
 		}
 
-		int next_frame = (((int)args.local.x) - 1) / (get_client_size().width / 240.0f);
+		int next_frame = (((int)args.local.x) - 1) / bar_width;
 
 		selected_frame = next_frame;
 
@@ -437,9 +437,47 @@ void TelemetryPanel::handle_event(gui::EventArgs& args)
 					LOGV("function: %s\n", record->function);
 				}
 			}
+
+			LOGV("variables:\n\n");
+			for (size_t index = 0; index < TELEMETRY_MAX_VARIABLES; ++index)
+			{
+				debug_var_t* variable = &viewer->frames[selected_frame].variables[index];
+				if (variable->name[0] > 0)
+				{
+					if (variable->type == DEBUG_RECORD_TYPE_FLOAT)
+					{
+						float* value = reinterpret_cast<float*>(variable->data);
+						LOGV("[%i] \"%s\": %2.2f\n", index, variable->name, *value);
+					}
+					else if (variable->type == DEBUG_RECORD_TYPE_FLOAT3)
+					{
+						glm::vec3* value = reinterpret_cast<glm::vec3*>(variable->data);
+						LOGV("[%i] \"%s\": [%2.2f, %2.2f, %2.2f]\n", index, variable->name, value->x, value->y, value->z);
+					}
+					else if (variable->type == DEBUG_RECORD_TYPE_FLOAT4)
+					{
+						glm::vec4* value = reinterpret_cast<glm::vec4*>(variable->data);
+						LOGV("[%i] \"%s\": [%2.2f, %2.2f, %2.2f, %2.2f]\n", index, variable->name, value->x, value->y, value->z, value->w);
+					}
+					else if (variable->type == DEBUG_RECORD_TYPE_UINT32)
+					{
+						uint32_t* value = reinterpret_cast<uint32_t*>(variable->data);
+						LOGV("[%i] \"%s\": %i\n", index, variable->name, *value);
+					}
+				}
+			}
 		}
 
 		args.handled = true;
+	}
+	else if (args.type == gui::Event_CursorScroll)
+	{
+		bar_width += args.wheel * 2.0f;
+		LOGV("bar width is %2.2f\n", bar_width);
+		if (bar_width < min_bar_width)
+		{
+			bar_width = min_bar_width;
+		}
 	}
 }
 #endif
@@ -1601,6 +1639,8 @@ Options:
 		uint64_t current_time = platform::microseconds();
 		platform::update(kernel::parameters().framedelta_milliseconds);
 
+		telemetry_viewer_tick(&tel_viewer, kernel::parameters().framedelta_seconds);
+
 		// while i debug network stuff; don't do this...
 		//if (!app_in_focus)
 		//{
@@ -1657,6 +1697,7 @@ Options:
 		debugdraw::text(20, yoffset+16, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
 		debugdraw::text(20, yoffset+32, "Space: Calibrate / Freeze Rotations", gemini::Color(1.0f, 1.0f, 1.0f));
 		debugdraw::text(20, yoffset+48, core::str::format("Camera: %2.2f, %2.2f, %2.2f [%2.2f, %2.2f]", camera.get_position().x, camera.get_position().y, camera.get_position().z, camera.get_yaw(), camera.get_pitch()), gemini::Color(1.0f, 1.0f, 1.0f));
+		debugdraw::text(20, yoffset + 64, core::str::format("debug bytes/sec: %i\n", tel_viewer.bytes_per_second), gemini::Color(1.0f, 1.0f, 1.0f));
 
 		glm::quat local_rotations[IMOCAP_TOTAL_SENSORS];
 
@@ -1800,6 +1841,8 @@ Options:
 
 		debugdraw::update(kernel::parameters().framedelta_seconds);
 
+		telemetry_record_variable(&tel_source, "light_position_world", &render_scene->light_position_world);
+		telemetry_record_variable(&tel_source, "framedelta_seconds", &kernel::parameters().framedelta_seconds);
 
 		debugdraw::axes(glm::mat4(1.0f), 1.0f);
 
