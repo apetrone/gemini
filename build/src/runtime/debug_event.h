@@ -110,6 +110,7 @@ namespace gemini
 		uint32_t current_index;
 		uint32_t bytes_received;
 		uint32_t bytes_per_second;
+		uint32_t last_frame_index;
 		float last_tick;
 	};
 

@@ -37,9 +37,6 @@ namespace gemini
 	void viewer_thread(platform::Thread* thread)
 	{
 		telemetry_viewer* viewer = static_cast<telemetry_viewer*>(thread->user_data);
-
-		LOGV("launched viewer listen thread.\n");
-
 		while (viewer->is_listening)
 		{
 			timeval zero_timeval;
@@ -64,18 +61,20 @@ namespace gemini
 				net_address source;
 
 				debug_frame_t* frame = &viewer->frames[viewer->current_index];
-
-				//debug_frame_t frame;
 				int32_t bytes_available = net_socket_recvfrom(viewer->connection, &source, (char*)frame, sizeof(debug_frame_t));
 				viewer->bytes_received += bytes_available;
-				//LOGV("read %i bytes\n", bytes_available);
-				//LOGV("read frame: %i\n", frame->frame_index);
-				//LOGV("sequence: %i\n", record->hitcount);
 
+				// Should be receiving viewer->last_frame_index + 1 here.
+				if (frame->frame_index > (viewer->last_frame_index + 1))
+				{
+					LOGV("-> Dropped %i frames\n", viewer->last_frame_index - frame->frame_index);
+				}
+
+				viewer->last_frame_index = frame->frame_index;
 				{
 					debug_frame_t* leframe = frame;
 					uint64_t max_cycles = 0;
-					uint64_t total_cycles;
+					uint64_t total_cycles = 0;
 					// sort the frame
 					for (size_t index = 0; index < TELEMETRY_MAX_RECORDS_PER_FRAME; ++index)
 					{
@@ -96,11 +95,8 @@ namespace gemini
 				{
 					viewer->current_index = 0;
 				}
-				//
 			}
 		}
-
-		LOGV("leaving viewer thread\n");
 	}
 
 	void telemetry_viewer_create(telemetry_viewer* viewer, uint32_t frame_history_size, const char* ip_address, uint16_t port)
@@ -127,6 +123,12 @@ namespace gemini
 		viewer->current_index = 0;
 		viewer->is_listening = 1;
 		viewer->last_tick = 1.0f;
+		viewer->last_frame_index = 0;
+		for (size_t index = 0; index < TELEMETRY_MAX_VIEWER_FRAMES; ++index)
+		{
+			viewer->frames[index].max_cycles = 0;
+			viewer->frames[index].total_cycles = 0;
+		}
 
 		// now create a listener thread
 		viewer->listener_thread  = platform::thread_create(viewer_thread, viewer);
@@ -157,13 +159,6 @@ namespace gemini
 			viewer->last_tick = 1.0f;
 		}
 	}
-	//void debug_record(debug_record_t* record, const char* name, float input_value)
-	//{
-	//	core::str::copy(record->name, name, 0);
-	//	float* value = reinterpret_cast<float*>(record->data);
-	//	*value = input_value;
-	//	record->type = DEBUG_RECORD_TYPE_FLOAT;
-	//}
 
 	static debug_server_t _telemetry_host_data;
 
@@ -205,6 +200,8 @@ namespace gemini
 	void telemetry_host_reset()
 	{
 		debug_server_t* server = telemetry_host_data();
+		server->frame.max_cycles = 0;
+		server->frame.total_cycles = 0;
 
 		for (size_t index = 0; index < TELEMETRY_MAX_RECORDS_PER_FRAME; ++index)
 		{

@@ -314,6 +314,7 @@ public:
 
 	gui::Point last_position;
 	int32_t selected_frame;
+	uint32_t adaptive_max_scale;
 
 	float bar_width;
 	float min_bar_width;
@@ -331,7 +332,7 @@ public:
 			profile_block->set_size(250, 100);
 			profile_block->set_font("debug", 16);
 			profile_block->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.5f));
-			profile_block->set_foreground_color(gemini::Color(1.0f, 0.0f, 1.0f));
+			profile_block->set_foreground_color(gemini::Color(0.0f, 1.0f, 0.0f));
 			profile_block->set_name("profile_block");
 
 			variable_block = new gui::Label(this);
@@ -385,6 +386,7 @@ public:
 		info_panel = new TelemetryInfo(this);
 		info_panel->set_size(250, 200);
 		info_panel->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.5f));
+		adaptive_max_scale = 100;
 	}
 
 	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
@@ -417,6 +419,9 @@ void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer
 	const glm::mat3& tx = get_transform(0);
 	uint32_t visible_frames = (width / bar_width);
 
+	uint32_t max_scale_current_frame = adaptive_max_scale;
+	adaptive_max_scale = 0;
+
 	for (size_t index = 0; index < visible_frames; ++index)
 	{
 		gui::Point origin = gui::Point((index * rect_width), capture_rect.height());
@@ -424,14 +429,18 @@ void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer
 		// just grab and graph the first record
 		debug_record_t* record = &viewer->frames[index].records[0];
 
-		float scale = record->cycles / static_cast<float>(viewer->frames[index].max_cycles);
+		if (viewer->frames[index].total_cycles > adaptive_max_scale)
+		{
+			adaptive_max_scale = viewer->frames[index].total_cycles;
+		}
+
+		float scale = viewer->frames[index].total_cycles / static_cast<float>(max_scale_current_frame);
 		float rect_height = scale * static_cast<float>(client_height);
 
-		float vert_offset = 0;// (client_height - rect_height);
-		tube[0] = gui::Point(0.0f, client_height - (client_height - rect_height));
+		tube[0] = gui::Point(0.0f, client_height - rect_height);
 		tube[1] = gui::Point(0.0f, client_height);
 		tube[2] = gui::Point(rect_width, client_height);
-		tube[3] = gui::Point(rect_width, client_height - (client_height - rect_height));
+		tube[3] = gui::Point(rect_width, client_height - rect_height);
 
 		gemini::Color current_color = normal;
 		if (selected_frame != -1 && index == selected_frame)
@@ -513,6 +522,7 @@ void TelemetryPanel::handle_event(gui::EventArgs& args)
 						record->hitcount);
 				}
 			}
+			//profile_block += core::str::format("Total Cycles: %i", viewer->frames[selected_frame].total_cycles);
 			info_panel->set_profile_block(profile_block.c_str());
 
 			String variable_block;
