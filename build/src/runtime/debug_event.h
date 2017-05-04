@@ -70,14 +70,15 @@ namespace gemini
 	const uint32_t TELEMETRY_MAX_RECORDS_PER_FRAME = 32;
 	const uint32_t TELEMETRY_MAX_VIEWER_FRAMES = 240;
 	const uint32_t TELEMETRY_MAX_VARIABLES = 16;
+	const uint32_t TELEMETRY_MAX_FUNCTION_LENGTH = 128;
+	const uint32_t TELEMETRY_MAX_FILENAME_LENGTH = 64;
 
 	struct debug_record_t
 	{
-		const char* function;
-		const char* filename;
+		char function[TELEMETRY_MAX_FUNCTION_LENGTH];
+		char filename[TELEMETRY_MAX_FILENAME_LENGTH];
 		uint64_t cycles;
 		uint32_t line_number;
-		uint32_t hitcount;
 	};
 
 

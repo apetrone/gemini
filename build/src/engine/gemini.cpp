@@ -46,6 +46,7 @@
 #include <renderer/scene_renderer.h>
 
 #include <runtime/debugvar.h>
+#include <runtime/debug_event.h>
 #include <runtime/keyframechannel.h>
 #include <runtime/mesh.h>
 #include <runtime/mesh_library.h>
@@ -1097,6 +1098,11 @@ Options:
 			hotloading::startup(renderer_allocator);
 		}
 
+		int32_t net_result = net_startup();
+		assert(net_result == 0);
+
+		telemetry_host_startup("127.0.0.1", TELEMETRY_VIEWER_PORT);
+
 		// setup interfaces
 		engine_interface = MEMORY2_NEW(engine_allocator, EngineInterface)
 			(engine_allocator,
@@ -1371,7 +1377,6 @@ Options:
 			const float screen_aspect_ratio = (view.width / (float)view.height);
 			view.projection = glm::perspective(glm::radians(interpolated_camera_state.field_of_view), screen_aspect_ratio, nearz, farz);
 
-
 			render_scene_update(render_scene, &ers);
 			render_scene_draw(render_scene, device, view.modelview, view.projection);
 
@@ -1385,13 +1390,12 @@ Options:
 			for (DebugVarBase* variable = debugvar_first(); variable != nullptr;)
 			{
 				debugdraw::text(x_offset,
-								y_offset,
-								variable->to_string(),
-								gemini::Color(1.0f, 1.0f, 1.0f));
+					y_offset,
+					variable->to_string(),
+					gemini::Color(1.0f, 1.0f, 1.0f));
 				variable = variable->next;
 				y_offset += 12;
 			}
-
 
 			debugdraw::render(view.modelview, view.projection, view.width, view.height);
 			if (_compositor)
@@ -1414,6 +1418,9 @@ Options:
 		{
 			platform::window::swap_buffers(main_window);
 		}
+
+		telemetry_host_submit_frame();
+
 	} // post_tick
 
 	virtual void shutdown()
@@ -1455,6 +1462,10 @@ Options:
 		audio::shutdown();
 
 		assets::shutdown();
+
+		telemetry_host_shutdown();
+
+		net_shutdown();
 
 		IAudioInterface* interface = audio::instance();
 		MEMORY2_DELETE(audio_allocator, interface);

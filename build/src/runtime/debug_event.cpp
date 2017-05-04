@@ -202,6 +202,8 @@ namespace gemini
 		debug_server_t* server = telemetry_host_data();
 		server->frame.max_cycles = 0;
 		server->frame.total_cycles = 0;
+		server->current_record = 0;
+		server->current_variable = 0;
 
 		for (size_t index = 0; index < TELEMETRY_MAX_RECORDS_PER_FRAME; ++index)
 		{
@@ -214,9 +216,6 @@ namespace gemini
 			debug_var_t* var = &server->frame.variables[index];
 			memset(var, 0, sizeof(debug_var_t));
 		}
-
-		server->current_record = 0;
-		server->current_variable = 0;
 	} // telemetry_host_reset
 
 	void telemetry_host_submit_frame()
@@ -234,10 +233,9 @@ namespace gemini
 		uint32_t current_record = server->current_record;
 		debug_record_t* record = &server->frame.records[current_record];
 		record->cycles = cycles;
-		record->filename = filename;
-		record->function = function;
+		core::str::copy(record->filename, filename, 0);
+		core::str::copy(record->function, function, 0);
 		record->line_number = line_number;
-		record->hitcount = 1;
 
 		current_record = atom_increment32(&server->current_record);
 		if (current_record >= TELEMETRY_MAX_RECORDS_PER_FRAME)

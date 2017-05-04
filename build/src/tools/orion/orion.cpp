@@ -81,6 +81,7 @@ using namespace gemini;
 #define DRAW_SENSOR_GRAPHS 0
 #define TEST_SPRING_SYSTEM 0
 #define TEST_TELEMETRY_SYSTEM 1
+#define TEST_TELEMETRY_HOST 0
 
 #define DRAW_LINES 0
 const size_t TOTAL_LINES = 256;
@@ -508,18 +509,14 @@ void TelemetryPanel::handle_event(gui::EventArgs& args)
 			for (size_t index = 0; index < TELEMETRY_MAX_RECORDS_PER_FRAME; ++index)
 			{
 				debug_record_t* record = &viewer->frames[selected_frame].records[index];
-				if (record->filename != nullptr)
+				if (record->cycles > 0)
 				{
 					profile_block += core::str::format(
-						"Filename@Line: %s @ %i\n"
-						"Function: %s\n"
-						"Cycles: %i\n"
-						"Hitcount: %i\n",
+						"[%s:%i - %s] Cycles: %i\n",
 						record->filename,
 						record->line_number,
 						record->function,
-						record->cycles,
-						record->hitcount);
+						record->cycles);
 				}
 			}
 			//profile_block += core::str::format("Total Cycles: %i", viewer->frames[selected_frame].total_cycles);
@@ -1679,7 +1676,9 @@ Options:
 		telemetry_panel->set_name("telemetry_panel");
 #endif
 
+#if TEST_TELEMETRY_HOST
 		telemetry_host_startup("127.0.0.1", TELEMETRY_VIEWER_PORT);
+#endif
 
 
 		sensor_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
@@ -1939,8 +1938,10 @@ Options:
 
 		debugdraw::update(kernel::parameters().framedelta_seconds);
 
+#if TEST_TELEMETRY_HOST
 		TELEMETRY_VARIABLE("light_position_world", render_scene->light_position_world);
 		TELEMETRY_VARIABLE("time", the_time);
+#endif
 
 		debugdraw::axes(glm::mat4(1.0f), 1.0f);
 
@@ -1987,12 +1988,16 @@ Options:
 
 		if (compositor)
 		{
+#if TEST_TELEMETRY_HOST
 			TELEMETRY_BLOCK(gui_draw);
+#endif
 			compositor->draw();
 		}
 
 		{
+#if TEST_TELEMETRY_HOST
 			TELEMETRY_BLOCK(device_draw);
+#endif
 			device->submit();
 			platform::window::swap_buffers(main_window);
 		}
@@ -2014,7 +2019,9 @@ Options:
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 		last_time = current_time;
 
+#if TEST_TELEMETRY_HOST
 		telemetry_host_submit_frame();
+#endif
 
 		//params.step_alpha = accumulator / params.step_interval_seconds;
 		//if (params.step_alpha >= 1.0f)
@@ -2044,7 +2051,9 @@ Options:
 		render_scene_destroy(render_scene, device);
 		render_scene_shutdown();
 
+#if TEST_TELEMETRY_HOST
 		telemetry_host_shutdown();
+#endif
 		telemetry_viewer_destroy(&tel_viewer);
 
 		animation::shutdown();
