@@ -332,6 +332,7 @@ public:
 			profile_block->set_font("debug", 16);
 			profile_block->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.5f));
 			profile_block->set_foreground_color(gemini::Color(1.0f, 0.0f, 1.0f));
+			profile_block->set_name("profile_block");
 
 			variable_block = new gui::Label(this);
 			variable_block->set_size(250, 100);
@@ -339,6 +340,7 @@ public:
 			variable_block->set_font("debug", 16);
 			variable_block->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.5f));
 			variable_block->set_foreground_color(gemini::Color(0.0f, 1.0f, 1.0f));
+			variable_block->set_name("variable_block");
 		}
 
 		void set_profile_block(const char* text)
@@ -406,7 +408,7 @@ void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer
 	float rect_width = bar_width;
 
 	const gemini::Color current(1.0f, 1.0f, 1.0f);
-	const gemini::Color normal(0.7f, 0.7f, 0.7f);
+	const gemini::Color normal(1.0f, 0.0f, 0.0f);
 	const gemini::Color selected(1.0f, 0.5f, 0.0f);
 
 	float client_height = get_client_size().height;
@@ -417,7 +419,7 @@ void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer
 
 	for (size_t index = 0; index < visible_frames; ++index)
 	{
-		gui::Point origin = gui::Point((index * rect_width), 0.0f);
+		gui::Point origin = gui::Point((index * rect_width), capture_rect.height());
 
 		// just grab and graph the first record
 		debug_record_t* record = &viewer->frames[index].records[0];
@@ -425,10 +427,11 @@ void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer
 		float scale = record->cycles / static_cast<float>(viewer->frames[index].max_cycles);
 		float rect_height = scale * static_cast<float>(client_height);
 
-		tube[0] = gui::Point(0.0f, panel_height - rect_height);
-		tube[1] = gui::Point(0.0f, panel_height);
-		tube[2] = gui::Point(rect_width, panel_height);
-		tube[3] = gui::Point(rect_width, panel_height - rect_height);
+		float vert_offset = 0;// (client_height - rect_height);
+		tube[0] = gui::Point(0.0f, client_height - (client_height - rect_height));
+		tube[1] = gui::Point(0.0f, client_height);
+		tube[2] = gui::Point(rect_width, client_height);
+		tube[3] = gui::Point(rect_width, client_height - (client_height - rect_height));
 
 		gemini::Color current_color = normal;
 		if (selected_frame != -1 && index == selected_frame)

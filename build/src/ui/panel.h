@@ -178,6 +178,8 @@ namespace gui
 		glm::mat3 get_transform(size_t index) const;
 
 	protected:
+		// Mark this panel and its children dirty.
+		void mark_dirty();
 
 		void update_transform(Compositor*);
 		void zsort_children(Panel* pane);

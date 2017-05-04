@@ -97,7 +97,7 @@ namespace gui
 		origin.y = y;
 		size.width = width;
 		size.height = height;
-		flags |= Flag_TransformIsDirty;
+		mark_dirty();
 	} // set_bounds
 
 	void Panel::set_bounds(const Rect& new_bounds)
@@ -108,9 +108,17 @@ namespace gui
 
 	void Panel::set_origin(float x, float y)
 	{
-		origin.x = x;
-		origin.y = y;
-		flags |= Flag_TransformIsDirty;
+		if (origin.x != x)
+		{
+			origin.x = x;
+			mark_dirty();
+		}
+
+		if (origin.y != y)
+		{
+			origin.y = y;
+			mark_dirty();
+		}
 	} // set_origin
 
 	void Panel::set_origin(const Point& new_origin)
@@ -120,8 +128,11 @@ namespace gui
 
 	void Panel::set_size(const Size& new_size)
 	{
-		size = new_size;
-		flags |= Flag_TransformIsDirty;
+		if ((size.width != new_size.width) || (size.height != new_size.height))
+		{
+			size = new_size;
+			mark_dirty();
+		}
 	} // set_size
 
 	void Panel::set_size(uint32_t width, uint32_t height)
@@ -156,7 +167,7 @@ namespace gui
 			children.push_back(panel);
 		}
 
-		panel->flags |= Flag_TransformIsDirty;
+		panel->mark_dirty();
 
 		// add panel to zsorted list
 		zsorted.push_back(panel);
@@ -200,7 +211,7 @@ namespace gui
 		{
 			origin.x += args.delta.x;
 			origin.y += args.delta.y;
-			flags |= Flag_TransformIsDirty;
+			mark_dirty();
 			args.handled = true;
 			//LOGV("Moved panel '%s' to %2.2f, %2.2f\n", get_name(), origin.x, origin.y);
 		}
@@ -221,10 +232,7 @@ namespace gui
 			(*it)->update(compositor, delta_seconds);
 		}
 
-		if (flags & Flag_TransformIsDirty)
-		{
-			flags &= ~Flag_TransformIsDirty;
-		}
+		flags &= ~Flag_TransformIsDirty;
 	} // update
 
 	void Panel::render_geometry(gui::render::CommandList& render_commands, const gemini::Color& color)
@@ -334,7 +342,7 @@ namespace gui
 		if (is_visible)
 		{
 			flags |= Flag_IsVisible;
-			flags |= Flag_TransformIsDirty;
+			mark_dirty();
 		}
 		else
 		{
@@ -398,7 +406,7 @@ namespace gui
 	void Panel::resize(const Size& requested_size)
 	{
 		size = requested_size;
-		flags |= Flag_TransformIsDirty;
+		mark_dirty();
 	} // resize
 
 	void Panel::set_maximum_size(const Size& max_size)
@@ -452,13 +460,13 @@ namespace gui
 	void Panel::set_rotation(const float radians)
 	{
 		z_rotation = radians;
-		flags |= Flag_TransformIsDirty;
+		mark_dirty();
 	}
 
 	void Panel::set_scale(const glm::vec2& new_scale)
 	{
 		scale = new_scale;
-		flags |= Flag_TransformIsDirty;
+		mark_dirty();
 	}
 
 	// ---------------------------------------------------------------------
@@ -498,6 +506,15 @@ namespace gui
 
 		layout = layout_instance;
 	}
+
+	void Panel::mark_dirty()
+	{
+		flags |= Flag_TransformIsDirty;
+		for (size_t index = 0; index < children.size(); ++index)
+		{
+			children[index]->mark_dirty();
+		}
+	} // mark_dirty
 
 	void Panel::update_transform(Compositor*)
 	{

@@ -196,7 +196,10 @@ namespace gui
 		// Don't hit the asserts in the compositor.
 		if (item_type != MenuItem_Separator)
 		{
-			size = max_menu_size;
+			if (max_menu_size.width > 0 && max_menu_size.height > 0)
+			{
+				size = max_menu_size;
+			}
 		}
 	} // update
 

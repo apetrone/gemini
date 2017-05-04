@@ -746,6 +746,7 @@ private:
 
 		game_interface->startup(compositor, root);
 #endif
+
 	}
 
 	void close_gamelibrary()
