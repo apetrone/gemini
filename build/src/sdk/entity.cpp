@@ -266,7 +266,7 @@ void Entity::use(Entity* /*user*/, const glm::vec3& /*in_vector*/)
 {
 }
 
-void Entity::hit(Entity* /*user*/, const glm::vec3& /*in_vector*/)
+void Entity::hit(Entity* /*user*/, const glm::vec3& /*force*/, const glm::vec3& /*local_position*/)
 {
 }
 
