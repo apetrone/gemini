@@ -106,6 +106,12 @@ public:
 		resize(count, value_type());
 	}
 
+	void reserve(size_t new_size)
+	{
+		// Modifies capacity of the array.
+		grow(new_size);
+	}
+
 	// resizes the container to contain count elements
 	// unlike std::vector, we aren't going to remove + destroy elements
 	// if count < total_elements.

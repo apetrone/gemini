@@ -155,5 +155,11 @@ namespace core
 				offset += requested_offset;
 			}
 		}
+
+		void ResizableMemoryStream::reserve(size_t new_size)
+		{
+			data.reserve(new_size);
+		} // resize
+
 	} // namespace util
 } // namespace core

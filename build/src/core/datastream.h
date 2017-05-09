@@ -108,6 +108,7 @@ namespace core
 			virtual size_t write(const void* data, size_t length);
 			virtual void seek(size_t offset, bool is_absolute);
 			virtual void flush() {}
+			virtual void reserve(size_t new_offset);
 		};
 	} // namespace util
 } // namespace core
