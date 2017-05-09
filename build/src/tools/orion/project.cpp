@@ -62,7 +62,8 @@ platform::Result Project::save_project()
 
 platform::Result Project::save_project_as(const String& absolute_path)
 {
-	core::util::ResizableMemoryStream stream;
+	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	core::util::ResizableMemoryStream stream(allocator);
 
 	uint32_t name_length = name.length();
 	stream.write(&name_length, sizeof(uint32_t));

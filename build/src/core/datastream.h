@@ -27,7 +27,7 @@
 #include "datastream.h"
 #include "typedefs.h"
 
-#include <vector>
+#include <core/array.h>
 
 namespace core
 {
@@ -97,11 +97,10 @@ namespace core
 
 		class ResizableMemoryStream : public MemoryStream
 		{
-			std::vector<char> data;
-			size_t offset;
+			Array<char> data;
 
 		public:
-			ResizableMemoryStream() : offset(0) {}
+			ResizableMemoryStream(gemini::Allocator& allocator);
 
 			virtual uint8_t* get_data() const;
 			virtual size_t get_data_size() const;
