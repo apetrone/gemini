@@ -1048,7 +1048,48 @@ UNITTEST(typespec)
 //	return core::str::case_insensitive_compare(type_name, deduced_type_name, 0) == 0;
 //}
 
+// ---------------------------------------------------------------------
+// resizable_memory_stream
+// ---------------------------------------------------------------------
+UNITTEST(resizable_memory_stream)
+{
+	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	ResizableMemoryStream mem(allocator);
 
+	const float INITIAL_VALUE0 = 3.27f;
+	const uint64_t INITIAL_VALUE1 = 1000483;
+	const uint8_t INITIAL_VALUE2 = 127;
+
+	float value = INITIAL_VALUE0;
+	uint64_t test = INITIAL_VALUE1;
+	uint8_t test2 = INITIAL_VALUE2;
+	mem.reserve(512);
+
+	mem.write(&value, sizeof(float));
+	mem.write(&test, sizeof(uint64_t));
+	mem.write(&test2, sizeof(uint8_t));
+
+	mem.rewind();
+
+	value = 0;
+	test = 0;
+	test2 = 0;
+
+	mem.read(&value, sizeof(float));
+	mem.read(&test, sizeof(uint64_t));
+	mem.read(&test2, sizeof(uint8_t));
+
+	TEST_ASSERT_EQUALS(INITIAL_VALUE0, value);
+	TEST_ASSERT_EQUALS(INITIAL_VALUE1, test);
+	TEST_ASSERT_EQUALS(INITIAL_VALUE2, test2);
+}
+
+// ---------------------------------------------------------------------
+// serialization
+// ---------------------------------------------------------------------
+UNITTEST(serialization)
+{
+}
 
 
 // ---------------------------------------------------------------------
