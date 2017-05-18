@@ -1115,8 +1115,7 @@ UNITTEST(util)
 int main(int, char**)
 {
 	gemini::core_startup();
-	//unittest::UnitTest::execute();
-	UNITTEST_EXECUTE(freelist);
+	unittest::UnitTest::execute();
 	gemini::core_shutdown();
 	return 0;
 }
