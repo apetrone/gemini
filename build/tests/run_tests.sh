@@ -4,6 +4,7 @@ BIN_PATH=../bin/debug_x86_64
 
 execute_test()
 {
+	echo "execute ${1}"
 	${BIN_PATH}/$*
 	result=$?
 	if [ $result != 0 ]; then

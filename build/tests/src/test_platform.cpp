@@ -292,17 +292,36 @@ UNITTEST(network)
 	char ip_address[16];
 	net_ipv4_by_hostname("pi-zero", "http", ip_address);
 	net_address_set(&host, ip_address, 8010);
+
+	// set non-blocking
+	net_socket_set_blocking(sock1, 1);
+
 	int32_t error_result = net_socket_connect(sock1, &host);
-	if (error_result == 0)
+
+	struct timeval timeout;
+	timeout.tv_sec = 2;
+	timeout.tv_usec = 0;
+	fd_set handles;
+	FD_ZERO(&handles);
+	FD_SET(sock1, &handles);
+
+	int32_t so_error;
+	if (select(sock1 + 1, &handles, NULL, NULL, &timeout) == 1)
 	{
-		LOGV("connected.\n");
-		net_socket_shutdown(sock1, net_socket_how::READ_WRITE);
-		net_socket_close(sock1);
+		socklen_t length = sizeof(int32_t);
+		getsockopt(sock1, SOL_SOCKET, SO_ERROR, &so_error, &length);
+		if (so_error == 0)
+		{
+			LOGV("connected.\n");
+			net_socket_shutdown(sock1, net_socket_how::READ_WRITE);
+		}
 	}
 	else
 	{
-		LOGW("Unable to connect to %s [%i]\n", ip_address, net_last_error());
+		LOGW("Unable to connect to %s [%i], so_error: %i\n", ip_address, net_last_error(), so_error);
 	}
+
+	net_socket_close(sock1);
 
 
 	// try to join/leave a multi-cast group
@@ -420,9 +439,7 @@ UNITTEST(datetime)
 int main(int, char**)
 {
 	gemini::core_startup();
-	//unittest::UnitTest::execute();
-	UNITTEST_EXECUTE(network);
-
+	unittest::UnitTest::execute();
 	gemini::core_shutdown();
 	return 0;
 }
