@@ -44,7 +44,7 @@ namespace gemini
 		return static_cast<uint32_t>(OSAtomicIncrement32(reinterpret_cast<volatile int32_t*>(destination)));
 	}
 
-	uint64_t atom_add_64(volatile uint64_t* destination, uint64_t value)
+	uint64_t atom_increment64(volatile uint64_t* destination, uint64_t value)
 	{
 		#error Implement on this platform.
 		return 0;
@@ -64,7 +64,7 @@ namespace gemini
 		return InterlockedIncrement((volatile unsigned int*)destination);
 	}
 
-	uint64_t atom_add_64(volatile uint64_t* destination, uint64_t value)
+	uint64_t atom_increment64(volatile uint64_t* destination, uint64_t value)
 	{
 		return InterlockedAdd64((volatile LONG64*)destination, value);
 	}
@@ -79,10 +79,9 @@ namespace gemini
 		return __sync_add_and_fetch(destination, 1);
 	}
 
-	uint64_t atom_add_64(volatile uint64_t* destination, uint64_t value)
+	uint64_t atom_increment64(volatile uint64_t* destination, uint64_t value)
 	{
-		#error Implement on this platform.
-		return 0;
+		return __sync_add_and_fetch(destination, 1);
 	}
 #else
 	#error No atomic synchronization functions defined for this platform.

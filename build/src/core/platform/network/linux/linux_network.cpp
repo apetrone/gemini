@@ -85,6 +85,11 @@ namespace platform
 
 	// socket functions
 
+	int32_t net_last_error()
+	{
+		return errno;
+	} // net_last_error
+
 	/// @returns 0 on success; -1 on failure
 	net_socket net_socket_open(net_socket_type type)
 	{
@@ -102,6 +107,27 @@ namespace platform
 	{
 		close(sock);
 	} // net_socket_close
+
+	void net_socket_shutdown(net_socket sock, net_socket_how how)
+	{
+		::shutdown(sock, static_cast<int>(how));
+	} // net_socket_shutdown
+
+	int32_t net_socket_add_multicast_group(net_socket sock, const char* group_address)
+	{
+		struct ip_mreq mreq;
+		mreq.imr_multiaddr.s_addr = inet_addr(group_address);
+		mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+		return setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&mreq, sizeof(ip_mreq));
+	} // net_socket_add_multicast_group
+
+	int32_t net_socket_remove_multicast_group(net_socket sock, const char* group_address)
+	{
+		struct ip_mreq mreq;
+		mreq.imr_multiaddr.s_addr = inet_addr(group_address);
+		mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+		return setsockopt(sock, IPPROTO_IP, IP_DROP_MEMBERSHIP, (char*)&mreq, sizeof(ip_mreq));
+	} // net_socket_remove_multicast_group
 
 	net_socket net_socket_accept(net_socket sock, net_address* source)
 	{

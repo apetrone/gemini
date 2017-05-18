@@ -383,8 +383,6 @@ UNITTEST(Delegate)
 // ---------------------------------------------------------------------
 // directory monitor
 // ---------------------------------------------------------------------
-static uint32_t _monitor_notified = 0;
-
 void monitor_triggered(MonitorHandle handle, MonitorAction action, const platform::PathString& path)
 {
 	LOGV("monitor_triggered with: %s\n", path());

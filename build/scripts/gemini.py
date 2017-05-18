@@ -327,7 +327,7 @@ def get_tools(arguments, libruntime, librenderer, libcore, libsdk, **kwargs):
 	orion = get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs)
 	tools.append(orion)
 
-	asset_compiler = get_asset_compiler(arguments, [libruntime, libcore], **kwargs)
+	asset_compiler = get_asset_compiler(arguments, [libruntime, librenderer, libfreetype, libcore], **kwargs)
 	tools.append(asset_compiler)
 
 	return tools

@@ -167,6 +167,9 @@ namespace gemini
 		}
 	};
 
+	template <class T>
+	struct telemetry_type_to_enum;
+
 	#define TELEMETRY_BLOCK(name) telemetry_timed_block telemetry_block_##_name(#name, __FILE__, __LINE__)
 	#define TELEMETRY_VARIABLE(name, variable) telemetry_record_variable(name, variable)
 
@@ -175,9 +178,6 @@ namespace gemini
 	{
 		debug_server_push_variable(name, &data, sizeof(T), telemetry_type_to_enum<T>::value);
 	}
-
-	template <class T>
-	struct telemetry_type_to_enum;
 
 	template <>
 	struct telemetry_type_to_enum<float>
