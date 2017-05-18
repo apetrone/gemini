@@ -152,7 +152,13 @@ namespace gemini
 
 		if (inotify_handle == -1)
 		{
-			LOGW("inotify_add_watch failed with errno = %i\n", inotify_handle);
+			if (errno == ENOSPC)
+			{
+				// No more watches left!
+				LOGW("Upper limit of watches reached!\n");
+			}
+
+			LOGW("inotify_add_watch failed with errno = %i\n", errno);
 			return MonitorHandle(0);
 		}
 

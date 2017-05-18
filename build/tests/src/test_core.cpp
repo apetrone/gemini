@@ -397,7 +397,10 @@ UNITTEST(directory_monitor)
 	MonitorDelegate delegate;
 	delegate.bind<monitor_triggered>();
 
-	MonitorHandle handle0 = directory_monitor_add(platform::get_program_directory()(), delegate);
+	platform::PathString directory = platform::get_program_directory()();
+	LOGV("adding watch for directory: \"%s\"\n", directory());
+
+	MonitorHandle handle0 = directory_monitor_add(directory(), delegate);
 
 	TEST_ASSERT_TRUE(handle0 > 0);
 
