@@ -181,7 +181,7 @@ namespace platform
 
 	int32_t net_socket_set_blocking(net_socket sock, int32_t value)
 	{
-		int32_t non_blocking = value ? 1 : 0;
+		int32_t non_blocking = value ? 0 : 1;
 		return fcntl(sock, F_SETFL, O_NONBLOCK, non_blocking);
 	} // net_socket_set_blocking
 

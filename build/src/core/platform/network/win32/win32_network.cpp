@@ -205,7 +205,7 @@ namespace platform
 
 	int32_t net_socket_set_blocking(net_socket sock, int32_t value)
 	{
-		u_long non_blocking = static_cast<u_long>(value) ? 1UL : 0UL;
+		u_long non_blocking = static_cast<u_long>(value) ? 0UL : 1UL;
 		return ioctlsocket(sock, FIONBIO, &non_blocking);
 	} // net_socket_set_blocking
 
