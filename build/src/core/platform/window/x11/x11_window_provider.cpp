@@ -108,6 +108,7 @@ namespace platform
 
 		NativeWindow* X11WindowProvider::create(const Parameters& parameters, void* native_visual)
 		{
+			// TODO: handle https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html
 			X11Window* window = MEMORY2_NEW(get_platform_allocator2(), X11Window);
 			Visual* visual = static_cast<Visual*>(native_visual);
 			assert(visual != nullptr);
