@@ -61,9 +61,6 @@ namespace platform
 			// request pointer motion while any button down
 			ButtonMotionMask |
 
-			// resize
-			ResizeRedirectMask |
-
 			// request changes to window structure
 			StructureNotifyMask |
 
@@ -311,14 +308,6 @@ namespace platform
 					kernel::event_dispatch(sysevent);
 					break;
 
-				// window has resized
-				case ResizeRequest:
-					sysevent.subtype = kernel::WindowResized;
-					sysevent.render_width = sysevent.window_width = event.xresizerequest.width;
-					sysevent.render_height = sysevent.window_height = event.xresizerequest.height;
-					kernel::event_dispatch(sysevent);
-					break;
-
 				// keyboard state has changed
 				case KeymapNotify:
 					XRefreshKeyboardMapping(&event.xmapping);
@@ -399,7 +388,14 @@ namespace platform
 				case MapNotify:
 				case UnmapNotify:
 				case ReparentNotify:
+					break;
+
 				case ConfigureNotify:
+					// TODO: Prevent dispatching this event if the size hasn't changed.
+					sysevent.subtype = kernel::WindowResized;
+					sysevent.render_width = sysevent.window_width = event.xconfigure.width;
+					sysevent.render_height = sysevent.window_height = event.xconfigure.height;
+					kernel::event_dispatch(sysevent);
 					break;
 
 				default:
