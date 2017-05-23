@@ -102,6 +102,7 @@ class imocap_packet(object):
 		return self.header == 0xba and self.footer == 0xff
 
 	def quaternion(self, index):
+		# W X Y Z order
 		offset = (1 + index * IMOCAP_DATA_SIZE)
 		values = struct.unpack_from('<hhhh', self.data, offset)
 		return [v * QUANTIZE_VALUE for v in values]
@@ -208,10 +209,8 @@ class imocap_client(object):
 						# get just the quaternion data out for now.
 						for index in range(0, self.IMOCAP_TOTAL_SENSORS):
 							values = packet.quaternion(index)
-							rotation = Quaternion((values[0],
-												   values[1],
-												   values[2],
-												   values[3]))
+							rotation = Quaternion(values)
+
 							self.device_rotations[index] = rotation
 
 						self.on_received_new_data()
