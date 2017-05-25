@@ -61,6 +61,7 @@ from bpy_extras.io_utils import (
 from time import time
 from mathutils import (
 	Matrix,
+	Quaternion,
 	Vector,
 )
 
@@ -73,7 +74,6 @@ import socket
 import struct
 
 from datetime import datetime
-from mathutils import Quaternion
 from threading import Thread
 
 #
@@ -131,6 +131,8 @@ class imocap_client(object):
 		self.last_client_contact_msec = 0
 		self.device_rotations = [Quaternion((1.0, 0.0, 0.0, 0.0))] * self.IMOCAP_TOTAL_SENSORS
 		self.zeroed_rotations = [Quaternion((1.0, 0.0, 0.0, 0.0))] * self.IMOCAP_TOTAL_SENSORS
+		self.last_frame = -1
+		self.world_poses = [Matrix()] * self.IMOCAP_TOTAL_SENSORS
 
 	def connect(self):
 		# The client responds to UDP broadcasts transmitted
@@ -138,6 +140,7 @@ class imocap_client(object):
 		# port and wait.
 		self.thread = Thread(target=self.wait_for_data, args=(1,0))
 		self.is_connected = True
+		self.last_frame = -1
 
 		self.client_address = None
 		self.data_socket = socket.socket(socket.AF_INET,
@@ -155,14 +158,66 @@ class imocap_client(object):
 	def get_local_rotation(self, index):
 		return self.zeroed_rotations[index].inverted() * self.device_rotations[index]
 
+	def compute_pose(self, world_poses, local_rotations, joint_offsets, index):
+		"""
+		Compute a pose for an index. Returns the resulting mat4
+		"""
+
+		parent_quat = Quaternion([1, 0, 0, 0])
+		parent_pose = Matrix()
+
+		if index > 0:
+			parent_quat = local_rotations[index - 1]
+			parent_pose = world_poses[index - 1]
+
+		local_pose = (parent_quat.inverted() * local_rotations[index]).to_matrix()
+		return parent_pose * joint_offsets[index] * local_pose
+
 	def on_received_new_data(self):
-		if 'Cube' in bpy.context.scene.objects:
-			obj = bpy.context.scene.objects['Cube']
-			obj.rotation_mode = 'QUATERNION'
-			obj.rotation_quaternion = self.get_local_rotation(0)
-			obj.rotation_mode = 'XYZ'
-		else:
-			print('No Cube found in scene')
+		joint_offsets = [
+			Matrix.Translation((0.0, 0.0, 0.0)),
+			Matrix.Translation((0.0, 0.0, 0.254)),
+			Matrix.Translation((0.0, 0.0, 0.254))
+		]
+
+		# cube0 = bpy.context.scene.objects['Cube0']
+		# cube1 = bpy.context.scene.objects['Cube1']
+		# cube2 = bpy.context.scene.objects['Cube2']
+
+		# cubes = [cube0, cube1, cube2]
+
+		# for cube in cubes:
+		# 	cube.rotation_mode = 'QUATERNION'
+
+		# rotation = Quaternion([1, 0, 0], -3.141592653)
+		# local_rotation = self.get_local_rotation(0)
+		# final = rotation * local_rotation
+
+		# cube0.rotation_quaternion = local_rotation
+		# cube1.rotation_quaternion = rotation
+		# cube2.rotation_quaternion = final
+
+		next_frame = bpy.context.scene.frame_current + 1
+
+		if next_frame >= bpy.context.scene.frame_end:
+			next_frame = 0
+		bpy.context.scene.frame_set(next_frame)
+
+		if bpy.context.scene.frame_current != self.last_frame:
+			self.last_frame = bpy.context.scene.frame_current
+			for index in range(0, 3):
+				cube_name = 'Cube{}'.format(index)
+				cube = bpy.context.scene.objects[cube_name]
+				cube.rotation_mode = 'QUATERNION'
+				cube.rotation_quaternion = self.get_local_rotation(index)
+
+				# cube.select = True
+				# bpy.context.scene.objects.active = cube
+				cube.keyframe_insert(data_path='rotation_quaternion')
+				# bpy.ops.anim.keyframe_insert_menu(type='Rotation')
+
+	def apply_rotations(self):
+		pass
 
 	def freeze_rotations(self):
 		for index in range(0, self.IMOCAP_TOTAL_SENSORS):
@@ -210,7 +265,6 @@ class imocap_client(object):
 						for index in range(0, self.IMOCAP_TOTAL_SENSORS):
 							values = packet.quaternion(index)
 							rotation = Quaternion(values)
-
 							self.device_rotations[index] = rotation
 
 						self.on_received_new_data()
@@ -286,14 +340,19 @@ class UIPanel(bpy.types.Panel):
 
 		self.layout.operator('io_import_imocap.freeze', text='Freeze Transforms')
 
+def test_fn(dummy):
+	global_client.apply_rotations()
+
 #
 # startup / blender specific interface functions
 #
 def register():
 	bpy.utils.register_module(__name__)
+	bpy.app.handlers.scene_update_pre.append(test_fn)
 
 def unregister():
 	bpy.utils.unregister_module(__name__)
+	bpy.app.handlers.scene_update_pre.remove(test_fn)
 
 if __name__ == "__main__":
 	register()
