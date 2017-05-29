@@ -85,6 +85,9 @@ namespace gemini
 			assert(data->thread);
 		}
 
+		// If you hit this, create_workers was called more than once.
+		assert(semaphore == nullptr);
+
 		semaphore = platform::semaphore_create(0, max_workers);
 		assert(semaphore);
 	}
@@ -116,6 +119,8 @@ namespace gemini
 		}
 
 		workers.clear();
+
+		assert(semaphore);
 		platform::semaphore_destroy(semaphore);
 		semaphore = nullptr;
 	}

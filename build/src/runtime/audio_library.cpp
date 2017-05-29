@@ -125,6 +125,9 @@ namespace gemini
 		Array<unsigned char> filecontents(allocator);
 		core::filesystem::instance()->virtual_load_file(filecontents, path);
 
+		// If you hit this, the file wasn't loaded! Replace me with proper error checking.
+		assert(!filecontents.empty());
+
 		unsigned char* wavedata = static_cast<unsigned char*>(&filecontents[0]);
 		wave_chunk_descriptor* desc = reinterpret_cast<wave_chunk_descriptor*>(wavedata);
 		if (desc->chunk_id != RIFF_CHUNK_ID)
