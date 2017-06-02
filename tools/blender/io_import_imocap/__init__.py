@@ -133,6 +133,7 @@ class imocap_client(object):
 		self.zeroed_rotations = [Quaternion((1.0, 0.0, 0.0, 0.0))] * self.IMOCAP_TOTAL_SENSORS
 		self.last_frame = -1
 		self.world_poses = [Matrix()] * self.IMOCAP_TOTAL_SENSORS
+		self.local_rotations = [Quaternion()] * self.IMOCAP_TOTAL_SENSORS
 
 	def connect(self):
 		# The client responds to UDP broadcasts transmitted
@@ -146,6 +147,9 @@ class imocap_client(object):
 		self.data_socket = socket.socket(socket.AF_INET,
 											socket.SOCK_DGRAM)
 		self.data_socket.bind(("0.0.0.0", self.listen_port))
+
+		# Clear all animation data.
+		# obj.animation_data_clear()
 
 		self.thread.start()
 
@@ -171,13 +175,14 @@ class imocap_client(object):
 			parent_pose = world_poses[index - 1]
 
 		local_pose = (parent_quat.inverted() * local_rotations[index]).to_matrix()
+		local_pose.resize_4x4()
 		return parent_pose * joint_offsets[index] * local_pose
 
 	def on_received_new_data(self):
 		joint_offsets = [
 			Matrix.Translation((0.0, 0.0, 0.0)),
-			Matrix.Translation((0.0, 0.0, 0.254)),
-			Matrix.Translation((0.0, 0.0, 0.254))
+			Matrix.Translation((0.0, 0.0, 2.54)),
+			Matrix.Translation((0.0, 0.0, 2.54))
 		]
 
 		# cube0 = bpy.context.scene.objects['Cube0']
@@ -205,16 +210,28 @@ class imocap_client(object):
 
 		if bpy.context.scene.frame_current != self.last_frame:
 			self.last_frame = bpy.context.scene.frame_current
+
 			for index in range(0, 3):
 				cube_name = 'Cube{}'.format(index)
 				cube = bpy.context.scene.objects[cube_name]
-				cube.rotation_mode = 'QUATERNION'
-				cube.rotation_quaternion = self.get_local_rotation(index)
+				# cube.rotation_mode = 'QUATERNION'
+				# cube.rotation_quaternion = self.get_local_rotation(index)
+				quat = self.get_local_rotation(index)
+				self.local_rotations[index] = quat
+
+				current_world_pose = self.compute_pose(
+					self.world_poses,
+					self.local_rotations,
+					joint_offsets,
+					index)
+				self.world_poses[index] = current_world_pose
+				cube.matrix_world = current_world_pose
 
 				# cube.select = True
 				# bpy.context.scene.objects.active = cube
-				cube.keyframe_insert(data_path='rotation_quaternion')
+				# cube.keyframe_insert(data_path='rotation_quaternion')
 				# bpy.ops.anim.keyframe_insert_menu(type='Rotation')
+		bpy.context.scene.update()
 
 	def apply_rotations(self):
 		pass
@@ -331,14 +348,19 @@ class UIPanel(bpy.types.Panel):
 	bl_space_type = 'VIEW_3D'
 	bl_region_type = 'UI'
 
+	# Be sure to set the correct blender context
+	# otherwise you'll receive errors, such as :
+	# "Writing to ID classes in this context is not allowed"
+	bl_context = 'object'
+
 	def draw(self, context):
 		layout = self.layout
 		scene = context.scene
 
 		action_text = 'Connect' if not global_client.is_connected else 'Disconnect'
-		self.layout.operator('io_import_imocap.connect', text=action_text)
+		self.layout.operator(imocap_connect.bl_idname, text=action_text)
 
-		self.layout.operator('io_import_imocap.freeze', text='Freeze Transforms')
+		self.layout.operator(imocap_freeze.bl_idname, text='Freeze Transforms')
 
 def test_fn(dummy):
 	global_client.apply_rotations()
