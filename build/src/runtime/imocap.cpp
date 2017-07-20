@@ -67,9 +67,6 @@ namespace imocap
 
 	void sensor_thread(platform::Thread* thread)
 	{
-#if 0
-		https://stackoverflow.com/questions/23771976/two-way-handshake-and-three-way-handshake
-#endif
 		net_socket* sock = static_cast<net_socket*>(thread->user_data);
 		LOGV("launched network listen thread.\n");
 
@@ -182,36 +179,6 @@ namespace imocap
 									_current_device->sensors[index] = glm::quat(w * QUANTIZE, x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
 									buffer += 8;
 								}
-
-#if 0
-								// seek the linear acceleration data.
-								{
-									int16_t x = (((int16_t)buffer[1]) << 8) | ((int16_t)buffer[0]);
-									int16_t y = (((int16_t)buffer[3]) << 8) | ((int16_t)buffer[2]);
-									int16_t z = (((int16_t)buffer[5]) << 8) | ((int16_t)buffer[4]);
-
-									_current_device->linear_acceleration[index] = glm::vec3(x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
-									buffer += 6;
-								}
-#endif
-
-#if 0
-								// Seek the gravity data
-								{
-									int16_t x = (((int16_t)buffer[1]) << 8) | ((int16_t)buffer[0]);
-									int16_t y = (((int16_t)buffer[3]) << 8) | ((int16_t)buffer[2]);
-									int16_t z = (((int16_t)buffer[5]) << 8) | ((int16_t)buffer[4]);
-
-									_current_device->gravity[index] = glm::vec3(x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
-									buffer += 6;
-								}
-#endif
-								//LOGV("q[%i]: %2.2f, %2.2f, %2.2f, %2.2f\n", index, q.x, q.y, q.z, q.w);
-
-								//if (index == 2)
-								//{
-								//	LOGV("accel: %2.2f, %2.2f, %2.2f\n", gravity[index].x, gravity[index].y, gravity[index].z);
-								//}
 							}
 						}
 						else
@@ -247,7 +214,6 @@ namespace imocap
 					}
 					else if (current_state == STATE_HANDSHAKE)
 					{
-						//LOGV("received data while handshaking: %i\n", bytes_available);
 						uint32_t request = (*reinterpret_cast<uint32_t*>(buffer));
 						uint32_t syn_value = (*reinterpret_cast<uint32_t*>(buffer + sizeof(uint32_t)));
 						if (request == expected_syn_value)
@@ -255,15 +221,11 @@ namespace imocap
 							char ip[22] = { 0 };
 							net_address_host(&source, ip, 22);
 							uint16_t port = net_address_port(&source);
-							LOGV("Connected with mocap client at %s:%i.\n", ip, port);
-
-
-							// Send back the response.
 
 							LOGV("Step 3/3: Got expected syn of %u; Read syn_value of %u, Responding with syn_value of %u\n", expected_syn_value, syn_value, syn_value + 1);
 							syn_value += 1;
 
-
+							// Send back the response.
 							uint32_t return_packet[2];
 							return_packet[0] = syn_value + 1;
 							return_packet[1] = KEEP_ALIVE_VALUE;
@@ -278,6 +240,7 @@ namespace imocap
 							last_client_ping_msec = last_client_contact_msec = platform::microseconds() * MillisecondsPerMicrosecond;
 
 							current_state = STATE_STREAMING;
+							LOGV("Connected with mocap client at %s:%i.\n", ip, port);
 						}
 						else
 						{
@@ -285,15 +248,6 @@ namespace imocap
 							current_state = STATE_WAITING;
 						}
 					}
-
-					// This isn't received by the Feather on shutdown.
-					//else if (current_state == STATE_SHUTDOWN)
-					//{
-					//	// send disconnect
-					//	int32_t value = DISCONNECT_VALUE;
-					//	net_socket_sendto(*sock, &client_address, (const char*)&value, sizeof(uint32_t));
-					//	thread_sleep(500);
-					//}
 				}
 			}
 		}
@@ -315,8 +269,6 @@ namespace imocap
 		for (size_t index = 0; index < IMOCAP_TOTAL_SENSORS; ++index)
 		{
 			device->zeroed_orientations[index] = transform_sensor_rotation(device->sensors[index]);
-
-			//device->zeroed_accelerations[index] = device_sensor_linear_acceleration(device, index);
 		}
 	}
 
@@ -329,21 +281,6 @@ namespace imocap
 	{
 		return glm::inverse(device->zeroed_orientations[sensor_index]) * transform_sensor_rotation(device->sensors[sensor_index]);
 	}
-
-	//glm::vec3 device_sensor_linear_acceleration(MocapDevice* device, size_t sensor_index)
-	//{
-	//	return device->linear_acceleration[sensor_index];
-	//}
-
-	//glm::vec3 device_sensor_local_acceleration(MocapDevice* device, size_t sensor_index)
-	//{
-	//	return device->linear_acceleration[sensor_index] - device->zeroed_accelerations[sensor_index];
-	//}
-
-	//glm::vec3 device_sensor_gravity(MocapDevice* device, size_t sensor_index)
-	//{
-	//	return device->gravity[sensor_index];
-	//}
 
 	MocapDevice* device_create()
 	{
