@@ -69,6 +69,7 @@ from math import (
 	degrees
 )
 
+import random
 import select
 import socket
 import struct
@@ -79,7 +80,7 @@ from threading import Thread
 #
 # constants
 #
-IMOCAP_DATA_SIZE = 20
+IMOCAP_DATA_SIZE = 8
 QUANTIZE_VALUE = (1.0 / 16384.0)
 
 # TODO: Need to flip Z and Y into Blender's coordinate frame.
@@ -96,7 +97,7 @@ class imocap_packet(object):
 	def __init__(self, data):
 		self.data = data
 		self.header = struct.unpack_from('B', data, 0)[0]
-		self.footer = struct.unpack_from('B', data, 61)[0]
+		self.footer = struct.unpack_from('B', data, 25)[0]
 
 	def is_valid(self):
 		return self.header == 0xba and self.footer == 0xff
@@ -134,6 +135,7 @@ class imocap_client(object):
 		self.last_frame = -1
 		self.world_poses = [Matrix()] * self.IMOCAP_TOTAL_SENSORS
 		self.local_rotations = [Quaternion()] * self.IMOCAP_TOTAL_SENSORS
+		self.expected_syn_value = -1
 
 	def connect(self):
 		# The client responds to UDP broadcasts transmitted
@@ -161,6 +163,9 @@ class imocap_client(object):
 
 	def get_local_rotation(self, index):
 		return self.zeroed_rotations[index].inverted() * self.device_rotations[index]
+
+	def random_int(self):
+		return random.randint(1, 999999)
 
 	def compute_pose(self, world_poses, local_rotations, joint_offsets, index):
 		"""
@@ -288,14 +293,21 @@ class imocap_client(object):
 				elif current_state == self.STATE_WAITING:
 					request_value = struct.unpack('<i', data)[0]
 					if request_value == self.CONNECTION_REQUEST_VALUE:
-						# Respond to the device with the handshake value
-						# This will initiate a handshake and establish
-						# connection.
+						# Step 1/3: Respond with a syn value
+						syn_value = self.random_int()
+
 						print('Mocap client at {}; initiating handshake'. \
 								format(address))
-						packet = struct.pack('<i', self.HANDSHAKE_VALUE)
-						sock.sendto(packet, address)
+						packet = struct.pack(
+									'<ii',
+									self.HANDSHAKE_VALUE,
+									syn_value
+								)
+
+						self.expected_syn_value = syn_value + 1
 						current_state = self.STATE_HANDSHAKE
+
+						sock.sendto(packet, address)
 					else:
 						print('Request value is invalid. '
 							'(received: {}, expected: {})'.format(
@@ -303,11 +315,12 @@ class imocap_client(object):
 								self.CONNECTION_REQUEST_VALUE))
 				elif current_state == self.STATE_HANDSHAKE:
 					# Data received while handshaking...
-					request_value = struct.unpack('<i', data)[0]
-					if request_value == self.HANDSHAKE_VALUE:
-						# Stream has been opened with the device.
-						# Reply with the response
-						packet = struct.pack('<i', self.HANDSHAKE_RESPONSE)
+					syn_value, response_value = struct.unpack('<ii', data)
+					if syn_value == self.expected_syn_value:
+						# Step 3/3: Respond with the syn_value + 1 to acknowledge
+						# and the client keep alive value.
+						# Streaming has now begun.
+						packet = struct.pack('<ii', response_value + 1, self.CLIENT_PING_VALUE)
 						sock.sendto(packet, address)
 						self.client_address = address
 						self.last_client_contact_msec = get_milliseconds()
@@ -315,8 +328,9 @@ class imocap_client(object):
 						print('Connected to imocap device. {}'.format(address))
 					else:
 						print('Handshake did not match! '
-							'(received: {}, expected: {})'.format(
-								request_value, self.HANDSHAKE_VALUE))
+							'(received: {}, expected: {}, expected syn: {})'.format(
+								syn_value, self.HANDSHAKE_VALUE,
+								self.expected_syn_value))
 
 
 global_client = imocap_client()
