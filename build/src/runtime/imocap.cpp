@@ -125,7 +125,6 @@ namespace imocap
 
 				if (msec_passed(last_client_ping_msec, CLIENT_PING_DELAY_MSEC))
 				{
-					LOGV("sending ping to client...\n");
 					net_socket_sendto(*sock, &client_address, (const char*)&KEEP_ALIVE_VALUE, sizeof(uint32_t));
 				}
 			}
@@ -223,18 +222,17 @@ namespace imocap
 							uint16_t port = net_address_port(&source);
 
 							LOGV("Step 3/3: Got expected syn of %u; Read syn_value of %u, Responding with syn_value of %u\n", expected_syn_value, syn_value, syn_value + 1);
-							syn_value += 1;
 
 							// Send back the response.
 							uint32_t return_packet[2];
 							return_packet[0] = syn_value + 1;
 							return_packet[1] = KEEP_ALIVE_VALUE;
 
-							// dispatch the very first ping along with the final ack.
-							net_socket_sendto(*sock, &source, (const char*)&return_packet, sizeof(uint32_t) * 2);
-
 							// be sure to set the client address here.
 							net_address_set(&client_address, ip, port);
+
+							// dispatch the very first ping along with the final ack.
+							net_socket_sendto(*sock, &source, (const char*)&return_packet, sizeof(uint32_t) * 2);
 
 							// reset counters and start streaming
 							last_client_ping_msec = last_client_contact_msec = platform::microseconds() * MillisecondsPerMicrosecond;
