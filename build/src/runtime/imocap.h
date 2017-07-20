@@ -38,11 +38,11 @@ namespace imocap
 	struct MocapDevice
 	{
 		glm::quat zeroed_orientations[IMOCAP_TOTAL_SENSORS];
-		glm::vec3 zeroed_accelerations[IMOCAP_TOTAL_SENSORS];
+		//glm::vec3 zeroed_accelerations[IMOCAP_TOTAL_SENSORS];
 
 		glm::quat sensors[IMOCAP_TOTAL_SENSORS];
-		glm::vec3 linear_acceleration[IMOCAP_TOTAL_SENSORS];
-		glm::vec3 gravity[IMOCAP_TOTAL_SENSORS];
+		//glm::vec3 linear_acceleration[IMOCAP_TOTAL_SENSORS];
+		//glm::vec3 gravity[IMOCAP_TOTAL_SENSORS];
 	};
 
 	struct mocap_frame_t
@@ -67,9 +67,9 @@ namespace imocap
 
 	glm::quat device_sensor_orientation(MocapDevice* device, size_t sensor_index);
 	glm::quat device_sensor_local_orientation(MocapDevice* device, size_t sensor_index);
-	glm::vec3 device_sensor_linear_acceleration(MocapDevice* device, size_t sensor_index);
-	glm::vec3 device_sensor_local_acceleration(MocapDevice* device, size_t sensor_index);
-	glm::vec3 device_sensor_gravity(MocapDevice* device, size_t sensor_index);
+	//glm::vec3 device_sensor_linear_acceleration(MocapDevice* device, size_t sensor_index);
+	//glm::vec3 device_sensor_local_acceleration(MocapDevice* device, size_t sensor_index);
+	//glm::vec3 device_sensor_gravity(MocapDevice* device, size_t sensor_index);
 
 	MocapDevice* device_create();
 	void device_destroy(MocapDevice* device);

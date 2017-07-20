@@ -34,7 +34,7 @@ enum
 	// 8 /* quaternion */ +
 	// 6 /* linear accel */ +
 	// 6 /* gravity */
-	IMOCAP_DATA_SIZE = 20
+	IMOCAP_DATA_SIZE = 8
 };
 
 typedef struct

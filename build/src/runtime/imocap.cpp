@@ -67,6 +67,9 @@ namespace imocap
 
 	void sensor_thread(platform::Thread* thread)
 	{
+#if 0
+		https://stackoverflow.com/questions/23771976/two-way-handshake-and-three-way-handshake
+#endif
 		net_socket* sock = static_cast<net_socket*>(thread->user_data);
 		LOGV("launched network listen thread.\n");
 
@@ -102,6 +105,9 @@ namespace imocap
 
 		const uint32_t DISCONNECT_VALUE = 2005;
 
+		const uint32_t KEEP_ALIVE_VALUE = 2000;
+
+		uint32_t expected_syn_value = 0;
 
 		while (net_listen_thread)
 		{
@@ -122,8 +128,8 @@ namespace imocap
 
 				if (msec_passed(last_client_ping_msec, CLIENT_PING_DELAY_MSEC))
 				{
-					uint32_t ping_value = 2000;
-					net_socket_sendto(*sock, &client_address, (const char*)&ping_value, sizeof(uint32_t));
+					LOGV("sending ping to client...\n");
+					net_socket_sendto(*sock, &client_address, (const char*)&KEEP_ALIVE_VALUE, sizeof(uint32_t));
 				}
 			}
 
@@ -177,6 +183,7 @@ namespace imocap
 									buffer += 8;
 								}
 
+#if 0
 								// seek the linear acceleration data.
 								{
 									int16_t x = (((int16_t)buffer[1]) << 8) | ((int16_t)buffer[0]);
@@ -186,7 +193,9 @@ namespace imocap
 									_current_device->linear_acceleration[index] = glm::vec3(x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
 									buffer += 6;
 								}
+#endif
 
+#if 0
 								// Seek the gravity data
 								{
 									int16_t x = (((int16_t)buffer[1]) << 8) | ((int16_t)buffer[0]);
@@ -196,6 +205,7 @@ namespace imocap
 									_current_device->gravity[index] = glm::vec3(x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
 									buffer += 6;
 								}
+#endif
 								//LOGV("q[%i]: %2.2f, %2.2f, %2.2f, %2.2f\n", index, q.x, q.y, q.z, q.w);
 
 								//if (index == 2)
@@ -214,12 +224,21 @@ namespace imocap
 						uint32_t request = (*reinterpret_cast<uint32_t*>(buffer));
 						if (request == 1983)
 						{
+							// This machine reports it can be a client.
 							char ip[22] = { 0 };
 							net_address_host(&source, ip, 22);
 							uint16_t port = net_address_port(&source);
 							LOGV("Mocap client at %s:%i; initiating handshake (%i)...\n", ip, port, HANDSHAKE_VALUE);
 							current_state = STATE_HANDSHAKE;
-							net_socket_sendto(*sock, &source, (const char*)&HANDSHAKE_VALUE, sizeof(uint32_t));
+
+							// Step 1/3: Send a syn value.
+							uint32_t packet[2];
+							expected_syn_value = rand();
+							LOGV("Step 1/3: send expected syn = %i\n", expected_syn_value);
+							packet[0] = HANDSHAKE_VALUE;
+							packet[1] = expected_syn_value;
+							net_socket_sendto(*sock, &source, (const char*)&packet, sizeof(uint32_t) * 2);
+							expected_syn_value++;
 						}
 						else
 						{
@@ -228,25 +247,41 @@ namespace imocap
 					}
 					else if (current_state == STATE_HANDSHAKE)
 					{
-						LOGV("received data while handshaking: %i\n", bytes_available);
+						//LOGV("received data while handshaking: %i\n", bytes_available);
 						uint32_t request = (*reinterpret_cast<uint32_t*>(buffer));
-						if (request == HANDSHAKE_VALUE)
+						uint32_t syn_value = (*reinterpret_cast<uint32_t*>(buffer + sizeof(uint32_t)));
+						if (request == expected_syn_value)
 						{
 							char ip[22] = { 0 };
 							net_address_host(&source, ip, 22);
 							uint16_t port = net_address_port(&source);
 							LOGV("Connected with mocap client at %s:%i.\n", ip, port);
-							uint32_t response = 65535;
-							net_socket_sendto(*sock, &source, (const char*)&response, sizeof(uint32_t));
 
+
+							// Send back the response.
+
+							LOGV("Step 3/3: Got expected syn of %u; Read syn_value of %u, Responding with syn_value of %u\n", expected_syn_value, syn_value, syn_value + 1);
+							syn_value += 1;
+
+
+							uint32_t return_packet[2];
+							return_packet[0] = syn_value + 1;
+							return_packet[1] = KEEP_ALIVE_VALUE;
+
+							// dispatch the very first ping along with the final ack.
+							net_socket_sendto(*sock, &source, (const char*)&return_packet, sizeof(uint32_t) * 2);
+
+							// be sure to set the client address here.
 							net_address_set(&client_address, ip, port);
-							last_client_contact_msec = platform::microseconds() * MillisecondsPerMicrosecond;
+
+							// reset counters and start streaming
+							last_client_ping_msec = last_client_contact_msec = platform::microseconds() * MillisecondsPerMicrosecond;
 
 							current_state = STATE_STREAMING;
 						}
 						else
 						{
-							LOGV("handshake did not match! (received: %i, expected: %i)\n", request, HANDSHAKE_VALUE);
+							LOGV("handshake did not match! (received: %i, expected: %i)\n", request, (expected_syn_value + 1));
 							current_state = STATE_WAITING;
 						}
 					}
@@ -281,7 +316,7 @@ namespace imocap
 		{
 			device->zeroed_orientations[index] = transform_sensor_rotation(device->sensors[index]);
 
-			device->zeroed_accelerations[index] = device_sensor_linear_acceleration(device, index);
+			//device->zeroed_accelerations[index] = device_sensor_linear_acceleration(device, index);
 		}
 	}
 
@@ -295,20 +330,20 @@ namespace imocap
 		return glm::inverse(device->zeroed_orientations[sensor_index]) * transform_sensor_rotation(device->sensors[sensor_index]);
 	}
 
-	glm::vec3 device_sensor_linear_acceleration(MocapDevice* device, size_t sensor_index)
-	{
-		return device->linear_acceleration[sensor_index];
-	}
+	//glm::vec3 device_sensor_linear_acceleration(MocapDevice* device, size_t sensor_index)
+	//{
+	//	return device->linear_acceleration[sensor_index];
+	//}
 
-	glm::vec3 device_sensor_local_acceleration(MocapDevice* device, size_t sensor_index)
-	{
-		return device->linear_acceleration[sensor_index] - device->zeroed_accelerations[sensor_index];
-	}
+	//glm::vec3 device_sensor_local_acceleration(MocapDevice* device, size_t sensor_index)
+	//{
+	//	return device->linear_acceleration[sensor_index] - device->zeroed_accelerations[sensor_index];
+	//}
 
-	glm::vec3 device_sensor_gravity(MocapDevice* device, size_t sensor_index)
-	{
-		return device->gravity[sensor_index];
-	}
+	//glm::vec3 device_sensor_gravity(MocapDevice* device, size_t sensor_index)
+	//{
+	//	return device->gravity[sensor_index];
+	//}
 
 	MocapDevice* device_create()
 	{
