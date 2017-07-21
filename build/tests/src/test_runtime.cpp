@@ -256,9 +256,9 @@ UNITTEST(jobqueue)
 UNITTEST(debug_event)
 {
 	// Is there really anything to test here?
-	telemetry_host_startup("127.0.0.1", TELEMETRY_VIEWER_PORT);
-	telemetry_host_submit_frame();
-	telemetry_host_shutdown();
+	//telemetry_host_startup("127.0.0.1", TELEMETRY_VIEWER_PORT);
+	//telemetry_host_submit_frame();
+	//telemetry_host_shutdown();
 }
 
 // ---------------------------------------------------------------------
