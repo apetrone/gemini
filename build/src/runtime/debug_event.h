@@ -40,7 +40,6 @@ The Source is where the data originates from, usually your application under
 test.
 The Viewer is a separate tool used to collect and view the data.
 
-
 Usage:
 
 I want to collect data per frame and expose a user interface to drill down
@@ -50,8 +49,6 @@ This can rapidly just ship off the data to a tool so it doesn't need to remain
 in the memory of the engine.
 
 This should be thread-safe and report which thread it was recorded on.
-
-
 */
 
 namespace gemini

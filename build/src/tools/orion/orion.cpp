@@ -80,7 +80,7 @@ using namespace gemini;
 #define ENABLE_UI 1
 #define DRAW_SENSOR_GRAPHS 0
 #define TEST_SPRING_SYSTEM 0
-#define TEST_TELEMETRY_SYSTEM 1
+#define TEST_TELEMETRY_SYSTEM 0
 #define TEST_TELEMETRY_HOST 0
 
 #define DRAW_LINES 0
@@ -1532,7 +1532,6 @@ Options:
 #if DRAW_SENSOR_GRAPHS
 			// Create a graph for each sensor
 
-
 			uint32_t origin = 24;
 
 			for (size_t index = 0; index < IMOCAP_TOTAL_SENSORS; ++index)
@@ -1857,29 +1856,6 @@ Options:
 			last_origin = origin;
 
 			debugdraw::sphere(origin, Color::from_rgba(255, 0, 0, 255), 0.025f);
-
-			const glm::vec3 acceleration = imocap::device_sensor_local_acceleration(mocap_device, index);
-
-
-#if DRAW_SENSOR_GRAPHS
-			graphs[index]->record_value(acceleration.x, 0);
-			graphs[index]->record_value(acceleration.y, 1);
-			graphs[index]->record_value(acceleration.z, 2);
-#endif
-
-			if (index == 2)
-			{
-				velocity_test += acceleration * (float)kernel::parameters().step_interval_seconds;
-				position_test += velocity_test;
-
-				assert(current_line_index < TOTAL_LINES);
-				glm::vec3* line0 = &lines[current_line_index++];
-				*line0 = origin;
-
-				current_line_index = current_line_index % TOTAL_LINES;
-			}
-
-			//debugdraw::basis(origin, acceleration, 1.0f, 0.025f);
 		}
 
 #if DRAW_LINES
@@ -1892,10 +1868,6 @@ Options:
 			assert((index * 2 + 1) < TOTAL_LINES);
 			last_line = lines[index * 2 + 1];
 		}
-#endif
-
-#if DRAW_SENSOR_GRAPHS
-		debugdraw::box(glm::vec3(-0.5f, -0.5f, -0.5f) + position_test, glm::vec3(0.5f, 0.5f, 0.5f) + position_test, gemini::Color(0.0f, 1.0f, 1.0f));
 #endif
 
 		if (is_recording_frames)
