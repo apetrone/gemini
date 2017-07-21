@@ -33,6 +33,10 @@
 #	define NOMINMAX
 #	include <windows.h>
 #	include <winsock2.h>
+// socklen_t is defined in this header, but to avoid bringing
+// it in, just define it here.
+//#	include <WS2tcpip.h>
+	typedef int socklen_t;
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE) || defined(PLATFORM_ANDROID)
 #	include <netinet/in.h> // for sockaddr_in
 #	include <sys/select.h>

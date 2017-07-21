@@ -290,7 +290,7 @@ UNITTEST(network)
 	TEST_ASSERT(sock1 != -1, "sock1 is valid");
 	net_address host;
 	char ip_address[16];
-	net_ipv4_by_hostname("pi-zero", "http", ip_address);
+	net_ipv4_by_hostname("localhost", "http", ip_address);
 	net_address_set(&host, ip_address, 8010);
 
 	// set non-blocking
@@ -309,7 +309,7 @@ UNITTEST(network)
 	if (select(sock1 + 1, &handles, NULL, NULL, &timeout) == 1)
 	{
 		socklen_t length = sizeof(int32_t);
-		getsockopt(sock1, SOL_SOCKET, SO_ERROR, &so_error, &length);
+		getsockopt(sock1, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&so_error), &length);
 		if (so_error == 0)
 		{
 			LOGV("connected.\n");
