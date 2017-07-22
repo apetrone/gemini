@@ -27,11 +27,14 @@
 
 #include <ui/compositor.h>
 
+#include <runtime/asset_handle.h>
+#include <runtime/assets.h>
 #include <runtime/filesystem.h>
 
+#include <renderer/font_library.h>
 #include <renderer/renderer.h>
-#include <renderer/font.h>
 
+using namespace gemini;
 
 struct GUIVertex
 {
@@ -69,7 +72,7 @@ void GUIRenderer::startup(gui::Compositor* target_compositor)
 
 	// standard gui pipeline
 	render2::PipelineDescriptor desc;
-	desc.shader = device->create_shader("gui");
+	desc.shader = gemini::shader_load("gui");
 	desc.vertex_description.add("in_position", render2::VD_FLOAT, 2);
 	desc.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 	desc.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
@@ -83,7 +86,7 @@ void GUIRenderer::startup(gui::Compositor* target_compositor)
 
 	// font pipeline
 	render2::PipelineDescriptor fontdesc;
-	fontdesc.shader = device->create_shader("font");
+	fontdesc.shader = gemini::shader_load("font");
 	fontdesc.vertex_description.add("in_position", render2::VD_FLOAT, 2);
 	fontdesc.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 	fontdesc.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
@@ -181,18 +184,18 @@ gui::TextureResult GUIRenderer::texture_info(const gui::TextureHandle& /*handle*
 
 gui::FontResult GUIRenderer::font_create(const char* path, gui::FontHandle& handle)
 {
-	Array<unsigned char> fontdata(allocator);
-	core::filesystem::instance()->virtual_load_file(fontdata, path);
-	font::Handle fonthandle = font::load_from_memory(&fontdata[0], fontdata.size(), 16);
-	assert(fonthandle.is_valid());
-	handle = gui::FontHandle(fonthandle);
+	FontCreateParameters font_params;
+	font_params.size_pixels = 16;
+	AssetHandle fonthandle = font_load(path, false, &font_params);
+
+	handle = gui::FontHandle(fonthandle.index);
 	return gui::FontResult_Success;
 }
 
 void GUIRenderer::font_destroy(const gui::FontHandle& handle)
 {
 	// nothing really to do in our system
-	font::Handle fonthandle(handle);
+	//font::Handle fonthandle(handle);
 	// TODO: implement this
 //		font::destroy_font(fonthandle);
 }
@@ -200,7 +203,9 @@ void GUIRenderer::font_destroy(const gui::FontHandle& handle)
 gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, const char* string, size_t string_length, gui::Rect& bounds)
 {
 	glm::vec2 bounds_min, bounds_max;
-	font::get_string_metrics(font::Handle(handle), string, string_length, bounds_min, bounds_max);
+	AssetHandle font_handle;
+	font_handle.index = handle;
+	font_string_metrics(font_handle, string, string_length, bounds_min, bounds_max);
 
 	bounds.set(static_cast<gui::ScreenInt>(bounds_min.x),
 		static_cast<gui::ScreenInt>(bounds_min.y),
@@ -211,8 +216,10 @@ gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, 
 
 void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender)
 {
-	font::Metrics metrics;
-	font::get_font_metrics(font::Handle(handle), metrics);
+	FontMetrics metrics;
+	AssetHandle font_handle;
+	font_handle.index = handle;
+	gemini::font_metrics(font_handle, metrics);
 
 	height = static_cast<size_t>(metrics.height);
 	ascender = metrics.ascender;
@@ -221,20 +228,21 @@ void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height, in
 
 size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, size_t string_length, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t /*buffer_size*/)
 {
-	font::Handle font_handle(handle);
+	AssetHandle font_handle;
+	font_handle.index = handle;
 
-	const size_t vertices_required = font::count_vertices(font_handle, string_length);
+	const size_t vertices_required = gemini::font_count_vertices(string_length);
 	vertex_cache.resize(vertices_required);
-	font::draw_string(font_handle, &vertex_cache[0], string, string_length, color);
+	font_draw_string(font_handle, &vertex_cache[0], string, string_length, color);
 
 	// todo: this seems counter-intuitive
 	// copy back to the buffer
 	for (size_t index = 0; index < vertex_cache.size(); ++index)
 	{
-		font::FontVertex& v = vertex_cache[index];
+		FontVertex& v = vertex_cache[index];
 		gui::render::Vertex& out = buffer[index];
-		out.x = v.position.x + bounds.origin.x;
-		out.y = v.position.y + bounds.origin.y;
+		out.x = v.position.x; // + bounds.origin.x;
+		out.y = v.position.y; // + bounds.origin.y;
 		out.uv[0] = v.uv.x;
 		out.uv[1] = v.uv.y;
 		out.color = color;
@@ -245,8 +253,10 @@ size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string,
 
 size_t GUIRenderer::font_count_vertices(const gui::FontHandle& handle, size_t string_length)
 {
-	font::Handle font_handle(handle);
-	return font::count_vertices(font_handle, string_length);
+	AssetHandle font_handle;
+	font_handle.index = handle;
+
+	return gemini::font_count_vertices(string_length);
 }
 
 void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gui::render::Vertex>& vertex_array)
@@ -286,6 +296,7 @@ void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gu
 	pass.clear_color = false;
 	pass.clear_depth = false;
 	pass.depth_test = false;
+	pass.depth_write = false;
 
 	render2::CommandQueue* queue = device->create_queue(pass);
 	render2::CommandSerializer* serializer = device->create_serializer(queue);

@@ -108,11 +108,16 @@ namespace core
 		}
 
 
-
+		ResizableMemoryStream::ResizableMemoryStream(gemini::Allocator& allocator)
+			: MemoryStream()
+			, data(allocator)
+		{
+		}
 
 		uint8_t* ResizableMemoryStream::get_data() const
 		{
-			return (uint8_t*)data.data();
+
+			return (uint8_t*)&data[0];
 		}
 
 		size_t ResizableMemoryStream::get_data_size() const
@@ -120,15 +125,19 @@ namespace core
 			return data.size();
 		}
 
-		size_t ResizableMemoryStream::read(void*, size_t)
+		size_t ResizableMemoryStream::read(void* destination, size_t length)
 		{
-			return 0;
+			memcpy((char*)destination, &data[0] + offset, length);
+			offset += length;
+			return length;
 		}
 
 		size_t ResizableMemoryStream::write(const void* source, size_t length)
 		{
 			data.resize(data.size() + length);
-			memcpy(data.data()+offset, source, length);
+
+			void* ptr = &data[0];
+			memcpy((char*)ptr + offset, source, length);
 
 			offset += length;
 
@@ -146,5 +155,11 @@ namespace core
 				offset += requested_offset;
 			}
 		}
+
+		void ResizableMemoryStream::reserve(size_t new_size)
+		{
+			data.reserve(new_size);
+		} // resize
+
 	} // namespace util
 } // namespace core

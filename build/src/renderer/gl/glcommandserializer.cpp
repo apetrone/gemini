@@ -24,7 +24,26 @@
 // -------------------------------------------------------------
 #include "glcommandserializer.h"
 
+#include <core/str.h>
+
 namespace render2
 {
+	GLCommandSerializer::GLCommandSerializer(gemini::Allocator& in_allocator, CommandQueue& command_queue)
+		: queue(command_queue)
+		, allocator(in_allocator)
+	{
+	}
 
+	void GLCommandSerializer::constant(const char* name, void* data, size_t data_size)
+	{
+		size_t name_length = core::str::len(name) + 1;
+		char* buffer = reinterpret_cast<char*>(MEMORY2_ALLOC(allocator, name_length));
+		assert(buffer != nullptr);
+		core::str::copy(buffer, name, name_length);
+		buffer[name_length - 1] = '\0';
+
+		queue.add_command(
+			Command(COMMAND_CONSTANT, buffer, data, data_size, name_length)
+		);
+	}
 } // namespace render2

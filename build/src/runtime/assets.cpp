@@ -32,134 +32,205 @@
 #include <renderer/image.h>
 #include <renderer/renderer.h>
 
+#include <renderer/font_library.h>
+#include <runtime/material_library.h>
+#include <runtime/mesh_library.h>
+#include <runtime/texture_library.h>
+#include <renderer/shader_library.h>
+#include <runtime/audio_library.h>
+
 using namespace renderer;
 
 namespace gemini
 {
-	namespace assets
+	struct AssetState
 	{
-		unsigned int find_parameter_mask( ShaderString & name )
-		{
-			// TODO: need to validate the name here against the
-			// parameter names in permutations config file.
+		FontLibrary* fonts;
+		MaterialLibrary* materials;
+		MeshLibrary* meshes;
+		gemini::ShaderLibrary* shaders;
+		AudioLibrary* sounds;
+		TextureLibrary* textures;
+		render2::Device* device;
+	};
 
-
-	//		if ( _shader_permutations != 0 )
-	//		{
-	//			for( unsigned int option_id = 0; option_id < shader_permutations().num_permutations; ++option_id )
-	//			{
-	//				ShaderPermutationGroup * option = shader_permutations().options[ option_id ];
-	//				if ( xstr_nicmp( (const char*)name.c_str(), option->name.c_str(), 64 ) == 0 )
-	//				{
-	//					//				LOGV( "mask for %s is %i\n", name.c_str(), option->mask_value );
-	//					return (1 << option->mask_value);
-	//				}
-	//			}
-	//		}
-
-			LOGV("Unable to find parameter mask for %s\n", name.c_str());
-			return 0;
-		} // find_parameter_mask
-	} // namespace assets
-
+	AssetState* _asset_state = nullptr;
 
 	namespace assets
 	{
 		gemini::Allocator asset_allocator;
 
-		// 1. Implement asset library
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(TextureAssetLibrary, textures)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MeshAssetLibrary, meshes)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MaterialAssetLibrary, materials)
-		//IMPLEMENT_ASSET_LIBRARY_ACCESSOR(EmitterConfigAssetLibrary, emitters)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(ShaderAssetLibrary, shaders)
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(SoundAssetLibrary, sounds);
-
 		void load_default_texture_and_material()
 		{
-			// setup default texture
-			Texture* default_texture = textures()->allocate_asset();
-			default_texture->texture = image::load_default_texture(default_texture->image);
+			image::Image default_image(asset_allocator);
+			default_image.width = 128;
+			default_image.height = 128;
+			default_image.channels = 3;
+			generate_checker_pattern(default_image, gemini::Color(1.0f, 0.0f, 1.0f), gemini::Color(0.0f, 1.0f, 0.0f));
 
-			textures()->take_ownership("textures/default", default_texture);
-			textures()->set_default(default_texture);
-			LOGV( "Loaded default texture; asset_id = %i\n", default_texture->asset_id );
+			default_image.filter = image::FILTER_NONE;
+			render2::Texture* default_texture = _asset_state->device->create_texture(default_image);
+
+			_asset_state->textures->default_asset(default_texture);
+			_asset_state->textures->take_ownership("default", default_texture, false);
 
 			// setup default material
-			Material * default_material = materials()->allocate_asset();
+			Material* default_material = _asset_state->materials->create(asset_allocator, nullptr);
 			default_material->name = "default";
 
 			MaterialParameter diffusemap;
 			diffusemap.name = "diffusemap";
 			diffusemap.type = MP_SAMPLER_2D;
 			diffusemap.texture_unit = texture_unit_for_map(diffusemap.name);
-			diffusemap.texture = default_texture->texture;
+			diffusemap.texture_handle = texture_load("default");
 
 			default_material->add_parameter(diffusemap);
 
-			materials()->take_ownership( "materials/default", default_material );
-			materials()->set_default(default_material);
-			LOGV( "Loaded default materials; asset_id = %i\n", default_material->asset_id );
-
+			_asset_state->materials->take_ownership("materials/default", default_material);
+			_asset_state->materials->default_asset(default_material);
 		} // load_default_texture_and_material
 
 
-		void startup()
+		void startup(render2::Device* device, bool load_default_assets)
 		{
+			assert(_asset_state == nullptr);
+
+			assert(device != nullptr);
+
+			platform::PathString shader_root = "shaders";
+			shader_root.append(PATH_SEPARATOR_STRING);
+
+			// TODO: Determine this by checking the renderer type
+#if defined(PLATFORM_OPENGL_SUPPORT)
+			shader_root.append("150");
+#elif defined(PLATFORM_GLES2_SUPPORT)
+			shader_root.append("100");
+#endif
+			// create the allocator
 			asset_allocator = memory_allocator_default(MEMORY_ZONE_ASSETS);
 
-			// 2. allocate asset libraries
-			_textures =		MEMORY2_NEW(asset_allocator, TextureAssetLibrary)			(asset_allocator, texture_load_callback, texture_construct_extension);
-			_meshes =		MEMORY2_NEW(asset_allocator, MeshAssetLibrary)				(asset_allocator, mesh_load_callback, mesh_construct_extension);
-			_materials =	MEMORY2_NEW(asset_allocator, MaterialAssetLibrary)			(asset_allocator, material_load_callback, material_construct_extension);
-			//_emitters =		MEMORY2_NEW(asset_allocator, EmitterConfigAssetLibrary)		(asset_allocator, emitterconfig_load_callback, emitterconfig_construct_extension);
-			_shaders =		MEMORY2_NEW(asset_allocator, ShaderAssetLibrary)			(asset_allocator, shader_load_callback, shader_construct_extension);
-			_sounds =		MEMORY2_NEW(asset_allocator, SoundAssetLibrary)				(asset_allocator, sound_load_callback, sound_construct_extension);
+			// allocate the base state
+			_asset_state = MEMORY2_NEW(asset_allocator, AssetState)();
+			_asset_state->device = device;
 
-			load_default_texture_and_material();
+			// allocate each asset library
+			_asset_state->fonts			= MEMORY2_NEW(asset_allocator, gemini::FontLibrary)(asset_allocator, device);
+			_asset_state->materials		= MEMORY2_NEW(asset_allocator, gemini::MaterialLibrary)(asset_allocator, device);
+			_asset_state->meshes		= MEMORY2_NEW(asset_allocator, gemini::MeshLibrary)(asset_allocator);
+			_asset_state->shaders		= MEMORY2_NEW(asset_allocator, gemini::ShaderLibrary)(asset_allocator, device);
+			_asset_state->sounds		= MEMORY2_NEW(asset_allocator, gemini::AudioLibrary)(asset_allocator);
+			_asset_state->textures		= MEMORY2_NEW(asset_allocator, gemini::TextureLibrary)(asset_allocator, device);
+
+			_asset_state->fonts->prefix_path("fonts");
+			_asset_state->materials->prefix_path("materials");
+			_asset_state->shaders->prefix_path(shader_root);
+
+			if (load_default_assets)
+			{
+				load_default_texture_and_material();
+			}
 		} // startup
 
 		void shutdown()
 		{
-			// 4. Delete asset library
-			MEMORY2_DELETE(asset_allocator, _textures);
-			MEMORY2_DELETE(asset_allocator, _meshes);
-			MEMORY2_DELETE(asset_allocator, _materials);
-			//MEMORY2_DELETE(asset_allocator, _emitters);
-			MEMORY2_DELETE(asset_allocator, _shaders);
-			MEMORY2_DELETE(asset_allocator, _sounds);
+			// Delete asset libraries
+			MEMORY2_DELETE(asset_allocator, _asset_state->fonts);
+			MEMORY2_DELETE(asset_allocator, _asset_state->materials);
+			MEMORY2_DELETE(asset_allocator, _asset_state->meshes);
+			MEMORY2_DELETE(asset_allocator, _asset_state->shaders);
+			MEMORY2_DELETE(asset_allocator, _asset_state->sounds);
+			MEMORY2_DELETE(asset_allocator, _asset_state->textures);
+
+			// Delete base asset state
+			MEMORY2_DELETE(asset_allocator, _asset_state);
+			_asset_state = nullptr;
 		} // shutdown
 
-		void append_asset_extension( AssetType type, core::StackString<MAX_PATH_SIZE> & path )
-		{
-			const char * extension = "";
-#if defined(PLATFORM_IPHONEOS)
-			kernel::KernelDeviceFlags device_flags = kernel::parameters().device_flags;
-#endif
-
-			switch( type )
-			{
-				case SoundAsset:
-				{
-#if defined(PLATFORM_IPHONEOS)
-					if ( (device_flags & kernel::DeviceiPad) || (device_flags & kernel::DeviceiPhone) )
-					{
-						extension = "caf";
-					}
-#else
-					extension = "ogg";
-#endif
-					break;
-				} // SoundAsset
-
-
-				default: LOGW( "AssetType %i is NOT supported!\n" ); break;
-			}
-
-			path.append( "." );
-			path.append( extension );
-
-		} // append_asset_extension
-
 	} // namespace assets
+
+	AssetHandle mesh_load(const char* path, bool ignore_cache, void* parameters)
+	{
+		return _asset_state->meshes->load(path, ignore_cache, parameters);
+	} // mesh_load
+
+	Mesh* mesh_from_handle(AssetHandle handle)
+	{
+		return _asset_state->meshes->lookup(handle);
+	} // mesh_from_handle
+
+	AssetHandle shader_load(const char* path, bool ignore_cache, void* parameters)
+	{
+		return _asset_state->shaders->load(path, ignore_cache, parameters);
+	} // shader_load
+
+	render2::Shader* shader_from_handle(AssetHandle handle)
+	{
+		return _asset_state->shaders->lookup(handle);
+	} // shader_from_handle
+
+	AssetHandle texture_load(const char* path, bool ignore_cache, void* parameters)
+	{
+		return _asset_state->textures->load(path, ignore_cache, parameters);
+	} // texture_load
+
+	render2::Texture* texture_from_handle(AssetHandle handle)
+	{
+		return _asset_state->textures->lookup(handle);
+	} // texture_from_handle
+
+	AssetHandle material_load(const char* path, bool ignore_cache, void* parameters)
+	{
+		return _asset_state->materials->load(path, ignore_cache, parameters);
+	} // material_load
+
+	Material* material_from_handle(AssetHandle handle)
+	{
+		return _asset_state->materials->lookup(handle);
+	} // material_from_handle
+
+	size_t font_count_vertices(size_t string_length)
+	{
+		return string_length * 6;
+	} // font_count_vertices
+
+	size_t font_draw_string(AssetHandle handle, FontVertex* vertices, const char* utf8, size_t string_length, const Color& color)
+	{
+		return _asset_state->fonts->draw_string(handle, vertices, utf8, string_length, color);
+	} // font_draw_string
+
+	AssetHandle font_load(const char* path, bool ignore_cache, FontCreateParameters* parameters)
+	{
+		return _asset_state->fonts->load(path, ignore_cache, parameters);
+	} // font_load
+
+	void font_metrics(AssetHandle handle, FontMetrics& out_metrics)
+	{
+		return _asset_state->fonts->font_metrics(handle, out_metrics);
+	} // font_metrics
+
+	FontData* font_from_handle(AssetHandle handle)
+	{
+		return _asset_state->fonts->lookup(handle);
+	} // font_from_handle
+
+	render2::Texture* font_texture(AssetHandle handle)
+	{
+		return _asset_state->fonts->font_texture(handle);
+	} // font_texture
+
+	int32_t font_string_metrics(AssetHandle handle, const char* utf8, size_t string_length, glm::vec2& mins, glm::vec2& maxs)
+	{
+		return _asset_state->fonts->string_metrics(handle, utf8, string_length, mins, maxs);
+	} // font_string_metrics
+
+	AssetHandle sound_load(const char* path, bool ignore_cache, void* parameters)
+	{
+		return _asset_state->sounds->load(path, ignore_cache, parameters);
+	} // sound_load
+
+	Sound* sound_from_handle(AssetHandle handle)
+	{
+		return _asset_state->sounds->lookup(handle);
+	} // sound_from_handle
+
 } // namespace gemini

@@ -33,8 +33,10 @@ namespace gemini
 	public:
 		virtual ~IEntityManager() {};
 
-		virtual void add(IEngineEntity* entity) = 0;
+		virtual uint16_t add(IEngineEntity* entity) = 0;
 		virtual void remove(IEngineEntity* entity) = 0;
+
+		virtual IEngineEntity* at_index(uint16_t index) = 0;
 
 		virtual void startup() = 0;
 		virtual void shutdown() = 0;

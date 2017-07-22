@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <core/mem.h>
+
 namespace gemini
 {
 	namespace hotloading

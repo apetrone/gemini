@@ -27,25 +27,27 @@
 #include <core/argumentparser.h>
 #include <core/logging.h>
 
+#include <runtime/assets.h>
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
+#include <runtime/asset_library.h>
 
 #include <platform/input.h>
 #include <platform/kernel.h>
 #include <platform/platform.h>
 #include <platform/window.h>
 
+#include <renderer/font_library.h>
 #include <renderer/renderer.h>
 #include <renderer/vertexbuffer.h>
-#include <renderer/font.h>
-#include <renderer/color.h>
 
+#include <renderer/color.h>
 
 #include <assert.h>
 
-using namespace renderer;
 using namespace gemini;
 
+const float RENDER_TEST_WAIT_SECONDS = 1.0f;
 
 // ---------------------------------------------------------------------
 // Color
@@ -92,8 +94,9 @@ class TestRender : public kernel::IKernel,
 		glm::mat4 modelview_matrix;
 		glm::mat4 projection_matrix;
 		unsigned int diffuse;
+		unsigned int mask_texture;
 
-		font::Handle handle;
+		AssetHandle font_handle;
 		platform::window::NativeWindow* native_window;
 		platform::window::NativeWindow* other_window;
 
@@ -103,6 +106,7 @@ class TestRender : public kernel::IKernel,
 		render2::Pipeline* texture_pipeline; 	// pipeline for textured geometry
 		render2::Pipeline* font_pipeline; 		// pipeline for font rendering
 		render2::Pipeline* line_pipeline; 		// pipeline for rendering lines
+		render2::Pipeline* multi_pipeline;		// pipeline for multi-texturing
 
 		render2::Buffer* vertex_buffer;
 		render2::Buffer* textured_buffer;
@@ -122,6 +126,7 @@ class TestRender : public kernel::IKernel,
 			texture_pipeline(nullptr),
 			font_pipeline(nullptr),
 			line_pipeline(nullptr),
+			multi_pipeline(nullptr),
 			vertex_buffer(nullptr),
 			textured_buffer(nullptr),
 			font_buffer(nullptr),
@@ -134,6 +139,11 @@ class TestRender : public kernel::IKernel,
 	};
 
 	typedef void (*test_state_callback)(TestRenderState& state);
+	struct RenderTest
+	{
+		core::StackString<128> name;
+		test_state_callback render_callback;
+	};
 
 public:
 	virtual void event(kernel::KeyboardEvent& event)
@@ -211,12 +221,12 @@ public:
 		serializer->draw(3, 6);
 
 		// quad; font texture
-//		serializer->texture(font::get_font_texture(state.handle), 0);
+//		serializer->texture(font_texture(state.font_handle), 0);
 //		serializer->draw(9, 6);
 
 		serializer->pipeline(state.font_pipeline);
 		serializer->vertex_buffer(state.font_buffer);
-		serializer->texture(font::get_font_texture(state.handle), 0);
+		serializer->texture(font_texture(state.font_handle), 0);
 		serializer->draw(0, state.total_font_vertices);
 
 		// horizontal line test
@@ -239,6 +249,48 @@ public:
 			platform::window::swap_buffers(state.other_window);
 		}
 	}
+
+	static void render_stage2(TestRenderState& state)
+	{
+		// sanity check
+		assert(state.device);
+		assert(state.pipeline);
+		assert(state.vertex_buffer);
+
+		render2::Pass render_pass;
+		render_pass.target = state.device->default_render_target();
+		render_pass.color(0.0f, 0.0f, 0.0f, 1.0f);
+		render_pass.clear_color = true;
+		render_pass.clear_depth = true;
+		render_pass.depth_test = false;
+
+		// create a command queue
+		render2::CommandQueue* queue = state.device->create_queue(render_pass);
+
+		// create a command serializer for the queue
+		render2::CommandSerializer* serializer = state.device->create_serializer(queue);
+		assert(serializer);
+
+		// procedurally-generated textured triangle
+		serializer->pipeline(state.multi_pipeline);
+		serializer->vertex_buffer(state.textured_buffer);
+		serializer->texture(state.checker, 0);
+		serializer->texture(state.notexture, 1);
+		serializer->draw(0, 3);
+
+		// quad; texture loaded from disk (notexture.png)
+
+		//serializer->draw(3, 6);
+
+		// queue the buffer with our device
+		state.device->destroy_serializer(serializer);
+		state.device->queue_buffers(queue, 1);
+
+		// submit the queues to the GPU
+		platform::window::activate_context(state.native_window);
+		state.device->submit();
+		platform::window::swap_buffers(state.native_window);
+	} // render_stage2
 
 
 	TestRender()
@@ -321,7 +373,7 @@ Options:
 		}
 
 		// automatically shutdown after 3 seconds
-		countdown = 3.0f;
+		countdown = RENDER_TEST_WAIT_SECONDS;
 
 		// create a test window
 		platform::window::Parameters params;
@@ -362,16 +414,19 @@ Options:
 		// initialize render device
 		render2::RenderParameters render_parameters(render_allocator);
 		render_parameters["rendering_backend"] = "default";
-		render_parameters["gamma_correct"] = "true";
+		render_parameters["gamma_correct"] = "false";
+		render_parameters["vsync"] = "true";
 
 		state.device = render2::create_device(render_allocator, render_parameters);
 		assert(state.device != nullptr);
+
+		assets::startup(state.device, false);
 
 		window_frame = platform::window::get_frame(state.native_window);
 
 		// setup the pipeline
 		render2::PipelineDescriptor desc;
-		desc.shader = state.device->create_shader("vertexcolor");
+		desc.shader = shader_load("vertexcolor");
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = state.device->create_input_layout(desc.vertex_description, desc.shader);
@@ -394,28 +449,39 @@ Options:
 		generate_triangle(0, vertices, glm::vec2(width, height), glm::vec2(0, 0));
 		state.device->buffer_upload(state.vertex_buffer, vertices, total_bytes);
 
-
 		// setup texture pipeline
 		render2::PipelineDescriptor td;
-		td.shader = state.device->create_shader("vertexcolortexture");
+		td.shader = shader_load("vertexcolortexture");
 		td.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 		td.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		td.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
 		td.input_layout = state.device->create_input_layout(td.vertex_description, td.shader);
 		state.texture_pipeline = state.device->create_pipeline(td);
 
+		// setup multi-texture pipeline
+		render2::PipelineDescriptor md;
+		md.shader = shader_load("multitexture");
+		md.vertex_description.add("in_position", render2::VD_FLOAT, 3);
+		md.vertex_description.add("in_color", render2::VD_FLOAT, 4);
+		md.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
+		md.input_layout = state.device->create_input_layout(md.vertex_description, md.shader);
+		state.multi_pipeline = state.device->create_pipeline(md);
+
 		// setup font pipeline
 		render2::PipelineDescriptor fd;
-		fd.shader = state.device->create_shader("font");
+		fd.shader = shader_load("font");
 		fd.vertex_description.add("in_position", render2::VD_FLOAT, 2);
 		fd.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		fd.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
+		fd.enable_blending = true;
+		fd.blend_source = render2::BlendOp::SourceAlpha;
+		fd.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 		fd.input_layout = state.device->create_input_layout(td.vertex_description, fd.shader);
 		state.font_pipeline = state.device->create_pipeline(fd);
 
 		// setup line pipeline
 		render2::PipelineDescriptor ld;
-		ld.shader = state.device->create_shader("lines");
+		ld.shader = shader_load("lines");
 		ld.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 		ld.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		ld.input_layout = state.device->create_input_layout(ld.vertex_description, ld.shader);
@@ -436,6 +502,7 @@ Options:
 		state.modelview_matrix = glm::mat4(1.0f);
 		state.projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
 		state.diffuse = 0;
+		state.mask_texture = 1;
 		state.pipeline->constants().set("modelview_matrix", &state.modelview_matrix);
 		state.pipeline->constants().set("projection_matrix", &state.projection_matrix);
 
@@ -449,6 +516,11 @@ Options:
 
 		state.line_pipeline->constants().set("modelview_matrix", &state.modelview_matrix);
 		state.line_pipeline->constants().set("projection_matrix", &state.projection_matrix);
+
+		state.multi_pipeline->constants().set("modelview_matrix", &state.modelview_matrix);
+		state.multi_pipeline->constants().set("projection_matrix", &state.projection_matrix);
+		state.multi_pipeline->constants().set("diffuse", &state.diffuse);
+		state.multi_pipeline->constants().set("mask_texture", &state.mask_texture);
 
 //		platform::window::show_cursor(true);
 		const size_t TOTAL_FONT_VERTICES = 1024;
@@ -472,7 +544,7 @@ Options:
 			checker_pattern.width = 32;
 			checker_pattern.height = 32;
 			checker_pattern.channels = 3;
-			image::generate_checker_pattern(checker_pattern, gemini::Color(1.0f, 0, 1.0f), gemini::Color(0, 1.0f, 0));
+			image::generate_checker_pattern(checker_pattern, gemini::Color(1.0f, 0.0f, 1.0f), gemini::Color(0.0f, 1.0f, 0.0f));
 			state.checker = state.device->create_texture(checker_pattern);
 			assert(state.checker);
 			LOGV("created checker_pattern texture procedurally\n");
@@ -505,21 +577,19 @@ Options:
 		// ---------------------------------------------------------------------
 		// font
 		// ---------------------------------------------------------------------
-		font_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
-		font::startup(font_allocator, state.device);
-
-		Array<unsigned char> fontdata(render_allocator);
-		core::filesystem::instance()->virtual_load_file(fontdata, "fonts/debug.ttf");
-		state.handle = font::load_from_memory(&fontdata[0], fontdata.size(), 16);
+		FontCreateParameters font_params;
+		font_params.size_pixels = 16;
+		state.font_handle = font_load("debug", false, &font_params);
 
 		const char* text = "The quick brown fox jumps over the lazy dog.";
-		Array<font::FontVertex> temp_vertices(render_allocator);
+		Array<FontVertex> temp_vertices(render_allocator);
 		const size_t text_size = core::str::len(text);
-		temp_vertices.resize(font::count_vertices(state.handle, text_size));
-		font::draw_string(state.handle, &temp_vertices[0], text, text_size, gemini::Color(1.0f, 1.0f, 1.0f));
 
-		font::Metrics metrics;
-		font::get_font_metrics(state.handle, metrics);
+		temp_vertices.resize(font_count_vertices(text_size));
+		font_draw_string(state.font_handle, &temp_vertices[0], text, text_size, gemini::Color(1.0f, 1.0f, 1.0f));
+
+		FontMetrics metrics;
+		font_metrics(state.font_handle, metrics);
 
 		float offset[2] = {window_frame.width/2, window_frame.height/2 + metrics.max_height};
 
@@ -528,7 +598,7 @@ Options:
 		for (size_t index = 0; index < temp_vertices.size(); ++index)
 		{
 			TexturedVertex* tv = &tvf[index];
-			font::FontVertex* fv = &temp_vertices[index];
+			FontVertex* fv = &temp_vertices[index];
 			tv->position[0] = fv->position.x + offset[0];
 			tv->position[1] = fv->position.y + offset[1];
 			tv->position[2] = 0;
@@ -538,10 +608,8 @@ Options:
 		}
 		state.device->buffer_upload(state.font_buffer, &tvf, sizeof(TexturedVertex)*TOTAL_FONT_VERTICES);
 
-
 		// hit this assert if we couldn't load the font
-		assert(state.handle.is_valid());
-
+		assert(state.font_handle != InvalidAssetHandle);
 
 		// ---------------------------------------------------------------------
 		// line buffer
@@ -567,7 +635,8 @@ Options:
 		// additional setup
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 
-		render_callbacks.push_back(render_stage1);
+		render_callbacks.push_back(RenderTest({ "stage1", render_stage1 }));
+		render_callbacks.push_back(RenderTest({ "stage2", render_stage2 }));
 
 		test_state = 0;
 		return kernel::NoError;
@@ -602,7 +671,7 @@ Options:
 			accumulator -= params.step_interval_seconds;
 
 			// increment tick counter
-			params.current_tick++;
+			params.current_frame++;
 		}
 
 		params.step_alpha = accumulator / params.step_interval_seconds;
@@ -615,32 +684,36 @@ Options:
 	virtual void tick()
 	{
 		update();
-		countdown -= kernel::parameters().step_interval_seconds;
+		countdown -= kernel::parameters().framedelta_milliseconds;
 
 		platform::update(kernel::parameters().framedelta_milliseconds);
 
+		RenderTest* render_test = &render_callbacks[test_state];
+		render_test->render_callback(state);
+
 		if (countdown <= 0)
 		{
+			// snap a screenshot
+			render2::Image image(render_allocator);
+			render2::RenderTarget* render_target = state.device->default_render_target();
+			image.create(render_target->width, render_target->height, 4);
+			state.device->render_target_read_pixels(render_target, image);
+			image::flip_image_vertically(render_target->width, render_target->height, 4, &image.pixels[0]);
+			image::save_image_to_file(image, core::str::format("%s.png", render_test->name()));
+
 			++test_state;
+			countdown = RENDER_TEST_WAIT_SECONDS;
 			if (test_state >= render_callbacks.size())
 			{
 				kernel::instance()->set_active(false);
 			}
-		}
-
-		test_state_callback render_callback = nullptr;
-		if (!render_callbacks.empty() && test_state < render_callbacks.size())
-		{
-			render_callback = render_callbacks[test_state];
-			if (render_callback)
-				render_callback(state);
 		}
 	}
 
 
 	virtual void shutdown()
 	{
-		font::shutdown();
+		assets::shutdown();
 
 #if TEST_RENDER_GRAPHICS
 		if (state.checker)
@@ -654,6 +727,7 @@ Options:
 		state.device->destroy_pipeline(state.texture_pipeline);
 		state.device->destroy_pipeline(state.font_pipeline);
 		state.device->destroy_pipeline(state.line_pipeline);
+		state.device->destroy_pipeline(state.multi_pipeline);
 
 		state.device->destroy_buffer(state.vertex_buffer);
 		state.device->destroy_buffer(state.textured_buffer);
@@ -774,9 +848,7 @@ private:
 	glm::vec2 center;
 
 	gemini::Allocator render_allocator;
-	gemini::Allocator font_allocator;
-
-	Array<test_state_callback> render_callbacks;
+	Array<RenderTest> render_callbacks;
 	TestRenderState state;
 	bool active;
 };

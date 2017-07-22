@@ -31,6 +31,7 @@
 #define STBI_HEADER_FILE_ONLY 1
 #define STBI_NO_STDIO 1
 #define STB_IMAGE_IMPLEMENTATION 1
+#define STB_IMAGE_WRITE_IMPLEMENTATION 1
 
 #if defined(PLATFORM_COMPILER_MSVC)
 	// disable some warnings in stb_image
@@ -42,6 +43,7 @@
 #endif
 
 #include "stb_image.h"
+#include "stb_image_write.h"
 
 #if defined(PLATFORM_COMPILER_MSVC)
 	#pragma warning(pop)
@@ -53,9 +55,6 @@ using namespace core;
 
 namespace image
 {
-	const unsigned int ERROR_TEXTURE_WIDTH = 128;
-	const unsigned int ERROR_TEXTURE_HEIGHT = 128;
-
 	Image::Image(gemini::Allocator& allocator)
 		: pixels(allocator)
 	{
@@ -299,19 +298,6 @@ namespace image
 		MEMORY2_DEALLOC(allocator, copy);
 	} // flip_image_vertically
 
-
-	renderer::Texture* load_default_texture(Image& image)
-	{
-		image.width = ERROR_TEXTURE_WIDTH;
-		image.height = ERROR_TEXTURE_HEIGHT;
-		image.channels = 3;
-		generate_checker_pattern(image, gemini::Color(1.0f, 0, 1.0f), gemini::Color(0, 1.0f, 0));
-
-		renderer::Texture* texture = renderer::driver()->texture_create(image);
-
-		return texture;
-	} // load_default_texture
-
 	Image load_from_memory(gemini::Allocator& allocator, unsigned char* data, unsigned int data_size)
 	{
 		Image image(allocator);
@@ -353,4 +339,8 @@ namespace image
 		stbi_image_free(pixels);
 	} // free_image
 
+	void save_image_to_file(const Image& image, const char* filename)
+	{
+		stbi_write_png(filename, image.width, image.height, image.channels, &image.pixels[0], image.alignment * image.width);
+	} // save_image_to_file
 } // namespace image

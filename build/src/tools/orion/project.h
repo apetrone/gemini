@@ -22,19 +22,47 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-
 #pragma once
 
-#include <core/typedefs.h>
+#include <core/mathlib.h>
+#include <core/mem.h>
 #include <core/str.h>
+#include <core/typedefs.h>
+
+#include <platform/platform.h>
 
 class Project
 {
-private:
-	String name;
-
+public:
+	Project();
+	~Project();
 
 	const String& get_name() const;
 	void set_name(const String& new_name);
+
+	platform::Result save_project();
+
+	platform::Result save_project_as(const String& absolute_path);
+
+	void set_root_path(const String& root_path);
+	const String& get_root_path() const;
+
+	static Project* create_project();
+	static Project* open_project(const String& absolute_path);
+
+	glm::vec3 camera_position;
+	float camera_yaw;
+	float camera_pitch;
+
+private:
+	// the name by which to refer to this object
+	String name;
+
+	// the path on disk where this project is located
+	String root_path;
+
+	// set to non-zero if the project settings have been modified
+	uint32_t modified_flag;
+
 
 }; // Project

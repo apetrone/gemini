@@ -97,7 +97,7 @@ namespace gui
 		origin.y = y;
 		size.width = width;
 		size.height = height;
-		flags |= Flag_TransformIsDirty;
+		mark_dirty();
 	} // set_bounds
 
 	void Panel::set_bounds(const Rect& new_bounds)
@@ -108,9 +108,17 @@ namespace gui
 
 	void Panel::set_origin(float x, float y)
 	{
-		origin.x = x;
-		origin.y = y;
-		flags |= Flag_TransformIsDirty;
+		if (origin.x != x)
+		{
+			origin.x = x;
+			mark_dirty();
+		}
+
+		if (origin.y != y)
+		{
+			origin.y = y;
+			mark_dirty();
+		}
 	} // set_origin
 
 	void Panel::set_origin(const Point& new_origin)
@@ -120,8 +128,11 @@ namespace gui
 
 	void Panel::set_size(const Size& new_size)
 	{
-		size = new_size;
-		flags |= Flag_TransformIsDirty;
+		if ((size.width != new_size.width) || (size.height != new_size.height))
+		{
+			size = new_size;
+			mark_dirty();
+		}
 	} // set_size
 
 	void Panel::set_size(uint32_t width, uint32_t height)
@@ -156,7 +167,7 @@ namespace gui
 			children.push_back(panel);
 		}
 
-		panel->flags |= Flag_TransformIsDirty;
+		panel->mark_dirty();
 
 		// add panel to zsorted list
 		zsorted.push_back(panel);
@@ -193,11 +204,14 @@ namespace gui
 
 	void Panel::handle_event(EventArgs& args)
 	{
-		if (args.type == Event_CursorDrag && get_parent() && args.capture == this && (flags & Flag_CanMove))
+		if (args.type == Event_CursorDrag &&
+			get_parent() &&
+			args.capture == this &&
+			flags & Flag_CanMove)
 		{
 			origin.x += args.delta.x;
 			origin.y += args.delta.y;
-			flags |= Flag_TransformIsDirty;
+			mark_dirty();
 			args.handled = true;
 			//LOGV("Moved panel '%s' to %2.2f, %2.2f\n", get_name(), origin.x, origin.y);
 		}
@@ -218,10 +232,7 @@ namespace gui
 			(*it)->update(compositor, delta_seconds);
 		}
 
-		if (flags & Flag_TransformIsDirty)
-		{
-			flags &= ~Flag_TransformIsDirty;
-		}
+		flags &= ~Flag_TransformIsDirty;
 	} // update
 
 	void Panel::render_geometry(gui::render::CommandList& render_commands, const gemini::Color& color)
@@ -235,10 +246,8 @@ namespace gui
 			color);
 	} // render_geometry
 
-	void Panel::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
+	void Panel::render_capture_rect(gui::render::CommandList& render_commands)
 	{
-		render_geometry(render_commands, background_color);
-
 		const uint32_t capture_flags = (Flag_CursorEnabled | Flag_CanMove);
 		if ((flags & (capture_flags)) == capture_flags)
 		{
@@ -262,10 +271,13 @@ namespace gui
 				render::WhiteTexture,
 				gemini::Color::from_rgba(32, 32, 32, 64));
 		}
+	} // render_capture_rect
 
+	void Panel::render_background(gui::render::CommandList& render_commands)
+	{
 		if (this->background.is_valid())
 		{
-//			renderer->draw_textured_bounds(frame, this->background);
+			//			renderer->draw_textured_bounds(frame, this->background);
 			render_commands.add_rectangle(
 				geometry[0],
 				geometry[1],
@@ -275,7 +287,13 @@ namespace gui
 				gemini::Color::from_rgba(255, 255, 255, 255)
 			);
 		}
+	} // render_background
 
+	void Panel::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
+	{
+		render_geometry(render_commands, background_color);
+		render_capture_rect(render_commands);
+		render_background(render_commands);
 		render_children(compositor, renderer, render_commands);
 	} // render
 
@@ -324,7 +342,7 @@ namespace gui
 		if (is_visible)
 		{
 			flags |= Flag_IsVisible;
-			flags |= Flag_TransformIsDirty;
+			mark_dirty();
 		}
 		else
 		{
@@ -388,7 +406,7 @@ namespace gui
 	void Panel::resize(const Size& requested_size)
 	{
 		size = requested_size;
-		flags |= Flag_TransformIsDirty;
+		mark_dirty();
 	} // resize
 
 	void Panel::set_maximum_size(const Size& max_size)
@@ -442,13 +460,13 @@ namespace gui
 	void Panel::set_rotation(const float radians)
 	{
 		z_rotation = radians;
-		flags |= Flag_TransformIsDirty;
+		mark_dirty();
 	}
 
 	void Panel::set_scale(const glm::vec2& new_scale)
 	{
 		scale = new_scale;
-		flags |= Flag_TransformIsDirty;
+		mark_dirty();
 	}
 
 	// ---------------------------------------------------------------------
@@ -488,6 +506,15 @@ namespace gui
 
 		layout = layout_instance;
 	}
+
+	void Panel::mark_dirty()
+	{
+		flags |= Flag_TransformIsDirty;
+		for (size_t index = 0; index < children.size(); ++index)
+		{
+			children[index]->mark_dirty();
+		}
+	} // mark_dirty
 
 	void Panel::update_transform(Compositor*)
 	{

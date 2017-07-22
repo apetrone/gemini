@@ -24,89 +24,80 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/stackstring.h>
-#include <core/mathlib.h> // for glm
+#include <core/mathlib.h>
+#include <runtime/asset_handle.h>
 
-#include <platform/platform.h>
+#define IMPLEMENT_ASSET_LIBRARY_ACCESSOR( name )\
+	name##AssetLibrary* _##name = 0;\
+	name##AssetLibrary* name()\
+	{\
+		return _##name;\
+	}
 
-#include <renderer/color.h>
+#define DECLARE_ASSET_LIBRARY_ACCESSOR( type, parameter_class, name )\
+	typedef AssetLibrary<type, parameter_class> name##AssetLibrary;\
+	name##AssetLibrary * name()
+
+namespace render2
+{
+	class Device;
+	struct Texture;
+	struct Shader;
+} // namespace render2
 
 namespace gemini
 {
+	struct Color;
+	struct Material;
+	struct Mesh;
+	struct FontData;
+	struct FontMetrics;
+	struct FontVertex;
+	struct FontCreateParameters;
+	struct Sound;
+
 	namespace assets
 	{
-		// Asset utils
-		enum AssetType
-		{
-			SoundAsset
-		}; // AssetType
-
-
 		// called to initialize default textures and other required resources.
-		void startup();
+		void startup(render2::Device* device, bool load_default_assets = true);
 
 		// purge all assets
 		void purge();
 
 		// purge all assets and reclaim unused memory
 		void shutdown();
-
-		// Given a relative path to an asset, tack on a platform-specific file extension
-		void append_asset_extension( AssetType type, core::StackString< MAX_PATH_SIZE > & path );
-
-		typedef unsigned int AssetID;
-
-		struct Asset
-		{
-			assets::AssetID asset_id;
-			virtual ~Asset() {}
-			virtual void release() = 0;
-
-			inline unsigned int Id() const
-			{
-				return asset_id;
-			} // Id
-		}; // Asset
-
-
-		struct AssetParameters
-		{
-
-		}; // AssetParameters
-
-		enum AssetLoadStatus
-		{
-			AssetLoad_Success = 0,
-			AssetLoad_Failure = 1
-		};
 	} // namespace assets
-} // namespace gemini
 
-#define IMPLEMENT_ASSET_LIBRARY_ACCESSOR( type, name )\
-	type * _##name = 0;\
-	type * name()\
-	{\
-		return _##name;\
-	}
+	AssetHandle mesh_load(const char* path, bool ignore_cache = false, void* parameters = nullptr);
+	Mesh* mesh_from_handle(AssetHandle handle);
 
-#define DECLARE_ASSET_LIBRARY_ACCESSOR( type, parameter_class, name )\
-	typedef AssetLibrary<type, parameter_class> type##AssetLibrary;\
-	type##AssetLibrary * name()
+	AssetHandle shader_load(const char* path, bool ignore_cache = false, void* parameters = nullptr);
+	render2::Shader* shader_from_handle(AssetHandle handle);
+
+	AssetHandle texture_load(const char* path, bool ignore_cache = false, void* parameters = nullptr);
+	render2::Texture* texture_from_handle(AssetHandle handle);
+
+	AssetHandle material_load(const char* path, bool ignore_cache = false, void* parameters = nullptr);
+	Material* material_from_handle(AssetHandle handle);
+
+	/// @returns The number of vertices required to render string with
+	/// string_length in characters.
+	size_t font_count_vertices(size_t string_length);
+	size_t font_draw_string(AssetHandle handle, FontVertex* vertices, const char* utf8, size_t string_length, const Color& color);
+
+	AssetHandle font_load(const char* path, bool ignore_cache, FontCreateParameters* parameters);
+
+	// retrieve metrics for this font
+	void font_metrics(AssetHandle handle, FontMetrics& out_metrics);
+	FontData* font_from_handle(AssetHandle handle);
+
+	// retrieve the font texture used by a font
+	render2::Texture* font_texture(AssetHandle handle);
+
+	// fetch metrics for a string
+	int32_t font_string_metrics(AssetHandle handle, const char* utf8, size_t string_length, glm::vec2& mins, glm::vec2& maxs);
 
 
-#include <runtime/assetlibrary.h>
-
-#include <runtime/assets/asset_texture.h>
-#include <runtime/assets/asset_shader.h>
-#include <runtime/assets/asset_material.h>
-#include <runtime/assets/asset_mesh.h>
-//#include <runtime/assets/asset_emitter.h>
-#include <runtime/assets/asset_sound.h>
-
-namespace gemini
-{
-	namespace assets
-	{
-		unsigned int find_parameter_mask(::renderer::ShaderString& name);
-	} // namespace assets
+	AssetHandle sound_load(const char* path, bool ignore_cache, void* parameters = nullptr);
+	Sound* sound_from_handle(AssetHandle handle);
 } // namespace gemini

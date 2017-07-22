@@ -33,11 +33,11 @@ template <class Type, int MaxSize>
 class FixedSizeQueue
 {
 private:
-public:
 	Type elements[MaxSize];
 	size_t total_elements;
 	size_t tail_index;
 	static Type default_value;
+public:
 
 	FixedSizeQueue() :
 		total_elements(MaxSize),
@@ -76,7 +76,7 @@ public:
 		// If you hit this, there are no items in the queue.
 		assert(tail_index > 0);
 
-		Type item = elements[tail_index-1];
+		Type item = elements[tail_index - 1];
 		tail_index--;
 		return item;
 	}

@@ -29,6 +29,8 @@
 #include <core/typedefs.h>
 #include <core/mem.h>
 
+#include <runtime/asset_handle.h>
+
 #include <vector>
 
 namespace renderer
@@ -55,7 +57,7 @@ namespace renderer
 		glm::mat4* object_matrix;
 
 		unsigned int material_id;
-		unsigned int shader_id;
+		gemini::AssetHandle shader_id;
 
 		glm::mat4* node_transforms;
 		glm::mat4* inverse_bind_transforms;
@@ -67,7 +69,7 @@ namespace renderer
 			object_matrix(0),
 
 			material_id(0),
-			shader_id(0),
+			shader_id(gemini::AssetHandle()),
 
 			node_transforms(0),
 			inverse_bind_transforms(0),

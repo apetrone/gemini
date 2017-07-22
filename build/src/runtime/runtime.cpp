@@ -41,10 +41,13 @@
 
 #include "filesystem_interface.h"
 
+#include <rapid/rapid.h>
+
 
 
 using platform::PathString;
 using namespace core;
+using namespace platform;
 
 namespace gemini
 {
@@ -53,6 +56,7 @@ namespace gemini
 		struct RuntimeState
 		{
 			gemini::Allocator allocator;
+			render2::Device* render_device;
 		}; // RuntimeState
 
 		RuntimeState _runtime_state;
@@ -82,22 +86,7 @@ namespace gemini
 			}
 		}
 
-		class RuntimeResourceProvider : public render2::ResourceProvider
-		{
-		public:
-			virtual bool load_file(Array<unsigned char>& data, const char* filename) const override
-			{
-				core::filesystem::instance()->virtual_load_file(data, filename);
-				return true;
-			}
 
-			virtual bool file_exists(const char* filename) const override
-			{
-				return core::filesystem::instance()->file_exists(filename);
-			}
-		}; // RuntimeResourceProvider
-
-		static RuntimeResourceProvider resource_provider;
 	}
 
 	// initialize filesystem
@@ -111,6 +100,7 @@ namespace gemini
 		uint32_t runtime_flags)
 	{
 		detail::_state->allocator = memory_allocator_default(MEMORY_ZONE_RUNTIME);
+		detail::_state->render_device = nullptr;
 
 		platform::PathString root_path = platform::get_program_directory();
 		LOGV("root_path: %s\n", root_path());
@@ -131,7 +121,7 @@ namespace gemini
 		}
 		else
 		{
-			// default path setu
+			// default path setup
 			platform::PathString application_path = platform::get_user_application_directory(application_data_path);
 			core::filesystem::instance()->root_directory(root_path);
 			core::filesystem::instance()->content_directory(content_path);
@@ -175,20 +165,25 @@ namespace gemini
 		}
 #endif
 
-		// install the resource provider to the renderer?
-		render2::set_resource_provider(&detail::resource_provider);
-
 		if (runtime_flags & RF_WINDOW_SYSTEM)
 		{
 			// initialize window subsystem
 			platform::window::startup(platform::window::RenderingBackend_Default);
 		}
 
+		// asset startup
+
+		runtime_load_rapid();
+
 		return platform::Result::success();
 	}
 
 	void runtime_shutdown()
 	{
+		// asset shutdown
+
+		runtime_unload_rapid();
+
 		core::filesystem::instance()->shutdown();
 
 		core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
@@ -302,20 +297,6 @@ namespace gemini
 	} // runtime_decompose_url
 
 
-
-	static util::ConfigLoadStatus load_render_config(const Json::Value& root, void* data)
-	{
-		::renderer::RenderSettings* settings = static_cast<::renderer::RenderSettings*>(data);
-
-		// TODO: there should be a better way to do this?
-		if (!root["gamma_correct"].isNull())
-		{
-			settings->gamma_correct = root["gamma_correct"].asBool();
-		}
-
-		return util::ConfigLoad_Success;
-	} // load_render_config
-
 	static util::ConfigLoadStatus settings_conf_loader(const Json::Value & root, void * data)
 	{
 		util::ConfigLoadStatus result = util::ConfigLoad_Success;
@@ -362,13 +343,6 @@ namespace gemini
 			cfg->application_directory = application_directory.asString().c_str();
 		}
 
-		const Json::Value& renderer = root["renderer"];
-		if (!renderer.isNull())
-		{
-			// load renderer settings
-			result = load_render_config(renderer, &cfg->render_settings);
-		}
-
 		return result;
 	} // settings_conf_loader
 
@@ -385,4 +359,573 @@ namespace gemini
 
 		return success;
 	} // runtime_load_application_config
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	void notify_client_create(NotificationClient* client)
+	{
+		memset(client, 0, sizeof(NotificationClient));
+
+		// create a broadcast socket
+		client->broadcast_socket = net_socket_open(net_socket_type::UDP);
+		assert(net_socket_is_valid(client->broadcast_socket));
+
+		net_address bind_address;
+		net_address_init(&bind_address);
+		net_address_set(&bind_address, "0.0.0.0", NOTIFY_COMMUNICATION_PORT);
+
+		net_socket_set_broadcast(client->broadcast_socket, 1);
+
+		int32_t bind_result = net_socket_bind(client->broadcast_socket, &bind_address);
+		assert(bind_result == 0);
+	}
+
+	void notify_client_destroy(NotificationClient* client)
+	{
+		net_socket_close(client->broadcast_socket);
+		net_socket_close(client->communication_socket);
+	}
+
+	void notify_client_tick(NotificationClient* client)
+	{
+		uint64_t current_milliseconds = platform::microseconds() * MillisecondsPerMicrosecond;
+		if (client->state == NCS_DISCONNECTING)
+		{
+			return;
+		}
+
+		memset(client->scratch_memory, 0, 256);
+		client->scratch_allocator = memory_allocator_linear(MEMORY_ZONE_DEFAULT, client->scratch_memory, 256);
+
+		if (client->state == NCS_BROADCASTING)
+		{
+			// broadcast message to find a server
+			if (runtime_msec_assign_if_timedout(client->last_broadcast_msec, NOTIFY_BROADCAST_DELAY_MSEC))
+			{
+				// broadcast again
+				net_address broadcast_address;
+				net_address_init(&broadcast_address);
+				net_address_set(&broadcast_address, "255.255.255.255", NOTIFY_BROADCAST_PORT);
+
+				uint32_t value = NMT_BROADCAST_REQUEST;
+				NotifyMessage broadcast_message;
+				broadcast_message.channel = 0;
+				broadcast_message.type = NMT_BROADCAST_REQUEST;
+				broadcast_message.data = &value;
+				broadcast_message.data_size = sizeof(uint32_t);
+
+				net_socket_sendto(client->broadcast_socket, &broadcast_address, static_cast<const char*>(broadcast_message.data), broadcast_message.data_size);
+			}
+		}
+		else if (client->state == NCS_CONNECTED)
+		{
+			if (runtime_msec_assign_if_timedout(client->last_heartbeat_msec, NOTIFY_HEARTBEAT_MSEC))
+			{
+				// send a heartbeat to the server
+				NotifyMessage message;
+				message.channel = 0;
+				message.type = NMT_HEARTBEAT;
+				message.data = &message.type;
+				message.data_size = sizeof(message.type);
+				notify_message_send(client->communication_socket, &message);
+			}
+
+			if (runtime_msec_assign_if_timedout(client->last_server_heartbeat_msec, NOTIFY_HEARTBEAT_MSEC * NOTIFY_CLIENT_TIMEOUT_MAX))
+			{
+				net_socket_close(client->communication_socket);
+				client->communication_socket = NET_SOCKET_INVALID;
+				client->state = NCS_BROADCASTING;
+				client->last_broadcast_msec = current_milliseconds - NOTIFY_BROADCAST_DELAY_MSEC;
+				client->last_heartbeat_msec = current_milliseconds;
+				client->last_server_heartbeat_msec = 0;
+			}
+		}
+
+		net_socket sock_max = client->broadcast_socket;
+
+		// see if the communication socket has any data
+		fd_set receive;
+		FD_ZERO(&receive);
+		FD_SET(client->broadcast_socket, &receive);
+
+		if (net_socket_is_valid(client->communication_socket))
+		{
+			FD_SET(client->communication_socket, &receive);
+			if (sock_max < client->communication_socket)
+			{
+				sock_max = client->communication_socket;
+			}
+		}
+
+		timeval zero_timeval;
+		zero_timeval.tv_sec = 0;
+		zero_timeval.tv_usec = 1;
+
+		int select_result = select(sock_max + 1, &receive, nullptr, nullptr, &zero_timeval);
+		assert(select_result >= 0);
+
+		if (FD_ISSET(client->broadcast_socket, &receive))
+		{
+			int32_t command = 0;
+			net_address source;
+			int32_t bytes_read = net_socket_recvfrom(client->broadcast_socket, &source, (char*)&command, sizeof(int32_t));
+
+			if (command == NMT_BROADCAST_CONFIRM)
+			{
+				net_address_port(&source, NOTIFY_COMMUNICATION_PORT);
+
+				// create a communication socket
+				client->communication_socket = net_socket_open(net_socket_type::TCP);
+				assert(net_socket_is_valid(client->communication_socket));
+
+				int32_t result = net_socket_connect(client->communication_socket, &source);
+				if (result == 0)
+				{
+					client->state = NCS_CONNECTED;
+					client->last_server_heartbeat_msec = platform::microseconds() * MillisecondsPerMicrosecond;
+
+					NotifyMessage message;
+					message.channel = 0;
+					notify_message_subscribe(client->scratch_allocator, message, client->subscribe_flags);
+					notify_message_send(client->communication_socket, &message);
+				}
+				else
+				{
+					LOGE("Unable to connect to server!\n");
+				}
+			}
+			else
+			{
+				LOGW("Unrecognized command: %i\n", command);
+			}
+		}
+		else if (FD_ISSET(client->communication_socket, &receive))
+		{
+			NotifyMessage msg;
+			int32_t bytes_read = notify_message_read(client->scratch_allocator, client->communication_socket, &msg);
+			if (bytes_read > 0)
+			{
+				if (msg.type == NMT_HEARTBEAT)
+				{
+					client->last_server_heartbeat_msec = platform::microseconds() * MillisecondsPerMicrosecond;
+				}
+				else if (msg.type == NMT_STRING)
+				{
+					if (client->channel_delegate.is_valid())
+					{
+						client->channel_delegate(msg.channel, msg.data, msg.data_size);
+					}
+					else
+					{
+						LOGW("Received message; but channel delegate is invalid\n");
+					}
+				}
+				else
+				{
+					LOGV("Unhandled message from server; received: %i\n", msg.type);
+				}
+			}
+		}
+	}
+
+	void notify_client_subscribe(NotificationClient* client, uint32_t channel, NotifyMessageDelegate delegate)
+	{
+		// Channel zero is reserved.
+		assert(channel > 0);
+		client->channel_delegate = delegate;
+		client->subscribe_flags |= (1 << channel);
+	}
+
+
+	int32_t notify_message_read(Allocator& allocator, platform::net_socket source, NotifyMessage* message)
+	{
+		const size_t BUFFER_MAX_SIZE = 256;
+		char buffer[BUFFER_MAX_SIZE] = { 0 };
+
+		int32_t bytes_read = net_socket_recv(source, buffer, BUFFER_MAX_SIZE);
+		if (bytes_read > 0)
+		{
+			core::util::MemoryStream stream;
+			stream.init(buffer, BUFFER_MAX_SIZE);
+			stream.read(message->type);
+			stream.read(message->channel);
+			stream.read(message->data_size);
+
+			message->data = MEMORY2_ALLOC(allocator, message->data_size);
+			assert(message->data);
+			stream.read(message->data, message->data_size);
+		}
+
+		return bytes_read;
+	}
+
+	int32_t notify_message_send(net_socket destination, const NotifyMessage* message)
+	{
+		char buffer[256] = { 0 };
+		core::util::MemoryStream stream;
+		stream.init(buffer, 256);
+		stream.write(message->type);
+		stream.write(message->channel);
+		stream.write(message->data_size);
+		stream.write(message->data, message->data_size);
+		return net_socket_send(destination, buffer, stream.current_offset());
+	}
+
+	void notify_message_string(NotifyMessage& message, const platform::PathString& path)
+	{
+		message.type = NMT_STRING;
+		message.data = (void*)&path[0];
+		message.data_size = path.size();
+	}
+
+	void notify_message_subscribe(Allocator& allocator, NotifyMessage& message, uint8_t flags)
+	{
+		message.type = NMT_SUBSCRIBE;
+		message.data = MEMORY2_ALLOC(allocator, sizeof(flags));
+		memcpy(message.data, &flags, sizeof(uint8_t));
+		message.data_size = sizeof(uint8_t);
+	}
+
+
+	net_socket notify_server_accept(net_socket communication_socket, net_address* source)
+	{
+		// try to accept
+		net_socket sock;
+		for (;;)
+		{
+			sock = net_socket_accept(communication_socket, source);
+			if (sock == -1)
+			{
+				if (errno == EINTR)
+				{
+					// interrupted function. sucks.
+					continue;
+				}
+				else
+				{
+					LOGW("accept failed: %i\n", errno);
+					return NET_SOCKET_INVALID;
+				}
+			}
+			break;
+		}
+
+		return sock;
+	}
+
+	void notify_server_create(NotificationServer* server)
+	{
+		memset(server, 0, sizeof(NotificationServer));
+
+		// create a broadcast socket
+		server->broadcast_socket = net_socket_open(net_socket_type::UDP);
+		assert(net_socket_is_valid(server->broadcast_socket));
+
+		net_address bind_address;
+		net_address_init(&bind_address);
+		net_address_set(&bind_address, "0.0.0.0", NOTIFY_BROADCAST_PORT);
+
+		int32_t bind_result = net_socket_bind(server->broadcast_socket, &bind_address);
+		assert(bind_result == 0);
+
+		server->communication_socket = net_socket_open(net_socket_type::TCP);
+		assert(net_socket_is_valid(server->communication_socket));
+
+		net_address com_address;
+		net_address_init(&com_address);
+		net_address_set(&com_address, "0.0.0.0", NOTIFY_COMMUNICATION_PORT);
+
+		net_socket_bind(server->communication_socket, &com_address);
+		net_socket_listen(server->communication_socket, 2);
+	}
+
+	void notify_server_destroy(NotificationServer* server)
+	{
+		net_socket_close(server->broadcast_socket);
+		net_socket_close(server->communication_socket);
+
+		// destroy all clients
+
+		NotificationServerSideClient* client = server->clients;
+		while (client)
+		{
+			NotificationServerSideClient* temp = client;
+			client = client->next;
+
+			MEMORY2_DELETE(detail::_state->allocator, temp);
+		}
+
+		server->clients = nullptr;
+	}
+
+	void notify_server_handle_broadcast_event(NotificationServer* server)
+	{
+		net_address source;
+		const size_t PACKET_SIZE = 128;
+		char packet_buffer[PACKET_SIZE] = { 0 };
+		int32_t bytes_read = net_socket_recvfrom(server->broadcast_socket, &source, packet_buffer, PACKET_SIZE);
+		if (bytes_read)
+		{
+			core::util::MemoryStream stream;
+			stream.init(packet_buffer, PACKET_SIZE);
+
+			int32_t broadcast_query_value = 0;
+			stream.read(broadcast_query_value);
+
+			if (broadcast_query_value == NMT_BROADCAST_REQUEST)
+			{
+				// client is looking for a server; reply with confirmation
+				int32_t reply_value = NMT_BROADCAST_CONFIRM;
+				net_socket_sendto(server->broadcast_socket, &source, (const char*)&reply_value, sizeof(int32_t));
+			}
+		}
+	}
+
+	void notify_server_handle_event(NotificationServer* server, NotificationServerSideClient* client)
+	{
+		memset(server->scratch_memory, 0, 256);
+		Allocator allocator = memory_allocator_linear(MEMORY_ZONE_DEFAULT, server->scratch_memory, 256);
+
+		NotifyMessage message;
+		int32_t bytes_read = notify_message_read(allocator, client->csock, &message);
+		if (bytes_read > 0)
+		{
+			if (message.type == NMT_HEARTBEAT)
+			{
+				client->last_heartbeat_msec = platform::microseconds() * MillisecondsPerMicrosecond;
+			}
+			else if (message.type == NMT_SUBSCRIBE)
+			{
+				memcpy(&client->subscribed_channels, message.data, message.data_size);
+			}
+		}
+		// else: value is probably -1 on a non-blocking socket.
+	}
+
+	void notify_server_tick(NotificationServer* server)
+	{
+		timeval zero_timeval;
+		zero_timeval.tv_sec = 0;
+		zero_timeval.tv_usec = 1;
+
+		fd_set receive;
+		FD_ZERO(&receive);
+		FD_SET(server->broadcast_socket, &receive);
+		FD_SET(server->communication_socket, &receive);
+
+
+		net_socket sock_max = server->communication_socket;
+
+		// iterate over clients and add their fds
+		NotificationServerSideClient* client = server->clients;
+		while (client)
+		{
+			FD_SET(client->csock, &receive);
+			if (client->csock > sock_max)
+			{
+				sock_max = client->csock;
+			}
+
+			client = client->next;
+		}
+
+		// TODO: better performance if we used epoll on linux.
+		int select_result = select(sock_max + 1,
+			&receive,
+			nullptr,
+			nullptr,
+			&zero_timeval);
+		assert(select_result >= 0);
+
+		if (FD_ISSET(server->broadcast_socket, &receive))
+		{
+			notify_server_handle_broadcast_event(server);
+		}
+		else if (FD_ISSET(server->communication_socket, &receive))
+		{
+			net_address source;
+			net_socket sock = notify_server_accept(server->communication_socket, &source);
+			if (net_socket_is_valid(sock))
+			{
+				char buffer[32] = { 0 };
+				net_address_host(&source, buffer, 32);
+
+				// create a client
+				NotificationServerSideClient* new_client = MEMORY2_NEW(detail::_state->allocator, NotificationServerSideClient);
+				new_client->address = source;
+				new_client->csock = sock;
+				new_client->flags = 0;
+				new_client->subscribed_channels = 0;
+				new_client->last_heartbeat_msec = platform::microseconds() * MillisecondsPerMicrosecond;
+				new_client->next = server->clients;
+				server->clients = new_client;
+			}
+		}
+
+		// loop through all clients, handle reads, and when due, send a heartbeat
+		if (server->clients)
+		{
+			bool send_heartbeat = runtime_msec_assign_if_timedout(server->next_heartbeat_msec, NOTIFY_HEARTBEAT_MSEC);
+			client = server->clients;
+			while (client)
+			{
+				if (client->flags & NSCF_DELETE_NEXT_TICK)
+				{
+					client = client->next;
+					continue;
+				}
+
+				if (FD_ISSET(client->csock, &receive))
+				{
+					// handle reads for this client socket
+					notify_server_handle_event(server, client);
+				}
+
+				if (send_heartbeat)
+				{
+					uint64_t client_last_heartbeat_msec = client->last_heartbeat_msec;
+					if (runtime_msec_assign_if_timedout(client_last_heartbeat_msec, NOTIFY_CLIENT_TIMEOUT_MAX * NOTIFY_HEARTBEAT_MSEC))
+					{
+						client->flags |= NSCF_DELETE_NEXT_TICK;
+						client = client->next;
+						continue;
+					}
+
+					NotifyMessage message;
+					message.type = NMT_HEARTBEAT;
+					message.channel = 0;
+					message.data = &message.type;
+					message.data_size = sizeof(message.type);
+					notify_message_send(client->csock, &message);
+				}
+				client = client->next;
+			}
+		}
+
+		// trim deleted clients
+		client = server->clients;
+		NotificationServerSideClient* prev = client;
+		while (client)
+		{
+			if (client->flags & NSCF_DELETE_NEXT_TICK)
+			{
+				if (prev == client)
+				{
+					NotificationServerSideClient* next = client->next;
+					server->clients = next;
+					prev = next;
+					MEMORY2_DELETE(detail::_state->allocator, client);
+					client = next;
+					continue;
+				}
+				else
+				{
+					NotificationServerSideClient* next = client->next;
+					prev->next = next;
+					MEMORY2_DELETE(detail::_state->allocator, client);
+					client = next;
+					continue;
+				}
+			}
+
+			prev = client;
+			client = client->next;
+		}
+	}
+
+	void notify_server_publish(NotificationServer* server, const NotifyMessage* message)
+	{
+		// This should really queue up the publish instead of directly sending it.
+		NotificationServerSideClient* client = server->clients;
+		while (client)
+		{
+			if (client->subscribed_channels & (1 << message->channel))
+			{
+				notify_message_send(client->csock, message);
+			}
+			client = client->next;
+		}
+	}
+
+	bool runtime_msec_assign_if_timedout(uint64_t& target_msec, uint32_t timeout_msec)
+	{
+		uint64_t current_milliseconds = platform::microseconds() * MillisecondsPerMicrosecond;
+		assert(current_milliseconds >= target_msec);
+		if ((current_milliseconds - target_msec) > timeout_msec)
+		{
+			target_msec = current_milliseconds;
+			return true;
+		}
+
+		return false;
+	} // runtime_msec_assign_if_timedout
+
+	static RapidInterface rapid;
+	static platform::DynamicLibrary* rapid_library = nullptr;
+
+	void runtime_load_rapid()
+	{
+		if (rapid_library)
+		{
+			runtime_unload_rapid();
+		}
+
+		PathString program_directory = platform::get_program_directory();
+		PathString lib_directory = program_directory;
+		core::str::directory_up(&lib_directory[0]);
+		core::str::directory_up(&lib_directory[0]);
+		lib_directory.append(PATH_SEPARATOR_STRING);
+		lib_directory.append("lib");
+		lib_directory.append(PATH_SEPARATOR_STRING);
+		lib_directory.append("debug_x86_64");
+		lib_directory.append(PATH_SEPARATOR_STRING);
+#if defined(PLATFORM_LINUX)
+		lib_directory.append("lib");
+#endif
+		lib_directory.append("rapid");
+		lib_directory.append(platform::dylib_extension());
+
+		LOGV("rapid lib = %s\n", lib_directory());
+		rapid_library = platform::dylib_open(lib_directory());
+		assert(rapid_library);
+
+		populate_interface_fn pif = reinterpret_cast<populate_interface_fn>(platform::dylib_find(rapid_library, "populate_interface"));
+		assert(pif);
+
+		pif(rapid);
+	}
+
+	void runtime_unload_rapid()
+	{
+		if (rapid_library)
+		{
+			memset(&rapid, 0, sizeof(RapidInterface));
+			platform::dylib_close(rapid_library);
+			rapid_library = nullptr;
+		}
+	}
+
+	RapidInterface* runtime_rapid()
+	{
+		if (!rapid_library)
+		{
+			return nullptr;
+		}
+
+		return &rapid;
+	}
+
 } // namespace gemini

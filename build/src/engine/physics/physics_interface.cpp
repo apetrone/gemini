@@ -32,7 +32,7 @@
 #include "bullet/bullet_staticbody.h"
 #include "bullet/bullet_motionstate.h"
 
-#include "assets/asset_mesh.h"
+//#include "assets/asset_mesh.h"
 
 #include "physics_common.h"
 
@@ -40,11 +40,15 @@
 
 #include <renderer/debug_draw.h>
 
+#include <runtime/assets.h>
+#include <runtime/mesh.h>
+
 #include <sdk/engine_api.h>
 #include <sdk/model_api.h>
 #include <sdk/physics_api.h>
 
 #include <core/typedefs.h>
+#include <renderer/color.h>
 
 using namespace gemini;
 using namespace gemini::physics::bullet;
@@ -110,55 +114,66 @@ namespace gemini
 			return rigidbody;
 		}
 
-		btCompoundShape* compound_shape_from_geometry(assets::Mesh* mesh, bool is_dynamic, float mass)
+		btCompoundShape* compound_shape_from_geometry(Mesh* mesh, bool is_dynamic, float mass)
 		{
 			bool use_quantized_bvh_tree = true;
 
 			btCompoundShape* compound = new btCompoundShape();
 
-			for( uint32_t index = 0; index < mesh->geometry.size(); ++index )
+			// this shape's transform
+			btTransform local_transform;
+			local_transform.setIdentity();
+
+			// setup shape for a dynamic object
+			if (is_dynamic)
 			{
-				assets::Geometry* geo = mesh->geometry[index];
-				FixedArray<glm::vec3>& vertices = geo->vertices;
+				// create a box for now. this needs to be replaced
+				btCollisionShape* shape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
+				btVector3 local_inertia(0, 0, 0);
 
-				// this shape's transform
-				btTransform local_transform;
-				local_transform.setIdentity();
+				// calculate local inertia
+				shape->calculateLocalInertia(mass, local_inertia);
+				compound->addChildShape(local_transform, shape);
+			}
+			else
+			{
+				// Use the collision geometry from the mesh.
+				assert(mesh->collision_geometry);
+				assert(mesh->collision_geometry->vertices);
+				assert(mesh->collision_geometry->normals);
+				assert(mesh->collision_geometry->indices);
 
-				// setup shape for a dynamic object
-				if (is_dynamic)
+				glm::vec3* vertices = mesh->collision_geometry->vertices;
+				// NOTE: Triangle shapes can ONLY be static objects.
+				// TODO: look into an alternative with btGImpactMeshShape or
+				// btCompoundShape + convex decomposition.
+				// Could also use btConvexHullShape.
+
+				// NOTE: This does NOT make a copy of the data. Whatever you pass it
+				// must persist for the life of the shape.
+				void* indices = mesh->collision_geometry->indices;
+
+				static_assert(sizeof(uint32_t) == sizeof(index_t), "physics assumes index_t is 32-bit");
+
+				btTriangleIndexVertexArray* triangle_vertex_array = new btTriangleIndexVertexArray(
+					mesh->collision_geometry->total_indices/3,
+					(int*)indices,
+					sizeof(index_t) * 3,
+					mesh->collision_geometry->total_vertices,
+					(btScalar*)vertices,
+					sizeof(glm::vec3)
+				);
+
+				// when loading uint16_ts, must specify the index type.
+				if (sizeof(index_t) == 2)
 				{
-					// create a box for now. this needs to be replaced
-					btCollisionShape* shape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
-					btVector3 local_inertia(0, 0, 0);
-
-					// calculate local inertia
-					shape->calculateLocalInertia(mass, local_inertia);
-					compound->addChildShape(local_transform, shape);
+					triangle_vertex_array->getIndexedMeshArray()[0].m_indexType = PHY_SHORT;
 				}
-				else
-				{
-					// NOTE: Triangle shapes can ONLY be static objects.
-					// TODO: look into an alternative with btGImpactMeshShape or
-					// btCompoundShape + convex decomposition.
-					// Could also use btConvexHullShape.
 
-					// specify verts/indices from our meshdef
-					// NOTE: This does NOT make a copy of the data. Whatever you pass it
-					// must persist for the life of the shape.
-					btTriangleIndexVertexArray* triangle_vertex_array = new btTriangleIndexVertexArray(
-						geo->index_count/3,
-						(int*)&geo->indices[0],
-						sizeof(int)*3, geo->vertex_count,
-						(btScalar*)&vertices[0],
-						sizeof(glm::vec3)
-					);
-
-					// use that to create a Bvh triangle mesh shape
-					// TODO: use a btConvexTriangleMeshShape ?
-					btBvhTriangleMeshShape* triangle_mesh = new btBvhTriangleMeshShape(triangle_vertex_array, use_quantized_bvh_tree);
-					compound->addChildShape(local_transform, triangle_mesh);
-				}
+				// use that to create a Bvh triangle mesh shape
+				// TODO: use a btConvexTriangleMeshShape ?
+				btBvhTriangleMeshShape* triangle_mesh = new btBvhTriangleMeshShape(triangle_vertex_array, use_quantized_bvh_tree);
+				compound->addChildShape(local_transform, triangle_mesh);
 			}
 
 			return compound;
@@ -172,9 +187,8 @@ namespace gemini
 			btScalar mass(properties.mass_kg);
 			btVector3 local_inertia(0, 0, 0);
 
-
 			IModelInstanceData* model_interface = engine::instance()->models()->get_instance_data(model_index);
-			assets::Mesh* mesh = assets::meshes()->find_with_id(model_interface->asset_index());
+			gemini::Mesh* mesh = gemini::mesh_from_handle(model_interface->asset_index());
 			if (!mesh)
 			{
 				LOGW("Unable to create physics for null mesh\n");
@@ -249,8 +263,6 @@ namespace gemini
 				body->setCollisionFlags( body_flags );
 				body->setFriction(0.75f);
 			}
-
-
 
 			bullet::get_world()->addRigidBody(body);
 
@@ -431,19 +443,36 @@ namespace gemini
 			bullet::step(step_interval_seconds);
 		}
 
-		RaycastInfo PhysicsInterface::raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance)
+		RaycastInfo PhysicsInterface::raycast(const glm::vec3& start,
+											  const glm::vec3& direction,
+											  float max_distance,
+											  ICollisionObject* ignored_object0,
+											  ICollisionObject* ignored_object1)
 		{
 			glm::vec3 destination = start + (direction * max_distance);
 			btVector3 ray_start(start.x, start.y, start.z);
 			btVector3 ray_end(destination.x, destination.y, destination.z);
 
-			// Ignored object must be valid!
-			assert(ignored_object);
+			//// Ignored object must be valid!
+			//assert(ignored_object);
 
-			BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object);
-			btCollisionObject* obj = bullet_object->get_collision_object();
 
-			ClosestNotMeRayResultCallback callback(obj, ray_start, ray_end);
+			btCollisionObject* obj0 = nullptr;
+			btCollisionObject* obj1 = nullptr;
+
+			if (ignored_object0)
+			{
+				BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object0);
+				obj0 = bullet_object->get_collision_object();
+			}
+
+			if (ignored_object1)
+			{
+				BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object1);
+				obj1 = bullet_object->get_collision_object();
+			}
+
+			ClosestNotMeRayResultCallback callback(ray_start, ray_end, false, false, obj0, obj1);
 
 			// rayTest accepts a line segment from start to end
 			bullet::get_world()->rayTest(ray_start, ray_end, callback);
@@ -455,6 +484,10 @@ namespace gemini
 				info.hit = glm::vec3(hit_point_world.x(), hit_point_world.y(), hit_point_world.z());
 				info.object = static_cast<ICollisionObject*>(callback.m_collisionObject->getUserPointer());
 
+				const btVector3& hit_normal_world = callback.m_hitNormalWorld;
+				info.hit_normal = glm::vec3(hit_normal_world.x(), hit_normal_world.y(), hit_normal_world.z());
+
+				info.closest_hit_fraction = callback.m_closestHitFraction;
 //				LOGV("fraction: %2.2f\n", callback.m_closestHitFraction);
 //
 //				if (callback.m_collisionObject->getCollisionFlags() & btCollisionObject::CF_STATIC_OBJECT)
@@ -471,7 +504,7 @@ namespace gemini
 		}
 
 
-		SweepTestResult PhysicsInterface::sweep(ICollisionObject* source_object, ICollisionShape* shape_object, const glm::vec3& start, const glm::vec3& end, float angle_threshold)
+		SweepTestResult PhysicsInterface::sweep(ICollisionObject* source_object, ICollisionShape* shape_object, const glm::vec3& start, const glm::vec3& end, float angle_threshold, const glm::vec3& angle)
 		{
 			SweepTestResult result;
 
@@ -491,7 +524,7 @@ namespace gemini
 			source.setOrigin(fromglm(start));
 			destination.setOrigin(fromglm(end));
 
-			ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), angle_threshold);
+			ClosestNotMeConvexResultCallback callback(ghost, fromglm(angle), angle_threshold);
 			callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
 			callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
 
@@ -514,6 +547,7 @@ namespace gemini
 				result.hit_point_world = toglm(callback.m_hitPointWorld);
 
 				btVector3 normal = callback.m_hitNormalWorld.normalize();
+				debugdraw::sphere(toglm(callback.m_hitPointWorld), gemini::Color(1.0f, 0.0f, 0.0f), 0.005f, 2.0f);
 				//::renderer::debugdraw::sphere(toglm(callback.m_hitPointWorld), Color::from_rgba(255, 0, 0, 255), 0.005f, 2.0f);
 				//::renderer::debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+normal*0.1f), Color::from_rgba(0, 255, 255, 255), 2.0f);
 

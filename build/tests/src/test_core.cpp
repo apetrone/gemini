@@ -30,6 +30,7 @@
 #include <core/datastream.h>
 #include <core/fixedarray.h>
 #include <core/fixedsizequeue.h>
+#include <core/freelist.h>
 #include <core/hashset.h>
 #include <core/mathlib.h>
 #include <core/mem.h>
@@ -41,6 +42,7 @@
 #include <core/util.h>
 
 #include <platform/platform.h>
+#include <platform/directory_monitor.h>
 
 #include <vector>
 #include <string>
@@ -228,6 +230,28 @@ UNITTEST(Array)
 		Array<int> temp = values;
 		TEST_ASSERT(temp == values, copy_and_equality);
 	}
+
+	// test array resizing
+	{
+		Array<int> test(default_allocator, 0);
+
+		test.resize(1);
+		test[0] = 72;
+
+		test.resize(2);
+		test[1] = 16;
+
+		TEST_ASSERT_EQUALS(test[0], 72);
+		TEST_ASSERT_EQUALS(test[1], 16);
+
+		test.push_back(24);
+		TEST_ASSERT_EQUALS(test[2], 24);
+
+		test.resize(4);
+		test.push_back(120);
+		TEST_ASSERT_EQUALS(test[4], 120);
+	}
+
 }
 
 
@@ -354,6 +378,45 @@ UNITTEST(Delegate)
 	TEST_ASSERT(g_result == 60, delegate_member_int_sum_two);
 
 	Delegate<int(int)> z = MAKE_MEMBER_DELEGATE(int(int), SomeType, &SomeType::ii_foo, &st);
+}
+
+// ---------------------------------------------------------------------
+// directory monitor
+// ---------------------------------------------------------------------
+void monitor_triggered(MonitorHandle handle, MonitorAction action, const platform::PathString& path)
+{
+	LOGV("monitor_triggered with: %s\n", path());
+}
+
+UNITTEST(directory_monitor)
+{
+	Allocator allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+	int32_t startup_result = directory_monitor_startup(allocator);
+	TEST_ASSERT_EQUALS(startup_result, 0);
+
+	MonitorDelegate delegate;
+	delegate.bind<monitor_triggered>();
+
+	platform::PathString directory = platform::get_program_directory()();
+	LOGV("adding watch for directory: \"%s\"\n", directory());
+
+	MonitorHandle handle0 = directory_monitor_add(directory(), delegate);
+
+	TEST_ASSERT_TRUE(handle0 > 0);
+
+	// TODO: Figure out a good way to test this.
+	// size_t index = 0;
+	// LOGV("waiting for file changes...\n");
+
+	// while (index < 0xFFFFFF)
+	// {
+	// 	directory_monitor_update();
+	// 	++index;
+	// }
+
+	directory_monitor_remove(handle0);
+
+	directory_monitor_shutdown();
 }
 
 
@@ -483,6 +546,16 @@ UNITTEST(HashSet)
 	test.insert(HashSet<int, int>::value_type(30, 72));
 	int z = test[30];
 	TEST_ASSERT_EQUALS(z, 72);
+
+
+	// test insertion
+	test[42] = 67;
+	TEST_ASSERT_EQUALS(test[42], 67);
+	TEST_ASSERT_TRUE(test.has_key(42));
+
+	// test removal
+	test.remove(42);
+	TEST_ASSERT_FALSE(test.has_key(42));
 }
 
 
@@ -505,6 +578,54 @@ UNITTEST(CircularBuffer)
 	int d = cb.next();
 	TEST_ASSERT(d == a, circular_buffer);
 }
+
+
+UNITTEST(freelist)
+{
+	struct MyStructNoDefaultCtor
+	{
+		int x;
+
+		MyStructNoDefaultCtor(int value)
+			: x(value)
+		{
+		}
+	};
+
+	Allocator allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
+	Freelist<int> list1(allocator);
+	Freelist<int>::Handle handle1, handle2, handle3;
+	handle1 = list1.acquire();
+	handle2 = list1.acquire();
+	handle3 = list1.acquire();
+
+	list1.set(handle1, 20);
+	list1.set(handle2, 40);
+	list1.set(handle3, 60);
+
+	TEST_ASSERT_EQUALS(list1.size(), 3);
+
+	list1.release(handle2);
+
+	int v1 = list1.from_handle(handle1);
+	TEST_ASSERT_EQUALS(v1, 20);
+
+	int v2 = list1.from_handle(handle3);
+	TEST_ASSERT_EQUALS(v2, 60);
+
+	Freelist<MyStructNoDefaultCtor*> list2(allocator);
+	Freelist<MyStructNoDefaultCtor*>::Handle handle = list2.acquire();
+	list2.set(handle, new MyStructNoDefaultCtor(72));
+
+	Freelist<MyStructNoDefaultCtor*>::Iterator iter;
+	for (iter = list2.begin(); iter != list2.end(); ++iter)
+	{
+		MyStructNoDefaultCtor* instance = iter.data();
+		delete instance;
+	}
+}
+
 
 // ---------------------------------------------------------------------
 // interpolation
@@ -770,6 +891,22 @@ UNITTEST(linearfreelist)
 	}
 
 	TEST_ASSERT(valid_handles == 1, is_valid);
+
+	// stress test
+	for (size_t index = 0; index < 10000; ++index)
+	{
+		LinearFreeList<int>::Handle handle = abc.acquire();
+		if ((index % 10) == 0)
+		{
+			// delete every 10th item.
+			abc.release(handle);
+		}
+	}
+
+	LinearFreeList<int>::Handle last_handle = abc.acquire();
+	TEST_ASSERT_EQUALS(last_handle, 9001);
+
+	abc.clear();
 }
 
 // ---------------------------------------------------------------------
@@ -912,7 +1049,48 @@ UNITTEST(typespec)
 //	return core::str::case_insensitive_compare(type_name, deduced_type_name, 0) == 0;
 //}
 
+// ---------------------------------------------------------------------
+// resizable_memory_stream
+// ---------------------------------------------------------------------
+UNITTEST(resizable_memory_stream)
+{
+	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	ResizableMemoryStream mem(allocator);
 
+	const float INITIAL_VALUE0 = 3.27f;
+	const uint64_t INITIAL_VALUE1 = 1000483;
+	const uint8_t INITIAL_VALUE2 = 127;
+
+	float value = INITIAL_VALUE0;
+	uint64_t test = INITIAL_VALUE1;
+	uint8_t test2 = INITIAL_VALUE2;
+	mem.reserve(512);
+
+	mem.write(&value, sizeof(float));
+	mem.write(&test, sizeof(uint64_t));
+	mem.write(&test2, sizeof(uint8_t));
+
+	mem.rewind();
+
+	value = 0;
+	test = 0;
+	test2 = 0;
+
+	mem.read(&value, sizeof(float));
+	mem.read(&test, sizeof(uint64_t));
+	mem.read(&test2, sizeof(uint8_t));
+
+	TEST_ASSERT_EQUALS(INITIAL_VALUE0, value);
+	TEST_ASSERT_EQUALS(INITIAL_VALUE1, test);
+	TEST_ASSERT_EQUALS(INITIAL_VALUE2, test2);
+}
+
+// ---------------------------------------------------------------------
+// serialization
+// ---------------------------------------------------------------------
+UNITTEST(serialization)
+{
+}
 
 
 // ---------------------------------------------------------------------

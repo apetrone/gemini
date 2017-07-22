@@ -256,11 +256,6 @@ namespace core
 			return _data;
 		}
 
-		Type* operator()()
-		{
-			return _data;
-		}
-
 		const char* c_str() const
 		{
 			return _data;

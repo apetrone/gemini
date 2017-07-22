@@ -500,11 +500,6 @@ namespace font
 //		LOGV("height = %i, ascender = %i, descender = %i (pixels)\n", out_metrics.height, out_metrics.ascender, out_metrics.descender);
 	}
 
-	int get_glyph_metrics(Handle /*handle*/, uint32_t /*codepoint*/, glm::vec2& /*mins*/, glm::vec2& /*maxs*/, int* /*advance*/)
-	{
-		return 0;
-	}
-
 	int get_string_metrics(Handle handle, const char* utf8, size_t string_length, glm::vec2& mins, glm::vec2& maxs)
 	{
 		if (!handle.is_valid())

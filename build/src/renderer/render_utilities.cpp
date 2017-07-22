@@ -23,7 +23,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "render_utilities.h"
-#include "renderstream.h"
 #include "rqueue.h"
 #include <core/logging.h>
 
@@ -55,21 +54,5 @@ namespace renderer
 				uvs[7] = y / (float)sheet_height;
 			} // calc_tile_uvs
 		} // namespace sprite
-
-		void strip_shader_version(char* buffer, core::StackString<32>& version)
-		{
-			// remove preceding "#version" shader
-			const char* pos = core::str::strstr(buffer, "#version");
-			if (pos)
-			{
-				const char* end = pos;
-				while(*end != '\n')
-					++end;
-
-				version._length = static_cast<size_t>(end-pos);
-				memcpy(&version[0], &buffer[(pos-buffer)], version._length);
-				memset(&buffer[(pos-buffer)], ' ', version._length);
-			}
-		} // strip_shader_version
 	} // mamespace render_utilities
 } // namespace renderer

@@ -26,6 +26,8 @@
 
 #include "typedefs.h"
 
+#include <core/array.h>
+
 #if 0
 // USAGE
 LinearFreeList<int> abc;
@@ -70,13 +72,14 @@ private:
 		T* data;
 		size_t state;
 	};
+
+	gemini::Allocator& allocator;
 	Array<Record> elements;
 
 public:
 	typedef T value_type;
 	typedef T* value_pointer;
 	typedef size_t Handle;
-	gemini::Allocator& allocator;
 
 	LinearFreeList(gemini::Allocator& allocator)
 		: allocator(allocator)

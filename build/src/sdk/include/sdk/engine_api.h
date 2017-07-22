@@ -73,13 +73,6 @@ namespace gemini
 		virtual void* allocate(size_t bytes) = 0;
 		virtual void deallocate(void* pointer) = 0;
 
-		virtual void render_view(const View& view, const gemini::Color& clear_color) = 0;
-		// render a viewmodel (no depth testing; different fov)
-		virtual void render_viewmodel(IEngineEntity* entity, const View& view) = 0;
-		virtual void render_debug(const View& view) = 0;
-		virtual void render_gui() = 0;
-
-
 		virtual Allocator& allocator() = 0;
 
 //		virtual void render_world(const glm::vec3& origin, const glm::vec2& view_angles) = 0;
@@ -99,8 +92,10 @@ namespace gemini
 		// the application, do so.
 		virtual void terminate_application() = 0;
 
-
 		virtual void set_relative_mouse_mode(bool enable) = 0;
+
+		virtual void play_animation(class IModelInstanceData* model, const char* name) = 0;
+		virtual bool is_animation_finished(IModelInstanceData* model) = 0;
 	};
 
 	namespace engine

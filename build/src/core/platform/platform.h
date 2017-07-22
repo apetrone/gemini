@@ -344,78 +344,7 @@ namespace platform
 	void joystick_set_force(uint32_t index, uint16_t force);
 
 
-	// ---------------------------------------------------------------------
-	// network
-	// ---------------------------------------------------------------------
-#if defined(PLATFORM_WINDOWS)
-	typedef SOCKET net_socket;
-#elif defined(PLATFORM_POSIX)
-	typedef int net_socket;
-#else
-	#error net_socket not defined for this platform!
-#endif
-	enum class net_socket_type
-	{
-		UDP,
-		TCP
-	};
 
-
-	typedef struct sockaddr_in net_address;
-
-	void net_address_init(net_address* address);
-	void net_address_set(net_address* address, const char* ip, uint16_t port);
-	int32_t net_address_host(net_address* address, char* buffer, size_t buffer_size);
-	uint16_t net_address_port(net_address* address);
-	void net_address_port(net_address* address, uint16_t port);
-
-	void net_shutdown();
-
-	// socket functions
-
-	/// @returns 0 on success; -1 on failure
-	net_socket net_socket_open(net_socket_type type);
-
-	// @returns true if socket is valid, false otherwise.
-	bool net_socket_is_valid(net_socket sock);
-
-	void net_socket_close(net_socket sock);
-
-	/// @returns 0 on success
-	int32_t net_socket_bind(net_socket sock, net_address* interface);
-
-	/// @brief Send data (TCP-only)
-	/// @returns bytes written.
-	int32_t net_socket_send(net_socket sock, const char* data, size_t data_size);
-
-	/// @brief Send data (UDP-only)
-/// @returns bytes read if > 0; otherwise an error code.
-	int32_t net_socket_sendto(net_socket sock, net_address* destination, const char* data, size_t data_size);
-
-
-	/// @brief Receive data (TCP-only)
-	/// @returns bytes read if > 0; otherwise an error code.
-	int32_t net_socket_recv(net_socket sock, char* buffer, size_t buffer_size);
-
-	/// @brief Receive data (UDP-only)
-	/// @returns bytes read if > 0; otherwise an error code.
-	int32_t net_socket_recvfrom(net_socket sock, net_address* from, char* buffer, size_t buffer_size);
-
-	// socket options
-
-	// enable/disable address re-use
-	int32_t net_socket_set_reuseaddr(net_socket sock, int32_t value);
-
-	// enable/disable blocking i/o
-	int32_t net_socket_set_blocking(net_socket sock, int32_t value);
-
-	// returns 0 on success
-	int32_t net_startup();
-
-	int32_t net_ipv4_by_hostname(const char* hostname, const char* service, char ip_address[16]);
-
-	// Connect to a remote server (TCP only)
-	int32_t net_socket_connect(net_socket sock, net_address& to);
 
 	// ---------------------------------------------------------------------
 	// process
@@ -598,7 +527,19 @@ namespace platform
 		constexpr uint8_t CanChooseFiles		= 16;	// files can be selected
 	} // namespace OpenDialogFlags
 
-	Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths);
+	enum class OpenDialogEventType
+	{
+		OkClicked
+	};
+
+	struct PlatformDialogEvent
+	{
+		OpenDialogEventType type;
+		platform::PathString filename;
+	};
+
+	typedef gemini::Delegate<uint32_t(PlatformDialogEvent&)> open_dialog_event_handler;
+	Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths, open_dialog_event_handler event_handler = open_dialog_event_handler());
 
 	namespace SaveDialogFlags
 	{

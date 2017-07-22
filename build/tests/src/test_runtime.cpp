@@ -29,21 +29,95 @@
 
 #include <platform/platform.h>
 
+#include <runtime/asset_handle.h>
+#include <runtime/asset_library.h>
+#include <runtime/assets.h>
+#include <runtime/debug_event.h>
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
 #include <runtime/jobqueue.h>
 #include <runtime/geometry.h>
-
 #include <runtime/http.h>
 
 #include <assert.h>
 
 #include <core/mathlib.h>
 
+using namespace gemini;
+
 // ---------------------------------------------------------------------
-// jobqueue
+// asset library
 // ---------------------------------------------------------------------
 
+struct CustomAsset
+{
+	uint32_t id;
+	platform::PathString uri;
+};
+
+class CustomAssetLibrary : public AssetLibrary2<CustomAsset, CustomAssetLibrary>
+{
+public:
+	CustomAssetLibrary(Allocator& allocator)
+		: AssetLibrary2(allocator)
+	{
+	}
+
+	void create_asset(LoadState& state, void* parameters)
+	{
+		state.asset = new CustomAsset();
+	}
+
+	bool is_same_asset(CustomAsset* asset, void* parameters)
+	{
+		return true;
+	}
+
+	AssetLoadStatus load_asset(LoadState& state, const platform::PathString& fullpath, void* parameters)
+	{
+		state.asset->uri = fullpath;
+		return AssetLoad_Success;
+	}
+
+	void destroy_asset(LoadState& state)
+	{
+		delete state.asset;
+	}
+};
+
+UNITTEST(asset_library)
+{
+	Allocator allocator = memory_allocator_default(MEMORY_ZONE_ASSETS);
+	CustomAssetLibrary lib(allocator);
+
+	// check default asset
+	CustomAsset default_asset;
+	default_asset.id = 42;
+	lib.default_asset(&default_asset);
+	TEST_ASSERT_EQUALS(default_asset.id, lib.default_asset()->id);
+
+	lib.prefix_path("shaders/120");
+
+	AssetHandle handle;
+	handle = lib.load("test1");
+	TEST_ASSERT_TRUE(lib.handle_is_valid(handle));
+	CustomAsset* asset0 = lib.lookup(handle);
+	TEST_ASSERT_TRUE(asset0 != nullptr);
+
+	// try loading the same asset again
+	handle = lib.load("test1");
+	CustomAsset* asset1 = lib.lookup(handle);
+	TEST_ASSERT_EQUALS(asset0, asset1);
+
+	platform::PathString fullpath("shaders/120/test1");
+	platform::path::normalize(&fullpath[0]);
+	TEST_ASSERT_EQUALS(asset1->uri, fullpath);
+}
+
+
+// ---------------------------------------------------------------------
+// geometry
+// ---------------------------------------------------------------------
 void print_string(const char* data)
 {
 	LOGV("thread: 0x%x, string: %s\n", (size_t)platform::thread_id(), data);
@@ -56,8 +130,6 @@ float mat3_determinant(const glm::mat3& xform)
 		- xform[1][0] * (xform[0][1] * xform[2][2] - xform[2][1] * xform[0][2])
 		+ xform[2][0] * (xform[0][1] * xform[1][2] - xform[1][1] * xform[0][2]);
 }
-
-
 
 UNITTEST(Geometry)
 {
@@ -79,8 +151,13 @@ UNITTEST(Geometry)
 
 	OrientedBoundingBox box;
 	compute_oriented_bounding_box_by_points(box, vertices, 4);
+
+	//AssetHandle mesh_handle = mesh_load("models/plane");
 }
 
+// ---------------------------------------------------------------------
+// jobqueue
+// ---------------------------------------------------------------------
 UNITTEST(jobqueue)
 {
 	const size_t MAX_JOB_ITERATIONS = 6;
@@ -174,6 +251,17 @@ UNITTEST(jobqueue)
 }
 
 // ---------------------------------------------------------------------
+// debug_event
+// ---------------------------------------------------------------------
+UNITTEST(debug_event)
+{
+	// Is there really anything to test here?
+	//telemetry_host_startup("127.0.0.1", TELEMETRY_VIEWER_PORT);
+	//telemetry_host_submit_frame();
+	//telemetry_host_shutdown();
+}
+
+// ---------------------------------------------------------------------
 // filesystem
 // ---------------------------------------------------------------------
 UNITTEST(filesystem)
@@ -190,6 +278,7 @@ UNITTEST(filesystem)
 	//	platform::PathString absolute_path;
 	//	TEST_ASSERT(fs->get_absolute_path_for_content(absolute_path, "conf/shaders.conf") == false, get_absolute_path_for_content_missing);
 }
+
 
 // ---------------------------------------------------------------------
 // http
@@ -227,6 +316,122 @@ UNITTEST(logging)
 	LOGW("Warning, %i parameters missing!\n", 3);
 }
 
+// https://tools.ietf.org/html/rfc4648
+void base64_indices_from_bytes(uint8_t* tuple, const uint8_t* bytes)
+{
+	// encode index table (from 6-bit value to index)
+	const uint8_t index_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+	// 6-bit bitmask
+	const uint32_t bitmask = (1 << 6) - 1;
+
+	// extract 6-bits from each input octet and convert to index
+	tuple[0] = index_table[ (bytes[0] >> 2) & bitmask ];
+	tuple[1] = index_table[ ((bytes[0] & 0x03) << 4) + (bytes[1] >> 4) ];
+	tuple[2] = index_table[ ((bytes[1] & 0xF) << 2) + (bytes[2] >> 6) ];
+	tuple[3] = index_table[ bytes[2] & bitmask ];
+} // base64_indices_from_bytes
+
+void base64_encode(const void* data, size_t data_size, Array<char>& output)
+{
+	size_t triplets = data_size / 3;
+	size_t extra_bytes = data_size % 3;
+	size_t total_triplets = triplets;
+
+	// If there is an uneven number of triplets, we increment the total.
+	if (extra_bytes > 0)
+	{
+		total_triplets++;
+	}
+	output.resize(total_triplets * 4);
+
+	size_t output_index = 0;
+	for (size_t triplet = 0; triplet < triplets; ++triplet)
+	{
+		const uint8_t* bytes = reinterpret_cast<const uint8_t*>(data) + (triplet * 3);
+		uint8_t tuple[4];
+		base64_indices_from_bytes(tuple, bytes);
+		output[output_index++] = tuple[0];
+		output[output_index++] = tuple[1];
+		output[output_index++] = tuple[2];
+		output[output_index++] = tuple[3];
+	}
+
+	// If there isn't an even number of triplets, we'll have to pad the output.
+	if (extra_bytes == 1)
+	{
+		// We pad the extra two bytes with zeros and replace the indices with =
+		uint8_t bytes[3];
+
+		const char* chars = reinterpret_cast<const char*>(data) + (triplets * 3);
+		bytes[0] = chars[0];
+		bytes[1] = 0;
+		bytes[2] = 0;
+
+		uint8_t tuple[4];
+		base64_indices_from_bytes(tuple, bytes);
+		output[output_index++] = tuple[0];
+		output[output_index++] = tuple[1];
+		output[output_index++] = '=';
+		output[output_index++] = '=';
+	}
+	else if (extra_bytes == 2)
+	{
+		// We pad the extra byte with a zero and replace the index with =
+		uint8_t bytes[3];
+
+		const char* chars = reinterpret_cast<const char*>(data) + (triplets * 3);
+		bytes[0] = chars[0];
+		bytes[1] = chars[1];
+		bytes[2] = 0;
+
+		uint8_t tuple[4];
+		base64_indices_from_bytes(tuple, bytes);
+		output[output_index++] = tuple[0];
+		output[output_index++] = tuple[1];
+		output[output_index++] = tuple[2];
+		output[output_index++] = '=';
+	}
+} // base64_encode
+
+UNITTEST(base64_encoding)
+{
+	Allocator default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
+	// base 64 encode multiple input octets.
+	const size_t test_encodings = 3;
+	const char* input[] = { "M", "Ma", "Man" };
+
+	size_t input_sizes[] = { 1, 2, 3 };
+
+	const char* encoded[] = { "TQ==", "TWE=", "TWFu" };
+
+	for (size_t index = 0; index < test_encodings; ++index)
+	{
+		Array<char> output(default_allocator);
+
+		// base64 encode it
+		base64_encode(input[index], input_sizes[index], output);
+
+		// compare it
+		TEST_ASSERT_TRUE(output.size() > 0);
+
+		bool matches = true;
+		for (size_t byte = 0; byte < output.size(); ++byte)
+		{
+			matches = matches && (encoded[index][byte] == output[byte]);
+		}
+		TEST_ASSERT_TRUE(matches);
+
+		// string is not NULL terminated, so we use this format.
+		if (!matches)
+		{
+			LOGV("[%s] -> output is '%.*s'\n", input[index], output.size(), &output[0]);
+		}
+	}
+} // base64_encoding
+
+
 int main(int, char**)
 {
 	gemini::core_startup();
@@ -235,7 +440,6 @@ int main(int, char**)
 	using namespace gemini;
 
 	unittest::UnitTest::execute();
-
 	gemini::runtime_shutdown();
 	gemini::core_shutdown();
 	return 0;

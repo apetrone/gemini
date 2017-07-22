@@ -144,6 +144,26 @@ namespace platform
 					&total_elements
 				);
 
+				int chosen_config = -1;
+				for (int config_index = 0; config_index < total_elements; ++config_index)
+				{
+					XVisualInfo* visual_info = glXGetVisualFromFBConfig(window_provider->get_display(), config[config_index]);
+					if (visual_info)
+					{
+						int transparent_type = -1;
+						glXGetFBConfigAttrib(window_provider->get_display(), config[config_index], GLX_TRANSPARENT_TYPE, &transparent_type);
+
+						// Look for an opaque window config.
+						if (transparent_type == GLX_NONE)
+						{
+							chosen_config = config_index;
+							break;
+						}
+					}
+				}
+
+				// If you hit this assert, a compatible FBconfig was not found.
+				assert(chosen_config != -1);
 
 				int context_attributes[] = {
 					GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
@@ -155,7 +175,7 @@ namespace platform
 				bool direct_rendering = true;
 				data->context = glXCreateContextAttribsARB(
 					window_provider->get_display(),
-					*config,
+					config[chosen_config],
 					share_context,
 					direct_rendering,
 					context_attributes
@@ -186,6 +206,9 @@ namespace platform
 				}
 
 				assert(glXIsDirect(window_provider->get_display(), data->context));
+
+				// free the list
+				XFree(config);
 			}
 			else // fallback and use glXCreateContext
 			{
@@ -262,6 +285,8 @@ namespace platform
 				window_provider->get_display(),
 				*config
 			);
+
+			XFree(config);
 		}
 
 		void* X11GraphicsProvider::get_native_visual(void* graphics_data)
@@ -282,6 +307,16 @@ namespace platform
 			// only frame buffer configurations that have associated X visuals
 			attributes[index++] = GLX_X_RENDERABLE;
 			attributes[index++] = True;
+
+			// This can be configured to allow transparent windows.
+			attributes[index++] = GLX_TRANSPARENT_TYPE;
+			attributes[index++] = GLX_NONE;
+
+			attributes[index++] = GLX_RENDER_TYPE;
+			attributes[index++] = GLX_RGBA_BIT;
+
+			attributes[index++] = GLX_X_VISUAL_TYPE;
+			attributes[index++] = GLX_TRUE_COLOR;
 
 			// setup the back buffer for the window
 			attributes[index++] = GLX_RED_SIZE;

@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "shaderprogram.h"
+//#include "shaderprogram.h"
 #include <renderer/color.h>
 
 #include <core/typedefs.h>
@@ -80,11 +80,6 @@ namespace font
 
 		bool is_valid() const;
 
-		unsigned int point_size() const
-		{
-			return 0; //return get_point_size(*this);
-		}
-
 		operator int() const
 		{
 			return ref;
@@ -109,9 +104,6 @@ namespace font
 
 	// retrieve metrics for this font
 	void get_font_metrics(Handle handle, Metrics& out_metrics);
-
-	// fetch metrics for a single glyph; if available (return == 0)
-	int get_glyph_metrics(Handle handle, uint32_t codepoint, glm::vec2& mins, glm::vec2& maxs, int* advance);
 
 	// fetch metrics for a string
 	int get_string_metrics(Handle handle, const char* utf8, size_t string_length, glm::vec2& mins, glm::vec2& maxs);

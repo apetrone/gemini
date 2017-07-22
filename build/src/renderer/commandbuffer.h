@@ -38,7 +38,8 @@ namespace render2
 		COMMAND_PIPELINE,			// set the rendering pipeline
 		COMMAND_VIEWPORT,			// set viewport
 		COMMAND_TEXTURE,			// set a texture
-		COMMAND_STATE
+		COMMAND_STATE,				// set graphics state
+		COMMAND_CONSTANT			// set a constant
 	};
 
 	// It is assumed that front faces are counter-clock wise.
@@ -64,22 +65,14 @@ namespace render2
 				size_t param3 = 0);
 	};
 
+	const char* render_command_to_string(CommandType command);
+
 	// ---------------------------------------------------------------------
 	// Pass
 	// ---------------------------------------------------------------------
 	struct Pass
 	{
-		Pass() :
-			target(nullptr),
-			clear_color(false),
-			clear_depth(false),
-			clear_stencil(false),
-			depth_test(true),
-			cull_mode(CullMode::Backface)
-		{
-			color(0, 0, 0, 0);
-		}
-
+		Pass();
 		void color(float red, float green, float blue, float alpha);
 
 		// color attachments (4)
@@ -94,6 +87,7 @@ namespace render2
 		bool clear_depth;
 		bool clear_stencil;
 		bool depth_test;
+		bool depth_write;
 
 		CullMode cull_mode;
 	}; // Pass

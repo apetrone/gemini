@@ -43,6 +43,12 @@ namespace gemini
 	{
 		return static_cast<uint32_t>(OSAtomicIncrement32(reinterpret_cast<volatile int32_t*>(destination)));
 	}
+
+	uint64_t atom_increment64(volatile uint64_t* destination, uint64_t value)
+	{
+		#error Implement on this platform.
+		return 0;
+	}
 #elif defined(PLATFORM_WINDOWS)
 	bool atom_compare_and_swap32(volatile uint32_t* destination, uint32_t new_value, uint32_t comparand)
 	{
@@ -57,6 +63,11 @@ namespace gemini
 	{
 		return InterlockedIncrement((volatile unsigned int*)destination);
 	}
+
+	uint64_t atom_increment64(volatile uint64_t* destination, uint64_t value)
+	{
+		return InterlockedAdd64((volatile LONG64*)destination, value);
+	}
 #elif defined(PLATFORM_LINUX) && (defined(__clang__) || defined(__GNUC__))
 	bool atom_compare_and_swap32(volatile uint32_t* destination, uint32_t new_value, uint32_t comparand)
 	{
@@ -68,6 +79,10 @@ namespace gemini
 		return __sync_add_and_fetch(destination, 1);
 	}
 
+	uint64_t atom_increment64(volatile uint64_t* destination, uint64_t value)
+	{
+		return __sync_add_and_fetch(destination, 1);
+	}
 #else
 	#error No atomic synchronization functions defined for this platform.
 #endif

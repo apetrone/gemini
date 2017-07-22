@@ -57,7 +57,7 @@ namespace gui
 		flags |= Flag_CursorEnabled;
 		set_name(label);
 
-		font_handle = get_compositor()->get_resource_cache()->create_font("fonts/debug.ttf", 16);
+		font_handle = get_compositor()->get_resource_cache()->create_font("debug", 16);
 
 		int ascender, descender;
 		size_t height;
@@ -196,7 +196,10 @@ namespace gui
 		// Don't hit the asserts in the compositor.
 		if (item_type != MenuItem_Separator)
 		{
-			size = max_menu_size;
+			if (max_menu_size.width > 0 && max_menu_size.height > 0)
+			{
+				size = max_menu_size;
+			}
 		}
 	} // update
 
@@ -271,7 +274,7 @@ namespace gui
 	{
 		MenuButton* button = new MenuButton(this, menu);
 		button->set_name(menu->get_text());
-		button->set_font("fonts/debug.ttf", 16);
+		button->set_font("debug", 16);
 		button->set_origin(next_origin, 0.0f);
 		button->set_size(menu->get_size());
 		button->set_text(menu->get_text());

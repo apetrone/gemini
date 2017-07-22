@@ -25,6 +25,8 @@
 #include <sdk/utils.h>
 #include <sdk/physics_collisionobject.h>
 
+#include <sdk/game_api.h>
+
 namespace gemini
 {
 	EntityFactoryRegistrar& entity_factory_registrar()
@@ -67,4 +69,10 @@ namespace gemini
 			return reinterpret_cast<Entity*>(object->get_user_data());
 		}
 	}
-}
+
+	// from game_api: create the inverse camera transform matrix
+	glm::mat4 camera_state_to_transform(const CameraState& camera_state)
+	{
+		return glm::translate(glm::mat4(1.0f), camera_state.position) * glm::toMat4(camera_state.rotation);
+	}
+} // namespace gemini

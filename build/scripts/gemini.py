@@ -158,6 +158,10 @@ def setup_driver(arguments, product, target_platform):
 	#macosx.driver.macosx_deployment_target = "10.8"
 	#macosx.driver.sdkroot = "macosx10.9"
 
+	product.defines += [
+		"JSON_IS_AMALGAMATION"
+	]
+
 	product.excludes += [
 		"*.DS_Store"
 	]
@@ -323,6 +327,9 @@ def get_tools(arguments, libruntime, librenderer, libcore, libsdk, **kwargs):
 	orion = get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs)
 	tools.append(orion)
 
+	asset_compiler = get_asset_compiler(arguments, [libruntime, librenderer, libfreetype, libcore], **kwargs)
+	tools.append(asset_compiler)
+
 	return tools
 
 
@@ -335,16 +342,19 @@ def get_libcore(arguments, target_platform):
 		"src/core/*.cpp",
 		"src/core/*.h",
 
+		"src/core/platform/directory_monitor.h",
+
 		"src/core/platform/graphics_provider.cpp",
 		"src/core/platform/graphics_provider.h",
 		"src/core/platform/kernel.cpp",
 		"src/core/platform/kernel.h",
 		"src/core/platform/kernel_events.h",
+		"src/core/platform/input.cpp",
+		"src/core/platform/input.h",
+		"src/core/platform/network.h",
 		"src/core/platform/platform.cpp",
 		"src/core/platform/platform.h",
 		"src/core/platform/platform_internal.h",
-		"src/core/platform/input.cpp",
-		"src/core/platform/input.h",
 		"src/core/platform/window.cpp",
 		"src/core/platform/window.h",
 		"src/core/platform/window_provider.cpp",
@@ -389,6 +399,9 @@ def get_libcore(arguments, target_platform):
 		"src/core/platform/backend/osx/osx_backend.mm",
 		"src/core/platform/backend/osx/cocoa_common.h",
 
+		# directory monitor
+		"src/core/platform/directory_monitor/osx/osx_directory_monitor.cpp",
+
 		# dylib
 		"src/core/platform/dylib/osx/osx_dylib.cpp",
 		"src/core/platform/dylib/posix/posix_dlopen.cpp",
@@ -398,7 +411,7 @@ def get_libcore(arguments, target_platform):
 		"src/core/platform/filesystem/posix/posix_filesystem_common.cpp",
 
 		# network
-		"src/core/platform/network/linux/linux_network.cpp",
+		"src/core/platform/network/osx/osx_network.cpp",
 
 		# serial
 		"src/core/platform/serial/posix/posix_serial.cpp",
@@ -460,6 +473,9 @@ def get_libcore(arguments, target_platform):
 		"src/core/platform/backend/linux/linux_backend.cpp",
 		"src/core/platform/backend/linux/linux_backend.h",
 
+		# directory monitor
+		"src/core/platform/directory_monitor/linux/linux_directory_monitor.cpp",
+
 		# dylib
 		"src/core/platform/dylib/posix/posix_dylib.cpp",
 		"src/core/platform/dylib/posix/posix_dlopen.cpp",
@@ -493,9 +509,6 @@ def get_libcore(arguments, target_platform):
 	if arguments.with_x11:
 		found_glx = target_platform.find_include_path("GL/glx.h")
 		assert_dependency(found_glx, "GL/glx.h not found!")
-
-		found_xrandr = target_platform.find_include_path("X11/extensions/Xrandr.h")
-		assert_dependency(found_xrandr, "X11/extensions/Xrandr.h not found!")
 
 		found_xinerama = target_platform.find_include_path("X11/extensions/Xinerama.h")
 		assert_dependency(found_xinerama, "X11/extensions/Xinerama.h not found!")
@@ -535,6 +548,9 @@ def get_libcore(arguments, target_platform):
 	windows.sources += [
 		# backend
 		"src/core/platform/backend/windows/win32_backend.cpp",
+
+		# directory monitor
+		"src/core/platform/directory_monitor/windows/win32_directory_monitor.cpp",
 
 		# dylib
 		"src/core/platform/dylib/windows/win32_dylib.cpp",
@@ -582,7 +598,42 @@ def get_librenderer(arguments, target_platform):
 	librenderer.project_root = COMMON_PROJECT_ROOT
 	librenderer.root = "../"
 	librenderer.sources += [
-		"src/renderer/*.*",
+		"src/renderer/color.cpp",
+		"src/renderer/color.h",
+		"src/renderer/commandbuffer.cpp",
+		"src/renderer/commandbuffer.h",
+		"src/renderer/constantbuffer.cpp",
+		"src/renderer/constantbuffer.h",
+		"src/renderer/constants.h",
+		"src/renderer/debug_draw.cpp",
+		"src/renderer/debug_draw.h",
+		"src/renderer/device.h",
+		"src/renderer/font_library.cpp",
+		"src/renderer/font_library.h",
+		"src/renderer/image.cpp",
+		"src/renderer/image.h",
+		"src/renderer/material.cpp",
+		"src/renderer/material.h",
+		"src/renderer/pipeline.cpp",
+		"src/renderer/pipeline.h",
+		"src/renderer/render_utilities.cpp",
+		"src/renderer/render_utilities.h",
+		"src/renderer/renderer.cpp",
+		"src/renderer/renderer.h",
+		"src/renderer/rendertarget.h",
+		"src/renderer/rqueue.cpp",
+		"src/renderer/rqueue.h",
+		"src/renderer/scene_renderer.cpp",
+		"src/renderer/scene_renderer.h",
+		"src/renderer/shader_library.cpp",
+		"src/renderer/shader_library.h",
+		"src/renderer/shader.cpp",
+		"src/renderer/shader.h",
+		"src/renderer/texture.cpp",
+		"src/renderer/texture.h",
+		"src/renderer/vertexbuffer.h",
+		"src/renderer/vertexdescriptor.cpp",
+		"src/renderer/vertexdescriptor.h",
 
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_image.h"),
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_truetype.h"),
@@ -609,22 +660,26 @@ def get_librenderer(arguments, target_platform):
 
 	if arguments.opengl:
 		librenderer.sources += [
-			"src/renderer/gl/*.cpp",
-			"src/renderer/gl/*.h",
-			"src/renderer/gl/opengl/*.cpp",
-			"src/renderer/gl/opengl/*.h"
-		]
-		librenderer.excludes += [
-			"src/renderer/gl/opengl/opengl_21.*",
+			"src/renderer/gl/gemgl.cpp",
+			"src/renderer/gl/gemgl.h",
+			"src/renderer/gl/opengl_device.cpp",
+			"src/renderer/gl/opengl_device.h",
+			"src/renderer/gl/glcommandserializer.cpp",
+			"src/renderer/gl/glcommandserializer.h",
+			"src/renderer/gl/opengl_common.cpp",
+			"src/renderer/gl/opengl_common.h"
+
 		]
 	elif arguments.gles:
 		librenderer.sources += [
-			"src/renderer/gl/*.cpp",
-			"src/renderer/gl/*.h",
-			# "src/renderer/gl/gles2/*.cpp",
-			# "src/renderer/gl/gles2/*.h"
-			"src/renderer/gl/gles2/*.cpp",
-			"src/renderer/gl/gles2/*.h"
+			"src/renderer/gl/gemgl.cpp",
+			"src/renderer/gl/gemgl.h",
+			"src/renderer/gl/gles2_device.cpp",
+			"src/renderer/gl/gles2_device.h",
+			"src/renderer/gl/glcommandserializer.cpp",
+			"src/renderer/gl/glcommandserializer.h",
+			"src/renderer/gl/opengl_common.cpp",
+			"src/renderer/gl/opengl_common.h"
 		]
 		librenderer.excludes += [
 			"src/renderer/gl/gles2/opengl_glesv2.*"
@@ -642,7 +697,7 @@ def get_librenderer(arguments, target_platform):
 
 	return librenderer
 
-def get_libruntime(arguments, target_platform, librenderer, libcore):
+def get_libruntime(arguments, target_platform, libcore):
 	libruntime = Product(name="runtime", output=get_library_type(target_platform))
 	setup_driver(arguments, libruntime, target_platform)
 	libruntime.project_root = COMMON_PROJECT_ROOT
@@ -660,29 +715,39 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 		"src/runtime/audio_mixer.h",
 
 		# assets
-		"src/runtime/assetlibrary.h",
-		# "src/runtime/assets/asset_emitter.cpp",
-		# "src/runtime/assets/asset_emitter.h",
-		# "src/runtime/assets/asset_font.cpp",
-		# "src/runtime/assets/asset_font.h",
-		"src/runtime/assets/asset_material.cpp",
-		"src/runtime/assets/asset_material.h",
-		"src/runtime/assets/asset_mesh.cpp",
-		"src/runtime/assets/asset_mesh.h",
-		"src/runtime/assets/asset_shader.cpp",
-		"src/runtime/assets/asset_shader.h",
-		"src/runtime/assets/asset_sound.cpp",
-		"src/runtime/assets/asset_sound.h",
-		"src/runtime/assets/asset_texture.cpp",
-		"src/runtime/assets/asset_texture.h",
+		"src/runtime/asset_library.h",
+		"src/runtime/asset_handle.h",
+
 		"src/runtime/assets.cpp",
 		"src/runtime/assets.h",
+
+		"src/runtime/debug_event.cpp",
+		"src/runtime/debug_event.h",
+
+		"src/runtime/debugvar.cpp",
+		"src/runtime/debugvar.h",
 
 		"src/runtime/hotloading.cpp",
 		"src/runtime/hotloading.h",
 
 		"src/runtime/keyframechannel.cpp",
 		"src/runtime/keyframechannel.h",
+
+		"src/runtime/material.cpp",
+		"src/runtime/material.h",
+		"src/runtime/material_library.cpp",
+		"src/runtime/material_library.h",
+
+		"src/runtime/mesh.cpp",
+		"src/runtime/mesh.h",
+		"src/runtime/mesh_library.cpp",
+		"src/runtime/mesh_library.h",
+
+		"src/runtime/audio_library.cpp",
+		"src/runtime/audio_library.h",
+
+		"src/runtime/texture_library.cpp",
+		"src/runtime/texture_library.h",
 
 		"src/ui/**.c*",
 		"src/ui/**.h",
@@ -706,7 +771,6 @@ def get_libruntime(arguments, target_platform, librenderer, libcore):
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")
 	]
 
-	libruntime.dependencies.append(librenderer)
 	libruntime.dependencies.append(libcore)
 
 	if arguments.with_civet:
@@ -918,6 +982,26 @@ def get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs):
 
 	return orion
 
+
+def get_asset_compiler(arguments, links, **kwargs):
+	asset_compiler = Product(name="asset_compiler", output=ProductType.Application)
+	asset_compiler.project_root = COMMON_PROJECT_ROOT
+	asset_compiler.product_root = COMMON_PRODUCT_ROOT
+	asset_compiler.root = "../"
+	target_platform = kwargs.get("target_platform", None)
+
+	setup_driver(arguments, asset_compiler, target_platform)
+	setup_common_tool(asset_compiler)
+
+	asset_compiler.dependencies.extend(links)
+
+	asset_compiler.sources += [
+		"src/tools/asset_compiler/asset_compiler.cpp"
+	]
+
+	return asset_compiler
+
+
 def arguments(parser):
 	parser.add_argument("--with-gles", dest="gles", action="store_true", help="Build with GLES support", default=False)
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi; implies EGL + OpenGLES", default=False)
@@ -1042,7 +1126,7 @@ def products(arguments, **kwargs):
 	librenderer = get_librenderer(arguments, target_platform)
 	librenderer.dependencies += [libcore, Dependency(file="glm.py")]
 
-	libruntime = get_libruntime(arguments, target_platform, librenderer, libcore)
+	libruntime = get_libruntime(arguments, target_platform, libcore)
 	libruntime.dependencies += [libcore, Dependency(file="glm.py")]
 
 	# don't add this until we clean up the shaderconfig dependency on libruntime
@@ -1083,7 +1167,7 @@ def products(arguments, **kwargs):
 		game.root = "../"
 		game.product_root = COMMON_PRODUCT_ROOT
 		game.includes += [
-			"src/include/sdk/*.h",
+			"src/include/sdk",
 			"src/engine/game",
 			"src/include"
 		]
@@ -1099,8 +1183,42 @@ def products(arguments, **kwargs):
 		# No need to whitelist; just glob everything for the game.
 		game.sources += [
 			"src/include/sdk/*.h",
-			os.path.join(GAME_ROOT_PATH, "src/*.h"),
-			os.path.join(GAME_ROOT_PATH, "src/*.cpp")
+			os.path.join(GAME_ROOT_PATH, "src/ai_behaviors.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/ai_behaviors.h"),
+			os.path.join(GAME_ROOT_PATH, "src/animated.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/animated.h"),
+			os.path.join(GAME_ROOT_PATH, "src/charactercontroller.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/charactercontroller.h"),
+			os.path.join(GAME_ROOT_PATH, "src/game_ui.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/game_ui.h"),
+			os.path.join(GAME_ROOT_PATH, "src/gameinterface.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/gameinterface.h"),
+			os.path.join(GAME_ROOT_PATH, "src/gamma_rays.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/gamma_rays.h"),
+			os.path.join(GAME_ROOT_PATH, "src/npc.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/npc.h"),
+			os.path.join(GAME_ROOT_PATH, "src/player.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/player.h"),
+			# os.path.join(GAME_ROOT_PATH, "src/project_helium.cpp"),
+			# os.path.join(GAME_ROOT_PATH, "src/project_helium.h"),
+			# os.path.join(GAME_ROOT_PATH, "src/project_hydrogen.cpp"),
+			# os.path.join(GAME_ROOT_PATH, "src/project_hydrogen.h"),
+			os.path.join(GAME_ROOT_PATH, "src/renderable.h"),
+			os.path.join(GAME_ROOT_PATH, "src/rotationsnap.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/rotationsnap.h"),
+			os.path.join(GAME_ROOT_PATH, "src/simplegame.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/simplegame.h"),
+			os.path.join(GAME_ROOT_PATH, "src/staticmesh.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/staticmesh.h"),
+			os.path.join(GAME_ROOT_PATH, "src/test.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/testgame.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/testgame.h"),
+			os.path.join(GAME_ROOT_PATH, "src/trigger.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/trigger.h"),
+			os.path.join(GAME_ROOT_PATH, "src/weapon.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/weapon.h"),
+			os.path.join(GAME_ROOT_PATH, "src/world.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/world.h")
 		]
 
 		gemini.dependencies += [ game ]
@@ -1149,10 +1267,10 @@ def products(arguments, **kwargs):
 		"src/engine/audio.cpp",
 		"src/engine/audio.h",
 		"src/engine/gemini.cpp",
+		"src/engine/model_instance_data.cpp",
+		"src/engine/model_instance_data.h",
 		"src/engine/navigation.cpp",
 		"src/engine/navigation.h",
-		"src/engine/scenelink.cpp",
-		"src/engine/scenelink.h",
 		# "src/engine/script.cpp",
 		# "src/engine/script.h",
 
@@ -1169,8 +1287,8 @@ def products(arguments, **kwargs):
 		# "src/engine/game/screencontrol.*",
 
 		"src/engine/game/entity_allocator.h",
-		"src/engine/game/particlesystem.h",
-		"src/engine/game/particlesystem.cpp",
+		# "src/engine/game/particlesystem.h",
+		# "src/engine/game/particlesystem.cpp",
 
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_image.h"),
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_vorbis.c")

@@ -217,16 +217,16 @@ namespace gui
 		const bool passed_flags = panel->has_flags(option_flags);
 		const bool hit_test = panel->hit_test_local(local_coords);
 		const bool result = passed_flags && hit_test;
-		//		if (!result)
-		//		{
-		//			fprintf(stdout, "[%s] local_coords = %2.2f, %2.2f [flags: %s, hit_test: %s]\n",
-		//				panel->get_name(),
-		//				local_coords.x,
-		//				local_coords.y,
-		//				passed_flags ? "Yes" : "No",
-		//				hit_test ? "Yes" : "No"
-		//			);
-		//		}
+		//if (!result)
+		//{
+		//	LOGV("[%s] local_coords = %2.2f, %2.2f [flags: %s, hit_test: %s]\n",
+		//		panel->get_name(),
+		//		local_coords.x,
+		//		local_coords.y,
+		//		passed_flags ? "Yes" : "No",
+		//		hit_test ? "Yes" : "No"
+		//	);
+		//}
 
 		return result;
 	} // hit_test_panel
@@ -497,7 +497,7 @@ namespace gui
 		return false;
 	} // cursor_move_absolute
 
-	void Compositor::cursor_button(CursorButton::Type button, bool is_down)
+	bool Compositor::cursor_button(CursorButton::Type button, bool is_down)
 	{
 		bool event_handled = false;
 		if (is_down)
@@ -589,7 +589,7 @@ namespace gui
 			drop_target = nullptr;
 		}
 
-		// return event_handled;
+		return event_handled;
 	} // cursor_button
 
 	void Compositor::cursor_scroll(int32_t direction)
@@ -649,7 +649,6 @@ namespace gui
 
 		const Point local_coords = panel->compositor_to_local(location);
 		const bool hit_layout = layout->hit_test_local(local_coords);
-		LOGV("test panel's layout %s, result => %i\n", panel->get_name(), hit_layout);
 		return hit_layout;
 	}
 

@@ -93,7 +93,7 @@ namespace kernel
 		// we should default to swapping buffers ourself
 		swap_buffers = 1;
 
-		current_tick = 0;
+		current_physics_tick = 0;
 		current_frame = 0;
 	}
 

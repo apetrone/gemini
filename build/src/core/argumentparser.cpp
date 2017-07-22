@@ -849,6 +849,14 @@ namespace core
 				}
 				else
 				{
+					if (flags & 1)
+					{
+						// still reading a token
+						std::string token = std::string(source_commandline,
+							static_cast<size_t>(outer - commandline),
+							static_cast<size_t>(iter - outer));
+						tokens.push_back(token);
+					}
 					break;
 				}
 

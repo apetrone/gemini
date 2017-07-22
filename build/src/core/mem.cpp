@@ -284,6 +284,11 @@ namespace gemini
 
 	void memory_deallocate(void* pointer, const char* /*filename*/, int /*line*/)
 	{
+		if (!pointer)
+		{
+			// Nothing to do.
+			return;
+		}
 		unsigned char* memory = reinterpret_cast<unsigned char*>(pointer);
 
 		MemoryZoneHeader* zone_header = memory_zone_header_from_pointer(pointer);

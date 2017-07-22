@@ -26,18 +26,23 @@
 
 #include <core/logging.h>
 
-#include <renderer/debug_draw.h>
-#include <renderer/renderer.h>
-#include <renderer/renderstream.h>
-#include <renderer/font.h>
+#include <runtime/asset_handle.h>
+#include <runtime/assets.h>
+
 #include <renderer/color.h>
+#include <renderer/debug_draw.h>
+#include <renderer/font_library.h>
+#include <renderer/renderer.h>
+#include <runtime/debug_event.h>
 
 // Enable this to temporarily make all debug draw functions a no-op.
 //#define DISABLE_DEBUG_DRAW 1
 
+using namespace gemini;
+
 namespace debugdraw
 {
-	const size_t DEBUGDRAW_PERSISTENT_PRIMITIVE_MAX = 16;
+	const size_t DEBUGDRAW_PERSISTENT_PRIMITIVE_MAX = 2048;
 
 	// if you modify this, you must also update the buffer_primitive_table.
 	enum
@@ -199,7 +204,7 @@ namespace debugdraw
 				return &persistent_primitives[ next_primitive++ ];
 			}
 
-			void update(float delta_msec)
+			void update(float delta_seconds)
 			{
 				// run an update for each active primitive
 				for(size_t index = 0; index < persistent_primitives.size(); ++index)
@@ -216,7 +221,7 @@ namespace debugdraw
 					if ((primitive->type > 0) && (primitive->timeleft >= 0))
 					{
 						// timeleft has a value, subtract deltatime
-						primitive->timeleft -= delta_msec;
+						primitive->timeleft -= delta_seconds;
 					}
 				}
 			}
@@ -267,9 +272,9 @@ namespace debugdraw
 
 	render2::Pipeline* text_pipeline = nullptr;
 	render2::Buffer* text_buffer = nullptr;
-	Array<font::FontVertex>* text_vertex_cache;
+	Array<FontVertex>* text_vertex_cache;
 
-	font::Handle text_handle;
+	AssetHandle text_handle;
 	glm::mat4 orthographic_projection;
 
 	glm::mat4 modelview_matrix;
@@ -627,15 +632,14 @@ namespace debugdraw
 
 		line_vertex_cache = MEMORY2_NEW(allocator, Array<DebugDrawVertex>)(allocator);
 		tris_vertex_cache = MEMORY2_NEW(allocator, Array<TexturedVertex>)(allocator);
-		text_vertex_cache = MEMORY2_NEW(allocator, Array<font::FontVertex>)(allocator);
+		text_vertex_cache = MEMORY2_NEW(allocator, Array<FontVertex>)(allocator);
 
 		device = render_device;
 
-		Array<unsigned char> fontdata(allocator);
-		const render2::ResourceProvider* resource_provider = render2::get_resource_provider();
-		resource_provider->load_file(fontdata, "fonts/debug.ttf");
-		text_handle = font::load_from_memory(&fontdata[0], fontdata.size(), 16);
-		assert(text_handle.is_valid());
+		FontCreateParameters font_params;
+		font_params.size_pixels = 16;
+		text_handle = font_load("debug", false, &font_params);
+		assert(text_handle != InvalidAssetHandle);
 
 		// create buffers for line, triangles, and font
 		line_buffer = device->create_vertex_buffer(0);
@@ -645,7 +649,7 @@ namespace debugdraw
 		// line pipeline
 		{
 			render2::PipelineDescriptor descriptor;
-			descriptor.shader = device->create_shader("debug");
+			descriptor.shader = shader_load("debug");
 			descriptor.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 			descriptor.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 			descriptor.input_layout = device->create_input_layout(descriptor.vertex_description, descriptor.shader);
@@ -659,7 +663,7 @@ namespace debugdraw
 		// triangle pipeline
 		{
 			render2::PipelineDescriptor descriptor;
-			descriptor.shader = device->create_shader("vertexcolortexture");
+			descriptor.shader = shader_load("vertexcolortexture");
 			descriptor.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 			descriptor.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 			descriptor.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
@@ -681,7 +685,7 @@ namespace debugdraw
 		// font pipeline
 		{
 			render2::PipelineDescriptor descriptor;
-			descriptor.shader = device->create_shader("font");
+			descriptor.shader = shader_load("font");
 			descriptor.vertex_description.add("in_position", render2::VD_FLOAT, 2);
 			descriptor.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 			descriptor.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
@@ -986,11 +990,11 @@ namespace debugdraw
 				if (primitive->type == TYPE_TEXT)
 				{
 					size_t prev_offset = offset_index;
-					offset_index += font::draw_string(text_handle, &(*text_vertex_cache)[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
+					offset_index += font_draw_string(text_handle, &(*text_vertex_cache)[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
 
 					for (size_t vertex_index = prev_offset; vertex_index < offset_index; ++vertex_index)
 					{
-						font::FontVertex* vertex = &(*text_vertex_cache)[vertex_index];
+						FontVertex* vertex = &(*text_vertex_cache)[vertex_index];
 						vertex->position.x += primitive->start.x;
 						vertex->position.y += primitive->start.y;
 					}
@@ -1003,11 +1007,11 @@ namespace debugdraw
 				if (primitive->type == TYPE_TEXT)
 				{
 					size_t prev_offset = offset_index;
-					offset_index += font::draw_string(text_handle, &(*text_vertex_cache)[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
+					offset_index += font_draw_string(text_handle, &(*text_vertex_cache)[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
 
 					for (size_t vertex_index = prev_offset; vertex_index < offset_index; ++vertex_index)
 					{
-						font::FontVertex* vertex = &(*text_vertex_cache)[vertex_index];
+						FontVertex* vertex = &(*text_vertex_cache)[vertex_index];
 						vertex->position.x += primitive->start.x;
 						vertex->position.y += primitive->start.y;
 					}
@@ -1016,7 +1020,7 @@ namespace debugdraw
 		}
 
 		assert(total_vertices_required % 3 == 0);
-		const size_t new_vertexbuffer_size = sizeof(font::FontVertex) * total_vertices_required;
+		const size_t new_vertexbuffer_size = sizeof(FontVertex) * total_vertices_required;
 		if (new_vertexbuffer_size > 0)
 		{
 			device->buffer_resize(text_buffer, new_vertexbuffer_size);
@@ -1027,7 +1031,7 @@ namespace debugdraw
 
 			serializer->pipeline(text_pipeline);
 			serializer->vertex_buffer(text_buffer);
-			render2::Texture* texture = font::get_font_texture(text_handle);
+			render2::Texture* texture = font_texture(text_handle);
 			assert(texture);
 			serializer->texture(texture, 0);
 			serializer->draw(0, total_vertices_required);
@@ -1049,6 +1053,7 @@ namespace debugdraw
 
 		render2::Pass pass;
 		pass.depth_test = false;
+		pass.depth_write = false;
 		pass.cull_mode = render2::CullMode::None;
 		if (render_target == nullptr)
 		{
@@ -1090,31 +1095,31 @@ namespace debugdraw
 	//}
 
 
-	void axes(const glm::mat4& transform, float axis_length, float duration)
+	void axes(const glm::mat4& transform, float axis_length, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if ( primitive )
 		{
 			primitive->type = TYPE_AXES;
 			glm::vec4 col = glm::column( transform, 3 );
 			primitive->start = glm::vec3( col );
 			primitive->transform = transform;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 			primitive->radius = axis_length;
 		}
 	}
 
-	void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration)
+	void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if (primitive)
 		{
 			primitive->type = TYPE_AXES;
@@ -1125,145 +1130,145 @@ namespace debugdraw
 			transform[3] = glm::vec4(origin.x, origin.y, origin.z, 0);
 			primitive->start = origin;
 			primitive->transform = transform;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 			primitive->radius = axis_length;
 		}
 	}
 
-	void box(const glm::vec3& mins, const glm::vec3& maxs, const gemini::Color& color, float duration)
+	void box(const glm::vec3& mins, const glm::vec3& maxs, const gemini::Color& color, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if ( primitive )
 		{
 			primitive->type = TYPE_BOX;
 			primitive->start = mins;
 			primitive->end = maxs;
 			primitive->color = color;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 		}
 	}
 
-	void point(const glm::vec3& pt, const gemini::Color& color, float size, float duration)
+	void point(const glm::vec3& pt, const gemini::Color& color, float size, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if ( primitive )
 		{
 			primitive->type = TYPE_BOX;
 			primitive->start = glm::vec3( pt[0] - size, pt[1] - size, pt[2] - size );
 			primitive->end = glm::vec3( pt[0] + size, pt[1] + size, pt[2] + size );
 			primitive->color = color;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 		}
 	}
 
-	void line(const glm::vec3& start, const glm::vec3& end, const gemini::Color& color, float duration)
+	void line(const glm::vec3& start, const glm::vec3& end, const gemini::Color& color, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if ( primitive )
 		{
 			primitive->type = TYPE_LINE;
 			primitive->start = start;
 			primitive->end = end;
 			primitive->color = color;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 		}
 	}
 
-	void sphere(const glm::vec3& center, const gemini::Color& color, float radius, float duration)
+	void sphere(const glm::vec3& center, const gemini::Color& color, float radius, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if ( primitive )
 		{
 			primitive->type = TYPE_SPHERE;
 			primitive->start = center;
 			primitive->radius = radius;
 			primitive->color = color;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 		}
 	}
 
-	void text(int x, int y, const char* string, const gemini::Color& color, float duration)
+	void text(int x, int y, const char* string, const gemini::Color& color, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = text_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = text_list->request(duration_seconds > 0.0f);
 		if ( primitive )
 		{
 			primitive->type = TYPE_TEXT;
 			primitive->start = glm::vec3(x, y, 0);
 			primitive->color = color;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 			primitive->buffer = string;
 		}
 	}
 
-	void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const gemini::Color& color, float duration)
+	void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const gemini::Color& color, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = tris_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = tris_list->request(duration_seconds > 0.0f);
 		if (primitive)
 		{
 			primitive->type = TYPE_TRIANGLE;
 			primitive->start = v0;
 			primitive->end = v1;
 			primitive->color = color;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 			primitive->alt = v2;
 		}
 	}
 
-	void camera(const glm::vec3& origin, const glm::vec3& view, float duration)
+	void camera(const glm::vec3& origin, const glm::vec3& view, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if (primitive)
 		{
 			primitive->type = TYPE_CAMERA;
 			primitive->start = origin;
 			primitive->end = view;
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 			primitive->radius = 1.0f;
 		}
 	}
 
-	void oriented_box(const glm::mat3& orientation, const glm::vec3& origin, const glm::vec3& extents, const gemini::Color& color, float duration)
+	void oriented_box(const glm::mat3& orientation, const glm::vec3& origin, const glm::vec3& extents, const gemini::Color& color, float duration_seconds)
 	{
 #if defined(DISABLE_DEBUG_DRAW)
 		return;
 #endif
 
-		DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+		DebugPrimitive* primitive = line_list->request(duration_seconds > 0.0f);
 		if (primitive)
 		{
 			primitive->type = TYPE_OBB;
 			primitive->start = origin;
 			primitive->end = extents;
 			primitive->transform = glm::mat4(orientation);
-			primitive->timeleft = duration;
+			primitive->timeleft = duration_seconds;
 			primitive->color = color;
 		}
 	} // oriented box

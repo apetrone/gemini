@@ -29,12 +29,6 @@
 
 namespace renderer
 {
-
-//	unsigned int texture_unit_for_map( renderer::ShaderString & name );
-//
-//	unsigned int material_type_to_parameter_type( const char * name );
-//	int material_parameter_type_to_render_state( unsigned int type );
-
 	MaterialParameter* Material::parameter_by_name(const std::string& search_name)
 	{
 		for (MaterialParameter& parameter : parameters)
@@ -74,5 +68,4 @@ namespace renderer
 			++i;
 		}
 	}
-
 } // namespace renderer

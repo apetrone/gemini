@@ -102,6 +102,7 @@ public:
 	uint32_t flags;
 	uint32_t render_flags;
 	int32_t model_index;
+	uint16_t index;
 	EntityName name;
 
 	glm::vec3 position;
@@ -133,7 +134,8 @@ public:
 	virtual void pre_tick();
 	virtual void post_tick();
 
-	virtual void update(float delta_seconds, float alpha);
+	virtual void update(float delta_seconds);
+	virtual void interpolate_state(float alpha);
 
 	virtual void remove();
 	virtual void remove_collision();
@@ -144,6 +146,9 @@ public:
 
 	// Use is called on this entity
 	virtual void use(Entity* user, const glm::vec3& in_vector);
+
+	// This entity was 'hit' by means of a weapon
+	virtual void hit(Entity* user, const glm::vec3& force, const glm::vec3& local_position);
 
 	virtual bool is_player() const { return false; }
 	virtual bool is_door() const { return false; }
@@ -165,6 +170,7 @@ public:
 	virtual void add_collider(gemini::physics::ICollisionObject* collider, const glm::vec3& offset);
 	virtual void remove_colliders();
 
+	virtual uint16_t entity_index() const;
 public:
 	// memory overloads
 	void* operator new(size_t bytes);
@@ -215,6 +221,7 @@ public:
 
 	// functions for this script object
 	virtual void set_model(const char* path);
+	virtual void remove_model();
 
 
 	Array<gemini::physics::ICollisionObject*> colliders;
@@ -226,5 +233,6 @@ void entity_startup();
 void entity_post_script_load();
 void entity_shutdown();
 void entity_update_physics();
-void entity_update(float delta_seconds, float alpha);
+void entity_update(float delta_seconds);
+void entity_interpolate(float alpha);
 gemini::Allocator& entity_allocator();

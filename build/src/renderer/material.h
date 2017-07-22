@@ -26,6 +26,7 @@
 
 #include "texture.h"
 
+#include <runtime/asset_handle.h>
 #include <core/mathlib.h>
 
 #include <vector>
@@ -51,13 +52,12 @@ namespace renderer
 		int int_value;
 		glm::vec4 vector_value;
 		unsigned int texture_unit;
-		renderer::Texture* texture;
+		gemini::AssetHandle texture_handle;
 
 
 		MaterialParameter() :
 			int_value(-1),
-			texture_unit(0),
-			texture(0)
+			texture_unit(0)
 		{
 		}
 	}; // MaterialParameter

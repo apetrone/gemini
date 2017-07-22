@@ -50,6 +50,13 @@ namespace image
 		TEX_CUBE = 1
 	}; // ImageType
 
+	enum ImagePixelFormat
+	{
+		IPF_RGB,				// 3-component, RGB
+		IPF_RGBA,				// 4-component, RGBA
+		IPF_SRGB,				// 3-component, sRGB
+	}; // ImagePixelFormat
+
 	enum ImageFlags
 	{
 		F_RGB = 1,
@@ -91,6 +98,7 @@ namespace image
 	{
 		ImageType type;
 		FilterType filter;
+		ImagePixelFormat pixel_format;
 		uint32_t flags;
 
 		uint32_t width;
@@ -119,7 +127,6 @@ namespace image
 	void generate_checker_pattern(Image& image, const gemini::Color& color1, const gemini::Color& color2);
 	void generate_checker_image(unsigned char* pixels, int width, int height, const gemini::Color& color1, const gemini::Color& color2);
 	void flip_image_vertically(int width, int height, int components, unsigned char* pixels);
-	renderer::Texture* load_default_texture(Image& image);
 
 	//
 	// image manipulation functions
@@ -132,5 +139,7 @@ namespace image
 	unsigned char* load_image_from_memory(unsigned char* data, unsigned int dataSize, unsigned int* width, unsigned int* height, unsigned int* channels);
 //	void save_image_to_file( const char * filename, unsigned int width, unsigned int height, unsigned int channels, unsigned char * pixels, int imageType );
 	void free_image(unsigned char* pixels);
+
+	void save_image_to_file(const Image& image, const char* filename);
 
 } // namespace image

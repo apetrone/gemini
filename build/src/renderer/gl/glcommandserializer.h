@@ -28,8 +28,7 @@
 
 #include <renderer/gl/gemgl.h>
 
-
-
+#include <core/mem.h>
 #include <core/typedefs.h>
 
 namespace render2
@@ -37,10 +36,7 @@ namespace render2
 	class GLCommandSerializer : public CommandSerializer
 	{
 	public:
-		GLCommandSerializer(CommandQueue& command_queue) :
-		queue(command_queue)
-		{
-		}
+		GLCommandSerializer(gemini::Allocator& allocator, CommandQueue& command_queue);
 
 		GLCommandSerializer& operator=(const GLCommandSerializer& other) = delete;
 
@@ -58,10 +54,10 @@ namespace render2
 							  );
 		}
 
-		virtual void draw_indexed_primitives(Buffer* index_buffer, size_t total)
+		virtual void draw_indexed_primitives(Buffer* index_buffer, size_t index_offset, size_t total)
 		{
 			queue.add_command(
-							  Command(COMMAND_DRAW_INDEXED, index_buffer, 0, total, 0, 0, 1)
+							  Command(COMMAND_DRAW_INDEXED, index_buffer, 0, index_offset, total, 0, 1)
 							  );
 		}
 
@@ -86,7 +82,13 @@ namespace render2
 							  );
 		}
 
+		virtual void constant(
+			const char* name,
+			void* data,
+			size_t data_size);
 	private:
 		CommandQueue& queue;
+
+		gemini::Allocator& allocator;
 	}; // GLCommandSerializer
 } // namespace render2

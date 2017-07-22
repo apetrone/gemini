@@ -25,6 +25,7 @@
 #pragma once
 
 #include <core/mathlib.h>
+#include <runtime/asset_handle.h>
 
 namespace gemini
 {
@@ -35,48 +36,31 @@ namespace gemini
 	public:
 		virtual ~IModelInstanceData() {};
 
-		virtual unsigned int asset_index() const = 0;
-		virtual glm::mat4& get_local_transform() = 0;
-		virtual void set_local_transform(const glm::mat4& transform) = 0;
-//		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const = 0;
-
-//		virtual glm::mat4* get_local_bone_transforms(uint32_t geometry_index) const = 0;
-		virtual glm::mat4* get_model_bone_transforms(uint32_t geometry_index) const = 0;
-		virtual glm::mat4* get_inverse_bind_transforms(uint32_t geometry_index) const = 0;
-		virtual uint32_t get_total_transforms() const = 0;
+		virtual AssetHandle asset_index() const = 0;
+		//virtual glm::mat4& get_local_transform() = 0;
+		//virtual void set_local_transform(const glm::mat4& transform) = 0;
 
 		virtual const Hitbox* get_hitboxes() const = 0;
 
 		virtual void set_animation_enabled(int32_t index, bool enabled) = 0;
-
-		// get an animations pose
-		virtual void get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations) = 0;
-
-		// set the pose for this model instance
-		virtual void set_pose(glm::vec3* positions, glm::quat* rotations) = 0;
 
 		// returns the index of an animation by name
 		// -1 if the animation could not be found.
 		virtual int32_t get_animation_index(const char* name) = 0;
 
 		// add an animation to this model
-		virtual int32_t add_animation(const char* name) = 0;
+		//virtual int32_t add_animation(const char* name) = 0;
 
-
-		virtual int32_t get_total_animations() const = 0;
-
-
-		virtual void reset_channels(int32_t index) = 0;
 		virtual float get_animation_duration(int32_t index) const = 0;
-		virtual uint32_t get_total_bones(int32_t index) const = 0;
+		//virtual uint32_t get_total_bones(int32_t index) const = 0;
 
-		virtual int32_t find_bone_named(const char* bone) = 0;
+		//virtual int32_t find_bone_named(const char* bone) = 0;
 
 		// returns the bone's current pose in local coordinates
-		virtual void get_local_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation) = 0;
+		//virtual void get_local_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation) = 0;
 
 		// returns the bone's current pose in model coordinates
-		virtual void get_model_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation) = 0;
+		//virtual void get_model_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation) = 0;
 
 		virtual const glm::vec3& get_mins() const = 0;
 		virtual const glm::vec3& get_maxs() const = 0;
@@ -91,7 +75,7 @@ namespace gemini
 
 //		virtual int32_t get_model_index(const char* model_path) = 0;
 
-		virtual int32_t create_instance_data(const char* model_path) = 0;
+		virtual int32_t create_instance_data(uint16_t entity_index, const char* model_path) = 0;
 		virtual void destroy_instance_data(int32_t index) = 0;
 
 		virtual IModelInstanceData* get_instance_data(int32_t index) = 0;

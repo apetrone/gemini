@@ -300,9 +300,9 @@ class VertexCache(object):
 				vertices[vertex_index][1],
 				vertices[vertex_index][2])
 
-			normal = Vector3(normals[vertex_index][0],
-				normals[vertex_index][1],
-				normals[vertex_index][2])
+			normal = Vector3(normals[loop.index][0],
+				normals[loop.index][1],
+				normals[loop.index][2])
 
 			# for now, this only handles one uv set
 			uv = uvs[0][loop.index]
@@ -756,6 +756,8 @@ class GeminiModel(object):
 		self.bone_data = None
 
 		self.selected_meshes = []
+		self.collision_meshes = []
+
 	#
 	# Materials
 	#
@@ -810,7 +812,7 @@ class GeminiModel(object):
 
 		# bail out early if we're missing data
 		if not (self.armature and self.bone_data):
-			return
+			return []
 
 		bpy.ops.object.select_all(action='DESELECT')
 
@@ -835,12 +837,11 @@ class GeminiModel(object):
 
 			if self.armature.animation_data is not None:
 				print("Exporting action '%s'" % action.name)
-				self.armature.animation_data.action = action
 				bpy.context.scene.objects.active = self.armature
 				bpy.ops.object.select_pattern(pattern=self.armature.name)
 				bpy.ops.object.mode_set(mode='POSE')
 				bpy.ops.pose.select_all(action='SELECT')
-				bpy.ops.pose.transforms_clear()
+				self.armature.animation_data.action = action
 				bpy.ops.object.mode_set(mode='OBJECT')
 
 			for bone_data in self.bone_data.ordered_items:
@@ -951,6 +952,23 @@ class GeminiModel(object):
 				if self.selected_only and obj.select or not self.selected_only:
 					self.selected_meshes.append(obj)
 
+	def generate_collision_geometry(self, collision_meshes):
+		vertices = []
+		normals = []
+		indices = []
+
+		if not collision_meshes:
+			print('No collision meshes. Skipping.')
+			return
+
+		if len(collision_meshes) > 1:
+			print("Found more than one collision mesh. Ignoring all but the first, {}".format(collision_meshes[0].name))
+
+		mesh = Mesh.from_object(self, collision_meshes[0], None)
+
+		return {'vertices': mesh.vertices, 'normals': mesh.normals, 'indices': mesh.indices}
+
+
 	#
 	# Export model + animations
 	#
@@ -967,8 +985,12 @@ class GeminiModel(object):
 
 		# scan through scene objects
 		for index, obj in enumerate(bpy.context.scene.objects):
-			print("index: %i, object: %s, type: %s" % (index, obj.name, obj.type))
-			self.add_object(obj)
+			#print("index: %i, object: %s, type: %s" % (index, obj.name, obj.type))
+			if '_collision' in obj.name:
+				print('Found collision mesh {}'.format(obj.name))
+				self.collision_meshes.append(obj)
+			else:
+				self.add_object(obj)
 
 		# clear selection
 		bpy.ops.object.select_all(action='DESELECT')
@@ -979,6 +1001,8 @@ class GeminiModel(object):
 		total_meshes = len(self.selected_meshes)
 
 		print("Total selected meshes: %i" % len(self.selected_meshes))
+
+		animations = []
 
 		root_node = RootNode(materials=[])
 		root_node.export_info = {
@@ -1001,10 +1025,6 @@ class GeminiModel(object):
 
 		root_node.prepare_materials_for_export(self)
 
-		self.file_handle.write(root_node.to_json())
-
-		self.file_handle.close()
-
 		if self.armature:
 			# write animations to the same directory where the .model goes
 			target_directory = os.path.dirname(self.filepath)
@@ -1020,6 +1040,15 @@ class GeminiModel(object):
 				handle.write(animation.to_json())
 				handle.close()
 
+		# Populate the animations so we know which to load.
+		root_node.animations = [anim.name for anim in animations]
+
+		root_node.collision_geometry = self.generate_collision_geometry(self.collision_meshes)
+
+		# Write out the mesh file
+		self.file_handle.write(root_node.to_json())
+		self.file_handle.close()
+
 		# restore the original frame
 		bpy.context.scene.frame_set(original_scrubber_position)
 
@@ -1030,7 +1059,7 @@ class GeminiModel(object):
 class export_gemini(bpy.types.Operator):
 	'''Export Skeleton Mesh / Animation Data file(s)'''
 	bl_idname = "gemini_export.test" # this is important since its how bpy.ops.export.udk_anim_data is constructed
-	bl_label = "Export gemini .model"
+	bl_label = "Export gemini (.model)"
 	# List of operator properties, the attributes will be assigned
 	# to the class instance from the operator settings before calling.
 
@@ -1100,7 +1129,7 @@ class export_gemini(bpy.types.Operator):
 # startup / blender specific interface functions
 #
 def menu_func(self, context):
-	self.layout.operator(export_gemini.bl_idname, text="gemini .model")
+	self.layout.operator(export_gemini.bl_idname, text="gemini (.model)")
 	#self.layout.operator(export_animation.bl_idname, text="gemini .animation")
 
 def register():

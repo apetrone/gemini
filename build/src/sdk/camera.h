@@ -94,6 +94,11 @@ enum class CameraType
 
 const char* cameratype_to_string(CameraType type);
 
+namespace gemini
+{
+	struct CameraState;
+}
+
 class GameCamera
 {
 public:
@@ -120,8 +125,8 @@ public:
 	// Called each frame
 	virtual void tick(float step_interval_seconds) = 0;
 
-	// Called when the target object's position changed
-	virtual void set_target_position(const glm::vec3& position) = 0;
+	// set the vertical field of view
+	virtual void set_fov(float new_fov) = 0;
 
 	// Set the target object's moved direction.
 	virtual void set_target_direction(const glm::vec3& direction) = 0;
@@ -134,6 +139,26 @@ public:
 
 	// Reset this camera's view.
 	virtual void reset_view() = 0;
+
+
+	virtual void set_minimum_distance(float value) = 0;
+	virtual void set_follow_distance(float value) = 0;
+
+	// Copy CameraState to internal state
+	virtual void set_initial_state(const gemini::CameraState& state) = 0;
+	virtual void get_current_state(gemini::CameraState& state) = 0;
+
+	// Sets the world position of the camera.
+	// This allows the camera to perform its own collision detection and
+	// response as well as allowing it to form the view matrix when parameters
+	// are extracted from the camera.
+	virtual void set_world_position(const glm::vec3& world_position) = 0;
+
+	virtual void set_target_fov(float new_fov) = 0;
+	virtual void set_horizontal_offset(float new_horizontal_offset) = 0;
+	virtual void set_vertical_offset(float new_vertical_offset) = 0;
+
+	virtual void collision_correct(float step_interval_seconds) = 0;
 }; // GameCamera
 
 
@@ -141,80 +166,68 @@ public:
 
 #include <sdk/physics_collisionobject.h>
 
-class QuaternionFollowCamera : public GameCamera
+
+template <class T>
+struct AnimatedTargetValue
 {
-private:
+	T target_value;
+	T original_value;
+	T current_value;
+	float target_time_seconds;
+	float current_time_seconds;
 
-	// truck: up and down
-	// tilt; from camera origin (up/down)
-	// pan: left/right from camera origin
-	// field of view
+	void set(const T& desired_value, float lerp_duration_seconds)
+	{
+		if (lerp_duration_seconds > 0.0f)
+		{
+			// lerp to this value over time
+			target_value = desired_value;
+			current_time_seconds = 0.0f;
+			target_time_seconds = lerp_duration_seconds;
+		}
+		else
+		{
+			// snap to this value
+			current_value = desired_value;
+			target_value = desired_value;
+			current_time_seconds = 0.0f;
+			target_time_seconds = 0.0f;
+		}
+		original_value = current_value;
+	}
 
+	void update(float delta_seconds)
+	{
 #if 0
-	// TODO: replace this with a spline
-	float pitch;
-	float pitch_min;
-	float pitch_max;
+		if (target_time_seconds > 0.0f)
+		{
+			current_time_seconds += delta_seconds;
+			float alpha = glm::clamp(current_time_seconds / target_time_seconds, 0.0f, 1.0f);
+			if (current_time_seconds > target_time_seconds)
+			{
+				target_time_seconds = 0.0f;
+			}
+
+			current_value = gemini::lerp(original_value, target_value, alpha);
+		}
 #endif
+		// exponential camera chase to desired_distance; gracefully zoom
+		float vel = (current_value - target_value);
+		//F = - k (p - r)
 
-	glm::vec3 position;
-	glm::vec3 target_position;
-	glm::vec3 target_facing_direction;
+		current_value += -20.0 * (vel * delta_seconds);
+		//current_value = target_value - (vel * exp(-delta_seconds / 0.45f));
 
-	// did the view move this tick?
-	size_t view_moved;
+		//float vel = (desired_distance - distance_to_target);
+		//distance_to_target = desired_distance - (vel * exp(-step_interval_seconds / 0.45f));
 
-	//float follow_distance;
-	//float player_height;
+		current_value = target_value;
+	}
 
-	float distance_to_target;
-	float desired_distance_to_target;
-	float desired_distance;
-
-	float field_of_view;
-
-	glm::vec3 camera_direction;
-	glm::vec3 camera_right;
-
-	float interpolation_time;
-	glm::quat interpolation_rotation;
-	glm::vec3 interpolation_vector;
-
-	float auto_orient_seconds;
-	size_t auto_orienting;
-
-
-	gemini::physics::ICollisionObject* collision_object;
-	gemini::physics::ICollisionShape* collision_shape;
-	glm::vec3 cam_vertices[6];
-
-
-	glm::vec3 perform_raycast(const glm::vec3& start, const glm::vec3& direction, const gemini::Color& color);
-
-	// correct camera position by testing collision
-	void collision_correct();
-
-public:
-	QuaternionFollowCamera();
-	virtual ~QuaternionFollowCamera();
-
-	virtual glm::vec3 get_origin() const override;
-	virtual glm::vec3 get_target() const override;
-	virtual glm::vec3 get_up() const override;
-	virtual glm::vec3 get_right() const override;
-	virtual float get_fov() const override;
-	virtual CameraType get_type() const override { return CameraType::FollowCamera; }
-	virtual void move_view(float yaw, float pitch) override;
-	virtual void set_yaw_pitch(float yaw, float pitch) override;
-	virtual void tick(float step_interval_seconds) override;
-	virtual void set_target_position(const glm::vec3& player_position) override;
-	virtual void set_target_direction(const glm::vec3& direction) override;
-	virtual glm::vec3 get_target_direction() const override;
-	virtual glm::vec3 get_camera_direction() const override;
-	virtual void reset_view() override;
-
-	void set_follow_distance(float target_distance);
-	void set_view(const glm::vec3& view_direction);
+	T value() const
+	{
+		return current_value;
+	}
 };
 
 class FixedCamera : public GameCamera
@@ -236,7 +249,7 @@ public:
 	virtual void move_view(float yaw, float pitch) override;
 	virtual void set_yaw_pitch(float yaw, float pitch) override;
 	virtual void tick(float step_interval_seconds) override;
-	virtual void set_target_position(const glm::vec3& player_position) override;
+	virtual void set_fov(float new_fov) override;
 	virtual void set_target_direction(const glm::vec3& direction) override;
 	virtual glm::vec3 get_target_direction() const override;
 	virtual glm::vec3 get_camera_direction() const override;
@@ -258,24 +271,37 @@ private:
 		}
 	};
 
+	enum class CameraMixAction
+	{
+		Idle,
+		Blend_Push,
+		Blend_Pop
+	};
+
 	FixedSizeQueue<CameraBlend, 4> cameras;
 
 	glm::vec3 origin;
 	glm::vec3 view;
 	glm::vec3 offset;
+	glm::vec3 world_position;
 
 	gemini::Allocator& allocator;
+
+	float blend_alpha;
+	float current_time_sec;
+	float total_time_sec;
+	CameraMixAction action;
 
 	void normalize_weights(float top_weight);
 public:
 	CameraMixer(gemini::Allocator& allocator);
 	~CameraMixer();
 
-	// push a new camera onto the stack with the desired blend weight
-	void push_camera(GameCamera* new_camera, float weight);
+	// push a new camera onto the stack
+	void push_camera(GameCamera* new_camera, float delay_sec);
 
-	// pop the current camera off the stack and set the new blend weight
-	void pop_camera(float weight);
+	// pop the current camera off the stack
+	void pop_camera(float delay_sec);
 
 	GameCamera* get_top_camera();
 
@@ -298,14 +324,16 @@ public:
 	void move_view(float yaw, float pitch);
 	void set_yaw_pitch(float yaw, float pitch);
 
-	// Update the target's position (in worldspace)
-	void set_target_position(const glm::vec3& position);
-
 	// Set the direction of travel for the target object.
 	void set_target_direction(const glm::vec3& direction);
 
 	glm::vec3 get_target_direction() const;
 	glm::vec3 get_camera_direction() const;
+
+	// sets the world position of the camera mixer "node"
+	void set_world_position(const glm::vec3& world_position);
+
+	void collision_correct(float step_interval_seconds);
 };
 
 struct Camera

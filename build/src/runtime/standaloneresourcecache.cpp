@@ -24,11 +24,14 @@
 // -------------------------------------------------------------
 #include "standaloneresourcecache.h"
 
-#include <renderer/texture.h>
+#include <renderer/font_library.h>
 #include <renderer/image.h>
+#include <renderer/texture.h>
 
+#include <runtime/assets.h>
 #include <runtime/filesystem.h>
 
+using namespace gemini;
 
 namespace renderer
 {
@@ -61,37 +64,22 @@ namespace renderer
 
 	gui::FontHandle StandaloneResourceCache::create_font(const char* filename, size_t pixel_size)
 	{
-		// This has to intelligently check to see if we've
-		// already loaded a font by matching
-		// both the filename and the requested pixel_size.
-		if (font_handle_by_path.has_key(filename))
-		{
-			Array<gui::FontHandle>& items = font_handle_by_path[filename];
+		FontCreateParameters font_params;
+		font_params.size_pixels = pixel_size;
+		AssetHandle fonthandle = font_load(filename, false, &font_params);
 
-			for (auto& handle : items)
-			{
-				font::Handle font_handle(handle);
-				if (font::get_pixel_size(font_handle) == pixel_size)
-				{
-					return handle;
-				}
-			}
-		}
-
-		Array<unsigned char> fontdata(allocator);
-		core::filesystem::instance()->virtual_load_file(fontdata, filename);
-		font::Handle fonthandle = font::load_from_memory(&fontdata[0], fontdata.size(), pixel_size);
-		assert(fonthandle.is_valid());
-
-		gui::FontHandle handle(fonthandle);
+		gui::FontHandle handle(fonthandle.index);
 
 		// we need to track the texture for looking during rendering
-		render2::Texture* texture = font::get_font_texture(fonthandle);
-		track_texture(texture);
+		render2::Texture* texture = font_texture(fonthandle);
+		if (!handle_by_texture.has_key(texture))
+		{
+			track_texture(texture);
 
-		// insert the new handle into the array
-		Array<gui::FontHandle>& items = font_handle_by_path[filename];
-		items.push_back(handle);
+			// insert the new handle into the array
+			Array<gui::FontHandle>& items = font_handle_by_path[filename];
+			items.push_back(handle);
+		}
 
 		return handle;
 	}
@@ -105,7 +93,10 @@ namespace renderer
 
 	gui::TextureHandle StandaloneResourceCache::texture_for_font(const gui::FontHandle& handle)
 	{
-		render2::Texture* texture = font::get_font_texture(font::Handle(handle));
+		AssetHandle font_handle;
+		font_handle.index = handle;
+
+		render2::Texture* texture = font_texture(font_handle);
 		if (handle_by_texture.has_key(texture))
 		{
 			return handle_by_texture[texture];

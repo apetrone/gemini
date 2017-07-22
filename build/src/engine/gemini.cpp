@@ -34,15 +34,22 @@
 #include <core/mathlib.h>
 #include <core/profiler.h>
 
+#include <runtime/assets.h>
+#include <runtime/audio_mixer.h>
 #include <runtime/filesystem.h>
-
 #include <runtime/runtime.h>
 #include <runtime/standaloneresourcecache.h>
 
 #include <renderer/renderer.h>
-#include <renderer/renderstream.h>
 #include <renderer/constantbuffer.h>
 #include <renderer/debug_draw.h>
+#include <renderer/scene_renderer.h>
+
+#include <runtime/debugvar.h>
+#include <runtime/debug_event.h>
+#include <runtime/keyframechannel.h>
+#include <runtime/mesh.h>
+#include <runtime/mesh_library.h>
 
 // SDK
 #include <sdk/audio_api.h>
@@ -57,18 +64,18 @@
 
 #include "input.h"
 
-#include "assets/asset_font.h"
-#include "assets/asset_shader.h"
-#include "assets/asset_mesh.h"
-#include "scenelink.h"
 #include "audio.h"
 #include "animation.h"
 #include "physics/physics.h"
 #include "hotloading.h"
 #include "navigation.h"
 
+#include <engine/model_instance_data.h>
+
 // for MAX_BONES
 #include <shared/shared_constants.h>
+
+#include <rapid/rapid.h>
 
 // uncomment this to draw bone debug information
 //#define GEMINI_DEBUG_BONES
@@ -81,6 +88,7 @@ using namespace platform;
 using namespace core;
 using namespace gemini; // for renderer
 
+
 #include <ui/ui.h>
 #include <ui/compositor.h>
 #include <ui/graph.h>
@@ -88,24 +96,129 @@ using namespace gemini; // for renderer
 
 #include "guirenderer.h"
 
+#include <map>
+
 // this is required at the moment because our render method needs it!
 gui::Compositor* _compositor = 0;
 
-void render_scene_from_camera(::renderer::RenderStream& stream, gemini::IEngineEntity** entity_list, View& view, SceneLink& scenelink)
+
+namespace gemini
 {
-	// use the entity list to render
-	scenelink.clear();
-	scenelink.queue_entities(entity_list, MAX_ENTITIES, RENDER_VISIBLE);
-	scenelink.sort();
-	scenelink.draw(stream, &view.modelview, &view.projection);
+	GameMessage event_to_gamemessage(const kernel::KeyboardEvent& event, uint64_t physics_tick);
+	GameMessage event_to_gamemessage(const kernel::MouseEvent& event, uint64_t physics_tick);
+	GameMessage event_to_gamemessage(const kernel::SystemEvent& event, uint64_t physics_tick);
+	GameMessage event_to_gamemessage(const kernel::GameControllerEvent& event, uint64_t physics_tick);
+
+
+	GameMessage event_to_gamemessage(const kernel::KeyboardEvent& event, uint64_t physics_tick)
+	{
+		GameMessage out;
+		out.timestamp = physics_tick;
+		out.type = GameMessage::KeyboardEvent;
+		out.button = event.key;
+		out.params[0] = event.is_down;
+		out.params[1] = event.modifiers;
+		return out;
+	}
+
+	GameMessage event_to_gamemessage(const kernel::MouseEvent& event, uint64_t physics_tick)
+	{
+		GameMessage out;
+		out.timestamp = physics_tick;
+		switch (event.subtype)
+		{
+		case kernel::MouseButton:
+			out.type = GameMessage::MouseEvent;
+			out.button = event.button;
+			out.params[0] = event.is_down;
+			break;
+
+		case kernel::MouseMoved:
+			out.type = GameMessage::MouseMove;
+			out.params[0] = event.mx;
+			out.params[1] = event.my;
+			break;
+
+		case kernel::MouseDelta:
+			out.type = GameMessage::MouseDelta;
+			out.params[0] = event.dx;
+			out.params[1] = event.dy;
+			break;
+
+		case kernel::MouseWheelMoved:
+			out.type = GameMessage::MouseWheel;
+			out.button = event.wheel_direction;
+			out.params[0] = event.mx;
+			out.params[1] = event.my;
+			out.params[2] = event.dx;
+			out.params[3] = event.dy;
+			break;
+
+		default:
+			assert(0);
+			break;
+		}
+		return out;
+	}
+
+	GameMessage event_to_gamemessage(const kernel::SystemEvent& event, uint64_t physics_tick)
+	{
+		GameMessage out;
+		out.timestamp = physics_tick;
+		out.type = GameMessage::SystemEvent;
+		if (event.subtype == kernel::WindowGainFocus)
+		{
+			out.params[0] = 1;
+		}
+		else if (event.subtype == kernel::WindowLostFocus)
+		{
+			out.params[1] = 1;
+		}
+		return out;
+	}
+
+	GameMessage event_to_gamemessage(const kernel::GameControllerEvent& event, uint64_t physics_tick)
+	{
+		// TODO@APP: Implement.
+		GameMessage out;
+		out.timestamp = physics_tick;
+		out.params[0] = event.gamepad_id;
+
+		switch (event.subtype)
+		{
+		case kernel::JoystickConnected:
+			out.type = GameMessage::GamePadConnected;
+			break;
+
+		case kernel::JoystickDisconnected:
+			out.type = GameMessage::GamePadDisconnected;
+			break;
+
+		case kernel::JoystickButton:
+			out.type = GameMessage::GamePadButton;
+			out.button = event.button;
+			out.params[1] = event.is_down;
+			break;
+
+		case kernel::JoystickAxisMoved:
+			out.type = GameMessage::GamePadAxis;
+			out.params[1] = event.axis_id;
+			out.params[2] = event.axis_value;
+			break;
+
+		default:
+			// Unhandled gamepad input!
+			assert(0);
+			break;
+		}
+
+		return out;
+	}
 }
 
-void render_viewmodel(::renderer::RenderStream& stream, gemini::IEngineEntity* entity, View& view, SceneLink& scenelink)
-{
-	scenelink.clear();
-	scenelink.queue_entities(&entity, 1, RENDER_VIEWMODEL);
-	scenelink.draw(stream, &view.modelview, &view.projection);
-}
+
+
+
 
 
 class EntityManager : public IEntityManager
@@ -116,11 +229,13 @@ class EntityManager : public IEntityManager
 public:
 	EntityManager() : index(0)
 	{
-		memset(entity_list, 0, sizeof(gemini::IEngineEntity*)*MAX_ENTITIES);
+		memset(entity_list, 0, sizeof(gemini::IEngineEntity*) * MAX_ENTITIES);
 	}
 
-	virtual void add(IEngineEntity* entity);
+	virtual uint16_t add(IEngineEntity* entity);
 	virtual void remove(IEngineEntity* entity);
+
+	virtual gemini::IEngineEntity* at_index(uint16_t index);
 
 	virtual void startup();
 	virtual void shutdown();
@@ -129,9 +244,15 @@ public:
 };
 
 
-void EntityManager::add(IEngineEntity* entity)
+uint16_t EntityManager::add(IEngineEntity* entity)
 {
+	uint16_t entity_index = index;
+
+	// If you hit this, more entities have been created than will fit
+	// in a short.
+	assert(index < USHRT_MAX);
 	entity_list[index++] = entity;
+	return entity_index;
 }
 
 void EntityManager::remove(IEngineEntity* entity)
@@ -147,6 +268,11 @@ void EntityManager::remove(IEngineEntity* entity)
 	}
 }
 
+gemini::IEngineEntity* EntityManager::at_index(uint16_t index)
+{
+	return entity_list[index];
+}
+
 void EntityManager::startup()
 {
 
@@ -158,451 +284,11 @@ void EntityManager::shutdown()
 }
 
 
-class ModelInterface : public gemini::IModelInterface
-{
-	// Each entity that has a model associated with it
-	// will have a model instance data allocated.
-	class ModelInstanceData : public IModelInstanceData
-	{
-		unsigned int mesh_asset_index;
-		assets::Mesh* mesh;
-		glm::mat4 transform;
-
-		// parent-local bone transforms
-		glm::mat4* local_bone_transforms;
-
-		// model bone transforms
-		glm::mat4* model_bone_transforms;
-
-		glm::mat4* inverse_bind_transforms;
-
-		Channel<glm::vec3> scale_channel;
-		Channel<glm::quat> rotation_channel;
-		Channel<glm::vec3> translation_channel;
-
-		glm::vec3 scale;
-		glm::quat rotation;
-		glm::vec3 translation;
-
-		std::vector<animation::SequenceId> animations;
-
-		gemini::Allocator& allocator;
-	public:
-
-		ModelInstanceData(gemini::Allocator& allocator)
-			: mesh_asset_index(0)
-			, mesh(0)
-			, local_bone_transforms(0)
-			, model_bone_transforms(0)
-			, inverse_bind_transforms(0)
-			, scale_channel(scale)
-			, rotation_channel(rotation)
-			, translation_channel(translation)
-			, allocator(allocator)
-		{
-		}
-
-		void set_mesh_index(unsigned int mesh_asset_id)
-		{
-			mesh_asset_index = mesh_asset_id;
-			mesh = assets::meshes()->find_with_id(mesh_asset_index);
-		}
-
-		void create_bones()
-		{
-			assert(mesh != 0);
-
-			// does this have an animation?
-			if (mesh->has_skeletal_animation)
-			{
-				size_t total_elements = (mesh->geometry.size() * mesh->skeleton.size());
-				local_bone_transforms = new glm::mat4[total_elements];
-				model_bone_transforms = new glm::mat4[total_elements];
-				inverse_bind_transforms = new glm::mat4[total_elements];
-			}
-		}
-
-		void destroy_bones()
-		{
-			if (local_bone_transforms)
-			{
-				delete [] local_bone_transforms;
-				local_bone_transforms = 0;
-			}
-
-			if (model_bone_transforms)
-			{
-				delete [] model_bone_transforms;
-				model_bone_transforms = 0;
-			}
-
-			if (inverse_bind_transforms)
-			{
-				delete [] inverse_bind_transforms;
-				inverse_bind_transforms = 0;
-			}
-		}
-
-		virtual unsigned int asset_index() const { return mesh_asset_index; }
-		virtual glm::mat4& get_local_transform() { return transform; }
-		virtual void set_local_transform(const glm::mat4& _transform) { transform = _transform; }
-		virtual glm::mat4* get_model_bone_transforms(uint32_t geometry_index) const
-		{
-			if (!model_bone_transforms)
-			{
-				return nullptr;
-			}
-			return &model_bone_transforms[mesh->skeleton.size() * geometry_index];
-		}
-
-		virtual const Hitbox* get_hitboxes() const
-		{
-			if (!model_bone_transforms)
-			{
-				return nullptr;
-			}
-
-			return &mesh->hitboxes[0];
-		}
-
-		virtual glm::mat4* get_inverse_bind_transforms(uint32_t geometry_index) const
-		{
-			if (!inverse_bind_transforms)
-			{
-				return nullptr;
-			}
-			return &inverse_bind_transforms[mesh->skeleton.size() * geometry_index];
-		}
-
-		virtual uint32_t get_total_transforms() const
-		{
-			return mesh->skeleton.size();
-		}
-
-		virtual void set_animation_enabled(int32_t index, bool enabled)
-		{
-			animation::SequenceId global_instance_index = animations[index];
-			animation::AnimatedInstance* instance = animation::get_instance_by_index(global_instance_index);
-			assert(instance != 0);
-			if (instance)
-			{
-				instance->enabled = enabled;
-			}
-		}
-
-		virtual void get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations)
-		{
-			animation::SequenceId instance_index = animations[index];
-			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
-
-#if defined(GEMINI_DEBUG_BONES)
-			const glm::vec2 origin(10.0f, 30.0f);
-#endif
-
-			const size_t total_joints = instance->animation_set.size() / ANIMATION_KEYFRAME_VALUES_MAX;
-
-			for (size_t bone_index = 0; bone_index < total_joints; ++bone_index)
-			{
-				animation::Channel* channel = &instance->channel_set[bone_index * ANIMATION_KEYFRAME_VALUES_MAX];
-
-				assert(bone_index < MAX_BONES);
-
-				glm::vec3& pos = positions[bone_index];
-				glm::quat& rot = rotations[bone_index];
-				const animation::Channel& tx = channel[0];
-				const animation::Channel& ty = channel[1];
-				const animation::Channel& tz = channel[2];
-				pos = glm::vec3(tx(), ty(), tz());
-
-				const animation::Channel& rx = channel[3];
-				const animation::Channel& ry = channel[4];
-				const animation::Channel& rz = channel[5];
-				const animation::Channel& rw = channel[6];
-
-				rot = glm::quat(rw(), rx(), ry(), rz());
-
-#if defined(GEMINI_DEBUG_BONES)
-				debugdraw::text(origin.x,
-					origin.y + (12.0f * bone_index),
-					core::str::format("%2i) '%s' | rot: [%2.2f, %2.2f, %2.2f, %2.2f]", bone_index,
-					mesh->skeleton[bone_index].name(),
-					rot.x, rot.y, rot.z, rot.w),
-					Color(0.0f, 0.0f, 0.0f));
-#endif
-			}
-		}
-
-		virtual void set_pose(glm::vec3* positions, glm::quat* rotations)
-		{
-			if (mesh->skeleton.empty())
-			{
-				return;
-			}
-
-			// You've hit the upper bounds for skeletal bones for a single
-			// model. Congrats.
-			assert(mesh->skeleton.size() < MAX_BONES);
-
-			Hitbox* hitboxes = &mesh->hitboxes[0];
-
-			size_t geometry_index = 0;
-			// we must update the transforms for each geometry instance
-			for (const assets::Geometry* geo : mesh->geometry)
-			{
-				// If you hit this assert, one mesh in this model didn't have
-				// blend weights.
-				assert(!geo->bind_poses.empty());
-
-				size_t transform_index;
-
-				for (size_t index = 0; index < mesh->skeleton.size(); ++index)
-				{
-					transform_index = (geometry_index * mesh->skeleton.size()) + index;
-					assets::Joint* joint = &mesh->skeleton[index];
-
-					glm::mat4& local_bone_pose = local_bone_transforms[transform_index];
-					glm::mat4& model_pose = model_bone_transforms[transform_index];
-
-					glm::mat4 parent_pose;
-					glm::mat4& inverse_bind_pose = inverse_bind_transforms[transform_index];
-
-					glm::mat4 local_rotation = glm::toMat4(rotations[index]);
-					glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), positions[index]);
-
-					const glm::mat4 local_pose = local_transform * local_rotation;
-					if (joint->parent_index > -1)
-					{
-						parent_pose = model_bone_transforms[joint->parent_index];
-					}
-
-					// this will be cached in local transforms
-					local_bone_pose = geo->bind_poses[index] * local_pose;
-
-					// this will be used for skinning in the vertex shader
-					model_pose = parent_pose * local_bone_pose;
-
-					// set the inverse_bind_pose
-					inverse_bind_pose = geo->inverse_bind_poses[index];
-
-					glm::mat4 local_bbox_xf = glm::toMat4(glm::angleAxis(glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
-					Hitbox* hitbox = (hitboxes + index);
-					//glm::vec3 pos(0.0f, 0.0f, 0.0f);
-					//glm::vec3 dims(0.5f, 0.5f, 0.5f);
-					//pos = mathlib::transform_point(local_bone_pose, pos);
-					//debugdraw::box(-dims + pos, dims + pos, gemini::Color(0.0f, 1.0f, 1.0f));
-					debugdraw::axes(glm::mat4(hitbox->rotation) * model_pose, 1.0f, 0.0f);
-				}
-
-				++geometry_index;
-			}
-		}
-
-		virtual int32_t get_animation_index(const char* name)
-		{
-			size_t index = 0;
-			for (const animation::SequenceId& id : animations)
-			{
-				animation::AnimatedInstance* instance = animation::get_instance_by_index(id);
-				animation::Sequence* sequence = animation::get_sequence_by_index(instance->sequence_index);
-				if (0 == core::str::case_insensitive_compare(name, sequence->name(), 0))
-				{
-					return index;
-					break;
-				}
-				++index;
-			}
-
-			return -1;
-		}
-
-		virtual int32_t add_animation(const char* name)
-		{
-			animation::SequenceId id = animation::load_sequence(allocator, name, mesh);
-			if (id > -1)
-			{
-				animations.push_back(id);
-				LOGV("[engine] added animation %s to index: %i\n", name, animations.size()-1);
-				return animations.size()-1;
-			}
-			else
-			{
-				LOGW("Unable to load sequence %s\n", name);
-				return -1;
-			}
-		}
-
-		virtual int32_t get_total_animations() const
-		{
-			return animations.size();
-		}
-
-		virtual void reset_channels(int32_t index)
-		{
-			animation::SequenceId instance_index = animations[index];
-			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
-
-			// reset all the channels
-			instance->reset_channels();
-
-			// force an advance, to fetch the first frame
-			// but don't advance time.
-			instance->advance(0.0f);
-		}
-
-		virtual float get_animation_duration(int32_t index) const
-		{
-			float duration_seconds = 0;
-			animation::SequenceId instance_index = animations[index];
-			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
-			assert(instance != 0);
-
-			animation::Sequence* sequence = animation::get_sequence_by_index(instance->sequence_index);
-			assert(sequence != 0 );
-
-			duration_seconds = sequence->duration_seconds;
-
-			return duration_seconds;
-		}
-
-		virtual uint32_t get_total_bones(int32_t /*index*/) const
-		{
-			assert(mesh != nullptr);
-			return mesh->skeleton.size();
-		}
-
-		virtual int32_t find_bone_named(const char* bone)
-		{
-			for (const assets::Joint& joint : mesh->skeleton)
-			{
-				if (joint.name == bone)
-					return joint.index;
-			}
-
-			return -1;
-		}
-
-		virtual void get_local_bone_pose(int32_t /*animation_index*/, int32_t bone_index, glm::vec3& position, glm::quat& rotation)
-		{
-			assert(bone_index != -1);
-
-			const glm::mat4 model_matrix = local_bone_transforms[bone_index];
-			rotation = glm::toQuat(model_matrix);
-			position = glm::vec3(glm::column(model_matrix, 3));
-		}
-
-		virtual void get_model_bone_pose(int32_t /*animation_index*/, int32_t bone_index, glm::vec3& position, glm::quat& rotation)
-		{
-			assert(bone_index != -1);
-
-			const glm::mat4& model_matrix = model_bone_transforms[bone_index];
-			rotation = glm::toQuat(model_matrix);
-			position = glm::vec3(glm::column(model_matrix, 3));
-		}
-
-		virtual const glm::vec3& get_mins() const
-		{
-			return mesh->aabb_mins;
-		}
-
-		virtual const glm::vec3& get_maxs() const
-		{
-			return mesh->aabb_maxs;
-		}
-
-		virtual const glm::vec3& get_center_offset() const
-		{
-			return mesh->mass_center_offset;
-		}
-	};
-
-
-	typedef std::map<int32_t, ModelInstanceData> ModelInstanceMap;
-	ModelInstanceMap id_to_instance;
-
-	gemini::Allocator& allocator;
-
-
-public:
-	ModelInterface(gemini::Allocator& _allocator)
-		: allocator(_allocator)
-	{
-	}
-
-	virtual int32_t create_instance_data(const char* model_path)
-	{
-		assets::Mesh* mesh = assets::meshes()->load_from_path(model_path);
-		if (mesh)
-		{
-			if (mesh->is_dirty)
-			{
-				mesh->prepare_geometry();
-			}
-			ModelInstanceData data(allocator);
-			data.set_mesh_index(mesh->Id());
-			data.create_bones();
-			int32_t index = (int32_t)id_to_instance.size();
-			id_to_instance.insert(ModelInstanceMap::value_type(index, data));
-			return index;
-		}
-
-		return -1;
-	}
-
-	virtual void destroy_instance_data(int32_t index)
-	{
-		ModelInstanceMap::iterator it = id_to_instance.find(index);
-		if (it != id_to_instance.end())
-		{
-			ModelInstanceData& data = it->second;
-			data.destroy_bones();
-
-			id_to_instance.erase(it);
-		}
-	}
-
-
-	IModelInstanceData* get_instance_data(int32_t index)
-	{
-		ModelInstanceMap::iterator it = id_to_instance.find(index);
-		if (it != id_to_instance.end())
-		{
-			return &(*it).second;
-		}
-
-		return 0;
-	}
-};
-
-
 class Experimental : public gemini::IExperimental
 {
-	gui::Panel* root;
-	gui::Compositor* compositor;
-
 public:
-	Experimental(gui::Panel* root) : root(root), compositor(0)
+	Experimental()
 	{
-	}
-
-
-	void set_root(gui::Panel* rootpanel)
-	{
-		root = rootpanel;
-	}
-
-	void set_compositor(gui::Compositor* c)
-	{
-		compositor = c;
-	}
-
-	virtual gui::Panel* root_panel() const
-	{
-		return root;
-	}
-
-	virtual gui::Compositor* get_compositor() const
-	{
-		return compositor;
 	}
 
 	virtual void navmesh_find_poly(gemini::NavMeshPolyRef* poly, const glm::vec3& position, const glm::vec3& extents)
@@ -622,9 +308,10 @@ public:
 
 	virtual void navmesh_generate_from_model(const char* path)
 	{
-		assets::Mesh* mesh = assets::meshes()->load_from_path(path);
-		assets::Geometry* geom = mesh->geometry[0];
-		navigation::create_from_geometry(geom->vertices, geom->indices, geom->mins, geom->maxs);
+		assert(0); // TODO: 01-19-17: fix this (meshes)
+		//assets::Mesh* mesh = assets::meshes()->load_from_path(path);
+		//assets::Geometry* geom = mesh->geometry[0];
+		//navigation::create_from_geometry(geom->vertices, geom->indices, geom->mins, geom->maxs);
 	}
 
 	virtual void navmesh_find_straight_path(NavMeshPath* path, glm::vec3* positions, uint32_t* total_positions)
@@ -658,21 +345,18 @@ struct SharedState
 
 static SharedState _sharedstate;
 
-const size_t GEMINI_MAX_RENDERSTREAM_BYTES = 8192;
-const size_t GEMINI_MAX_RENDER_STREAM_COMMANDS = 512;
-
 class AudioInterface : public IAudioInterface
 {
 public:
 	virtual void precache_sound(const char* path)
 	{
-		assets::sounds()->load_from_path(path);
+		sound_load(path, false);
 	}
 
 	virtual gemini::AudioHandle play(const char* path, int num_repeats)
 	{
 		return gemini::audio::play_sound(
-			assets::sounds()->load_from_path(path),
+			sound_from_handle(sound_load(path, false)),
 			num_repeats
 		);
 	}
@@ -689,10 +373,9 @@ public:
 };
 
 
+struct ModelInstanceData;
 
-
-
-class EngineInterface : public IEngineInterface
+class EngineInterface : public IEngineInterface, public IModelInterface
 {
 	IEntityManager* entity_manager;
 	IModelInterface* model_interface;
@@ -700,41 +383,40 @@ class EngineInterface : public IEngineInterface
 	IExperimental* experimental_interface;
 
 	platform::window::NativeWindow* main_window;
-	SceneLink& scenelink;
-
-	Array<char> render_stream_data;
-	Array<::renderer::RenderState> render_commands;
+	render2::Device* device;
 
 	gemini::Allocator& engine_allocator;
 
+	// model instance data
+	typedef std::map<int32_t, gemini::ModelInstanceData> ModelInstanceMap;
+	ModelInstanceMap id_to_instance;
+
 public:
+	RenderScene* render_scene;
 
 	EngineInterface(gemini::Allocator& _allocator,
 					IEntityManager* em,
-					IModelInterface* mi,
 					gemini::physics::IPhysicsInterface* pi,
 					IExperimental* ei,
-					SceneLink& scene_link,
+					render2::Device* render_device,
 					platform::window::NativeWindow* window)
 		: engine_allocator(_allocator)
 		, entity_manager(em)
-		, model_interface(mi)
 		, physics_interface(pi)
 		, experimental_interface(ei)
 		, main_window(window)
-		, scenelink(scene_link)
-		, render_stream_data(_allocator)
-		, render_commands(_allocator)
+		, device(render_device)
+		, render_scene(nullptr)
 	{
-		render_stream_data.resize(GEMINI_MAX_RENDERSTREAM_BYTES);
-		render_commands.resize(GEMINI_MAX_RENDER_STREAM_COMMANDS);
 	}
 
 
-	virtual ~EngineInterface() {};
+	virtual ~EngineInterface()
+	{
+	}
 
 	virtual IEntityManager* entities() { return entity_manager; }
-	virtual IModelInterface* models() { return model_interface; }
+	virtual IModelInterface* models() { return this; }
 	virtual gemini::physics::IPhysicsInterface* physics() { return physics_interface; }
 	virtual IExperimental* experiment() { return experimental_interface; }
 	virtual core::logging::ILog* log() { return core::logging::instance(); }
@@ -743,94 +425,16 @@ public:
 	virtual void* allocate(size_t size)
 	{
 		return MEMORY2_ALLOC(engine_allocator, size);
-		//return game_allocator.allocate(size, sizeof(void*), __FILE__, __LINE__);
 	}
 
 	virtual void deallocate(void* pointer)
 	{
 		MEMORY2_DEALLOC(engine_allocator, pointer);
-		//game_allocator.deallocate(pointer);
-	}
-
-	virtual void render_view(const View& view, const Color& clear_color)
-	{
-		// TODO: need to validate this origin/orientation is allowed.
-		// otherwise, client could ask us to render from anyone's POV.
-		EntityManager* em = static_cast<EntityManager*>(engine::instance()->entities());
-
-		gemini::IEngineEntity** entity_list = em->get_entity_list();
-
-
-		::renderer::RenderStream rs((char*)&render_stream_data[0], GEMINI_MAX_RENDERSTREAM_BYTES, (::renderer::RenderState*)&render_commands[0], GEMINI_MAX_RENDER_STREAM_COMMANDS);
-		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
-//		rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
-		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
-		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
-		rs.add_clearcolor(clear_color.red, clear_color.green, clear_color.blue, 1.0f);
-		rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER );
-		rs.run_commands();
-
-		View newview = view;
-		platform::window::Frame frame = platform::window::get_render_frame(main_window);
-		newview.width = frame.width;
-		newview.height = frame.height;
-
-		render_scene_from_camera(rs, entity_list, newview, scenelink);
-	}
-
-	virtual void render_gui()
-	{
-		if (_compositor)
-		{
-			_compositor->draw();
-		}
 	}
 
 	virtual Allocator& allocator()
 	{
 		return engine_allocator;
-	}
-
-	virtual void render_viewmodel(IEngineEntity* entity, const View& view)
-	{
-//		render_method->render_viewmodel(entity, main_window, origin, view_angles);
-		::renderer::RenderStream rs((char*)&render_stream_data[0], GEMINI_MAX_RENDERSTREAM_BYTES, (::renderer::RenderState*)&render_commands[0], GEMINI_MAX_RENDER_STREAM_COMMANDS);
-		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
-		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
-		rs.add_state(::renderer::STATE_DEPTH_TEST, 0);
-//		rs.add_clear(::renderer::CLEAR_DEPTH_BUFFER);
-		rs.run_commands();
-
-//		Camera camera;
-//		camera.type = Camera::FIRST_PERSON;
-//
-//		camera.perspective(35.0f, window->render_width, window->render_height, 0.01f, 32.0f);
-//
-//		camera.set_absolute_position(glm::vec3(-1.0f, 0.6f, 2.5f));
-//		camera.eye_position = origin;
-//		camera.view = glm::vec3(0, 0, -1);
-//		camera.pitch = 0;
-//		camera.yaw = 0;
-//		camera.update_view();
-//
-//		render_entity_from_camera(entity, camera, scenelink);
-
-		View newview = view;
-		platform::window::Frame frame = platform::window::get_render_frame(main_window);
-		newview.width = frame.width;
-		newview.height = frame.height;
-
-		::render_viewmodel(rs, entity, newview, scenelink);
-	}
-
-
-	virtual void render_debug(const View& view) override
-	{
-		View newview = view;
-		platform::window::Frame frame = platform::window::get_render_frame(main_window);
-		newview.width = frame.width;
-		newview.height = frame.height;
-		debugdraw::render(newview.modelview, newview.projection, newview.width, newview.height);
 	}
 
 	virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height)
@@ -840,7 +444,6 @@ public:
 		render_width = frame.width;
 		render_height = frame.height;
 	}
-
 
 	virtual void center_cursor()
 	{
@@ -880,10 +483,92 @@ public:
 	virtual void set_relative_mouse_mode(bool enable) override
 	{
 		platform::window::set_relative_mouse_mode(main_window, enable);
-
 		center_cursor();
 	}
-};
+
+	virtual void play_animation(IModelInstanceData* model, const char* animation_name)
+	{
+		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
+		render_scene_animation_play(render_scene, instance->get_component_index(), animation_name);
+	}
+
+	virtual bool is_animation_finished(IModelInstanceData* model)
+	{
+		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
+
+		return render_scene_animation_finished(render_scene, instance->get_component_index());
+	}
+
+	// IModelInterface
+	virtual int32_t create_instance_data(uint16_t entity_index, const char* model_path);
+	virtual void destroy_instance_data(int32_t index);
+	virtual IModelInstanceData* get_instance_data(int32_t index);
+}; // EngineInterface
+
+int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char* model_path)
+{
+	AssetHandle mesh_handle = mesh_load(model_path);
+	Mesh* mesh = mesh_from_handle(mesh_handle);
+	if (mesh)
+	{
+		uint32_t component_id = 0;
+		if (mesh->skeleton.empty())
+		{
+			component_id = render_scene_add_static_mesh(render_scene, mesh_handle, entity_index, glm::mat4(1.0f));
+		}
+		else
+		{
+			component_id = render_scene_add_animated_mesh(render_scene, mesh_handle, entity_index, glm::mat4(1.0f));
+		}
+
+		gemini::ModelInstanceData data(engine_allocator);
+		data.set_mesh_index(mesh_handle);
+		data.set_component_index(component_id);
+
+		int32_t index = (int32_t)id_to_instance.size();
+		id_to_instance.insert(ModelInstanceMap::value_type(index, data));
+
+		return index;
+	}
+
+	return -1;
+}
+
+void EngineInterface::destroy_instance_data(int32_t index)
+{
+	ModelInstanceMap::iterator it = id_to_instance.find(index);
+	if (it != id_to_instance.end())
+	{
+		gemini::ModelInstanceData& data = it->second;
+
+		AssetHandle mesh_handle = data.get_mesh_handle();
+		Mesh* mesh = mesh_from_handle(mesh_handle);
+
+		uint32_t component_id = data.get_component_index();
+		if (mesh->skeleton.empty())
+		{
+			render_scene_remove_static_mesh(render_scene, component_id);
+		}
+		else
+		{
+			render_scene_remove_animated_mesh(render_scene, component_id);
+		}
+
+		id_to_instance.erase(it);
+	}
+}
+
+
+IModelInstanceData* EngineInterface::get_instance_data(int32_t index)
+{
+	ModelInstanceMap::iterator it = id_to_instance.find(index);
+	if (it != id_to_instance.end())
+	{
+		return &(*it).second;
+	}
+
+	return 0;
+}
 
 
 
@@ -898,6 +583,54 @@ extern "C"
 }
 #endif
 
+
+
+
+void extract_entities(EntityRenderState* ers, IEngineEntity** entities)
+{
+	for (size_t index = 0; index < MAX_ENTITIES; ++index)
+	{
+		IEngineEntity* entity = entities[index];
+		if (entity)
+		{
+			entity->get_world_transform(ers->position[index], ers->orientation[index]);
+			entity->get_render_position(ers->position[index]);
+			entity->get_pivot_point(ers->pivot_point[index]);
+		}
+	}
+}
+
+void interpolate_states(EntityRenderState* out, EntityRenderState* a, EntityRenderState* b, float alpha)
+{
+	for (size_t index = 0; index < MAX_ENTITIES; ++index)
+	{
+		glm::quat orientation = gemini::slerp(a->orientation[index], b->orientation[index], alpha);
+		glm::vec3 position = gemini::lerp(a->position[index], b->position[index], alpha);
+
+		// Wait, since when does a pivot point get interpolated ?
+		// I have no idea what this produces.
+		glm::vec3 pivot_point = gemini::lerp(a->pivot_point[index], b->pivot_point[index], alpha);
+
+		glm::mat4 rotation = glm::toMat4(orientation);
+		glm::mat4 translation = glm::translate(glm::mat4(1.0f), position);
+		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
+		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
+
+		out->model_matrix[index] = translation * from_pivot * rotation * to_pivot;
+	}
+}
+
+void copy_state(EntityRenderState* out, EntityRenderState* in)
+{
+	for (size_t index = 0; index < MAX_ENTITIES; ++index)
+	{
+		out->orientation[index] = in->orientation[index];
+		out->position[index] = in->position[index];
+		out->pivot_point[index] = in->pivot_point[index];
+	}
+}
+
+
 class EngineKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -911,26 +644,26 @@ private:
 	StackString<MAX_PATH_SIZE> game_path;
 	bool draw_physics_debug;
 	bool draw_navigation_debug;
+	bool debug_camera;
 
 	platform::window::NativeWindow* main_window;
+
+	Array<gemini::GameMessage>* queued_messages;
 
 	// Kernel State variables
 	double accumulator;
 	uint64_t last_time;
 
 	// rendering
-	SceneLink* scenelink;
 	render2::Device* device;
 
 	// game library
 	platform::DynamicLibrary* gamelib;
 	disconnect_engine_fn disconnect_engine;
 	EntityManager entity_manager;
-	ModelInterface model_interface;
 	Experimental experimental;
 	IEngineInterface* engine_interface;
 	IGameInterface* game_interface;
-
 
 	// GUI stuff
 	GUIRenderer* gui_renderer;
@@ -940,17 +673,18 @@ private:
 
 	::renderer::StandaloneResourceCache* resource_cache;
 
-	// used by debug draw
-	font::Handle debug_font;
-
-	assets::Sound* test_sound;
-	audio::SoundHandle_t background_music;
-
 	gemini::Allocator audio_allocator;
 	gemini::Allocator renderer_allocator;
 	gemini::Allocator animation_allocator;
 	gemini::Allocator gui_allocator;
 	gemini::Allocator engine_allocator;
+
+	float interpolate_alpha;
+	RenderScene* render_scene;
+	EntityRenderState* entity_render_state;
+
+	CameraState camera_state[2];
+
 
 	void open_gamelibrary()
 	{
@@ -962,7 +696,12 @@ private:
 
 		PathString relative_library_path;
 		relative_library_path = "bin";
-		relative_library_path.append(PATH_SEPARATOR_STRING).append("game").append(platform::dylib_extension());
+		relative_library_path.append(PATH_SEPARATOR_STRING);
+#if defined(PLATFORM_LINUX)
+		relative_library_path.append("lib");
+#endif
+		relative_library_path.append("game");
+		relative_library_path.append(platform::dylib_extension());
 //		fs->get_absolute_path_for_content(game_library_path, relative_library_path());
 		core::filesystem::absolute_path_from_relative(game_library_path, relative_library_path(), fs->content_directory());
 
@@ -996,7 +735,7 @@ private:
 				assert(game_interface != 0);
 			}
 
-			game_interface->startup();
+			game_interface->startup(compositor, root);
 		}
 #else
 		game_interface = ::connect_engine(gemini::engine::instance());
@@ -1006,8 +745,9 @@ private:
 			assert(game_interface != 0);
 		}
 
-		game_interface->startup();
+		game_interface->startup(compositor, root);
 #endif
+
 	}
 
 	void close_gamelibrary()
@@ -1033,23 +773,23 @@ private:
 		}
 
 		::disconnect_engine();
+		game_interface = nullptr;
 #endif
 	}
 
-
-
 public:
-	EngineKernel() :
-		active(true),
-		draw_physics_debug(false),
-		draw_navigation_debug(false),
-		accumulator(0.0f),
-		last_time(0),
-		experimental(0),
-		engine_interface(0),
-		game_interface(0)
+	EngineKernel()
+		: active(true)
+		, draw_physics_debug(false)
+		, draw_navigation_debug(false)
+		, debug_camera(false)
+		, accumulator(0.0f)
+		, last_time(0)
+		, engine_interface(0)
+		, game_interface(0)
 		, engine_allocator(memory_allocator_default(MEMORY_ZONE_DEFAULT))
-		, model_interface(engine_allocator)
+		, queued_messages(nullptr)
+		, interpolate_alpha(0.0f)
 	{
 		game_path = "";
 		compositor = nullptr;
@@ -1063,6 +803,14 @@ public:
 
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
+
+	void queue_game_message(const GameMessage& message)
+	{
+		if (queued_messages)
+		{
+			queued_messages->push_back(message);
+		}
+	} // queue_game_message
 
 	virtual void event(kernel::KeyboardEvent& event)
 	{
@@ -1078,21 +826,32 @@ public:
 				draw_navigation_debug = !draw_navigation_debug;
 				LOGV("draw_navigation_debug = %s\n", draw_navigation_debug?"ON":"OFF");
 			}
+			else if (event.key == gemini::BUTTON_SPACE)
+			{
+				debug_camera = !debug_camera;
+				LOGV("debug_camera = %s\n", debug_camera ? "ON" : "OFF");
+			}
+
+			if (event.key == BUTTON_F2)
+			{
+				runtime_unload_rapid();
+				LOGV("unloaded rapid interface\n");
+			}
+			else if (event.key == BUTTON_F3)
+			{
+				runtime_load_rapid();
+				LOGV("loading rapid interface\n");
+			}
 		}
 
-		if (game_interface)
-		{
-			game_interface->on_event(event);
-		}
-	}
+		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
+	} // event
 
 	virtual void event(kernel::MouseEvent& event)
 	{
-		if (game_interface)
-		{
-			game_interface->on_event(event);
-		}
-	}
+		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
+	} // event
+
 
 	virtual void event(kernel::SystemEvent& event)
 	{
@@ -1122,24 +881,15 @@ public:
 			set_active(false);
 		}
 
-		if (game_interface)
-		{
-			game_interface->on_event(event);
-		}
-	}
+		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
+	} // event
+
 
 	virtual void event(kernel::GameControllerEvent& event)
 	{
-		if (game_interface)
-		{
-			//if (event.subtype == kernel::JoystickButton && event.is_down)
-			//{
-			//	gemini::audio::SoundHandle_t sound_handle = gemini::audio::play_sound(test_sound, 0);
-			//}
+		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
+	} // event
 
-			game_interface->on_event(event);
-		}
-	}
 
 	void setup_gui(render2::Device* device, gemini::Allocator& renderer_allocator, uint32_t width, uint32_t height)
 	{
@@ -1158,9 +908,6 @@ public:
 		root = new gui::Panel(compositor);
 		root->set_name("root");
 
-		experimental.set_root(root);
-		experimental.set_compositor(compositor);
-
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		root->set_origin(0, 0);
 		root->set_size(frame.width, frame.height);
@@ -1172,7 +919,7 @@ public:
 		graph->set_name("frametime_graph");
 		graph->set_origin(width - 250, 0);
 		graph->set_size(250, 100);
-		graph->set_font("fonts/debug.ttf", 16);
+		graph->set_font("debug", 16);
 		graph->set_background_color(Color::from_rgba(10, 10, 10, 210));
 		graph->set_foreground_color(Color::from_rgba(255, 255, 255, 255));
 		graph->create_samples(100, 1);
@@ -1180,7 +927,8 @@ public:
 		graph->set_range(0.0f, 33.3f);
 		graph->enable_baseline(true, 16.6f, Color::from_rgba(255, 0, 255, 255));
 #endif
-	}
+	} // setup_gui
+
 
 	virtual kernel::Error startup()
 	{
@@ -1275,9 +1023,6 @@ Options:
 
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 
-		// initialize window subsystem
-		//platform::window::startup(platform::window::RenderingBackend_Default);
-
 		platform::window::Parameters window_params;
 
 		platform::window::Frame screen_frame = platform::window::screen_frame(0);
@@ -1299,48 +1044,42 @@ Options:
 		main_window = platform::window::create(window_params);
 		platform::window::focus(main_window);
 
-
 		engine_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		renderer_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
 
+		entity_render_state = static_cast<EntityRenderState*>(MEMORY2_ALLOC(engine_allocator, sizeof(EntityRenderState) * 2));
+		memset(entity_render_state, 0, sizeof(EntityRenderState) * 2);
+		queued_messages = MEMORY2_NEW(engine_allocator, Array<GameMessage>)(engine_allocator);
+
 		// initialize rendering subsystems
-		{
-			render2::RenderParameters render_params(renderer_allocator);
-			// set some options
-			render_params["vsync"] = "true";
-			render_params["double_buffer"] = "true";
-			render_params["depth_size"] = "24";
-			render_params["multisample"] = "4";
+		render2::RenderParameters render_params(renderer_allocator);
 
-			// set opengl specific options
-			render_params["rendering_backend"] = "opengl";
-			render_params["opengl.major"] = "3";
-			render_params["opengl.minor"] = "2";
-			render_params["opengl.profile"] = "core";
-			render_params["opengl.share_context"] = "true";
+		// set some options
+		render_params["double_buffer"] = "true";
+		render_params["depth_size"] = "24";
+		render_params["multisample"] = "4";
 
-			device = render2::create_device(renderer_allocator, render_params);
-			device->init(config.window_width, config.window_height);
+		render_params["gamma_correct"] = "false";
+		render_params["vsync"] = "false";
 
-			scenelink = MEMORY2_NEW(renderer_allocator, SceneLink)(renderer_allocator);
-			int render_result = ::renderer::startup(renderer_allocator, ::renderer::Default, config.render_settings);
-			if (render_result == 0)
-			{
-				LOGE("renderer initialization failed!\n");
-				return kernel::RendererFailed;
-			}
-		}
+		// set opengl specific options
+		render_params["rendering_backend"] = "opengl";
+		render_params["opengl.major"] = "3";
+		render_params["opengl.minor"] = "2";
+		render_params["opengl.profile"] = "core";
+		render_params["opengl.share_context"] = "true";
 
-		assets::startup();
+		device = render2::create_device(renderer_allocator, render_params);
+		assert(device != nullptr);
 
-		if (device)
-		{
-			// initialize fonts
-			font::startup(renderer_allocator, device);
+		device->init(config.window_width, config.window_height);
 
-			// initialize debug draw
-			debugdraw::startup(renderer_allocator, device);
-		}
+		assets::startup(device);
+
+		render_scene_startup(device, renderer_allocator);
+
+		// initialize debug draw
+		debugdraw::startup(renderer_allocator, device);
 
 		audio_allocator = memory_allocator_default(MEMORY_ZONE_AUDIO);
 
@@ -1348,12 +1087,6 @@ Options:
 		audio::startup(audio_allocator);
 		IAudioInterface* audio_instance = MEMORY2_NEW(audio_allocator, AudioInterface);
 		audio::set_instance(audio_instance);
-
-		test_sound = gemini::assets::sounds()->load_from_path("sounds/select");
-		assert(test_sound);
-
-		assets::Sound* canond = gemini::assets::sounds()->load_from_path("sounds/canond");
-		//background_music = audio::play_sound(canond, 0);
 
 		animation_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 
@@ -1365,18 +1098,27 @@ Options:
 			hotloading::startup(renderer_allocator);
 		}
 
+		int32_t net_result = net_startup();
+		assert(net_result == 0);
+
+		telemetry_host_startup("127.0.0.1", TELEMETRY_VIEWER_PORT);
 
 		// setup interfaces
 		engine_interface = MEMORY2_NEW(engine_allocator, EngineInterface)
 			(engine_allocator,
 			&entity_manager,
-			&model_interface,
 			physics::instance(),
 			&experimental,
-			*scenelink,
+			device,
 			main_window
 		);
 		gemini::engine::set_instance(engine_interface);
+
+		// create the render scene
+		render_scene = render_scene_create(engine_allocator, device);
+
+		EngineInterface* engine_instance = static_cast<EngineInterface*>(engine_interface);
+		engine_instance->render_scene = render_scene;
 
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		setup_gui(device, renderer_allocator, frame.width, frame.height);
@@ -1391,18 +1133,14 @@ Options:
 			game_interface->level_load();
 		}
 
-
-
-
 		// TODO: post_application_startup
-
 
 		uint64_t current_time = platform::microseconds();
 		LOGV("startup in %2.2fms\n", (current_time-last_time) * MillisecondsPerMicrosecond);
 		last_time = current_time;
 
 		return kernel::NoError;
-	}
+	} // startup
 
 
 	virtual void tick()
@@ -1414,40 +1152,112 @@ Options:
 		platform::update(kernel::parameters().framedelta_milliseconds);
 		PROFILE_END("platform_update");
 
-		// update accumulator
-		accumulator += params.framedelta_seconds;
+
+		// calculate delta ticks in milliseconds
+		params.framedelta_milliseconds = (current_time - last_time) * MillisecondsPerMicrosecond;
+
+		// cache the value in seconds
+		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
+
+		interpolate_alpha += kernel::parameters().framedelta_seconds;
 
 		// record the current frametime milliseconds
 #if defined(DEBUG_FRAMERATE)
 		graph->record_value(params.framedelta_milliseconds, 0);
 #endif
+
+		last_time = current_time;
+
+		// update accumulator
+		accumulator += params.framedelta_seconds;
+
 		// set the baseline for the font
 		int x = 250;
 		int y = 16;
-		debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", params.framedelta_milliseconds), Color());
+		debugdraw::text(x, y, core::str::format("frame delta = %2.2fms (%i fps)\n",
+												params.framedelta_milliseconds,
+												static_cast<uint32_t>(1000.0f / params.framedelta_milliseconds)),
+												Color());
 		y += 12;
 		//debugdraw::text(x, y, core::str::format("allocations = %i, total %2.2f MB\n",
 		//	core::memory::global_allocator().get_zone()->get_active_allocations(),
 		//	core::memory::global_allocator().get_zone()->get_active_bytes() / (float)(1024 * 1024)), Color());
 		//y += 12;
 
-		while (accumulator >= params.step_interval_seconds)
+		uint32_t reset_queue = 0;
+
+		EngineInterface* ei = reinterpret_cast<EngineInterface*>(engine_interface);
+
+
+		while (accumulator > params.step_interval_seconds)
 		{
-			if (game_interface)
+			// iterate over queued messages and play until we hit the time cap
+			for (size_t index = 0; index < queued_messages->size(); ++index)
 			{
-				game_interface->tick(params.current_tick, params.step_interval_seconds, params.step_alpha);
+				if ((*queued_messages)[index].timestamp <= params.current_physics_tick)
+				{
+					if (game_interface)
+					{
+						game_interface->handle_game_message((*queued_messages)[index]);
+					}
+				} // execute
 			}
 
-			// this is going to be incorrect unless this is placed in the step.
-			// additionally, these aren't interpolated: figure how to; for example,
-			// draw hit boxes for a moving player with this system.
-			debugdraw::update(params.step_interval_seconds /** MillisecondsPerSecond*/);
+			if (game_interface)
+			{
+				game_interface->fixed_step(params.current_physics_tick, params.step_interval_seconds);
+				engine::instance()->physics()->step_simulation(params.step_interval_seconds);
+			}
+
 
 			// subtract the interval from the accumulator
 			accumulator -= params.step_interval_seconds;
 
 			// increment tick counter
-			params.current_tick++;
+			params.current_physics_tick++;
+
+			reset_queue = 1;
+		}
+
+		if (game_interface)
+		{
+			game_interface->tick(params.current_physics_tick, params.framedelta_seconds);
+
+			if (reset_queue)
+			{
+				debugdraw::update(params.step_interval_seconds);
+			}
+		}
+
+		if (reset_queue)
+		{
+			static float the_time = 0.0f;
+			render_scene->light_position_world.x = cosf(the_time);
+			render_scene->light_position_world.y = 2.0f;
+			render_scene->light_position_world.z = sinf(the_time);
+			the_time += 0.01f;
+
+			copy_state(&entity_render_state[0], &entity_render_state[1]);
+
+			extract_entities(&entity_render_state[1], entity_manager.get_entity_list());
+			interpolate_alpha = 0.0f;
+
+			camera_state[0] = camera_state[1];
+			game_interface->extract_camera(&camera_state[1], nullptr);
+
+			// 1. Assess camera position
+			// 2. Correct camera position
+			// 3. Determine if camera is too close to the player
+			// 4. optionally: fade out player when too close
+			//LOGV("Collision Correct the camera position?\n");
+
+			queued_messages->resize(0);
+
+			if (game_interface)
+			{
+				game_interface->render_frame(0.0f);
+				game_interface->reset_events();
+			}
 		}
 
 		params.step_alpha = accumulator / params.step_interval_seconds;
@@ -1461,26 +1271,13 @@ Options:
 		post_tick();
 		kernel::parameters().current_frame++;
 
-
-		// calculate delta ticks in milliseconds
-		params.framedelta_milliseconds = (current_time - last_time) * SecondsPerMillisecond;
-
-		// cache the value in seconds
-		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
-		last_time = current_time;
-
 		//gemini::profiler::report();
 		//gemini::profiler::reset();
-	}
+	} // tick
 
 	void post_tick()
 	{
 		platform::window::activate_context(main_window);
-
-		if (game_interface)
-		{
-			game_interface->execute_frame(kernel::parameters().framedelta_seconds);
-		}
 
 		if (compositor)
 		{
@@ -1490,6 +1287,121 @@ Options:
 		if (draw_physics_debug)
 		{
 			physics::debug_draw();
+		}
+
+		if (game_interface)
+		{
+			float alpha = glm::clamp(static_cast<float>(accumulator / kernel::parameters().step_interval_seconds), 0.0f, 1.0f);
+
+			/*game_interface->render_frame(alpha);*/
+
+			// render the main view
+			gemini::View view;
+			const gemini::Color background_color = gemini::Color::from_rgba(128, 128, 128, 255);
+
+			platform::window::Frame frame = platform::window::get_render_frame(main_window);
+			view.width = frame.width;
+			view.height = frame.height;
+
+			glm::vec3 player_offset;
+			game_interface->get_render_view(view, player_offset);
+
+			// interpolate
+			EntityRenderState ers;
+
+			interpolate_states(&ers, &entity_render_state[0], &entity_render_state[1], alpha);
+
+			CameraState interpolated_camera_state;
+
+			const uint32_t enable_interpolation = 1;
+			if (enable_interpolation)
+			{
+				interpolated_camera_state.world_position = gemini::lerp(camera_state[0].world_position, camera_state[1].world_position, alpha);
+				interpolated_camera_state.position = gemini::lerp(camera_state[0].position, camera_state[1].position, alpha);
+				interpolated_camera_state.distance_from_pivot = gemini::lerp(camera_state[0].distance_from_pivot, camera_state[1].distance_from_pivot, alpha);
+				interpolated_camera_state.rotation = gemini::slerp(camera_state[0].rotation, camera_state[1].rotation, alpha);
+				interpolated_camera_state.field_of_view = gemini::lerp(camera_state[0].field_of_view, camera_state[1].field_of_view, alpha);
+				interpolated_camera_state.vertical_offset = gemini::lerp(camera_state[0].vertical_offset, camera_state[1].vertical_offset, alpha);
+				interpolated_camera_state.horizontal_offset = gemini::lerp(camera_state[0].horizontal_offset, camera_state[1].horizontal_offset, alpha);
+				interpolated_camera_state.view = gemini::lerp(camera_state[0].view, camera_state[1].view, alpha);
+			}
+			else
+			{
+				interpolated_camera_state = camera_state[1];
+			}
+
+			// setup the inverse camera transform.
+			//glm::mat4 to_world = glm::translate(glm::mat4(), -interpolated_camera_state.position);
+
+			glm::vec3 cam_origin;
+
+			RapidInterface* rapid = runtime_rapid();
+			if (rapid)
+			{
+				view.modelview = rapid->camera_test(interpolated_camera_state.world_position,
+																interpolated_camera_state.position,
+																interpolated_camera_state.rotation);
+			}
+			else
+			{
+				view.modelview = camera_state_to_transform(interpolated_camera_state);// *to_world;
+				glm::vec4 row = glm::column(view.modelview, 3);
+			}
+
+			cam_origin = glm::vec3(glm::column(view.modelview, 3));
+			view.modelview = glm::inverse(view.modelview);
+
+			//glm::mat4 tx = glm::translate(glm::mat4(1.0f), player_offset);
+
+			//debugdraw::axes(glm::inverse(tx) * view.modelview, 1.0f, 0.0f);
+
+			//debugdraw::camera(
+			//	cam_origin,
+			//	interpolated_camera_state.view,
+			//	0.0f
+			//);
+
+			if (debug_camera)
+			{
+				// 5 is centered
+				const glm::vec3 wall_collision_offset(5.f, -1.1f, 0.0f);
+				const float pitch_degrees = 0.0f; // -35.0f
+				view.modelview = glm::inverse(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f) + wall_collision_offset) * glm::toMat4(glm::angleAxis(glm::radians(pitch_degrees), glm::vec3(1.0f, 0.0f, 0.0f))));
+			}
+
+			// this is what happens when we interpolate the vectors; but suffers artifacts from lerping vector used as orientation.
+			//view.modelview = glm::lookAt(interpolated_camera_pos, interpolated_camera_pos + interpolated_target_pos, glm::vec3(0.0f, 1.0f, 0.0f));
+
+			const float nearz = 0.01f;
+			const float farz = 4096.0f;
+			const float screen_aspect_ratio = (view.width / (float)view.height);
+			view.projection = glm::perspective(glm::radians(interpolated_camera_state.field_of_view), screen_aspect_ratio, nearz, farz);
+
+			render_scene_update(render_scene, &ers);
+			render_scene_draw(render_scene, device, view.modelview, view.projection);
+
+			//debugdraw::text(30, 230, core::str::format("static meshes: %i", render_scene->stat_static_meshes_drawn), Color(1.0f, 1.0f, 0.5f));
+			//debugdraw::text(30, 244, core::str::format("animated meshes: %i", render_scene->stat_animated_meshes_drawn), Color(1.0f, 1.0f, 0.5f));
+
+			// draw all render vars...
+			uint32_t x_offset = 10;
+			uint32_t y_offset = 150;
+
+			for (DebugVarBase* variable = debugvar_first(); variable != nullptr;)
+			{
+				debugdraw::text(x_offset,
+					y_offset,
+					variable->to_string(),
+					gemini::Color(1.0f, 1.0f, 1.0f));
+				variable = variable->next;
+				y_offset += 12;
+			}
+
+			debugdraw::render(view.modelview, view.projection, view.width, view.height);
+			if (_compositor)
+			{
+				_compositor->draw();
+			}
 		}
 
 		//if (draw_navigation_debug)
@@ -1506,7 +1418,10 @@ Options:
 		{
 			platform::window::swap_buffers(main_window);
 		}
-	}
+
+		telemetry_host_submit_frame();
+
+	} // post_tick
 
 	virtual void shutdown()
 	{
@@ -1525,11 +1440,9 @@ Options:
 			MEMORY2_DELETE(renderer_allocator, gui_renderer);
 		}
 
-
-
 		// since the game can create gui elements, we need to shutdown
 		// the gui before shutting down the game library.
-		close_gamelibrary();
+		 close_gamelibrary();
 
 		// we need to explicitly shut this down so it cleans up before
 		// our memory detects any leaks.
@@ -1538,7 +1451,8 @@ Options:
 			MEMORY2_DELETE(renderer_allocator, resource_cache);
 		}
 
-		font::shutdown();
+		render_scene_destroy(render_scene, device);
+		render_scene_shutdown();
 
 		// shutdown subsystems
 		hotloading::shutdown();
@@ -1546,14 +1460,26 @@ Options:
 		gemini::physics::shutdown();
 		debugdraw::shutdown();
 		audio::shutdown();
+
 		assets::shutdown();
+
+		telemetry_host_shutdown();
+
+		net_shutdown();
 
 		IAudioInterface* interface = audio::instance();
 		MEMORY2_DELETE(audio_allocator, interface);
 		audio::set_instance(nullptr);
 
+		MEMORY2_DEALLOC(engine_allocator, entity_render_state);
+		entity_render_state = nullptr;
+
+		MEMORY2_DELETE(engine_allocator, queued_messages);
+		queued_messages = nullptr;
+
+		MEMORY2_DELETE(engine_allocator, engine_interface);
+
 		// must shutdown the renderer before our window
-		::renderer::shutdown(renderer_allocator);
 		render2::destroy_device(renderer_allocator, device);
 
 		platform::window::destroy(main_window);
@@ -1565,11 +1491,8 @@ Options:
 #endif
 
 		gemini::runtime_shutdown();
-
-		MEMORY2_DELETE(engine_allocator, engine_interface);
-		MEMORY2_DELETE(renderer_allocator, scenelink);
-	}
-};
+	} // shutdown
+}; // EngineKernel
 
 PLATFORM_MAIN
 {
@@ -1618,63 +1541,5 @@ public:
 //		InputRenameMe irm;
 //		irm.load_input_table("conf/input.conf");
 
-
-#endif
-
-
-
-#if 0
-
-		struct TempVertex
-		{
-			glm::vec2 pos;
-			Color color;
-			glm::vec2 uv;
-		};
-
-		// create the render target and texture for the gui
-		image::Image image;
-		image.width = 512;
-		image.height = 512;
-		image.channels = 3;
-		gui_texture = ::renderer::driver()->texture_create(image);
-
-		gui_render_target = ::renderer::driver()->render_target_create(image.width, image.height);
-		::renderer::driver()->render_target_set_attachment(gui_render_target, ::renderer::RenderTarget::COLOR, 0, gui_texture);
-		::renderer::driver()->render_target_set_attachment(gui_render_target, ::renderer::RenderTarget::DEPTHSTENCIL, 0, 0);
-
-
-		if (alt_window)
-		{
-			alt_vs.desc.add(::renderer::VD_FLOAT2);
-			alt_vs.desc.add(::renderer::VD_FLOAT4);
-			alt_vs.desc.add(::renderer::VD_FLOAT2);
-
-
-			alt_vs.create(6, 10, ::renderer::DRAW_INDEXED_TRIANGLES);
-
-			platform::window::Frame frame = platform::window::get_render_frame(alt_window);
-			float cx = frame.width / 2.0f;
-			float cy = frame.height / 2.0f;
-
-			if (alt_vs.has_room(4, 6))
-			{
-				TempVertex* v = (TempVertex*)alt_vs.request(4);
-
-				const float RECT_SIZE = 150.0f;
-
-
-				// this is intentionally inverted along the y
-				// so that texture renderered appears correctly.
-				v[0].pos = glm::vec2(cx-RECT_SIZE, cy-RECT_SIZE); v[0].uv = glm::vec2(0,0); v[0].color = Color::from_rgba(255, 255, 255, 255);
-				v[1].pos = glm::vec2(cx-RECT_SIZE, cy+RECT_SIZE); v[1].uv = glm::vec2(0,1); v[1].color = Color::from_rgba(255, 255, 255, 255);
-				v[2].pos = glm::vec2(cx+RECT_SIZE, cy+RECT_SIZE); v[2].uv = glm::vec2(1,1); v[2].color = Color::from_rgba(255, 255, 255, 255);
-				v[3].pos = glm::vec2(cx+RECT_SIZE, cy-RECT_SIZE); v[3].uv = glm::vec2(1,0); v[3].color = Color::from_rgba(255, 255, 255, 255);
-
-				::renderer::IndexType indices[] = {0, 1, 2, 2, 3, 0};
-				alt_vs.append_indices(indices, 6);
-				alt_vs.update();
-			}
-		}
 
 #endif

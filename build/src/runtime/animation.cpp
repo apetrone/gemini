@@ -24,21 +24,25 @@
 // -------------------------------------------------------------
 #include "animation.h"
 
-#include <assets/asset_mesh.h>
-
+#include <core/freelist.h>
 #include <core/mem.h>
+#include <core/linearfreelist.h>
 #include <core/logging.h>
 #include <core/interpolation.h>
 #include <core/mathlib.h>
 #include <core/stackstring.h>
 
+#include <platform/platform.h>
+
 #include <hashset.h>
 
 #include <runtime/configloader.h>
+#include <runtime/mesh.h>
+
+#include <renderer/debug_draw.h>
+
 
 #include <vector>
-
-using namespace gemini::assets;
 
 using gemini::animation::Keyframe;
 
@@ -48,6 +52,26 @@ namespace gemini
 {
 	namespace animation
 	{
+		typedef Freelist<Sequence*> SequenceFreelist;
+		typedef Freelist<AnimatedInstance*> AnimatedInstanceFreelist;
+		struct AnimationState
+		{
+			Allocator* allocator;
+			SequenceFreelist sequences;
+			AnimatedInstanceFreelist instances;
+
+			AnimationState(Allocator& in_allocator)
+				: allocator(&in_allocator)
+				, sequences(in_allocator)
+				, instances(in_allocator)
+			{
+			}
+		};
+
+		AnimationState* _animation_state = nullptr;
+
+
+
 		//
 		// KeyframeList
 		//
@@ -87,20 +111,14 @@ namespace gemini
 		// Channel
 		//
 
-		Channel::Channel(float* target, bool should_wrap) : value(target)
+		Channel::Channel(float* target, bool should_wrap)
 		{
 			keyframelist = 0;
-			local_time_seconds = 0.0f;
-			current_keyframe = 0;
 			wrap = should_wrap;
 		}
 
 		Channel::~Channel()
-		{}
-
-		void Channel::set_target(float *target)
 		{
-			value = target;
 		}
 
 		void Channel::set_keyframe_list(KeyframeList* source_keyframe_list)
@@ -108,101 +126,64 @@ namespace gemini
 			keyframelist = source_keyframe_list;
 		}
 
-		void Channel::advance(float delta_seconds)
+		float Channel::evaluate(float t_seconds, float frame_delay_seconds) const
 		{
-			if (!keyframelist)
-			{
-				return;
-			}
-
-			if (!value)
-			{
-				return;
-			}
-
 			if (keyframelist->duration_seconds == 0)
 			{
-				*value = 0;
-				return;
-			}
-//			assert(keyframelist->duration_seconds > 0.0f);
-
-			local_time_seconds += delta_seconds;
-
-			// determine the next keyframe; this must not wrap
-			uint32_t next_keyframe = current_keyframe + 1;
-			if (next_keyframe > keyframelist->total_keys)
-			{
-				next_keyframe = keyframelist->total_keys;
+				return 0.0f;
 			}
 
-			// our local time has passed the sequence duration
-			if (local_time_seconds > keyframelist->duration_seconds)
+			uint32_t last_key = (keyframelist->total_keys - 1);
+
+			// TODO: Perform a direct lookup into the array with some math.
+			// this hasn't been a performance problem yet, fix it when it comes up.
+			float delta;
+			float value_a;
+			float value_b;
+			for (uint32_t key = 0; key < keyframelist->total_keys; ++key)
 			{
-				current_keyframe = 0;
-				if (wrap)
+				// alpha is calculated by dividing the deltas: (a/b)
+				// a. The delta between the current simulation time and the last key frame's time
+				// b. The delta between the next key frame's time and the last key frame's time.
+				Keyframe* keyframe = &keyframelist->keys[key];
+				uint32_t next_key = key + 1;
+				if (t_seconds < keyframe->seconds)
 				{
-					local_time_seconds -= keyframelist->duration_seconds;
+					if (key == 0)
+					{
+						// can't get previous; lerp forward
+						Keyframe* next = &keyframelist->keys[next_key];
+						delta = (next->seconds - keyframe->seconds);
+						value_a = next->value;
+						value_b = keyframe->value;
+
+						float alpha = (delta / frame_delay_seconds);
+						return gemini::lerp(value_a, value_b, alpha);
+					}
+					else
+					{
+						// This assumes that the animation is evenly sampled
+						// across key frames by frame_delay_seconds.
+						// If it isn't, we could use
+						// (keyframe->seconds - prev_keyframe->seconds) as
+						// the denominator instead of frame_delay_seconds.
+						Keyframe* prev_keyframe = &keyframelist->keys[key - 1];
+						float alpha = (t_seconds - prev_keyframe->seconds) / frame_delay_seconds;
+						return gemini::lerp(prev_keyframe->value, keyframe->value, alpha);
+					}
 				}
-				else
+				else if (last_key == key)
 				{
-					local_time_seconds = keyframelist->duration_seconds;
-				}
-			}
-
-			float last_keyframe_time = keyframelist->keys[current_keyframe].seconds;
-			float next_time = keyframelist->keys[next_keyframe].seconds;
-			assert(next_time != 0.0f);
-
-			// alpha is calculated by dividing the deltas: (a/b)
-			// a. The delta between the current simulation time and the last key frame's time
-			// b. The delta between the next key frame's time and the last key frame's time.
-			float alpha = (local_time_seconds - last_keyframe_time) / (next_time - last_keyframe_time);
-			alpha = glm::clamp(alpha, 0.0f, 1.0f);
-
-			// update value
-			float prev_value = keyframelist->keys[current_keyframe].value;
-			float next_value;
-//			if ((current_keyframe+1) >= keyframelist->total_keys)
-//			{
-//				// TODO: should use post-infinity here
-//				// For now, just use the last keyframe.
-//				next_value = keyframelist->keys[current_keyframe].value;
-//			}
-//			else
-			{
-				next_value = keyframelist->keys[next_keyframe].value;
-			}
-
-			// lerp the value
-			*value = gemini::lerp(prev_value, next_value, alpha);
-
-			// determine if we should advance the keyframe index
-			if (local_time_seconds >= next_time)
-			{
-				// advance the frame
-				++current_keyframe;
-
-				// catch out of frame bounds
-				if (current_keyframe == keyframelist->total_keys-1)
-				{
-					current_keyframe = 0;
-					local_time_seconds -= next_time;
+					// next key would wrap: We may just be able to
+					// return the last/first value.
+					next_key = 0;
+					Keyframe* next = &keyframelist->keys[last_key];
+					return next->value;
 				}
 			}
-		} // advance
 
-		void Channel::reset()
-		{
-			current_keyframe = 0;
-			local_time_seconds = 0;
-		} // reset
-
-		float Channel::operator()() const
-		{
-			return *value;
-		} // operator()
-
+			return 0.0f;
+		} // evaluate
 
 		// Sequence
 		Sequence::Sequence(gemini::Allocator& _allocator)
@@ -212,13 +193,18 @@ namespace gemini
 		}
 
 		// AnimatedInstance
-
 		AnimatedInstance::AnimatedInstance(gemini::Allocator& allocator)
 			: local_time_seconds(0.0)
-			, enabled(false)
+			, flags(Flags::Idle)
 			, animation_set(allocator)
 			, channel_set(allocator)
 		{
+		}
+
+		AnimatedInstance::~AnimatedInstance()
+		{
+			animation_set.clear();
+			channel_set.clear();
 		}
 
 		void AnimatedInstance::initialize(Sequence* sequence)
@@ -233,30 +219,37 @@ namespace gemini
 			{
 				Channel& channel = channel_set[index];
 				channel.set_keyframe_list(&sequence->animation_set[index]);
-				channel.set_target(&animation_set[index]);
 			}
 		}
 
 		void AnimatedInstance::advance(float delta_seconds)
 		{
+			local_time_seconds += delta_seconds;
+
 			Sequence* sequence = animation::get_sequence_by_index(sequence_index);
 			assert(sequence != 0);
 
-			for (Channel& channel : channel_set)
+			if (local_time_seconds > sequence->duration_seconds)
 			{
-				channel.advance(delta_seconds);
+				//local_time_seconds -= sequence->duration_seconds;
+				local_time_seconds = 0;
+				flags = Flags::Finished;
 			}
+		}
+
+		bool AnimatedInstance::is_playing() const
+		{
+			return flags == Flags::Playing;
+		}
+
+		bool AnimatedInstance::is_finished() const
+		{
+			return flags == Flags::Finished;
 		}
 
 		void AnimatedInstance::reset_channels()
 		{
-			Sequence* sequence = animation::get_sequence_by_index(sequence_index);
-			assert(sequence != 0);
-
-			for (auto& channel : channel_set)
-			{
-				channel.reset();
-			}
+			local_time_seconds = 0.0f;
 		}
 
 		//
@@ -266,21 +259,14 @@ namespace gemini
 		SequenceHash* _sequences_by_name;
 		gemini::Allocator* _allocator = nullptr;
 
+		struct AnimationSequenceLoadData
+		{
+			Sequence* sequence;
+			Mesh* mesh;
+		};
+
 		namespace detail
 		{
-
-			typedef std::vector<Sequence*> SequenceArray;
-			typedef std::vector<AnimatedInstance*> InstanceArray;
-
-
-			SequenceArray _sequences;
-			InstanceArray _instances;
-
-			struct AnimationSequenceLoadData
-			{
-				Sequence* sequence;
-				Mesh* mesh;
-			};
 
 			static bool validate_node(const Json::Value& node, const char* error_message)
 			{
@@ -317,12 +303,6 @@ namespace gemini
 
 				core::util::ConfigLoadStatus result = core::util::ConfigLoad_Failure;
 
-				if (!mesh->has_skeletal_animation)
-				{
-					LOGW("Tried to attach an animation to a non-animated model!\n");
-					return result;
-				}
-
 				if (root.isNull())
 				{
 					return result;
@@ -336,7 +316,7 @@ namespace gemini
 				}
 
 				LOGV("bones_array.size() == %i, mesh->skeleton.size() == %i\n",
-					 bones_array.size(), mesh->skeleton.size());
+					bones_array.size(), mesh->skeleton.size());
 				assert(bones_array.size() == mesh->skeleton.size());
 
 				if (bones_array.size() != mesh->skeleton.size())
@@ -375,7 +355,6 @@ namespace gemini
 				// 1. allocate enough space for each bone
 				sequence->animation_set.allocate(bones_array.size() * ANIMATION_KEYFRAME_VALUES_MAX, KeyframeList(sequence->allocator));
 
-
 				Json::ValueIterator node_iter = bones_array.begin();
 				size_t node_index = 0;
 				for (; node_iter != bones_array.end(); ++node_iter)
@@ -388,7 +367,8 @@ namespace gemini
 					const Json::Value& translation_keys = jnode["translation"];
 					assert(!scale_keys.isNull() && !rotation_keys.isNull() && !translation_keys.isNull());
 
-					Joint* joint = mesh->find_bone_named(node_name.c_str());
+#if 1
+					Joint* joint = mesh_find_bone_named(mesh, node_name.c_str());
 					assert(joint != 0);
 
 //					LOGV("reading keyframes for bone \"%s\", joint->index = %i\n", joint->name(), joint->index);
@@ -472,74 +452,78 @@ namespace gemini
 //							LOGV("t=%2.2f, %g %g %g %g\n", t, x, y, z, w);
 						}
 					}
-
+#endif
 					++node_index;
 				}
 
 				return core::util::ConfigLoad_Success;
 			}
+		} // namespace detail
 
-
-			Sequence* load_sequence_from_file(gemini::Allocator& allocator, const char* name, Mesh* mesh)
+		Sequence* load_sequence_from_file(gemini::Allocator& allocator, const char* name, Mesh* mesh)
+		{
+			if (_sequences_by_name->has_key(name))
 			{
-				if (_sequences_by_name->has_key(name))
-				{
-					Sequence* data = 0;
-					data = _sequences_by_name->get(name);
-					return data;
-				}
+				Sequence* data = 0;
+				data = _sequences_by_name->get(name);
+				return data;
+			}
 
-				Sequence* sequence = MEMORY2_NEW(allocator, Sequence)(allocator);
-				core::StackString<MAX_PATH_SIZE> filepath = name;
-				filepath.append(".animation");
-				AnimationSequenceLoadData data;
-				data.mesh = mesh;
-				data.sequence = sequence;
-				sequence->name = name;
-				if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(filepath(), load_animation_from_json, &data, true))
-				{
-					sequence->index= _sequences.size();
-					_sequences_by_name->insert(SequenceHash::value_type(name, sequence));
-					_sequences.push_back(sequence);
-				}
-				else
-				{
-					MEMORY2_DELETE(allocator, sequence);
-				}
+			Sequence* sequence = MEMORY2_NEW(allocator, Sequence)(allocator);
+			platform::PathString filepath = name;
+			filepath.append(".animation");
+			AnimationSequenceLoadData data;
+			data.mesh = mesh;
+			data.sequence = sequence;
+			sequence->name = name;
+			LOGV("loading animation %s\n", filepath());
+			if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(filepath(), detail::load_animation_from_json, &data, true))
+			{
+				sequence->index = _animation_state->sequences.acquire();
+				_sequences_by_name->insert(SequenceHash::value_type(name, sequence));
+				_animation_state->sequences.set(sequence->index, sequence);
+			}
+			else
+			{
+				MEMORY2_DELETE(allocator, sequence);
+			}
 
-				return sequence;
-			} // load_sequence_from_file
-		}
-
+			return sequence;
+		} // load_sequence_from_file
 
 		void startup(gemini::Allocator& allocator)
 		{
 			_allocator = &allocator;
 			_sequences_by_name = MEMORY2_NEW(allocator, SequenceHash)(allocator);
+
+			_animation_state = MEMORY2_NEW(allocator, AnimationState)(allocator);
 		}
 
 		void shutdown()
 		{
-			for (Sequence* sequence : detail::_sequences)
+			for (size_t index = 0; index < _animation_state->sequences.size(); ++index)
 			{
-				MEMORY2_DELETE(*_allocator, sequence);
+				Sequence* instance = _animation_state->sequences.at(index);
+				MEMORY2_DELETE(*_allocator, instance);
 			}
-			detail::_sequences.clear();
 
-			for (AnimatedInstance* instance : detail::_instances)
+			for (size_t index = 0; index < _animation_state->instances.size(); ++index)
 			{
-				destroy_sequence_instance(*_allocator, instance);
+				AnimatedInstance* instance = _animation_state->instances.at(index);
+				MEMORY2_DELETE(*_allocator, instance);
 			}
-			detail::_instances.clear();
 
 			MEMORY2_DELETE(*_allocator, _sequences_by_name);
+			MEMORY2_DELETE(*_animation_state->allocator, _animation_state);
 		}
 
 		void update(float delta_seconds)
 		{
-			for (AnimatedInstance* instance : detail::_instances)
+			AnimatedInstanceFreelist::Iterator anim = _animation_state->instances.begin();
+			for (; anim != _animation_state->instances.end(); ++anim)
 			{
-				if (instance->enabled)
+				AnimatedInstance* instance = anim.data();
+				if (instance->is_playing())
 				{
 					instance->advance(delta_seconds);
 				}
@@ -548,7 +532,7 @@ namespace gemini
 
 		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, Mesh* mesh)
 		{
-			Sequence* sequence = detail::load_sequence_from_file(allocator, name, mesh);
+			Sequence* sequence = load_sequence_from_file(allocator, name, mesh);
 			if (sequence)
 			{
 				AnimatedInstance* instance = create_sequence_instance(allocator, sequence->index);
@@ -572,8 +556,7 @@ namespace gemini
 
 		Sequence* get_sequence_by_index(SequenceId index)
 		{
-			assert(static_cast<size_t>(index) < detail::_sequences.size());
-			return detail::_sequences[index];
+			return _animation_state->sequences.from_handle(index);
 		}
 
 		AnimatedInstance* create_sequence_instance(gemini::Allocator& allocator, SequenceId index)
@@ -581,23 +564,84 @@ namespace gemini
 			Sequence* source = get_sequence_by_index(index);
 			AnimatedInstance* instance = MEMORY2_NEW(allocator, AnimatedInstance)(allocator);
 			instance->initialize(source);
-
-			instance->index = detail::_instances.size();
-			detail::_instances.push_back(instance);
-
+			instance->index = _animation_state->instances.acquire();
+			_animation_state->instances.set(instance->index, instance);
 			return instance;
 		}
 
 		void destroy_sequence_instance(gemini::Allocator& allocator, AnimatedInstance* instance)
 		{
-			MEMORY2_DELETE(allocator, instance);
+			_animation_state->instances.release(instance->index);
 		}
 
 		AnimatedInstance* get_instance_by_index(SequenceId index)
 		{
-			assert(static_cast<size_t>(index) < detail::_instances.size());
-			return detail::_instances[index];
+			return _animation_state->instances.from_handle(index);
 		}
+
+//#define GEMINI_DEBUG_BONES 1
+
+		float animated_instance_get_local_time(AnimatedInstance* instance)
+		{
+			return instance->local_time_seconds;
+		}
+
+		void animated_instance_get_pose(AnimatedInstance* instance, Pose& pose)
+		{
+#if defined(GEMINI_DEBUG_BONES)
+			const glm::vec2 origin(10.0f, 30.0f);
+#endif
+
+			const size_t total_joints = instance->animation_set.size() / ANIMATION_KEYFRAME_VALUES_MAX;
+
+			// If you hit this, there are more joints than expected in this animation_set.
+			assert(total_joints < MAX_BONES);
+
+			Sequence* sequence = _animation_state->sequences.from_handle(instance->sequence_index);
+			assert(sequence);
+			float frame_delay_seconds = sequence->frame_delay_seconds;
+
+			for (size_t bone_index = 0; bone_index < total_joints; ++bone_index)
+			{
+				animation::Channel* channel = &instance->channel_set[bone_index * ANIMATION_KEYFRAME_VALUES_MAX];
+
+				const animation::Channel& tx = channel[0];
+				const animation::Channel& ty = channel[1];
+				const animation::Channel& tz = channel[2];
+				glm::vec3& pos = pose.pos[bone_index];
+				pos = glm::vec3(tx.evaluate(instance->local_time_seconds, frame_delay_seconds),
+								ty.evaluate(instance->local_time_seconds, frame_delay_seconds),
+								tz.evaluate(instance->local_time_seconds, frame_delay_seconds));
+
+				const animation::Channel& rx = channel[3];
+				const animation::Channel& ry = channel[4];
+				const animation::Channel& rz = channel[5];
+				const animation::Channel& rw = channel[6];
+				glm::quat& rot = pose.rot[bone_index];
+				rot = glm::quat(rw.evaluate(instance->local_time_seconds, frame_delay_seconds),
+								rx.evaluate(instance->local_time_seconds, frame_delay_seconds),
+								ry.evaluate(instance->local_time_seconds, frame_delay_seconds),
+								rz.evaluate(instance->local_time_seconds, frame_delay_seconds));
+
+#if defined(GEMINI_DEBUG_BONES)
+				debugdraw::text(origin.x,
+					origin.y + (12.0f * bone_index),
+					core::str::format("%2i) '%s' | rot: [%2.2f, %2.2f, %2.2f, %2.2f]", bone_index,
+						"",//mesh->skeleton[bone_index].name(),
+						rot.x, rot.y, rot.z, rot.w),
+					Color(0.0f, 0.0f, 0.0f));
+#endif
+			}
+		} // animation_instance_get_pose
+
+		//void animation_interpolate_pose(Pose& out, Pose& last_pose, Pose& curr_pose, float t)
+		//{
+		//	for (size_t index = 0; index < MAX_BONES; ++index)
+		//	{
+		//		out.pos[index] = lerp(last_pose.pos[index], curr_pose.pos[index], t);
+		//		out.rot[index] = slerp(last_pose.rot[index], curr_pose.rot[index], t);
+		//	}
+		//} // animation_interpolate_pose
 
 	} // namespace animation
 } // namespace gemini

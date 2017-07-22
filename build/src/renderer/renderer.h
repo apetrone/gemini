@@ -25,9 +25,9 @@
 #pragma once
 
 
-#include "image.h"
-#include "shaderprogram.h"
-#include "vertexbuffer.h"
+#include <renderer/image.h>
+#include <renderer/shader.h>
+#include <renderer/vertexbuffer.h>
 
 #include <core/typedefs.h>
 #include <core/fixedarray.h>
@@ -37,108 +37,11 @@
 #include <core/str.h>
 #include <core/hashset.h>
 
+#include <runtime/asset_handle.h>
+
 namespace renderer
 {
-	typedef String ShaderString;
 	const size_t GEOMETRY_UV_SET_MAX = 1;
-
-	enum DriverType
-	{
-		Default, // pick one.
-		OpenGL,
-		GLESv2,
-		GLESv3
-	}; // DriverType
-
-
-	enum DriverCommandType
-	{
-		DC_SHADER,
-		DC_UNIFORMMATRIX4,
-		DC_UNIFORM1i,
-		DC_UNIFORM3f,
-		DC_UNIFORM4f,
-		DC_UNIFORM_SAMPLER_2D,
-		DC_UNIFORM_SAMPLER_CUBE,
-
-		DC_CLEAR,
-		DC_CLEARCOLOR,
-		DC_CLEARDEPTH,
-		DC_CULLMODE,
-
-		DC_VIEWPORT,
-
-		DC_DRAWCALL,
-		DC_SCISSOR,
-		DC_STATE,
-		DC_BLENDFUNC,
-
-		DC_MAX
-	}; // DriverCommandType
-
-
-	enum DriverState
-	{
-		STATE_BACKFACE_CULLING,
-		STATE_BLEND,
-		STATE_DEPTH_TEST,
-		STATE_DEPTH_WRITE,
-	}; // DriverState
-
-	enum RenderClearFlags
-	{
-		CLEAR_COLOR_BUFFER = 0x00004000,
-		CLEAR_DEPTH_BUFFER = 0x00000100
-	};
-
-	enum RenderBlendType
-	{
-		BLEND_ZERO,
-		BLEND_ONE,
-		BLEND_SRC_COLOR,
-		BLEND_ONE_MINUS_SRC_COLOR,
-		BLEND_DST_COLOR,
-		BLEND_ONE_MINUS_DST_COLOR,
-		BLEND_SRC_ALPHA,
-		BLEND_ONE_MINUS_SRC_ALPHA,
-		BLEND_ONE_MINUS_DST_ALPHA,
-		BLEND_CONSTANT_COLOR,
-		BLEND_ONE_MINUS_CONSTANT_COLOR,
-		BLEND_CONSTANT_ALPHA,
-		BLEND_ONE_MINUS_CONSTANT_ALPHA,
-		BLEND_SRC_ALPHA_SATURATE,
-		BLEND_SRC1_COLOR,
-		BLEND_ONE_MINUS_SRC1_COLOR,
-		BLEND_SRC1_ALPHA,
-		BLEND_ONE_MINUS_SRC1_ALPHA
-	}; // RenderBlendType
-
-	enum CullMode
-	{
-		CULLMODE_FRONT,
-		CULLMODE_BACK,
-	}; // CullMode
-
-
-
-	struct RenderSettings
-	{
-		// enable gamma correct rendering
-		bool gamma_correct;
-
-		// try to establish some sane defaults
-		RenderSettings() :
-			gamma_correct(false)
-		{
-		}
-
-	};
-
-
-
-	// returns 0 on failure, 1 on success
-	int startup(gemini::Allocator& allocator, DriverType driver, const RenderSettings& settings);
-	void shutdown(gemini::Allocator& allocator);
 
 #if defined(PLATFORM_GLES2_SUPPORT)
 	typedef unsigned short IndexType;
@@ -148,92 +51,27 @@ namespace renderer
 	#error Unknown renderer support!
 #endif
 
-	typedef unsigned char VertexType;
-
-#define MAX_DESCRIPTORS 8
-	typedef unsigned short VertexDescriptorType;
-
-	// Any changes to this enum must also be handled in:
-	// 1. GL Core3.2 driver (static_setup)
-	// 2. VertexDescriptor::calculate_vertex_stride
-	// 3. VertexDescriptor::elements (look up table for descriptor # of elements)
-	// 4. VertexDescriptor::size
-	enum
+	// I would like to be able to test both interleaved and serial formats
+	// on the GPU.
+	struct StaticMeshVertex
 	{
-		VD_FLOAT2 = 0,
-		VD_FLOAT3,
-		VD_FLOAT4,
-		VD_INT4,
-		VD_UNSIGNED_BYTE3,
-		VD_UNSIGNED_BYTE4,
-		VD_UNSIGNED_INT,
-		VD_TOTAL
-	}; // Vertex Descriptor
+		glm::vec3 position;
+		glm::vec3 normal;
+		glm::vec2 uvs;
+	};
 
 
-	enum VertexBufferDrawType
+	struct AnimatedMeshVertex
 	{
-		DRAW_TRIANGLES,
-		DRAW_INDEXED_TRIANGLES,
-		DRAW_LINES,
-		DRAW_POINTS,
-
-		DRAW_LIMIT,
-	}; // VertexBufferDrawType
-
-	enum VertexBufferBufferType
-	{
-		BUFFER_STATIC,
-		BUFFER_DYNAMIC,
-		BUFFER_STREAM,
-
-		BUFFER_LIMIT,
-	}; // VertexBufferBufferType
-
-	enum VertexBufferErrorType
-	{
-		VERTEX_BUFFER_ERROR_NONE = 0
-	}; // VertexBufferErrorType
-
-	struct VertexDescriptor
-	{
-		unsigned char id;
-		unsigned char attribs;
-		VertexDescriptorType description[ MAX_DESCRIPTORS ];
-
-		static void startup();
-		static void map_type(uint32_t type, uint16_t sizeof_type_bytes, uint16_t total_elements);
-		static uint16_t size_in_bytes[ VD_TOTAL ];
-		static uint16_t elements[ VD_TOTAL ];
-
-		VertexDescriptor();
-		void add(VertexDescriptorType desc);
-
-		VertexDescriptorType get(int index);
-		void reset();
-		unsigned int calculate_vertex_stride();
-		const VertexDescriptor& operator= (const VertexDescriptor& other);
-	}; // VertexDescriptor
-
-	enum TextureFlags
-	{
-		TEXTURE_WRAP 			= (1 << 0),
-		TEXTURE_CLAMP 			= (1 << 1),
-		TEXTURE_MIP_NEAREST		= (1 << 2),
-		TEXTURE_MIP_LINEAR		= (1 << 3)
-	}; // TextureFlags
-
-	struct BlendParameters
-	{
-		unsigned int source;
-		unsigned int destination;
-	}; // BlendParameters
-
+		glm::vec3 position;
+		glm::vec3 normal;
+		glm::vec2 uvs;
+		glm::vec4 blend_indices;
+		glm::vec4 blend_weights;
+	};
 
 	struct Geometry
 	{
-		unsigned short attributes;
-
 		unsigned int vertex_count;
 		unsigned int index_count;
 
@@ -241,21 +79,32 @@ namespace renderer
 		// they will be vertex_count in length.
 		FixedArray<glm::vec3> vertices;
 		FixedArray<glm::vec3> normals;
-		FixedArray<gemini::Color> colors;
 		FixedArray<glm::vec2> uvs;
 		FixedArray<glm::vec4> blend_indices;
 		FixedArray<glm::vec4> blend_weights;
 		FixedArray<renderer::IndexType> indices;
 
-		renderer::VertexBuffer* vertexbuffer;
-		renderer::VertexBufferDrawType draw_type;
-
-		// return true if this object is animated
-		// i.e. requires dynamic updates in the renderer
-		bool is_animated() const { return 0; }
 		Geometry(gemini::Allocator& allocator);
 		virtual ~Geometry();
 		Geometry& operator=(const Geometry& other) = delete;
+
+		core::StackString<128> name;
+
+		gemini::AssetHandle material_id;
+		gemini::AssetHandle shader_id;
+
+		render2::Buffer* vertex_buffer;
+		render2::Buffer* index_buffer;
+
+		// are these still needed for any reason?
+		glm::vec3 mins;
+		glm::vec3 maxs;
+
+		// model space to bone space transforms
+		FixedArray<glm::mat4> bind_poses;
+
+		// object-space to joint-space transforms
+		FixedArray<glm::mat4> inverse_bind_poses;
 	}; // Geometry
 } // namespace renderer
 
@@ -266,108 +115,6 @@ namespace renderer
 #include "pipeline.h"
 #include "commandbuffer.h"
 
-namespace renderer
-{
-	struct RenderStream;
-
-	void create_shaderprogram_from_file(gemini::Allocator& allocator, const char* path, renderer::ShaderProgram** program);
-}
-
-
-namespace renderer
-{
-	// This interface can be derived for each new platform
-	class RenderDevice
-	{
-	public:
-		virtual ~RenderDevice() {}
-
-		// resource management
-
-		// commands
-	};
-
-
-	// Renderer is a high-level interface for visuals. It doesn't know/care
-	// what the underlying API or devices are.
-	// Internally, it will direct calls to the device.
-	class Renderer
-	{
-	public:
-		virtual ~Renderer() {}
-
-		virtual void apply_settings(const renderer::RenderSettings& settings) = 0;
-	};
-
-	//
-	// IRenderDriver
-	// The render driver acts as a command processor. The implementation details are up to the driver
-	// which make this a nice abstraction layer.
-	class IRenderDriver
-	{
-	public:
-		virtual ~IRenderDriver() {}
-		virtual const char * description() = 0;
-
-
-		virtual void init_with_settings(const renderer::RenderSettings& settings) = 0;
-		virtual void create_default_render_target() = 0;
-
-		// these commands are called with the command and current memory stream
-		virtual void run_command( DriverCommandType command, core::util::MemoryStream & stream ) = 0;
-		virtual void post_command( DriverCommandType command, core::util::MemoryStream & stream ) = 0;
-
-		virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, core::util::MemoryStream & stream ) = 0;
-		virtual void setup_material( renderer::Material* material, renderer::ShaderProgram* program, RenderStream& stream) = 0;
-
-		// texture
-		virtual renderer::Texture* texture_create(image::Image& image) = 0;
-		virtual void texture_update(renderer::Texture* texture, const image::Image& image, const mathlib::Recti& rect) = 0;
-		virtual void texture_destroy(renderer::Texture* texture) = 0;
-
-		virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
-		virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream ) = 0;
-		virtual void vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices ) = 0;
-
-
-		virtual renderer::VertexBuffer * vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry ) = 0;
-		virtual void vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer::Geometry * geometry ) = 0;
-
-//		virtual void vertexbuffer_activate( renderer::VertexBuffer & parameters ) = 0;
-//		virtual void vertexbuffer_update( renderer::VertexBuffer & parameters ) = 0;
-		virtual void vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices ) = 0;
-		virtual void vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned int num_vertices ) = 0;
-//		virtual void vertexbuffer_deactivate( renderer::VertexBuffer & parameters ) = 0;
-
-		virtual renderer::ShaderObject shaderobject_create( renderer::ShaderObjectType shader_type ) = 0;
-		virtual bool shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version ) = 0;
-		virtual void shaderobject_destroy( renderer::ShaderObject shader_object ) = 0;
-
-		virtual renderer::ShaderProgram* shaderprogram_create() = 0;
-		virtual void shaderprogram_destroy( renderer::ShaderProgram* program ) = 0;
-		virtual void shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object ) = 0;
-		virtual void shaderprogram_detach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object ) = 0;
-		virtual void shaderprogram_bind_attributes( renderer::ShaderProgram* shader_program ) = 0;
-		virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram* shader_program ) = 0;
-		virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram* shader_program, const char* block_name) = 0;
-		virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram* shader_program ) = 0;
-		virtual void shaderprogram_activate( renderer::ShaderProgram* shader_program ) = 0;
-		virtual void shaderprogram_deactivate( renderer::ShaderProgram* shader_program ) = 0;
-
-		virtual renderer::RenderTarget* render_target_create(uint16_t width, uint16_t height) = 0;
-		virtual void render_target_destroy(renderer::RenderTarget* rt) = 0;
-		virtual void render_target_activate(renderer::RenderTarget* rt) = 0;
-		virtual void render_target_deactivate(renderer::RenderTarget* rt) = 0;
-		virtual void render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture) = 0;
-	}; // IRenderDriver
-
-	typedef IRenderDriver* (*RenderDriverCreator)();
-
-	IRenderDriver * driver();
-} // namespace renderer
-
-
-
 namespace render2
 {
 	struct Region
@@ -377,15 +124,6 @@ namespace render2
 		uint32_t width;
 		uint32_t height;
 	};
-
-
-	//	struct TextureDescriptor
-	//	{
-	//		uint32_t min_filter;
-	//		uint32_t mag_filter;
-	//		uint32_t s_address_mode;
-	//		uint32_t t_address_mode;
-	//	};
 
 	// ---------------------------------------------------------------------
 	// Texture: data uploaded to the GPU
@@ -422,7 +160,8 @@ namespace render2
 	enum class PrimitiveType
 	{
 		Lines,		// treat elements as pairs
-		Triangles	// treat elements as triplets
+		Triangles,	// treat elements as triplets
+		TriangleStrip // treat elements as triangle strips
 	};
 
 	typedef image::Image Image;
@@ -441,7 +180,7 @@ namespace render2
 		{
 		}
 
-		Shader* shader;
+		gemini::AssetHandle shader;
 		uint32_t attachments[ MAX_PIPELINE_ATTACHMENTS ];
 		VertexDescriptor vertex_description;
 		InputLayout* input_layout;
@@ -469,6 +208,7 @@ namespace render2
 
 		virtual void draw_indexed_primitives(
 			Buffer* index_buffer,
+			size_t index_offset,
 			size_t total) = 0;
 
 		virtual void pipeline(Pipeline* pipeline) = 0;
@@ -482,31 +222,24 @@ namespace render2
 		virtual void texture(
 			Texture* texture,
 			uint32_t index) = 0;
+
+		virtual void constant(
+			const char* name,
+			void* data,
+			size_t data_size) = 0;
 	}; // CommandSerializer
+
+	// ---------------------------------------------------------------------
+	// types
+	// ---------------------------------------------------------------------
+	typedef core::StackString<128> param_string;
+	typedef HashSet<param_string, param_string> RenderParameters;
 } // namespace render2
 
 #include "device.h"
 
 namespace render2
 {
-	// ---------------------------------------------------------------------
-	// types
-	// ---------------------------------------------------------------------
-	typedef core::StackString<128> param_string;
-	typedef HashSet<param_string, param_string> RenderParameters;
-
-
-	// This allows custom implementations of resource loading to be exopsed
-	// to the renderer.
-	class ResourceProvider
-	{
-	public:
-		virtual ~ResourceProvider();
-
-		virtual bool load_file(Array<unsigned char>& data, const char* filename) const = 0;
-		virtual bool file_exists(const char* filename) const = 0;
-	}; // class ResourceProvider
-
 	// ---------------------------------------------------------------------
 	// table of render parameters
 	// <variable>: [<options/type>]
@@ -519,16 +252,10 @@ namespace render2
 	// ---------------------------------------------------------------------
 	//
 	// ---------------------------------------------------------------------
-
-
-
 	/// @brief Create a render device with the given parameters
 	Device* create_device(gemini::Allocator& allocator, const RenderParameters& parameters);
 
 	/// @brief Destroy an existing render device
 	void destroy_device(gemini::Allocator& allocator, Device* device);
-
-	void set_resource_provider(ResourceProvider* provider);
-	ResourceProvider* get_resource_provider();
 } // namespace render2
 

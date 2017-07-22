@@ -24,9 +24,10 @@
 // -------------------------------------------------------------
 
 #include <renderer/debug_draw.h>
-#include <renderer/font.h>
+#include <renderer/font_library.h>
 #include <renderer/renderer.h>
 
+#include <runtime/assets.h>
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
 
@@ -41,6 +42,7 @@
 #include <core/stackstring.h>
 #include <core/fixedarray.h>
 
+using namespace gemini;
 using namespace platform;
 using namespace renderer;
 
@@ -61,10 +63,9 @@ private:
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
 
-	font::Handle font;
+	AssetHandle font;
 
 	gemini::Allocator render_allocator;
-	gemini::Allocator font_allocator;
 
 	struct MyVertex
 	{
@@ -122,6 +123,10 @@ public:
 		else if (event.subtype == kernel::WindowResized)
 		{
 			LOGV("resolution_changed %i %i\n", event.render_width, event.render_height);
+			if (device)
+			{
+				device->backbuffer_resized(event.render_width, event.render_height);
+			}
 		}
 		else if (event.subtype == kernel::WindowClosed)
 		{
@@ -272,6 +277,8 @@ Options:
 			device = create_device(render_allocator, params);
 			assert(device);
 
+			assets::startup(device, false);
+
 			platform::window::Frame window_frame = platform::window::get_frame(main_window);
 			LOGV("initializing render device...\n");
 			device->init(static_cast<int>(window_frame.width), static_cast<int>(window_frame.height));
@@ -280,7 +287,7 @@ Options:
 
 			// setup shaders
 			render2::PipelineDescriptor desc;
-			desc.shader = device->create_shader("vertexcolor");
+			desc.shader = shader_load("vertexcolor");
 			render2::VertexDescriptor& vertex_format = desc.vertex_description;
 			vertex_format.add("in_position", render2::VD_FLOAT, 3);
 			vertex_format.add("in_color", render2::VD_FLOAT, 4);
@@ -337,13 +344,10 @@ Options:
 		}
 
 		LOGV("font startup...\n");
-		font_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
-		font::startup(font_allocator, device);
 
-		Array<unsigned char> data(font_allocator);
-		LOGV("load fonts/debug.ttf\n");
-		core::filesystem::instance()->virtual_load_file(data, "fonts/debug.ttf");
-		font = font::load_from_memory(&data[0], data.size(), 16);
+		FontCreateParameters font_params;
+		font_params.size_pixels = 16;
+		font = font_load("debug", false, &font_params);
 
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 
@@ -400,7 +404,7 @@ Options:
 
 	virtual void shutdown()
 	{
-		font::shutdown();
+		assets::shutdown();
 
 		// shutdown the render device
 		device->destroy_buffer(vertex_buffer);

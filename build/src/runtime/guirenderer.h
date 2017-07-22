@@ -35,9 +35,8 @@ namespace gui
 	class Compositor;
 }
 
-#include <renderer/renderstream.h>
 #include <renderer/image.h>
-#include <renderer/font.h>
+#include <renderer/font_library.h>
 
 
 // A common resource cache interface that can be used by the engine and tools/tests
@@ -132,5 +131,5 @@ private:
 	unsigned int diffuse_texture;
 
 	CommonResourceCache& resource_cache;
-	Array<font::FontVertex> vertex_cache;
+	Array<gemini::FontVertex> vertex_cache;
 }; // GUIRenderer

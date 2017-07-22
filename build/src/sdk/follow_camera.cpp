@@ -203,13 +203,13 @@ void FollowCamera::tick(float step_interval_seconds)
 #endif
 }
 
-void FollowCamera::set_target_position(const glm::vec3& target_worldspace_position)
-{
-	target_position = target_worldspace_position;
-	// TODO: update camera position
-
-	update_desired_position(view);
-}
+//void FollowCamera::set_target_position(const glm::vec3& target_worldspace_position)
+//{
+//	target_position = target_worldspace_position;
+//	// TODO: update camera position
+//
+//	update_desired_position(view);
+//}
 
 void FollowCamera::set_target_direction(const glm::vec3& direction)
 {

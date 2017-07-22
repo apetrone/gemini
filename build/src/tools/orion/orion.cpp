@@ -22,20 +22,22 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-
-#include <renderer/renderer.h>
-#include <renderer/font.h>
-
+#include <runtime/animation.h>
+#include <runtime/assets.h>
+#include <runtime/debug_event.h>
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
 #include <runtime/geometry.h>
 #include <runtime/guirenderer.h>
+#include <runtime/hotloading.h>
 #include <runtime/standaloneresourcecache.h>
 
-#include <platform/platform.h>
-#include <platform/window.h>
-#include <platform/kernel.h>
 #include <platform/input.h>
+#include <platform/kernel.h>
+#include <platform/platform.h>
+#include <platform/network.h>
+#include <platform/window.h>
+#include <platform/directory_monitor.h>
 
 #include <core/hashset.h>
 #include <core/stackstring.h>
@@ -54,13 +56,16 @@
 #include <ui/timeline.h>
 #include <ui/ui.h>
 
+#include <rapid/rapid.h>
+
+#include <renderer/debug_draw.h>
+#include <renderer/font_library.h>
+#include <renderer/renderer.h>
+#include <renderer/scene_renderer.h>
+
 #include <sdk/camera.h>
 #include <sdk/game_api.h>
 #include <sdk/utils.h>
-
-#include <renderer/debug_draw.h>
-
-#include <rapid/rapid.h>
 
 
 #include "project.h"
@@ -70,9 +75,13 @@ using namespace renderer;
 using namespace gemini;
 
 #include <runtime/imocap.h>
+#include <runtime/debug_event.h>
 
 #define ENABLE_UI 1
 #define DRAW_SENSOR_GRAPHS 0
+#define TEST_SPRING_SYSTEM 0
+#define TEST_TELEMETRY_SYSTEM 0
+#define TEST_TELEMETRY_HOST 0
 
 #define DRAW_LINES 0
 const size_t TOTAL_LINES = 256;
@@ -85,6 +94,7 @@ namespace gui
 	public:
 		RenderableSurface(Panel* parent)
 			: Panel(parent)
+			, render_device(nullptr)
 			, target(nullptr)
 			, handle(render::WhiteTexture)
 		{
@@ -92,6 +102,7 @@ namespace gui
 			set_name("RenderableSurface");
 		}
 
+		void set_device(render2::Device* device) { render_device = device; }
 		void set_render_target(render2::RenderTarget* render_target) { target = render_target; }
 		render2::RenderTarget* get_render_target() const { return target; }
 		void set_texture_handle(int ref) { handle = ref; }
@@ -115,9 +126,12 @@ namespace gui
 			// resize the render target
 			LOGV("resize render target %i %i\n", new_size.width, new_size.height);
 			gui::Panel::set_size(new_size);
+			//https://blog.nelhage.com/2016/12/how-i-test/
+			render_device->resize_render_target(target, new_size.width, new_size.height);
 		}
 
 	private:
+		render2::Device* render_device;
 		render2::RenderTarget* target;
 		int handle;
 	}; // RenderableSurface
@@ -186,12 +200,391 @@ public:
 }; // AssetProcessingPanel
 
 
+// The quiet period required before an asset change is dispatched to subscribers.
+const float ASSET_CHANGE_NOTIFICATION_QUIET_SECONDS = 0.250f;
+struct ModifiedAssetData
+{
+	float quiet_time_left;
+	MonitorHandle monitor_handle;
+};
 
-
-
+typedef HashSet<platform::PathString, ModifiedAssetData> PathDelayHashSet;
 
 size_t total_bytes = sizeof(MyVertex) * 4;
 
+
+class SpringPanel : public gui::Panel
+{
+public:
+
+	gui::Point tube[4];
+
+	struct Object
+	{
+		gui::Point position;
+		gui::Point velocity;
+	};
+
+	float k;
+	float x;
+	Object box;
+
+	gui::Point target;
+
+	SpringPanel(gui::Panel* parent)
+		: gui::Panel(parent)
+	{
+		set_background_color(gemini::Color(0.5f, 0.5f, 0.5f));
+
+		tube[0] = gui::Point(0.0f, 0.0f);
+		tube[1] = gui::Point(0.0f, 50.0f);
+		tube[2] = gui::Point(50.0f, 50.0f);
+		tube[3] = gui::Point(50.0f, 0.0f);
+
+
+		box.position = gui::Point(0.0f, 0.0f);
+		box.velocity = gui::Point(0.0f, 0.0f);
+		target = gui::Point(50.0f, 0.0f);
+	}
+
+	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
+};
+
+
+void SpringPanel::update(gui::Compositor* compositor, float delta_seconds)
+{
+	gui::Panel::update(compositor, delta_seconds);
+#if 0
+	// Simple harmonic oscillator
+	x = box.position.x - target.x;
+	k = 15.f;
+
+	const float mass_kgs = .045f;
+	//float w = sqrt(k / m);
+	//const float frequency = (w / (2 * mathlib::PI));
+	//const float period = 1.0f / frequency;
+	const float T = (mathlib::PI * 2.0) * (sqrt(mass_kgs / k));
+	const float frequency = (1.0f / T);
+	LOGV("freq: %2.2fHz\n", frequency);
+
+
+	box.velocity.x += -k*x * delta_seconds;
+	box.position += box.velocity * delta_seconds;
+#endif
+
+#if 1
+	// Damped harmonic oscillator
+	x = box.position.x - target.x;
+	k = 0.125f;
+	const float mass_kgs = .045f;
+	const float c = 0.19f;
+
+	//const float damping_ratio = (c / (2.0 * sqrt(mass_kgs * k)));
+	//LOGV("damping_ratio is %2.2f\n", damping_ratio);
+
+	//box.velocity += 0.75f * (-(box.position - target) * delta_seconds);
+	box.velocity.x += -k*x -c * box.velocity.x;
+	box.position += box.velocity;
+#endif
+}
+
+void SpringPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
+{
+	gui::Panel::render(compositor, renderer, render_commands);
+
+	render_commands.add_rectangle(
+		gui::transform_point(get_transform(0), box.position + tube[0]),
+		gui::transform_point(get_transform(0), box.position + tube[1]),
+		gui::transform_point(get_transform(0), box.position + tube[2]),
+		gui::transform_point(get_transform(0), box.position + tube[3]),
+		gui::render::WhiteTexture,
+		gemini::Color(1.0f, 0.5f, 0.0)
+	);
+}
+
+
+#if TEST_TELEMETRY_SYSTEM
+class TelemetryPanel : public gui::Panel
+{
+public:
+
+	gui::Point tube[4];
+
+	telemetry_viewer* viewer;
+
+	gui::Point last_position;
+	int32_t selected_frame;
+	uint32_t adaptive_max_scale;
+
+	float bar_width;
+	float min_bar_width;
+
+	class TelemetryInfo : public gui::Panel
+	{
+		gui::Label* profile_block;
+		gui::Label* variable_block;
+
+	public:
+		TelemetryInfo(gui::Panel* parent)
+			: gui::Panel(parent)
+		{
+			profile_block = new gui::Label(this);
+			profile_block->set_size(250, 100);
+			profile_block->set_font("debug", 16);
+			profile_block->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.5f));
+			profile_block->set_foreground_color(gemini::Color(0.0f, 1.0f, 0.0f));
+			profile_block->set_name("profile_block");
+
+			variable_block = new gui::Label(this);
+			variable_block->set_size(250, 100);
+			variable_block->set_origin(0, 100);
+			variable_block->set_font("debug", 16);
+			variable_block->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.5f));
+			variable_block->set_foreground_color(gemini::Color(0.0f, 1.0f, 1.0f));
+			variable_block->set_name("variable_block");
+		}
+
+		void set_profile_block(const char* text)
+		{
+			profile_block->set_text(text);
+		}
+
+		void set_variable_block(const char* text)
+		{
+			variable_block->set_text(text);
+		}
+
+		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
+		{
+			render_geometry(render_commands, background_color);
+			//render_capture_rect(render_commands);
+			render_background(render_commands);
+			render_children(compositor, renderer, render_commands);
+		}
+	};
+
+
+	TelemetryInfo* info_panel;
+
+
+	TelemetryPanel(gui::Panel* parent, telemetry_viewer* telemetry_viewer)
+		: gui::Panel(parent)
+		, viewer(telemetry_viewer)
+	{
+		set_background_color(gemini::Color(0.5f, 0.5f, 0.5f));
+
+		tube[0] = gui::Point(0.0f, 0.0f);
+		tube[1] = gui::Point(0.0f, 50.0f);
+		tube[2] = gui::Point(50.0f, 50.0f);
+		tube[3] = gui::Point(50.0f, 0.0f);
+
+		flags |= gui::Panel::Flag_CanMove;
+		selected_frame = -1;
+
+		bar_width = 6.0f;
+
+		info_panel = new TelemetryInfo(this);
+		info_panel->set_size(250, 200);
+		info_panel->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.5f));
+		adaptive_max_scale = 100;
+	}
+
+	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
+	virtual void handle_event(gui::EventArgs& args) override;
+};
+
+void TelemetryPanel::update(gui::Compositor* compositor, float delta_seconds)
+{
+	min_bar_width = (get_client_size().width / static_cast<float>(TELEMETRY_MAX_VIEWER_FRAMES));
+	gui::Panel::update(compositor, delta_seconds);
+}
+
+void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
+{
+	render_geometry(render_commands, background_color);
+	render_capture_rect(render_commands);
+	render_background(render_commands);
+
+	uint32_t width = get_client_size().width;
+	float rect_width = bar_width;
+
+	const gemini::Color current(1.0f, 1.0f, 1.0f);
+	const gemini::Color normal(1.0f, 0.0f, 0.0f);
+	const gemini::Color selected(1.0f, 0.5f, 0.0f);
+
+	float client_height = get_client_size().height;
+	float panel_height = get_size().height;
+
+	const glm::mat3& tx = get_transform(0);
+	uint32_t visible_frames = (width / bar_width);
+
+	uint32_t max_scale_current_frame = adaptive_max_scale;
+	adaptive_max_scale = 0;
+
+	for (size_t index = 0; index < visible_frames; ++index)
+	{
+		gui::Point origin = gui::Point((index * rect_width), capture_rect.height());
+
+		// just grab and graph the first record
+		debug_record_t* record = &viewer->frames[index].records[0];
+
+		if (viewer->frames[index].total_cycles > adaptive_max_scale)
+		{
+			adaptive_max_scale = viewer->frames[index].total_cycles;
+		}
+
+		float scale = viewer->frames[index].total_cycles / static_cast<float>(max_scale_current_frame);
+		float rect_height = scale * static_cast<float>(client_height);
+
+		tube[0] = gui::Point(0.0f, client_height - rect_height);
+		tube[1] = gui::Point(0.0f, client_height);
+		tube[2] = gui::Point(rect_width, client_height);
+		tube[3] = gui::Point(rect_width, client_height - rect_height);
+
+		gemini::Color current_color = normal;
+		if (selected_frame != -1 && index == selected_frame)
+		{
+			current_color = selected;
+		}
+		else if (index == viewer->current_index)
+		{
+			current_color = current;
+		}
+
+		render_commands.add_rectangle(
+			gui::transform_point(tx, origin + tube[0]),
+			gui::transform_point(tx, origin + tube[1]),
+			gui::transform_point(tx, origin + tube[2]),
+			gui::transform_point(tx, origin + tube[3]),
+			gui::render::WhiteTexture,
+			current_color
+		);
+	}
+
+	render_children(compositor, renderer, render_commands);
+}
+
+void TelemetryPanel::handle_event(gui::EventArgs& args)
+{
+	last_position = args.local;
+
+	// Allow the cursor to still drag by the title bar.
+	// TODO: Determine WHERE the capture was made. If it wasn't made in
+	// the capture rect, the inherited Panel shouldn't handle it. This panel should.
+	Panel::handle_event(args);
+	if (args.handled || point_in_capture_rect(args.local))
+	{
+		return;
+	}
+
+	if (args.type == gui::Event_CursorDrag || args.type == gui::Event_CursorButtonPressed)
+	{
+		if (args.type == gui::Event_CursorButtonPressed)
+		{
+			args.compositor->set_capture(this, args.cursor_button);
+		}
+
+		int next_frame = (((int)args.local.x) - 1) / bar_width;
+
+		selected_frame = next_frame;
+
+		LOGV("selected frame: %i\n", next_frame);
+		if (selected_frame >= 0 && selected_frame < TELEMETRY_MAX_VIEWER_FRAMES)
+		{
+			info_panel->set_visible(true);
+			float x_offset = args.cursor.x;
+			float x_origin = get_origin().x;
+
+			if ((x_origin + x_offset + info_panel->get_size().width) > args.compositor->get_size().width)
+			{
+				x_offset = (args.compositor->get_size().width - info_panel->get_size().width - x_origin);
+			}
+			gui::Point info_panel_offset = args.compositor->compositor_to_local(gui::Point(x_offset, 0.0f));
+
+			info_panel->set_origin(info_panel_offset.x, capture_rect.height());
+
+			String profile_block;
+			for (size_t index = 0; index < TELEMETRY_MAX_RECORDS_PER_FRAME; ++index)
+			{
+				debug_record_t* record = &viewer->frames[selected_frame].records[index];
+				if (record->cycles > 0)
+				{
+					profile_block += core::str::format(
+						"[%s:%i - %s] Cycles: %i\n",
+						record->filename,
+						record->line_number,
+						record->function,
+						record->cycles);
+				}
+			}
+			//profile_block += core::str::format("Total Cycles: %i", viewer->frames[selected_frame].total_cycles);
+			info_panel->set_profile_block(profile_block.c_str());
+
+			String variable_block;
+			for (size_t index = 0; index < TELEMETRY_MAX_VARIABLES; ++index)
+			{
+				debug_var_t* variable = &viewer->frames[selected_frame].variables[index];
+				if (variable->name[0] > 0)
+				{
+					if (variable->type == DEBUG_RECORD_TYPE_FLOAT)
+					{
+						float* value = reinterpret_cast<float*>(variable->data);
+						variable_block += core::str::format("[%i] \"%s\": %2.2f\n", index, variable->name, *value);
+					}
+					else if (variable->type == DEBUG_RECORD_TYPE_FLOAT2)
+					{
+						glm::vec2* value = reinterpret_cast<glm::vec2*>(variable->data);
+						variable_block += core::str::format("[%i] \"%s\": [%2.2f, %2.2f]\n", index, variable->name, value->x, value->y);
+					}
+					else if (variable->type == DEBUG_RECORD_TYPE_FLOAT3)
+					{
+						glm::vec3* value = reinterpret_cast<glm::vec3*>(variable->data);
+						variable_block += core::str::format("[%i] \"%s\": [%2.2f, %2.2f, %2.2f]\n", index, variable->name, value->x, value->y, value->z);
+					}
+					else if (variable->type == DEBUG_RECORD_TYPE_FLOAT4)
+					{
+						glm::vec4* value = reinterpret_cast<glm::vec4*>(variable->data);
+						variable_block += core::str::format("[%i] \"%s\": [%2.2f, %2.2f, %2.2f, %2.2f]\n", index, variable->name, value->x, value->y, value->z, value->w);
+					}
+					else if (variable->type == DEBUG_RECORD_TYPE_UINT32)
+					{
+						uint32_t* value = reinterpret_cast<uint32_t*>(variable->data);
+						variable_block += core::str::format("[%i] \"%s\": %u\n", index, variable->name, *value);
+					}
+					else if (variable->type == DEBUG_RECORD_TYPE_INT32)
+					{
+						int32_t* value = reinterpret_cast<int32_t*>(variable->data);
+						variable_block += core::str::format("[%i] \"%s\": %i\n", index, variable->name, *value);
+					}
+				}
+			}
+			info_panel->set_variable_block(variable_block.c_str());
+		}
+		else
+		{
+			info_panel->set_visible(false);
+		}
+
+		args.handled = true;
+	}
+	else if (args.type == gui::Event_CursorScroll)
+	{
+		bar_width += args.wheel * 2.0f;
+		LOGV("bar width is %2.2f\n", bar_width);
+		if (bar_width < min_bar_width)
+		{
+			bar_width = min_bar_width;
+		}
+	}
+}
+#endif
+
+struct EditorEnvironment
+{
+	Project* project;
+};
 
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -217,12 +610,20 @@ private:
 
 	MyVertex vertex_data[4];
 
+	EditorEnvironment environment;
+
 //	GLsync fence;
+
+	RenderScene* render_scene;
 
 	gui::Compositor* compositor;
 	gui::Label* log_window;
 	GUIRenderer* gui_renderer;
 	gui::Panel* main_panel;
+	SpringPanel* spring_panel;
+#if TEST_TELEMETRY_SYSTEM
+	TelemetryPanel* telemetry_panel;
+#endif
 	::renderer::StandaloneResourceCache* resource_cache;
 	render2::RenderTarget* render_target;
 	render2::Texture* texture;
@@ -234,6 +635,8 @@ private:
 	Array<imocap::mocap_frame_t> mocap_frames;
 	size_t current_mocap_frame;
 	PathString current_mocap_filename;
+
+	telemetry_viewer tel_viewer;
 
 	float value;
 
@@ -262,16 +665,24 @@ private:
 
 	imocap::MocapDevice* mocap_device;
 
-	// development interface
-	RapidInterface rapid;
-	platform::DynamicLibrary* rapid_library;
+	gemini::MonitorHandle monitor_zero;
+	gemini::MonitorHandle monitor_one;
+	gemini::MonitorHandle monitor_materials;
 
+	gemini::Allocator asset_allocator;
+	MonitorDelegate monitor_delegate;
 	gemini::Allocator sensor_allocator;
 	gemini::Allocator render_allocator;
 	gemini::Allocator debugdraw_allocator;
 
 	glm::vec3* lines;
 	size_t current_line_index;
+
+	NotificationServer notify_server;
+	NotificationClient notify_client;
+	PathDelayHashSet* queued_asset_changes;
+
+	EntityRenderState entity_render_state;
 
 public:
 	EditorKernel()
@@ -286,7 +697,6 @@ public:
 		, is_playing_frames(false)
 		, app_in_focus(true)
 		, mocap_device(nullptr)
-		, rapid_library(nullptr)
 		, lines(nullptr)
 		, current_line_index(0)
 		, mocap_frames(sensor_allocator, 0)
@@ -301,9 +711,17 @@ public:
 		should_move_view = false;
 
 		asset_processor = nullptr;
+
+		memset(&environment, 0, sizeof(EditorEnvironment));
 	}
 
-	virtual ~EditorKernel() {}
+	virtual ~EditorKernel()
+	{
+		if (environment.project)
+		{
+			delete environment.project;
+		}
+	}
 
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
@@ -331,27 +749,73 @@ public:
 		if (event.key == BUTTON_S)
 			backward_down = event.is_down;
 
-		if (event.key == BUTTON_SPACE)
+		if (event.is_down)
 		{
-			LOGV("freezing rotations\n");
-			imocap::zero_rotations(mocap_device);
+			if (event.key == BUTTON_SPACE)
+			{
+				LOGV("freezing rotations\n");
+				imocap::zero_rotations(mocap_device);
 
-			position_test = velocity_test = glm::vec3(0.0f, 0.0f, 0.0f);
-		}
+				position_test = velocity_test = glm::vec3(0.0f, 0.0f, 0.0f);
+			}
 
-		if (event.key == BUTTON_F2)
-		{
-			unload_rapid_interface();
+			if (event.key == BUTTON_F2)
+			{
+				runtime_unload_rapid();
+				LOGV("unloaded rapid interface\n");
 
-			LOGV("unloaded rapid interface\n");
-		}
-		else if (event.key == BUTTON_F3)
-		{
-			load_rapid_interface();
-			LOGV("loading rapid interface\n");
+			}
+			else if (event.key == BUTTON_F3)
+			{
+				runtime_load_rapid();
+				LOGV("loading rapid interface\n");
+			}
+
+			if (event.key == BUTTON_F4)
+			{
+				LOGV("take a snapshot\n");
+				render2::Image image(render_allocator);
+				image.create(render_target->width, render_target->height, 4);
+				device->render_target_read_pixels(render_target, image);
+				image::save_image_to_file(image, "test.png");
+			}
 		}
 	}
 
+	void on_asset_reload(uint32_t channel, void* data, uint32_t data_size)
+	{
+		platform::PathString path = (const char*)data;
+		path.recompute_size();
+		assert(data_size == path.size());
+
+		path = path.basename();
+		path = path.remove_extension();
+		if (channel == 1)
+		{
+			LOGV("reloading SHADER asset: %s\n", path());
+			shader_load(path(), true);
+		}
+		else if (channel == 2)
+		{
+			LOGV("reloading TEXTURE asset: %s\n", path());
+		}
+		else if (channel == 3)
+		{
+			LOGV("reload material: %s\n", path());
+			material_load(path(), true);
+		}
+	}
+
+	void on_file_updated(MonitorHandle monitor_handle, MonitorAction action, const platform::PathString& path)
+	{
+		if (action == MonitorAction::Modified)
+		{
+			ModifiedAssetData mod;
+			mod.quiet_time_left = ASSET_CHANGE_NOTIFICATION_QUIET_SECONDS;
+			mod.monitor_handle = monitor_handle;
+			(*queued_asset_changes)[path] = mod;
+		}
+	}
 
 	virtual void event(kernel::SystemEvent& event)
 	{
@@ -364,6 +828,7 @@ public:
 			compositor->resize(event.window_width, event.window_height);
 
 			main_panel->set_size(event.window_width, event.window_height-24);
+			camera.perspective(60.0f, (int)event.window_width, (int)event.window_height, 0.01f, 1024.0f);
 		}
 		else if (event.subtype == kernel::WindowClosed)
 		{
@@ -412,24 +877,27 @@ public:
 			}
 			else if (event.subtype == kernel::MouseButton)
 			{
-				if (event.is_down)
+				bool handled = compositor->cursor_button(input_to_gui[event.button], event.is_down);
+				if (!handled)
 				{
-					if (event.button == MouseButton::MOUSE_LEFT)
+					if (event.is_down)
 					{
-						should_move_view = true;
-					}
+						if (event.button == MouseButton::MOUSE_LEFT)
+						{
+							should_move_view = true;
+						}
 
-					platform::window::set_mouse_tracking(true);
-				}
-				else
-				{
-					if (event.button == MouseButton::MOUSE_LEFT)
-					{
-						should_move_view = false;
+						platform::window::set_mouse_tracking(true);
 					}
-					platform::window::set_mouse_tracking(false);
+					else
+					{
+						if (event.button == MouseButton::MOUSE_LEFT)
+						{
+							should_move_view = false;
+						}
+						platform::window::set_mouse_tracking(false);
+					}
 				}
-				compositor->cursor_button(input_to_gui[event.button], event.is_down);
 			}
 			else if (event.subtype == kernel::MouseWheelMoved)
 			{
@@ -454,15 +922,124 @@ public:
 
 	void on_file_new(void)
 	{
+		uint32_t open_flags = platform::OpenDialogFlags::CanChooseDirectories | platform::OpenDialogFlags::CanCreateDirectories;
+
+		gemini::Allocator temp = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
+		Array<PathString> paths(temp);
+		platform::Result result = platform::show_open_dialog("Choose project root", open_flags, paths);
+		if (result.succeeded())
+		{
+			assert(environment.project == nullptr);
+
+			Project* project = Project::create_project();
+			environment.project = project;
+
+			project->set_name("TestProject");
+			project->camera_position = camera.get_position();
+			project->camera_yaw = camera.get_yaw();
+			project->camera_pitch = camera.get_pitch();
+			platform::PathString project_path = paths[0];
+			project->set_root_path(project_path());
+			project_path.append(PATH_SEPARATOR_STRING);
+			project_path.append("project.conf");
+
+			project->save_project_as(project_path());
+
+			LOGV("saved path: %s\n", paths[0]());
+		}
+	}
+
+
+	uint32_t on_test_click(platform::PlatformDialogEvent& event)
+	{
+		if (event.type == OpenDialogEventType::OkClicked)
+		{
+			// does a project file exist at path?
+			platform::PathString project_path = event.filename;
+			project_path.append(PATH_SEPARATOR_STRING);
+			project_path.append("project.conf");
+			if (!core::filesystem::instance()->file_exists(project_path(), false))
+			{
+				// TODO: Alert the user that this directory doesn't contain
+				// a project file.
+				LOGW("file '%s' does not exist\n", project_path());
+				return 1;
+			}
+		}
+
+		return 0;
 	}
 
 	void on_file_open()
+	{
+		uint32_t open_flags = platform::OpenDialogFlags::CanChooseDirectories;
+
+		gemini::Allocator temp = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
+		Array<PathString> paths(temp);
+		platform::open_dialog_event_handler delegate;
+		delegate.bind<EditorKernel, &EditorKernel::on_test_click>(this);
+		platform::Result result = platform::show_open_dialog("Choose project", open_flags, paths, delegate);
+		if (result.succeeded())
+		{
+			platform::PathString project_path = paths[0];
+			project_path.append(PATH_SEPARATOR_STRING);
+			project_path.append("project.conf");
+
+			environment.project = Project::open_project(project_path());
+
+			camera.set_position(environment.project->camera_position);
+			camera.set_yaw(environment.project->camera_yaw);
+			camera.set_pitch(environment.project->camera_pitch);
+		}
+	}
+
+	void on_file_save_project()
+	{
+		// If you hit this, there's no opened project.
+		assert(environment.project);
+
+		if (environment.project)
+		{
+			environment.project->camera_position = camera.get_position();
+			environment.project->camera_yaw = camera.get_yaw();
+			environment.project->camera_pitch = camera.get_pitch();
+			environment.project->save_project();
+		}
+	}
+
+	void on_file_save_project_as()
 	{
 	}
 
 	void on_file_quit(void)
 	{
 		set_active(false);
+	}
+
+	void on_project_build(void)
+	{
+		if (environment.project)
+		{
+			const String& path = environment.project->get_root_path();
+			LOGV("project root path is: %s\n", path.c_str());
+
+			// 1. Define source / destination folders.
+			//    platform specific versions, including shader types, etc.
+			// 2. Determine what processes to perform.
+			//	  Copy, Convert, Compress, etc.
+
+			// copy: conf, fonts, materials, shaders
+			// copy now, convert later: models
+			// convert: sounds, textures
+
+			// create a file watcher for the project root.
+		}
+		else
+		{
+			LOGV("BUILD: No project loaded.\n");
+		}
 	}
 
 	void on_record_start(void)
@@ -593,15 +1170,20 @@ public:
 
 	void timeline_scrubber_changed(size_t current_frame)
 	{
-		value = (current_frame / 30.0f);
+		value = mathlib::PI * 2.0 * (current_frame / 30.0f);
+
+		render_scene->light_position_world.x = cosf(value);
+		render_scene->light_position_world.y = 2.0f;
+		render_scene->light_position_world.z = sinf(value);
 	}
 
 	void render_main_content(render2::RenderTarget* render_target)
 	{
+#if 0
 		render2::Pass render_pass;
-		render_pass.color(0.0f, value, value, 1.0f);
-		render_pass.clear_color = true;
-		render_pass.clear_depth = true;
+		render_pass.color(0.0f, 0.0f, 0.0, 0.0f);
+		render_pass.clear_color = false;
+		render_pass.clear_depth = false;
 		render_pass.depth_test = false;
 		render_pass.target = render_target;
 
@@ -610,14 +1192,18 @@ public:
 
 		serializer->pipeline(surface_pipeline);
 
-		const bool test_triangle = 1;
+		const bool test_triangle = 0;
 		if (test_triangle)
 		{
 			serializer->vertex_buffer(vertex_buffer);
 			serializer->draw(0, 3);
-			device->queue_buffers(queue, 1);
 		}
+		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
+#endif
+		render_scene->camera_position_world = camera.get_position();
+		render_scene->camera_view_direction = camera.get_view();
+		render_scene_draw(render_scene, device, camera.get_modelview(), camera.get_projection(), render_target);
 
 		debugdraw::render(camera.get_modelview(), camera.get_projection(), render_target->width, render_target->height, render_target);
 	}
@@ -697,33 +1283,54 @@ Options:
 			// set perspective on camera
 			camera.perspective(60.0f, (int)params.frame.width, (int)params.frame.height, 0.01f, 1024.0f);
 			//camera.set_position(glm::vec3(0.0f, 5.0f, 10.0f));
-			camera.set_position(glm::vec3(0.69f, 0.55f, 0.45f));
-			camera.set_yaw(-78.15f);
-			camera.set_pitch(31.65f);
+
+			// test for rendering mocap suit
+			//camera.set_position(glm::vec3(0.69f, 0.55f, 0.45f));
+			//camera.set_yaw(-78.15f);
+			//camera.set_pitch(31.65f);
+
+			// test for rendering cubes
+			camera.set_position(glm::vec3(-2.10f, 1.24f, 1.10f));
+			camera.set_yaw(71.70f);
+			camera.set_pitch(12.45f);
+
 			camera.set_type(Camera::FIRST_PERSON);
 			camera.update_view();
 		}
 
-
-
-		// old renderer initialize
-		{
-//			renderer::RenderSettings render_settings;
-//			render_settings.gamma_correct = true;
-
-//			renderer::startup(renderer::OpenGL, render_settings);
-
-			// clear errors
-//			gl.CheckError("before render startup");
-
-//			fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-		}
-
 		platform::window::Frame window_frame;
+
+		asset_allocator = memory_allocator_default(MEMORY_ZONE_ASSETS);
+		assert(directory_monitor_startup(asset_allocator) == 0);
+
+		queued_asset_changes = MEMORY2_NEW(asset_allocator, PathDelayHashSet)(asset_allocator);
+
+		monitor_delegate.bind<EditorKernel, &EditorKernel::on_file_updated>(this);
+
+		platform::PathString watch_path = core::filesystem::instance()->content_directory();
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("shaders");
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("150");
+
+		monitor_zero = directory_monitor_add(watch_path(), monitor_delegate);
+
+		watch_path = core::filesystem::instance()->content_directory();
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("textures");
+		monitor_one = directory_monitor_add(watch_path(), monitor_delegate);
+
+		watch_path = core::filesystem::instance()->content_directory();
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("materials");
+		monitor_materials = directory_monitor_add(watch_path(), monitor_delegate);
 
 		// initialize the renderer
 		{
 			render_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
+
+
+			hotloading::startup(render_allocator);
 
 			debugdraw_allocator = memory_allocator_default(MEMORY_ZONE_DEBUGDRAW);
 
@@ -733,21 +1340,26 @@ Options:
 			// set some options
 			params["vsync"] = "true";
 			params["double_buffer"] = "true";
+			params["gamma_correct"] = "true";
 			params["depth_size"] = "24";
 //			params["multisample"] = "4";
 
 			// set opengl specific options
-			params["rendering_backend"] = "opengl";
+			//params["rendering_backend"] = "opengl";
 
 
 			device = create_device(render_allocator, params);
+			assert(device != nullptr);
+
+			assets::startup(device, true);
+			render_scene_startup(device, render_allocator);
 
 			window_frame = platform::window::get_frame(main_window);
 			device->init(window_frame.width, window_frame.height);
 
 			// setup shaders
 			render2::PipelineDescriptor desc;
-			desc.shader = device->create_shader("vertexcolor");
+			desc.shader = shader_load("vertexcolor");
 			render2::VertexDescriptor& vertex_format = desc.vertex_description;
 			vertex_format.add("in_position", render2::VD_FLOAT, 3);
 			vertex_format.add("in_color", render2::VD_FLOAT, 4);
@@ -758,7 +1370,7 @@ Options:
 
 			{
 				render2::PipelineDescriptor desc;
-				desc.shader = device->create_shader("vertexcolor");
+				desc.shader = shader_load("vertexcolor");
 				render2::VertexDescriptor& vertex_format = desc.vertex_description;
 				vertex_format.add("in_position", render2::VD_FLOAT, 3);
 				vertex_format.add("in_color", render2::VD_FLOAT, 4);
@@ -814,7 +1426,48 @@ Options:
 //			fs->add_virtual_path("editor/assets");
 		}
 
-		font::startup(render_allocator, device);
+
+		render_scene = render_scene_create(render_allocator, device);
+
+		animation::startup(asset_allocator);
+
+#if 0
+		AssetHandle test_mesh = mesh_load("models/vault");
+		//AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
+		AssetHandle animated_mesh;
+		animated_mesh = mesh_load("models/cube_rig/cube_rig");
+		//animated_mesh = mesh_load("models/chest_rig/chest_rig");
+		//animated_mesh = mesh_load("models/isocarbon_rig/isocarbon_rig");
+
+		glm::mat4 transform(1.0f);
+
+		const uint32_t TOTAL_STATIC_MESHES = 1;
+
+		for (size_t index = 0; index < TOTAL_STATIC_MESHES; ++index)
+		{
+			uint16_t entity_index = index;
+			render_scene_add_static_mesh(render_scene, test_mesh, entity_index, transform);
+			entity_render_state.model_matrix[entity_index] = transform;
+			transform = glm::translate(transform, glm::vec3(1.5f, 0.0f, 0.0f));
+		}
+
+		transform = glm::rotate(transform, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		for (size_t index = 0; index < 4; ++index)
+		{
+			uint16_t entity_index = TOTAL_STATIC_MESHES + index;
+			uint32_t component_id = render_scene_add_animated_mesh(render_scene, animated_mesh, entity_index, transform);
+			if (index == 2)
+			{
+				render_scene_animation_play(render_scene, component_id, "wiggle");
+			}
+			else
+			{
+				render_scene_animation_play(render_scene, component_id, "idle");
+			}
+			entity_render_state.model_matrix[entity_index] = transform;
+			transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
+		}
+#endif
 
 		// initialize debug draw
 		debugdraw::startup(debugdraw_allocator, device);
@@ -866,12 +1519,18 @@ Options:
 			horizontal_layout->add_layout(center_layout);
 #endif
 
+#if TEST_SPRING_SYSTEM
+			spring_panel = new SpringPanel(compositor);
+			spring_panel->set_origin(100, 100);
+			spring_panel->set_size(400, 400);
+			spring_panel->set_name("spring_panel");
+#endif
 
-			const char dev_font[] = "fonts/debug.ttf";
+
+			const char dev_font[] = "debug";
 			const size_t dev_font_size = 16;
 #if DRAW_SENSOR_GRAPHS
 			// Create a graph for each sensor
-
 
 			uint32_t origin = 24;
 
@@ -881,7 +1540,7 @@ Options:
 				graph->set_origin(window_frame.width - 250, origin);
 				graph->set_size(250, 100);
 				origin += 108;
-				graph->set_maximum_size(gui::Size(250, 100));
+				graph->set_maximum_size(gui::Sizes(250, 100));
 				graph->set_font(dev_font, dev_font_size);
 				graph->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
 				graph->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
@@ -902,7 +1561,7 @@ Options:
 			status->set_font(dev_font, dev_font_size);
 			status->set_text("");
 			status->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
-			status->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.25f));
+			status->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.0f));
 
 #if 1
 			asset_processor = new AssetProcessingPanel(compositor);
@@ -921,9 +1580,15 @@ Options:
 				filemenu->add_item("New Project...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_new, this));
 				filemenu->add_item("Open Project...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_open, this));
 				filemenu->add_separator();
+				filemenu->add_item("Save Project", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_save_project, this));
+				filemenu->add_item("Save Project As...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_save_project_as, this));
+				filemenu->add_separator();
 				filemenu->add_item("Quit", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_file_quit, this));
 				menubar->add_menu(filemenu);
 
+				gui::Menu* project = new gui::Menu("Project", menubar);
+				project->add_item("Build", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_project_build, this));
+				menubar->add_menu(project);
 
 				gui::Menu* record = new gui::Menu("Sensor", menubar);
 				record->add_item("Save New Stream...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_record_start, this));
@@ -931,7 +1596,6 @@ Options:
 				record->add_item("Open Stream...", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_playback_start, this));
 				record->add_item("Stop Playback", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_playback_stop, this));
 				menubar->add_menu(record);
-
 
 				gui::Menu* windowmenu = new gui::Menu("Window", menubar);
 				windowmenu->add_item("Show Asset Processor", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_window_toggle_asset_processor, this));
@@ -952,6 +1616,7 @@ Options:
 
 			// TODO: sort out this interface!
 			render_target = device->create_render_target(texture);
+			surface->set_device(device);
 			surface->set_render_target(render_target);
 			surface->set_texture_handle(handle);
 
@@ -974,7 +1639,7 @@ Options:
 			log_window = new gui::Label(compositor);
 			log_window->set_origin(0.0f, 450);
 			log_window->set_size(500, 250);
-			log_window->set_font("fonts/debug.ttf", 16);
+			log_window->set_font("debug", 16);
 			log_window->set_name("log_window");
 			log_window->set_foreground_color(gemini::Color(0.85f, 0.85f, 0.85f));
 			log_window->set_background_color(gemini::Color(0.10f, 0.10f, 0.10f));
@@ -1001,58 +1666,104 @@ Options:
 		int32_t startup_result = net_startup();
 		assert(startup_result == 0);
 
+		telemetry_viewer_create(&tel_viewer, 120, "0.0.0.0", TELEMETRY_VIEWER_PORT);
+
+#if TEST_TELEMETRY_SYSTEM
+		telemetry_panel = new TelemetryPanel(compositor, &tel_viewer);
+		telemetry_panel->set_origin(100, 100);
+		telemetry_panel->set_size(600, 200);
+		telemetry_panel->set_name("telemetry_panel");
+#endif
+
+#if TEST_TELEMETRY_HOST
+		telemetry_host_startup("127.0.0.1", TELEMETRY_VIEWER_PORT);
+#endif
+
+
 		sensor_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		imocap::startup(sensor_allocator);
 
 		mocap_device = imocap::device_create();
 
-		load_rapid_interface();
+		notify_server_create(&notify_server);
+		notify_client_create(&notify_client);
+
+		NotifyMessageDelegate channel_delegate;
+		channel_delegate.bind<EditorKernel, &EditorKernel::on_asset_reload>(this);
+		notify_client_subscribe(&notify_client, 1, channel_delegate);
+		notify_client_subscribe(&notify_client, 2, channel_delegate);
+		notify_client_subscribe(&notify_client, 3, channel_delegate);
 
 
 		lines = new glm::vec3[TOTAL_LINES];
 
+		last_time = platform::microseconds();
+
 		return kernel::NoError;
 	}
 
-	void load_rapid_interface()
+	void tick_queued_asset_changes(PathDelayHashSet& hashset, float tick_seconds)
 	{
-		if (rapid_library)
+		uint32_t handle_to_channel[] = {
+			1,
+			2,
+			3
+		};
+		PathDelayHashSet::Iterator it = hashset.begin();
+		for (; it != hashset.end(); ++it)
 		{
-			unload_rapid_interface();
+			ModifiedAssetData& data = it.value();
+			assert(data.monitor_handle > 0 && data.monitor_handle < 4);
+
+			data.quiet_time_left -= tick_seconds;
+			if (data.quiet_time_left <= 0.0f)
+			{
+				NotifyMessage message;
+				platform::PathString asset_path = it.key();
+				notify_message_string(message, asset_path);
+				message.channel = handle_to_channel[data.monitor_handle - 1];
+				notify_server_publish(&notify_server, &message);
+
+				it = hashset.remove(it);
+				continue;
+			}
 		}
-		rapid_library = platform::dylib_open("X:/gemini/build/lib/debug_x86_64/rapid.dll");
-		assert(rapid_library);
-
-		populate_interface_fn pif = reinterpret_cast<populate_interface_fn>(platform::dylib_find(rapid_library, "populate_interface"));
-		assert(pif);
-
-		pif(rapid);
-		status->set_text("PLUGIN LOADED");
-	}
-
-	void unload_rapid_interface()
-	{
-		if (rapid_library)
-		{
-			memset(&rapid, 0, sizeof(RapidInterface));
-			platform::dylib_close(rapid_library);
-			rapid_library = nullptr;
-			status->set_text("PLUGIN NOT LOADED");
-		}
-	}
+	} // tick_queued_asset_changes
 
 	virtual void tick()
 	{
 		uint64_t current_time = platform::microseconds();
 		platform::update(kernel::parameters().framedelta_milliseconds);
 
-		if (!app_in_focus)
-		{
-			return;
-		}
+		telemetry_viewer_tick(&tel_viewer, kernel::parameters().framedelta_seconds);
+
+		// while i debug network stuff; don't do this...
+		//if (!app_in_focus)
+		//{
+		//	return;
+		//}
+
+		hotloading::tick();
+		directory_monitor_update();
+		notify_server_tick(&notify_server);
+		notify_client_tick(&notify_client);
+		tick_queued_asset_changes(*queued_asset_changes, kernel::parameters().framedelta_seconds);
+
+		animation::update(kernel::parameters().framedelta_seconds);
+
+		render_scene_update(render_scene, &entity_render_state);
 
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
+
+		if (runtime_rapid())
+		{
+			status->set_text("PLUGIN LOADED");
+		}
+		else
+		{
+			status->set_text("PLUGIN NOT LOADED");
+		}
 
 		value += 0.01f * multiplifer;
 		value = glm::clamp(value, 0.0f, 1.0f);
@@ -1081,6 +1792,8 @@ Options:
 		debugdraw::text(20, yoffset, "Left Click + Drag: Rotate Camera", gemini::Color(1.0f, 1.0f, 1.0f));
 		debugdraw::text(20, yoffset+16, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
 		debugdraw::text(20, yoffset+32, "Space: Calibrate / Freeze Rotations", gemini::Color(1.0f, 1.0f, 1.0f));
+		debugdraw::text(20, yoffset+48, core::str::format("Camera: %2.2f, %2.2f, %2.2f [%2.2f, %2.2f]", camera.get_position().x, camera.get_position().y, camera.get_position().z, camera.get_yaw(), camera.get_pitch()), gemini::Color(1.0f, 1.0f, 1.0f));
+		debugdraw::text(20, yoffset + 64, core::str::format("debug bytes/sec: %i\n", tel_viewer.bytes_per_second), gemini::Color(1.0f, 1.0f, 1.0f));
 
 		glm::quat local_rotations[IMOCAP_TOTAL_SENSORS];
 
@@ -1124,13 +1837,13 @@ Options:
 			}
 		}
 
-
+		RapidInterface* rapid = runtime_rapid();
 		for (size_t index = 0; index < IMOCAP_TOTAL_SENSORS; ++index)
 		{
 			glm::mat4& world_pose = world_poses[index];
-			if (rapid_library && rapid.compute_pose)
+			if (rapid)
 			{
-				rapid.compute_pose(world_pose, world_poses, local_rotations, joint_offsets, index);
+				rapid->compute_pose(world_pose, world_poses, local_rotations, joint_offsets, index);
 			}
 
 			debugdraw::axes(world_pose, 0.1f);
@@ -1143,29 +1856,6 @@ Options:
 			last_origin = origin;
 
 			debugdraw::sphere(origin, Color::from_rgba(255, 0, 0, 255), 0.025f);
-
-			const glm::vec3 acceleration = imocap::device_sensor_local_acceleration(mocap_device, index);
-
-
-#if DRAW_SENSOR_GRAPHS
-			graphs[index]->record_value(acceleration.x, 0);
-			graphs[index]->record_value(acceleration.y, 1);
-			graphs[index]->record_value(acceleration.z, 2);
-#endif
-
-			if (index == 2)
-			{
-				velocity_test += acceleration * (float)kernel::parameters().step_interval_seconds;
-				position_test += velocity_test;
-
-				assert(current_line_index < TOTAL_LINES);
-				glm::vec3* line0 = &lines[current_line_index++];
-				*line0 = origin;
-
-				current_line_index = current_line_index % TOTAL_LINES;
-			}
-
-			//debugdraw::basis(origin, acceleration, 1.0f, 0.025f);
 		}
 
 #if DRAW_LINES
@@ -1178,10 +1868,6 @@ Options:
 			assert((index * 2 + 1) < TOTAL_LINES);
 			last_line = lines[index * 2 + 1];
 		}
-#endif
-
-#if DRAW_SENSOR_GRAPHS
-		debugdraw::box(glm::vec3(-0.5f, -0.5f, -0.5f) + position_test, glm::vec3(0.5f, 0.5f, 0.5f) + position_test, gemini::Color(0.0f, 1.0f, 1.0f));
 #endif
 
 		if (is_recording_frames)
@@ -1213,8 +1899,23 @@ Options:
 		debugdraw::oriented_box(box.rotation, box.center, box.positive_extents, gemini::Color(1.0f, 0.0f, 0.0f));
 		debugdraw::axes(glm::mat4(box.rotation), 1.0f, 0.0f);
 #endif
+		static float the_time = 0.0f;
+		render_scene->light_position_world.x = cosf(the_time);
+		render_scene->light_position_world.y = 2.0f;
+		render_scene->light_position_world.z = sinf(the_time);
+		the_time += 0.01f;
+
+		// draw the position of the light
+		debugdraw::sphere(render_scene->light_position_world, Color(1.0f, 1.0f, 1.0f), 0.5f, 0.0f);
 
 		debugdraw::update(kernel::parameters().framedelta_seconds);
+
+#if TEST_TELEMETRY_HOST
+		TELEMETRY_VARIABLE("light_position_world", render_scene->light_position_world);
+		TELEMETRY_VARIABLE("time", the_time);
+#endif
+
+		debugdraw::axes(glm::mat4(1.0f), 1.0f);
 
 		if (compositor)
 		{
@@ -1239,11 +1940,12 @@ Options:
 		render_pass.clear_color = true;
 		render_pass.clear_depth = true;
 		render_pass.depth_test = false;
+		render_pass.depth_write = true;
 
 		render2::CommandQueue* queue = device->create_queue(render_pass);
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 
-		serializer->pipeline(pipeline);
+		serializer->pipeline(surface_pipeline);
 		serializer->vertex_buffer(vertex_buffer);
 		serializer->draw(0, 3);
 		device->queue_buffers(queue, 1);
@@ -1251,14 +1953,26 @@ Options:
 #endif
 		platform::window::activate_context(main_window);
 
+		//render_scene_draw(render_scene, device, modelview_matrix, projection_matrix);
+
+		//debugdraw::render(camera.get_modelview(), camera.get_projection(), render_target->width, render_target->height, device->default_render_target());
+
+
 		if (compositor)
 		{
+#if TEST_TELEMETRY_HOST
+			TELEMETRY_BLOCK(gui_draw);
+#endif
 			compositor->draw();
 		}
 
-		device->submit();
-
-		platform::window::swap_buffers(main_window);
+		{
+#if TEST_TELEMETRY_HOST
+			TELEMETRY_BLOCK(device_draw);
+#endif
+			device->submit();
+			platform::window::swap_buffers(main_window);
+		}
 
 #if defined(GEMINI_ENABLE_PROFILER)
 		gemini::profiler::report();
@@ -1271,11 +1985,21 @@ Options:
 		params.current_frame++;
 
 		// calculate delta ticks in milliseconds
-		params.framedelta_milliseconds = (current_time - last_time) * SecondsPerMillisecond;
+		params.framedelta_milliseconds = (current_time - last_time) * MillisecondsPerMicrosecond;
 
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 		last_time = current_time;
+
+#if TEST_TELEMETRY_HOST
+		telemetry_host_submit_frame();
+#endif
+
+		//params.step_alpha = accumulator / params.step_interval_seconds;
+		//if (params.step_alpha >= 1.0f)
+		//{
+		//	params.step_alpha -= 1.0f;
+		//}
 
 		//memory_leak_report(false);
 	}
@@ -1285,11 +2009,29 @@ Options:
 	{
 		delete [] lines;
 		lines = nullptr;
-		unload_rapid_interface();
 
 		imocap::device_destroy(mocap_device);
 		mocap_device = nullptr;
 		imocap::shutdown();
+
+		directory_monitor_shutdown();
+
+		notify_client_destroy(&notify_client);
+		notify_server_destroy(&notify_server);
+
+		// must be shut down before the animations; as they're referenced.
+		render_scene_destroy(render_scene, device);
+		render_scene_shutdown();
+
+#if TEST_TELEMETRY_HOST
+		telemetry_host_shutdown();
+#endif
+		telemetry_viewer_destroy(&tel_viewer);
+
+		animation::shutdown();
+
+		MEMORY2_DELETE(asset_allocator, queued_asset_changes);
+		queued_asset_changes = nullptr;
 
 		net_shutdown();
 		debugdraw::shutdown();
@@ -1311,7 +2053,8 @@ Options:
 		resource_cache->clear();
 		MEMORY2_DELETE(render_allocator, resource_cache);
 
-		font::shutdown();
+
+		assets::shutdown();
 
 		// shutdown the render device
 		device->destroy_buffer(vertex_buffer);
@@ -1322,6 +2065,8 @@ Options:
 		destroy_device(render_allocator, device);
 
 //		glDeleteSync(fence);
+
+		hotloading::shutdown();
 
 		platform::window::destroy(main_window);
 		platform::window::shutdown();

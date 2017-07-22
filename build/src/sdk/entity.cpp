@@ -128,16 +128,24 @@ void entity_update_physics()
 	}
 }
 
-void entity_update(float delta_seconds, float alpha)
+void entity_update(float delta_seconds)
 {
 	for(auto& entity : entity_list().objects)
 	{
 		if ( !(entity->flags & Entity::EF_DELETE_INSTANCE) )
 		{
-			entity->update(delta_seconds, alpha);
+			entity->update(delta_seconds);
 		}
 	}
 	entity_deferred_delete( true );
+}
+
+void entity_interpolate(float alpha)
+{
+	for (Entity* entity : entity_list().objects)
+	{
+		entity->interpolate_state(alpha);
+	}
 }
 
 gemini::Allocator& entity_allocator()
@@ -165,7 +173,7 @@ Entity::Entity()
 	this->id = entity_list().count();
 
 	entity_list().add( this );
-	engine::instance()->entities()->add(this);
+	index = engine::instance()->entities()->add(this);
 	LOGV("Entity() - %p, %ld\n", this, (unsigned long)this->id);
 
 	render_flags = RENDER_NONE;
@@ -176,6 +184,12 @@ Entity::~Entity()
 	LOGV("~Entity() - %p, %ld\n", this, (unsigned long)this->id);
 	entity_list().remove( this );
 	engine::instance()->entities()->remove(this);
+
+	if (model_index != -1)
+	{
+		remove_model();
+	}
+
 
 	remove_colliders();
 } // ~Entity
@@ -220,10 +234,15 @@ void Entity::post_tick()
 	set_current_transform_from_physics(0);
 }
 
-void Entity::update(float delta_seconds, float /*alpha*/)
+void Entity::update(float delta_seconds)
 {
 	local_time += delta_seconds;
 } // update
+
+void Entity::interpolate_state(float alpha)
+{
+
+} // interpolate_state
 
 void Entity::remove()
 {
@@ -244,6 +263,10 @@ void Entity::collision_ended(const EntityCollisionData& /*collision_data*/)
 }
 
 void Entity::use(Entity* /*user*/, const glm::vec3& /*in_vector*/)
+{
+}
+
+void Entity::hit(Entity* /*user*/, const glm::vec3& /*force*/, const glm::vec3& /*local_position*/)
 {
 }
 
@@ -310,6 +333,11 @@ void Entity::remove_colliders()
 		engine::instance()->physics()->destroy_object(collider);
 	}
 	colliders.clear();
+}
+
+uint16_t Entity::entity_index() const
+{
+	return index;
 }
 
 //
@@ -415,6 +443,11 @@ void Entity::set_parent(Entity* /*other*/)
 void Entity::set_model(const char* path)
 {
 //	engine::instance()->models()->destroy_instance_data(model_index);
-	model_index = engine::instance()->models()->create_instance_data(path);
+	model_index = engine::instance()->models()->create_instance_data(entity_index(), path);
 //	LOGV("set model index: %i, for model: %s\n", model_index, path);
+}
+
+void Entity::remove_model()
+{
+	engine::instance()->models()->destroy_instance_data(model_index);
 }

@@ -31,6 +31,12 @@ namespace image
 
 namespace render2
 {
+	enum ShaderStages
+	{
+		SHADER_STAGE_VERTEX,
+		SHADER_STAGE_FRAGMENT
+	}; // ShaderStages
+
 	// ---------------------------------------------------------------------
 	// Device: hardware abstraction layer
 	// ---------------------------------------------------------------------
@@ -64,7 +70,7 @@ namespace render2
 		// ---------------------------------------------------------------------
 		// input layout
 		// ---------------------------------------------------------------------
-		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader) = 0;
+		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, gemini::AssetHandle shader_handle) = 0;
 		virtual void destroy_input_layout(InputLayout* layout) = 0;
 
 		// ---------------------------------------------------------------------
@@ -76,12 +82,9 @@ namespace render2
 		// ---------------------------------------------------------------------
 		// shader
 		// ---------------------------------------------------------------------
-		/// @brief Create a new shader
-		/// @param name Public name of the shader
-		/// @param reuse_shader If non-NULL, reload name into this shader
-		/// @returns A valid shader created from the name parameter
-		virtual Shader* create_shader(const char* name, Shader* reuse_shader = nullptr) = 0;
+		virtual Shader* create_shader(ShaderSource** sources, uint32_t total_sources) = 0;
 		virtual void destroy_shader(Shader* shader) = 0;
+
 
 		// ---------------------------------------------------------------------
 		// render target
@@ -91,6 +94,8 @@ namespace render2
 		virtual RenderTarget* default_render_target() = 0;
 		virtual RenderTarget* create_render_target(Texture* texture) = 0;
 		virtual void destroy_render_target(RenderTarget* target) = 0;
+		virtual void resize_render_target(RenderTarget* target, uint32_t width, uint32_t height) = 0;
+		virtual void render_target_read_pixels(RenderTarget* target, Image& image) = 0;
 
 		// ---------------------------------------------------------------------
 		// initialization
@@ -126,5 +131,12 @@ namespace render2
 		virtual void update_texture(Texture* texture, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions) = 0;
 		virtual void destroy_texture(Texture* texture) = 0;
 
+		// ---------------------------------------------------------------------
+		//
+		// ---------------------------------------------------------------------
+		virtual void update_parameters(const RenderParameters& render_params) = 0;
+
+		virtual size_t compute_vertex_stride(const VertexDescriptor& descriptor) = 0;
+		virtual size_t compute_index_stride() = 0;
 	}; // class Device
 } // namespace render2

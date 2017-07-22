@@ -25,20 +25,19 @@
 #pragma once
 
 #include <core/fixedarray.h>
+#include <core/mathlib.h>
 #include <core/stackstring.h>
-
 #include <core/typedefs.h>
+
+#include <shared/shared_constants.h>
+
 
 namespace gemini
 {
 	struct Allocator;
+	struct Mesh;
 
 	const size_t ANIMATION_KEYFRAME_VALUES_MAX = 7;
-
-	namespace assets
-	{
-		struct Mesh;
-	}
 
 	namespace animation
 	{
@@ -71,17 +70,8 @@ namespace gemini
 		class Channel
 		{
 		private:
-			// source keyframe list
+			// source key frame list
 			KeyframeList* keyframelist;
-
-			// local time in seconds [0, keyframelist->duration_seconds]
-			float local_time_seconds;
-
-			// current key frame index [0, keyframelist->total_keys-1]
-			uint32_t current_keyframe;
-
-			// value by reference
-			float* value;
 
 			// is this a loopable anim; if so, we ignore the last keyframe and wrap
 			// because keyframe[first] == keyframe[last]
@@ -91,18 +81,22 @@ namespace gemini
 			Channel(float* target = 0, bool should_wrap = true);
 			~Channel();
 
-			void set_target(float* target);
 			void set_keyframe_list(KeyframeList* source_keyframe_list);
-			void advance(float delta_seconds);
-			void reset();
 
-			float operator()() const;
+			// evaluate this channel at time t_seconds
+			float evaluate(float t_seconds, float frame_delay_seconds) const;
 		}; // Channel
 
 
 		//
 		// supporting structures
 		//
+
+		struct Pose
+		{
+			glm::vec3 pos[MAX_BONES];
+			glm::quat rot[MAX_BONES];
+		};
 
 		typedef int32_t SequenceId;
 		struct Sequence
@@ -118,28 +112,33 @@ namespace gemini
 			FixedArray<KeyframeList> animation_set;
 
 			Sequence(gemini::Allocator& allocator);
-		};
-
-
+		}; // Sequence
 
 		struct AnimatedInstance
 		{
+			enum class Flags
+			{
+				Idle,		// has not played yet
+				Playing,	// enabled
+				Finished	// finished playing
+			};
+
 			SequenceId index;
 			float local_time_seconds;
 			SequenceId sequence_index;
 			FixedArray<float> animation_set;
 			FixedArray<Channel> channel_set;
-			bool enabled;
-
+			Flags flags;
 
 			AnimatedInstance(gemini::Allocator& allocator);
-			virtual ~AnimatedInstance() {}
+			virtual ~AnimatedInstance();
 
 			virtual void initialize(Sequence* sequence);
 			virtual void advance(float delta_seconds);
-			virtual bool is_playing() const { return enabled; }
+			virtual bool is_playing() const;
+			virtual bool is_finished() const;
 			virtual void reset_channels();
-		};
+		}; // AnimatedInstance
 
 		//
 		// animation system
@@ -148,12 +147,18 @@ namespace gemini
 		void shutdown();
 		void update(float delta_seconds);
 
-		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, assets::Mesh* mesh);
+		Sequence* load_sequence_from_file(gemini::Allocator& allocator, const char* name, Mesh* mesh);
+		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, Mesh* mesh);
 		SequenceId find_sequence(const char* name);
 		Sequence* get_sequence_by_index(SequenceId index);
 
+		// caller must clean up the returned instance by calling destroy_sequence_instance.
 		AnimatedInstance* create_sequence_instance(gemini::Allocator& allocator, SequenceId index);
 		void destroy_sequence_instance(gemini::Allocator& allocator, AnimatedInstance* instance);
 		AnimatedInstance* get_instance_by_index(SequenceId index);
+
+		void animated_instance_get_pose(AnimatedInstance* instance, Pose& pose);
+
+		//void animation_interpolate_pose(Pose& out, Pose& last_pose, Pose& curr_pose, float t);
 	}
 } // namespace gemini

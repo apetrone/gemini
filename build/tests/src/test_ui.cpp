@@ -29,6 +29,7 @@
 #include <core/argumentparser.h>
 #include <core/typespec.h>
 
+#include <runtime/assets.h>
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
 #include <runtime/guirenderer.h>
@@ -40,9 +41,9 @@
 #include <platform/kernel.h>
 #include <platform/input.h>
 
+#include <renderer/font_library.h>
 #include <renderer/renderer.h>
 #include <renderer/vertexbuffer.h>
-#include <renderer/font.h>
 
 #include <ui/ui.h>
 #include <ui/compositor.h>
@@ -56,6 +57,7 @@
 
 #include <assert.h>
 
+using namespace gemini;
 using namespace renderer;
 
 // The simplest of all tests -- see what happens when we create a new panel
@@ -67,6 +69,7 @@ using namespace renderer;
 #define GEMINI_TEST_BUTTON			1 // 6 draw calls (2 per button)
 #define GEMINI_TEST_SLIDER			1 // 5 draw calls
 #define GEMINI_TEST_LAYOUT			1
+#define GEMINI_TEST_ROTATED_LABEL	1 //
 
 // enable this to enable and test audio
 //#define TEST_AUDIO 1
@@ -404,8 +407,8 @@ public:
 		assert(frame.width > 0);
 		assert(frame.height > 0);
 
-		const char dev_font[] = "fonts/debug.ttf";
-		const char menu_font[] = "fonts/debug.ttf";
+		const char dev_font[] = "debug";
+		const char menu_font[] = "debug";
 
 		const size_t dev_font_size = 16;
 		const size_t menu_font_size = 48;
@@ -463,7 +466,7 @@ public:
 					gui::Button* button0 = new gui::Button(test_panel);
 					const float inc = COLOR_INCREMENT * index;
 					button0->set_background_color(gemini::Color(inc, 0.5f + (inc < 0.5) ? inc : -0.5f, (1.0f - (COLOR_INCREMENT*index))));
-					button0->set_font("fonts/debug.ttf", 16);
+					button0->set_font("debug", 16);
 					button0->set_text(core::str::format("button %i", index));
 					button0->set_name(core::str::format("button %i", index));
 					horizontal->add_panel(button0);
@@ -521,7 +524,7 @@ public:
 					b1->set_size(128, 40);
 					b1->set_name(core::str::format("button %i", index));
 					b1->set_text(core::str::format("button %i", index));
-					b1->set_font("fonts/debug.ttf", 16);
+					b1->set_font("debug", 16);
 					hlayout->add_panel(b1);
 					continue;
 				}
@@ -531,10 +534,19 @@ public:
 				b1->set_size(128, 40);
 				b1->set_name(core::str::format("button %i", index));
 				b1->set_text(core::str::format("button %i", index));
-				b1->set_font("fonts/debug.ttf", 16);
+				b1->set_font("debug", 16);
 				layout->add_panel(b1);
 			}
 		}
+#endif
+
+#if defined(GEMINI_TEST_ROTATED_LABEL) && GEMINI_TEST_ROTATED_LABEL
+	gui::Label* test_label = new gui::Label(compositor);
+	test_label->set_font("debug", 16);
+	test_label->set_text("Hello");
+	test_label->set_origin(250, 250);
+	test_label->set_size(200, 200);
+	test_label->set_rotation(mathlib::degrees_to_radians(45.0f));
 #endif
 
 #if defined(TEST_AUDIO) && 0
@@ -691,7 +703,7 @@ public:
 		slider_label->set_background_color(gemini::Color::from_rgba(0, 0, 0, 0));
 		slider_label->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
 		slider_label->set_text("empty");
-		slider_label->set_font("fonts/debug.ttf", 16);
+		slider_label->set_font("debug", 16);
 
 		gui::Size slider_size(200, 30);
 		slider = new gui::Slider(compositor);
@@ -707,11 +719,6 @@ public:
 
 	virtual kernel::Error startup()
 	{
-
-
-
-
-
 		// parse command line values
 		std::vector<std::string> arguments;
 		core::argparse::ArgumentParser parser;
@@ -806,13 +813,15 @@ Options:
 		device = render2::create_device(render_allocator, render_parameters);
 		assert(device != nullptr);
 
+		assets::startup(device, false);
+
 		window_frame = platform::window::get_frame(native_window);
 
 		device->init(static_cast<int>(window_frame.width), static_cast<int>(window_frame.height));
 
 		// setup the pipeline
 		render2::PipelineDescriptor desc;
-		desc.shader = device->create_shader("vertexcolor");
+		desc.shader = shader_load("vertexcolor");
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
@@ -852,10 +861,6 @@ Options:
 
 		kernel::parameters().step_interval_seconds = (1.0f / 50.0f);
 
-
-		// initialize fonts
-		font::startup(render_allocator, device);
-
 		// initialize gui
 		setup_gui(window_frame.width, window_frame.height);
 
@@ -891,7 +896,7 @@ Options:
 			accumulator -= static_cast<float>(params.step_interval_seconds);
 
 			// increment tick counter
-			params.current_tick++;
+			params.current_frame++;
 		}
 
 		params.step_alpha = static_cast<float>(accumulator / params.step_interval_seconds);
@@ -1015,8 +1020,7 @@ Options:
 		MEMORY2_DELETE(gui_allocator, resource_cache);
 		MEMORY2_DELETE(gui_allocator, renderer);
 
-		// shutdown the fonts
-		font::shutdown();
+		assets::shutdown();
 
 		device->destroy_buffer(vertex_buffer);
 		device->destroy_pipeline(pipeline);

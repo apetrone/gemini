@@ -24,21 +24,6 @@
 // -------------------------------------------------------------
 #pragma once
 
-namespace renderer
-{
-	struct VertexBuffer
-	{
-		int vertex_count;
-		int index_count;
-
-		VertexBuffer()
-		{
-			vertex_count = 0;
-			index_count = 0;
-		}
-	}; // VertexBuffer
-} // namespace renderer
-
 namespace render2
 {
 	// 1. uploading all buffer data to GPU in one call
@@ -53,13 +38,13 @@ namespace render2
 
 	public:
 
-		Buffer() :
-		max_size(0),
-		flags(0)
+		Buffer()
+			: max_size(0)
+			, flags(0)
 		{
 		}
 
-		virtual ~Buffer() {}
+		virtual ~Buffer();
 		void clear_flag(uint32_t flag);
 
 	public:
