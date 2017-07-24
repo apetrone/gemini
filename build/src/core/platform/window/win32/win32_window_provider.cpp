@@ -633,7 +633,7 @@ namespace platform
 
 			// register for raw input
 			// keyboard: usagepage = 1, usage = 6
-
+#if 0
 
 			RAWINPUTDEVICELIST* device_list = nullptr;
 			UINT total_devices;
@@ -706,7 +706,7 @@ namespace platform
 			}
 
 			MEMORY2_DEALLOC(get_platform_allocator2(), device_list);
-
+#endif
 			return Result::success();
 		}
 

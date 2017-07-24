@@ -883,7 +883,6 @@ namespace core
 				LOGE("Usage section not found!\n");
 			}
 
-
 			// build our token list
 			TokenList tokenlist;
 			for (const std::string& token : tokens)
@@ -897,7 +896,6 @@ namespace core
 			PatternList input_patterns;
 			parse_patterns_from_tokens(input_patterns, tokenwrapper);
 
-
 			bool automatic_help = true;
 			bool should_exit = check_extra(automatic_help, version_string, input_patterns);
 			if (should_exit)
@@ -905,8 +903,6 @@ namespace core
 				// should bail here; displayed help or version string to user.
 				return false;
 			}
-
-
 
 			// insert default option values for the items not in the dict
 			for (PatternPtr option : options_registry)
