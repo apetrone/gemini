@@ -630,7 +630,6 @@ void copy_state(EntityRenderState* out, EntityRenderState* in)
 	}
 }
 
-
 class EngineKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -642,6 +641,7 @@ private:
 	// kernel stuff
 	bool active;
 	StackString<MAX_PATH_SIZE> game_path;
+	uint32_t enable_telemetry;
 	bool draw_physics_debug;
 	bool draw_navigation_debug;
 	bool debug_camera;
@@ -792,6 +792,7 @@ public:
 		, interpolate_alpha(0.0f)
 	{
 		game_path = "";
+		enable_telemetry = 0;
 		compositor = nullptr;
 		gui_renderer = nullptr;
 		resource_cache = nullptr;
@@ -947,12 +948,18 @@ Options:
 	-h, --help  Show this help screen
 	--version  Display the version number
 	--game=<game_path>  The game path to load content from
+	-t, --telemetry Enable telemetry data
 	)";
 
 		if (parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
 		{
 			std::string path = vm["--game"];
 			game_path = platform::make_absolute_path(path.c_str());
+
+			if (vm.find("-t") != vm.end() || vm.find("--telemetry") != vm.end())
+			{
+				enable_telemetry = 1;
+			}
 		}
 		else
 		{
@@ -1101,7 +1108,10 @@ Options:
 		int32_t net_result = net_startup();
 		assert(net_result == 0);
 
-		telemetry_host_startup("127.0.0.1", TELEMETRY_VIEWER_PORT);
+		if (enable_telemetry)
+		{
+			telemetry_host_startup("127.0.0.1", TELEMETRY_VIEWER_PORT);
+		}
 
 		// setup interfaces
 		engine_interface = MEMORY2_NEW(engine_allocator, EngineInterface)
@@ -1419,7 +1429,10 @@ Options:
 			platform::window::swap_buffers(main_window);
 		}
 
-		telemetry_host_submit_frame();
+		if (enable_telemetry)
+		{
+			telemetry_host_submit_frame();
+		}
 
 	} // post_tick
 
@@ -1463,7 +1476,10 @@ Options:
 
 		assets::shutdown();
 
-		telemetry_host_shutdown();
+		if (enable_telemetry)
+		{
+			telemetry_host_shutdown();
+		}
 
 		net_shutdown();
 
