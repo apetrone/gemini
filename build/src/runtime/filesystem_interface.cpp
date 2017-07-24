@@ -110,6 +110,10 @@ namespace core
 		void FileSystemInterface::user_application_directory(const ::platform::PathString& application_directory)
 		{
 			user_application_path = application_directory;
+			if (!directory_exists(user_application_path(), false))
+			{
+				platform::make_directory(user_application_path());
+			}
 		}
 
 		bool FileSystemInterface::virtual_file_exists(const char* relative_path) const
