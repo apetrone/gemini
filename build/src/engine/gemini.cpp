@@ -1341,30 +1341,14 @@ Options:
 			}
 
 			// setup the inverse camera transform.
-			//glm::mat4 to_world = glm::translate(glm::mat4(), -interpolated_camera_state.position);
-
 			glm::vec3 cam_origin;
-
-			RapidInterface* rapid = runtime_rapid();
-			if (rapid)
-			{
-				view.modelview = rapid->camera_test(interpolated_camera_state.world_position,
-																interpolated_camera_state.position,
-																interpolated_camera_state.rotation);
-			}
-			else
-			{
-				view.modelview = camera_state_to_transform(interpolated_camera_state);// *to_world;
-				glm::vec4 row = glm::column(view.modelview, 3);
-			}
-
+			view.modelview = glm::translate(glm::mat4(1.0f), interpolated_camera_state.position) * glm::toMat4(interpolated_camera_state.rotation);
 			cam_origin = glm::vec3(glm::column(view.modelview, 3));
 			view.modelview = glm::inverse(view.modelview);
 
+			// Uncomment this to debug the camera.
 			//glm::mat4 tx = glm::translate(glm::mat4(1.0f), player_offset);
-
 			//debugdraw::axes(glm::inverse(tx) * view.modelview, 1.0f, 0.0f);
-
 			//debugdraw::camera(
 			//	cam_origin,
 			//	interpolated_camera_state.view,
@@ -1378,9 +1362,6 @@ Options:
 				const float pitch_degrees = 0.0f; // -35.0f
 				view.modelview = glm::inverse(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f) + wall_collision_offset) * glm::toMat4(glm::angleAxis(glm::radians(pitch_degrees), glm::vec3(1.0f, 0.0f, 0.0f))));
 			}
-
-			// this is what happens when we interpolate the vectors; but suffers artifacts from lerping vector used as orientation.
-			//view.modelview = glm::lookAt(interpolated_camera_pos, interpolated_camera_pos + interpolated_target_pos, glm::vec3(0.0f, 1.0f, 0.0f));
 
 			const float nearz = 0.01f;
 			const float farz = 4096.0f;

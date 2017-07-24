@@ -46,7 +46,7 @@ namespace gemini
 								const glm::vec3& position,
 								const glm::quat& rotation)
 	{
-#if 1
+#if 0
 		// positive values for left side; negative for right.
 
 		// The horizontal offset also needs to be flipped.
