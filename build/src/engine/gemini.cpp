@@ -1095,6 +1095,9 @@ Options:
 		IAudioInterface* audio_instance = MEMORY2_NEW(audio_allocator, AudioInterface);
 		audio::set_instance(audio_instance);
 
+		// lower the master volume for a while
+		audio::set_master_volume(0.05f);
+
 		animation_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 
 		gemini::physics::startup();
@@ -1436,7 +1439,7 @@ Options:
 
 		// since the game can create gui elements, we need to shutdown
 		// the gui before shutting down the game library.
-		 close_gamelibrary();
+		close_gamelibrary();
 
 		// we need to explicitly shut this down so it cleans up before
 		// our memory detects any leaks.
