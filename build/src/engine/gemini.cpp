@@ -1172,6 +1172,8 @@ Options:
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 
+		params.game_delta_milliseconds = (params.framedelta_milliseconds * params.game_time_scale);
+
 		interpolate_alpha += kernel::parameters().framedelta_seconds;
 
 		// record the current frametime milliseconds

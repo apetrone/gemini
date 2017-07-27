@@ -65,9 +65,14 @@ namespace kernel
 		// time state
 		double step_interval_seconds;
 		float step_alpha;
+
+		// real-world times
 		float framedelta_seconds;
 		float framedelta_milliseconds;
 
+		// Game time (which can be affected by scale)
+		float game_delta_milliseconds;
+		float game_time_scale;
 
 		// the current tick (physics step)
 		uint64_t current_physics_tick;
