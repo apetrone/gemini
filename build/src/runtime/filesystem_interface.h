@@ -65,6 +65,7 @@ namespace core
 			virtual void virtual_load_file(Array<unsigned char>& buffer, const char* relative_path);
 
 			virtual void free_file_memory(void* memory);
+			virtual void load_file(Array<unsigned char>& buffer, const char* absolute_path) ;
 		};
 	} // namespace filesystem
 } // namespace core

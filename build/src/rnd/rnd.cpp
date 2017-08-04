@@ -1220,6 +1220,253 @@ void present_dialogue(DialogueNode* node)
 	}
 }
 
+#include <core/datastream.h>
+using namespace gemini;
+
+struct TextFileContext
+{
+	core::util::DataStream* stream;
+	uint32_t current_line;
+	uint32_t current_column;
+	char* current;
+};
+
+
+void text_advance_character(TextFileContext* context)
+{
+	if (*context->current == '\n')
+	{
+		LOGV("found newline!\n");
+		++context->current_line;
+		context->current_column = 0;
+	}
+	++context->current;
+	++context->current_column;
+} // text_advance_character
+
+uint32_t text_eat_comments(TextFileContext* context)
+{
+	char comment_char = '#';
+	if (*context->current == comment_char)
+	{
+		LOGV("found comment at line %i, col %i\n", context->current_line, context->current_column);
+		for ( ;; )
+		{
+			uint32_t bail = 0;
+			if (*context->current == '\n')
+			{
+				bail = 1;
+			}
+
+			text_advance_character(context);
+
+			if (bail)
+			{
+				return 1;
+			}
+		}
+	}
+
+	LOGV("no comment found on line %i\n", context->current_line);
+	return 0;
+}
+
+void string_copy_token(char* token, const char* source, size_t length)
+{
+	memcpy(token, source, length);
+}
+
+char* string_tokenize(TextFileContext* context, char* str, char* token)
+{
+	const size_t TOKEN_SIZE = 64;
+	uint8_t read_token = 0;
+	char* current = str;
+	for ( ;; )
+	{
+		if (current && *current)
+		{
+			text_eat_comments(context);
+
+			if (!read_token && isalnum(*current))
+			{
+				str = current;
+				read_token = 1;
+				LOGV("started reading token at line %i, column %i\n", context->current_line, context->current_column);
+			}
+			else if (read_token && isspace(*current))
+			{
+				// sort out token
+				string_copy_token(token, str, current - str);
+
+				token[current - str + 1] = '\0';
+				read_token = 0;
+				LOGV("token on line %i is \"%s\"\n", context->current_line, token);
+				break;
+			}
+			else
+			{
+				++current;
+			}
+		}
+	}
+	return current;
+}
+
+
+struct str_t
+{
+	str_t(const char* str)
+	{
+		allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+		flags = 1;
+		size = core::str::len(str);
+
+		// Need to copy data from str
+		data = static_cast<char*>(MEMORY2_ALLOC(allocator, (size + 1) * sizeof(uint8_t)));
+		core::str::copy(data, str, size);
+	}
+
+	str_t(char* str, size_t length)
+	{
+		allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+		flags = 0;
+		size = length;
+		data = str;
+	}
+
+	~str_t()
+	{
+		if (flags & 1)
+		{
+			MEMORY2_DEALLOC(allocator, data);
+			data = nullptr;
+			flags &= ~1;
+		}
+	}
+
+	const char* c_str() const
+	{
+		return data;
+	}
+
+	char* data;
+
+	// 1: This string instance owns allocated data that must be deallocated.
+	uint32_t flags;
+	uint32_t size;
+	gemini::Allocator allocator;
+};
+
+
+void test_str()
+{
+	str_t test("welp");
+
+	LOGV("Well, it is: %s\n", test.c_str());
+} // test_str
+
+
+char* string_read_line(TextFileContext* context)
+{	
+	for ( ;; )
+	{
+		if (text_eat_comments(context))
+		{
+			// LOGV("skipping comment line at %i\n", context->current_line);
+			continue;
+		}
+
+		if (isspace(*context->current))
+		{
+			text_advance_character(context);
+			continue;
+		}
+		else
+		{
+			// LOGV("found character %c [%i] at line %i, col %i\n",  *context->current, *context->current, context->current_line, context->current_column);
+			break;
+		}
+	}
+
+	char* first_character = context->current;
+	for ( ;; )
+	{
+		if (*context->current == '\n')
+		{
+			// advance the current character and truncate this
+			// string.
+			// str_t(context->current, string_length);
+			char* newline = context->current;
+			++context->current;
+			*newline = '\0';
+
+			// size_t string_length = newline - first_character;
+			// return str_t(first_character, string_length);
+			break;
+		}
+
+		// eat characters until we hit a newline
+		text_advance_character(context);
+	}
+
+	return first_character;
+}
+
+void test_file_handler(TextFileContext* context)
+{
+	// loop through the whole data stream
+	// uint32_t data_size = context->stream->get_data_size();
+	char* data = reinterpret_cast<char*>(context->stream->get_data());
+	context->current_line = 1;
+	context->current_column = 1;
+	context->current = data;
+
+	while (context->current && *context->current)
+	{
+		// read all lines
+		// char token[64] = {0};
+		char* line = string_read_line(context);
+		LOGV("[%s] at line %i\n", line, context->current_line);
+
+		if (*line == '/')
+		{
+			LOGV("Found a directory declaration at line %i\n", context->current_line);
+			continue;
+		}
+
+		// Split string into pieces at the equals sign
+		// Array<String> pieces = string_split_lines(line, '=');
+	}
+
+	LOGV("read file with %i lines\n", context->current_line);
+}
+
+void read_file(const char* path)
+{
+	LOGV("reading file: %s\n", path);
+
+	TextFileContext context;
+
+	core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
+	if (filesystem->file_exists(path, false))
+	{
+		gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+		Array<unsigned char> data(allocator);
+		filesystem->load_file(data, path);
+		char* memory = reinterpret_cast<char*>(&data[0]);
+		size_t memory_size = data.size();
+		core::util::MemoryStream stream;
+		stream.init(memory, memory_size);
+
+		context.stream = &stream;
+		test_file_handler(&context);
+	}
+	else
+	{
+		LOGV("No file found.\n");
+	}
+}
+
 
 int main(int, char**)
 {
@@ -1234,7 +1481,11 @@ int main(int, char**)
 //	test_serialization();
 //	test_reflection();
 
-#if defined(PLATFORM_LINUX)
+	// read_file("/home/apetrone/gemini/build/bin/debug_x86_64/input.conf");
+
+	test_str();
+
+#if defined(PLATFORM_LINUX) && 0
 	const size_t event_size = sizeof(struct input_event);
 	LOGV("event_size: %i\n", event_size);
 
