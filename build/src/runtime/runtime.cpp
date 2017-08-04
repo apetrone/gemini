@@ -49,6 +49,9 @@ using platform::PathString;
 using namespace core;
 using namespace platform;
 
+// Uncomment this to display runtime info from runtime.
+//#define GEMINI_RUNTIME_DEBUG
+
 namespace gemini
 {
 	namespace detail
@@ -103,9 +106,14 @@ namespace gemini
 		detail::_state->render_device = nullptr;
 
 		platform::PathString root_path = platform::get_program_directory();
+#if defined(GEMINI_RUNTIME_DEBUG)
 		LOGV("root_path: %s\n", root_path());
+#endif
 		platform::PathString content_path = platform::fs_content_directory();
+
+#if defined(GEMINI_RUNTIME_DEBUG)
 		LOGV("content_path: %s\n", content_path());
+#endif
 
 		// create file system instance
 		core::filesystem::IFileSystem* filesystem = MEMORY2_NEW(detail::_state->allocator, core::filesystem::FileSystemInterface);
@@ -898,7 +906,9 @@ namespace gemini
 		lib_directory.append("rapid");
 		lib_directory.append(platform::dylib_extension());
 
+#if defined(GEMINI_RUNTIME_DEBUG)
 		LOGV("rapid lib = %s\n", lib_directory());
+#endif
 		rapid_library = platform::dylib_open(lib_directory());
 		assert(rapid_library);
 
