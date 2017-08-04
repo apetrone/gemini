@@ -28,6 +28,8 @@
 #include <stddef.h>
 #include <core/str.h> // for STRING_HASH32
 
+#include <type_traits>
+
 #define TYPESPEC_REGISTER_NAME(C)\
 	template <>\
 	const char* TypeSpecName< C >::value = #C
@@ -107,6 +109,8 @@ struct TypeSpecInfo
 	virtual const char* name() const = 0;
 
 	virtual size_t identifier() const = 0;
+
+	virtual size_t size() const = 0;
 };
 
 template <class T>
@@ -120,6 +124,11 @@ struct TypeSpecInstanceInfo : public TypeSpecInfo
 	virtual size_t identifier() const
 	{
 		return TypeSpecIdentifier<T>::value;
+	}
+
+	virtual size_t size() const
+	{
+		return TypeSpecSize<T>::value;
 	}
 }; // TypeSpecInstanceInfo
 
@@ -163,3 +172,22 @@ size_t typespec_identifier_from_value(T*)
 {
 	return TypeSpecIdentifier<T>::value;
 }
+
+
+template <class T>
+struct typespec_is_pod
+{
+	enum
+	{
+		value = std::is_trivially_constructible<T>::value
+		//value = std::is_pod<T>::value
+	};
+};
+
+template <class T>
+struct typespec_is_class
+{	enum
+	{
+		value = std::is_class<T>::value
+	};
+};

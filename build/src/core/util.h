@@ -28,6 +28,7 @@
 #include "stackstring.h"
 #include "array.h"
 #include <string>
+#include <core/str.h>
 
 #if defined(PLATFORM_COMPILER_MSVC)
 #pragma warning(push)
@@ -89,6 +90,15 @@ namespace core
 			uint32_t operator()(const StackString<C, char>& s)
 			{
 				return hash_32bit(&s[0], s.size(), 0);
+			}
+		};
+
+		template <>
+		struct hash<gemini::string>
+		{
+			uint32_t operator()(const gemini::string& value)
+			{
+				return hash_32bit(&value[0], value.length(), 0);
 			}
 		};
 	} // namespace util

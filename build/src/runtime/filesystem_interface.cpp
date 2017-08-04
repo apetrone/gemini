@@ -32,6 +32,37 @@ namespace core
 {
 	namespace filesystem
 	{
+		// internal functions here
+		void _internal_load_file(Array<unsigned char>& buffer, const char* absolute_path)
+		{
+			if (!platform::fs_file_exists(absolute_path))
+			{
+				LOGE("File does not exist! \"%s\" (at \"%s\")\n", absolute_path);
+				return;
+			}
+
+			platform::File handle = platform::fs_open(absolute_path, platform::FileMode_Read);
+			if (handle.is_open())
+			{
+				// TODO: use 'get_length' to allow Android's Asset Manager?
+				size_t file_size;
+				platform::fs_seek(handle, 0, platform::FileSeek_End);
+				file_size = static_cast<size_t>(platform::fs_tell(handle));
+				platform::fs_seek(handle, 0, platform::FileSeek_Begin);
+
+				if (file_size > 0)
+				{
+					buffer.resize(file_size + 1, 0);
+				}
+
+				platform::fs_read(handle, &buffer[0], 1, file_size);
+				platform::fs_close(handle);
+
+				// Ensure we terminate the buffer.
+				buffer[file_size] = '\0';
+			}
+		} // internal_load_file
+
 		FileSystemInterface::FileSystemInterface()
 		{
 			allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_FILESYSTEM);
@@ -63,6 +94,7 @@ namespace core
 				fullpath.normalize(PATH_SEPARATOR);
 			}
 
+			LOGV("Checking path \"%s\"\n", fullpath());
 			return platform::fs_file_exists(fullpath());
 		}
 
@@ -182,34 +214,18 @@ namespace core
 		{
 			platform::PathString fullpath;
 			absolute_path_from_relative(fullpath, relative_path, content_directory());
-			if (!file_exists(fullpath(), false))
-			{
-				LOGE("File does not exist! \"%s\" (at \"%s\")\n", relative_path, fullpath());
-				return;
-			}
 
-			platform::File handle = platform::fs_open(fullpath(), platform::FileMode_Read);
-			if (handle.is_open())
-			{
-				// TODO: use 'get_length' to allow Android's Asset Manager?
-				size_t file_size;
-				platform::fs_seek(handle, 0, platform::FileSeek_End);
-				file_size = static_cast<size_t>(platform::fs_tell(handle));
-				platform::fs_seek(handle, 0, platform::FileSeek_Begin);
-
-				if (file_size > 0)
-				{
-					buffer.resize(file_size, 0);
-				}
-
-				platform::fs_read(handle, &buffer[0], 1, file_size);
-				platform::fs_close(handle);
-			}
+			load_file(buffer, fullpath());
 		} // virtual_load_file
 
 		void FileSystemInterface::free_file_memory(void* memory)
 		{
 			MEMORY2_DEALLOC(allocator, memory);
 		} // free_file_memory
+
+		void FileSystemInterface::load_file(Array<unsigned char>& buffer, const char* absolute_path)
+		{
+			_internal_load_file(buffer, absolute_path);
+		} // load_file
 	} // namespace filesystem
 } // namespace core

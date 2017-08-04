@@ -26,9 +26,11 @@
 
 #include "typedefs.h"
 #include "mem.h"
+#include <core/array.h>
 
 #include <string>
 #include <vector>
+
 
 typedef std::string String;
 
@@ -48,6 +50,9 @@ namespace core
 		// cross platform functions
 		int sprintf(char* destination, size_t destination_max_size, const char* format, ...);
 		int vsnprintf(char* destination, size_t destination_max_size, const char* format, va_list arg);
+
+		// returns if newline is at string; returns true for \r\n or \n
+		bool isnewline(char* string, uint32_t* advance = nullptr);
 
 		// pass 0 for source_bytes in order to count the source string; (runs len on it)
 		char* copy(char* destination, const char* source, size_t source_bytes);
@@ -97,5 +102,131 @@ namespace core
 		{
 			return 0x0;
 		}
+
+
+		template <class T>
+		void parse_value_from_string(T* value, const char* token);
 	} // namespace str
+
+#if 0
+	struct str_t
+	{
+		// Semi-optimized string class for performant use of string data.
+		// Implements copy-on-write semantics.
+
+		str_t(gemini::Allocator& memory_allocator,
+			const char* str);
+		str_t(gemini::Allocator& memory_allocator,
+			const char* str,
+			size_t start,
+			size_t length);
+
+		void reallocate(size_t new_size);
+		~str_t();
+		void recalculate_size();
+		bool operator==(const char* other);
+		str_t& operator=(const str_t& other);
+
+		// returns the size of the data in bytes
+		size_t size() const;
+
+		// returns the length of the string in characters
+		size_t length() const;
+
+		// returns a c-style string
+		const char* c_str() const;
+		char& operator[](int index);
+		void perform_copy_on_write();
+		static str_t copy(gemini::Allocator& allocator, const char* source);
+		char operator[](int index) const;
+
+		char* data;
+
+		// 1: This string instance owns allocated data that must be deallocated.
+		// 2: data_size is stale
+		uint32_t flags;
+		uint32_t data_size;
+		gemini::Allocator& allocator;
+	}; // str_t
+#endif
+
 } // namespace core
+
+namespace gemini
+{
+
+	// strings are immutable. You must use the string_* functions to operate
+	// on them.
+	struct string
+	{
+		typedef const char value_type;
+
+		size_t string_data_size;
+		const char* string_data;
+
+		string()
+		{
+			string_data = nullptr;
+			string_data_size = 0;
+		} // string
+
+		string(const string& other)
+		{
+			string_data = other.string_data;
+			string_data_size = other.string_data_size;
+		} // string
+
+		size_t size() const
+		{
+			return string_data_size * sizeof(unsigned char);
+		} // size
+
+		size_t length() const
+		{
+			return string_data_size;
+		} // length
+
+		bool operator==(const string& other) const
+		{
+			if (other.string_data_size != string_data_size)
+			{
+				return false;
+			}
+
+			if (core::str::case_insensitive_compare(other.string_data, string_data, string_data_size) != 0)
+			{
+				return false;
+			}
+
+			return true;
+		} // operator==
+
+		bool operator==(const char* other)
+		{
+			return core::str::case_insensitive_compare(string_data, other, 0) == 0;
+		} // operator==
+
+		string& operator=(const string& other)
+		{
+			string_data = other.string_data;
+			string_data_size = other.string_data_size;
+			return *this;
+		} // operator=
+
+		const char* c_str() const
+		{
+			return string_data;
+		} // c_str
+
+		const char& operator[](int index) const;
+	}; // string
+
+	char* string_allocate(gemini::Allocator& allocator, size_t length);
+	string string_create(gemini::Allocator& allocator, const char* data);
+	string string_create(const char* data);
+	void string_destroy(gemini::Allocator& allocator, string& string);
+	string string_concat(gemini::Allocator& allocator, const string& first, const string& second);
+	string string_substr(gemini::Allocator& allocator, const char* source, uint32_t start, uint32_t length);
+
+	void string_split_lines(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, const char* delimiters = "\t ");
+} // namespace gemini

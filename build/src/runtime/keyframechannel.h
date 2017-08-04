@@ -271,7 +271,7 @@ namespace gemini
 		void create( unsigned int max_samples, const Type * values, float framedelay, Type pre_infinity_value = Type(), Type post_infinity_value = Type() )
 		{
 			total_samples = max_samples;
-			samples = MEMORY2_NEW_ARRAY(allocator, Type, total_samples);
+			samples = MEMORY2_NEW_ARRAY(Type, allocator, total_samples);
 
 			set_keys( values, total_samples );
 

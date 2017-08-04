@@ -5,16 +5,18 @@
 #include <runtime/runtime.h>
 
 
-#include <core/core.h>
-#include <core/logging.h>
-#include <core/typedefs.h>
-#include <core/fixedarray.h>
-#include <core/stackstring.h>
-#include <core/interpolation.h>
 #include <core/argumentparser.h>
+#include <core/core.h>
+#include <core/datastream.h>
+#include <core/fixedarray.h>
+#include <core/logging.h>
+#include <core/interpolation.h>
 #include <core/mem.h>
 #include <core/stackstring.h>
-#include <core/datastream.h>
+#include <core/str.h>
+#include <core/typedefs.h>
+#include <core/serialization.h>
+#include <core/typespec.h>
 
 #include <json/json.h>
 
@@ -123,10 +125,10 @@ void test_memory()
 	gemini::Allocator test_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
 	int* a = MEMORY2_NEW(test_allocator, int;
 	BaseClass* foo = MEMORY2_NEW(test_allocator, DerivedClass);
-	BaseClass* values = MEMORY2_NEW_ARRAY(test_allocator, DerivedClass, 1024);
-	DerivedClass* derived = MEMORY2_NEW_ARRAY(test_allocator, DerivedClass, 512);
+	BaseClass* values = MEMORY2_NEW_ARRAY(DerivedClass, test_allocator, 1024);
+	DerivedClass* derived = MEMORY2_NEW_ARRAY(DerivedClass, test_allocator, 512);
 
-	uint64_t* sixyfours = MEMORY2_NEW_ARRAY(test_allocator, uint64_t, 16384);
+	uint64_t* sixyfours = MEMORY2_NEW_ARRAY(uint64_t, test_allocator, 16384);
 
 	MEMORY2_DELETE(test_allocator, a);
 	MEMORY2_DELETE(test_allocator, foo);
@@ -926,153 +928,6 @@ void test_devices()
 
 #endif
 
-// test out reading BNO055.
-
-struct DataInput
-{
-	bool execute;
-
-	glm::quat orientation;
-	platform::Serial* device;
-	platform::Thread* thread_data;
-//	EventQueueType* event_queue;
-};
-
-// raw data read from BNO055;
-// quaternion data is 16-bit x 4 values
-const size_t TOTAL_SENSORS = 20;
-
-struct bno055_packet_t
-{
-	uint8_t header;
-	uint8_t data[8 * TOTAL_SENSORS];
-	uint8_t footer;
-
-	bno055_packet_t()
-	{
-		header = 0xba;
-		footer = 0xff;
-	}
-
-	bool is_valid() const
-	{
-		return (header == 0xba) && (footer == 0xff);
-	}
-
-	glm::quat get_orientation(uint32_t sensor_index = 0) const
-	{
-		int16_t x = 0;
-		int16_t y = 0;
-		int16_t z = 0;
-		int16_t w = 0;
-
-		const uint8_t* buffer = (data + (sensor_index * 8));
-
-		// they are 16-bit LSB
-		x = (((uint16_t)buffer[3]) << 8) | ((uint16_t)buffer[2]);
-		y = (((uint16_t)buffer[5]) << 8) | ((uint16_t)buffer[4]);
-		z = (((uint16_t)buffer[7]) << 8) | ((uint16_t)buffer[6]);
-		w = (((uint16_t)buffer[1]) << 8) | ((uint16_t)buffer[0]);
-
-		const double QUANTIZE = (1.0 / 16384.0);
-
-		return glm::quat(w * QUANTIZE, x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
-	}
-};
-
-void data_thread(platform::Thread* thread)
-{
-	DataInput* block = static_cast<DataInput*>(thread->user_data);
-
-	LOGV("entering data thread\n");
-
-	const size_t PACKET_SIZE = sizeof(bno055_packet_t);
-	const size_t MAX_PACKET_DATA = 4 * PACKET_SIZE;
-	uint8_t buffer[MAX_PACKET_DATA];
-	size_t current_index = 0;
-
-	while(block->execute)
-	{
-		size_t bytes_read = platform::serial_read(block->device, &buffer[current_index], PACKET_SIZE);
-		if (bytes_read > 0)
-		{
-//			LOGV("read bytes: %i\n", bytes_read);
-			size_t last_index = current_index;
-			current_index += bytes_read;
-
-			// scan for a valid packet
-			assert(last_index < (MAX_PACKET_DATA - sizeof(bno055_packet_t)));
-			uint8_t* head = &buffer[last_index];
-
-			// try to search the entire length of a packet
-			for (size_t index = 0; index < sizeof(bno055_packet_t); ++index)
-			{
-				bno055_packet_t* packet = reinterpret_cast<bno055_packet_t*>(head);
-				if (packet->is_valid())
-				{
-//					gemini::GameMessage message;
-//					message.type = gemini::GameMessage::Orientation;
-
-					glm::quat q = packet->get_orientation(0);
-					// this bit of code converts the coordinate system of the BNO055
-					// to that of gemini.
-//					glm::quat flipped(q.w, q.x, -q.z, -q.y);
-//					glm::quat y = glm::quat(glm::vec3(0, mathlib::degrees_to_radians(180), 0));
-//					glm::quat result = glm::inverse(y * flipped);
-					LOGV("q[0]: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
-
-					q = packet->get_orientation(1);
-					LOGV("q[1]: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
-
-//					block->event_queue->push_back(message);
-
-					// handle the packet and reset the data
-
-					memset(buffer, 0, MAX_PACKET_DATA);
-
-					current_index = 0;
-					break;
-				}
-			}
-		}
-		else
-		{
-			LOGV("no bytes read!\n");
-		}
-	}
-
-	LOGV("exiting data thread\n");
-}
-
-void test_bno055()
-{
-	DataInput data_input;
-#if defined(PLATFORM_APPLE) || defined(PLATFORM_LINUX)
-	const char* serial_device = "/dev/cu.usbserial-AH02QPX7";
-#elif defined(PLATFORM_WINDOWS)
-	const char* serial_device = "COM3";
-#endif
-	data_input.device = platform::serial_open(serial_device, 115200);
-	if (data_input.device)
-	{
-		assert(data_input.device != nullptr);
-		data_input.execute = 1;
-
-		data_input.thread_data = platform::thread_create(data_thread, &data_input);
-
-		LOGV("reading data...\n");
-
-		while (true)
-		{
-			// process!
-		}
-	}
-	else
-	{
-		LOGE("Could not open device\n");
-	}
-}
-
 //#define ENABLE_BSDIFF 1
 
 #if defined(ENABLE_BSDIFF)
@@ -1220,13 +1075,206 @@ void present_dialogue(DialogueNode* node)
 	}
 }
 
+#include <core/datastream.h>
+#include <runtime/text_parser.h>
+using namespace gemini;
+
+using namespace core;
+
+
+#if 0
+
+void string_copy_token(char* token, const char* source, size_t length)
+{
+	memcpy(token, source, length);
+}
+
+
+char* string_tokenize(TextFileContext* context, char* str, char* token)
+{
+	uint8_t read_token = 0;
+	char* current = str;
+	for ( ;; )
+	{
+		if (current && *current)
+		{
+			text_eat_comments(context);
+
+			if (!read_token && isalnum(*current))
+			{
+				str = current;
+				read_token = 1;
+				LOGV("started reading token at line %i, column %i\n", context->current_line, context->current_column);
+			}
+			else if (read_token && isspace(*current))
+			{
+				// sort out token
+				string_copy_token(token, str, current - str);
+
+				token[current - str + 1] = '\0';
+				read_token = 0;
+				LOGV("token on line %i is \"%s\"\n", context->current_line, token);
+				break;
+			}
+			else
+			{
+				++current;
+			}
+		}
+	}
+	return current;
+}
+#endif
+
+
+
+#if 0
+void load_lines(TextFileContext* context, const gemini::string& line, void* user_data)
+{
+	//LOGV("[%s] at line %i\n", line.c_str(), context->current_line);
+
+	//if (line[0] == '/')
+	//{
+	//	LOGV("Found a directory declaration at line %i\n", context->current_line);
+	//	return;
+	//}
+
+	// Split string into pieces at the equals sign
+	Array<gemini::string> pieces(*context->allocator);
+	string_split_lines(*context->allocator, pieces, line, "=");
+	if (pieces.size() != 2)
+	{
+		LOGV("malformed data on line %i\n", context->current_line);
+		return;
+	}
+
+	gemini::string& key = pieces[0];
+	gemini::string& value = pieces[1];
+
+	LOGV("key = \"%s\"; value = \"%s\"\n", key.c_str(), value.c_str());
+} // load_lines
+#endif
+
+
+struct StyleTest
+{
+	uint32_t label_margin;
+	uint32_t background_color;
+	uint32_t foreground_color;
+	uint32_t interpolation;
+	float step_value;
+	float another_val;
+	char* font_name;
+
+	glm::vec4 button_background_color;
+
+	template <class Archive>
+	void serialize(Archive& archive)
+	{
+		archive & MAKE_MEMBER(label_margin);
+		archive & MAKE_MEMBER(background_color);
+		archive & MAKE_MEMBER(foreground_color);
+		archive & MAKE_MEMBER(interpolation);
+		archive & MAKE_MEMBER(step_value);
+		archive & MAKE_MEMBER(another_val);
+		archive & MAKE_MEMBER(font_name);
+		archive & MAKE_MEMBER(button_background_color);
+	}
+
+	StyleTest()
+	{
+		font_name = nullptr;
+	}
+
+	~StyleTest()
+	{
+		if (font_name)
+		{
+			delete[] font_name;
+			font_name = nullptr;
+		}
+	}
+}; // StyleTest
+
+
+TYPESPEC_REGISTER_CLASS(StyleTest);
+SERIALIZER_SET_DISPATCH(StyleTest, SerializerType_INTERNAL);
+
+
+//
+void line_parse_keyvalues(TextFileContext* context, const gemini::string& line, void* user_data)
+{
+	KeyValueArchive* archive = reinterpret_cast<KeyValueArchive*>(user_data);
+
+	// Split string into pieces at the equals sign
+	Array<gemini::string> pieces(*context->allocator);
+	string_split_lines(*context->allocator, pieces, line, "=");
+
+	if (pieces.size() < 2)
+	{
+		return;
+	}
+	gemini::string& key = pieces[0];
+	gemini::string& value = pieces[1];
+
+	archive->set_item(key, value);
+} // line_parse_keyvalues
+
+
+void read_file(const char* path)
+{
+	LOGV("reading file: %s\n", path);
+
+	TextFileContext context;
+
+	if (text_context_from_file(&context, path) == 0)
+	{
+		const uint64_t start_time = platform::microseconds();
+		gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+		Array<unsigned char> data(allocator);
+		filesystem->load_file(data, path);
+		char* memory = reinterpret_cast<char*>(&data[0]);
+		size_t memory_size = data.size();
+		core::util::MemoryStream stream;
+		stream.init(memory, memory_size);
+
+		context.stream = &stream;
+
+		const size_t STRING_MEM_SIZE = 4096;
+		char string_mem[STRING_MEM_SIZE];
+		gemini::Allocator string_allocator = gemini::memory_allocator_linear(gemini::MEMORY_ZONE_DEFAULT, string_mem, STRING_MEM_SIZE);
+		context.allocator = &string_allocator;
+
+		// gather the fields here.
+		// get the instance of the style test.
+		StyleTest test;
+
+		KeyValueArchive archive(allocator);
+
+		//context.line_handler = load_lines;
+		context.line_handler = line_parse_keyvalues;
+		text_read_lines(&context, &archive);
+
+		LOGV("read file with %i lines\n", context.current_line);
+
+		archive >> test;
+
+		uint64_t delta_time = platform::microseconds() - start_time;
+		LOGV("parsed file in %2.2fms\n", delta_time * MillisecondsPerMicrosecond);
+	}
+	else
+	{
+		LOGV("No file found.\n");
+	}
+} // read_file
+
 
 int main(int, char**)
 {
 	gemini::core_startup();
 	gemini::runtime_startup("arcfusion.net/gemini/rnd");
 
-	gemini::Allocator default_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	// gemini::Allocator default_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
 
 //	test_memory();
 //	test_maths();
@@ -1234,7 +1282,44 @@ int main(int, char**)
 //	test_serialization();
 //	test_reflection();
 
-#if defined(PLATFORM_LINUX)
+	//read_file("X:/gemini/build/tests/input.conf");
+	read_file("X:/gemini/build/assets/conf/ui.styles");
+
+
+#if 0
+	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	{
+		StyleTest test;
+
+		FieldCollector collector;
+		collector << test;
+		LOGV("Listing all fields...\n");
+		for (size_t index = 0; index < collector.fields.size(); ++index)
+		{
+			LOGV("> [%i] -> %s\n", index, collector.fields[index].c_str());
+		}
+
+		KeyValueArchive reader(allocator);
+		gemini::string key;
+		gemini::string margin_value;
+
+		key = string_create("label_margin");
+		margin_value = string_create(allocator, "4");
+		reader.set_item(key, margin_value);
+
+		key = string_create("background_color");
+		margin_value = string_create(allocator, "8");
+		reader.set_item(key, margin_value);
+
+		key = string_create("foreground_color");
+		margin_value = string_create(allocator, "12");
+		reader.set_item(key, margin_value);
+
+		reader >> test;
+	}
+#endif
+
+#if defined(PLATFORM_LINUX) && 0
 	const size_t event_size = sizeof(struct input_event);
 	LOGV("event_size: %i\n", event_size);
 

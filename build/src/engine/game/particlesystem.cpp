@@ -59,7 +59,7 @@ namespace gemini
 
 	void ParticleEmitter::init()
 	{
-		particle_list = MEMORY2_NEW_ARRAY(allocator, Particle, emitter_config->max_particles);
+		particle_list = MEMORY2_NEW_ARRAY(Particle, allocator, emitter_config->max_particles);
 
 		this->next_spawn = 0;
 		this->num_particles_alive = this->emitter_config->max_particles;

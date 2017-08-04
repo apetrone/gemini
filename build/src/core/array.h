@@ -42,7 +42,7 @@ public:
 private:
 	value_pointer allocate(size_t count)
 	{
-		return MEMORY2_NEW_ARRAY(allocator, value_type, count);
+		return MEMORY2_NEW_ARRAY(value_type, allocator, count);
 	}
 
 	void deallocate(value_pointer pointer)

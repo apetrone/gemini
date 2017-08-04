@@ -229,7 +229,9 @@ namespace gemini
 	#define MEMORY2_NEW(allocator, type) new ((allocator).allocate((allocator), sizeof(type), alignof(type), __FILE__, __LINE__)) type
 	#define MEMORY2_DELETE(allocator, pointer) memory_destroy((allocator), pointer, __FILE__, __LINE__)
 
-	#define MEMORY2_NEW_ARRAY(allocator, type, size) gemini::memory_array_allocate< type >((allocator), size, __FILE__, __LINE__)
+	// This function signature breaks convention because in order to use VA_ARGS, we
+	// have to bundle the parameters being forwarded together.
+	#define MEMORY2_NEW_ARRAY(type, ...) gemini::memory_array_allocate< type >(__FILE__, __LINE__, __VA_ARGS__)
 	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate((allocator), pointer, __FILE__, __LINE__), pointer = 0
 
 	void* memory_allocate(MemoryZone zone, size_t requested_size, uint32_t alignment, const char* filename, int line);
@@ -254,7 +256,9 @@ namespace gemini
 	#define MEMORY2_NEW(allocator, type) new ((allocator).allocate((allocator), sizeof(type), alignof(type))) type
 	#define MEMORY2_DELETE(allocator, pointer) (allocator).deallocate((allocator), pointer)
 
-	#define MEMORY2_NEW_ARRAY(allocator, type, size) gemini::memory_array_allocate< type >((allocator), size)
+	// This function signature breaks convention because in order to use VA_ARGS, we
+	// have to bundle the parameters being forwarded together.
+	#define MEMORY2_NEW_ARRAY(type, ...) gemini::memory_array_allocate<type>(__VA_ARGS__)
 	#define MEMORY2_DELETE_ARRAY(allocator, pointer) gemini::memory_array_deallocate((allocator), pointer), pointer = 0
 
 	void* memory_allocate(MemoryZone zone, size_t requested_size, uint32_t alignment);
@@ -281,9 +285,27 @@ namespace gemini
 	#pragma warning(disable: 4189) // 'p': local variable is initialized but not referenced
 #endif
 
+	// Assistant functions to memory_allocate_array which take variable arguments
+	// and returns a pointer to an array of type T.
+	template <class T>
+	T* memory_placement_with_params(void* memory)
+	{
+		return new (memory) T;
+	} // memory_placement_with_params
+
+	template <class T, class ... Types>
+	T* memory_placement_with_params(void* memory, Types && ... tail)
+	{
+		return new (memory) T(tail ...);
+	} // memory_placement_with_params
+
+
+
+
+	// No params (Type has default constructor)
 	template <class _Type>
 #if defined(ENABLE_MEMORY_TRACKING)
-	_Type* memory_array_allocate(Allocator& allocator, size_t array_size, const char* filename, int line)
+	_Type* memory_array_allocate(const char* filename, int line, Allocator& allocator, size_t array_size)
 #else
 	_Type* memory_array_allocate(Allocator& allocator, size_t array_size)
 #endif
@@ -315,6 +337,46 @@ namespace gemini
 		for (size_t index = 0; index < array_size; ++index)
 		{
 			new (&values[index]) _Type;
+		}
+
+		return values;
+	} // memory_array_allocate
+
+	// Variadic version when _Type has no default constructor
+	template<class _Type, class ... Params>
+#if defined(ENABLE_MEMORY_TRACKING)
+	_Type* memory_array_allocate(const char* filename, int line, Allocator& allocator, size_t array_size, Params && ... params_tail)
+#else
+	_Type* memory_array_allocate(Allocator& allocator, size_t array_size, Params && ... params_tail)
+#endif
+	{
+		// If you hit this assert, someone wanted to allocate zero items of
+		// an array. Sad panda.
+		assert(array_size > 0);
+
+		// As part of the allocation for arrays store the requested
+		// array_size and the size of the _Type.
+		size_t total_size = sizeof(_Type) * array_size + (sizeof(size_t) + sizeof(size_t));
+
+#if defined(ENABLE_MEMORY_TRACKING)
+		void* mem = allocator.allocate(allocator, total_size, alignof(_Type), filename, line);
+		assert(mem != nullptr);
+#else
+		void* mem = allocator.allocate(allocator, total_size, alignof(_Type));
+#endif
+		size_t* block = reinterpret_cast<size_t*>(mem);
+		*block = array_size;
+
+		block++;
+		*block = sizeof(_Type);
+
+		block++;
+
+		_Type* values = reinterpret_cast<_Type*>(block);
+
+		for (size_t index = 0; index < array_size; ++index)
+		{
+			new (&values[index]) _Type(params_tail ...);
 		}
 
 		return values;

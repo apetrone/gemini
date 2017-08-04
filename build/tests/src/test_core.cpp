@@ -55,6 +55,8 @@ using namespace core::util;
 using namespace gemini;
 
 
+// A class with no default constructor for purposes
+// of testing with various core utilities.
 class TestClassNoDefaultConstructor
 {
 public:
@@ -713,9 +715,15 @@ UNITTEST(memory)
 	MEMORY2_DELETE(sa, three);
 
 	// 3. Test arrays
-	TestDevice* devices = MEMORY2_NEW_ARRAY(sa, TestDevice, 64);
+	TestDevice* devices = MEMORY2_NEW_ARRAY(TestDevice, sa, 64);
 	TEST_ASSERT_TRUE(devices != nullptr);
 	MEMORY2_DELETE_ARRAY(sa, devices);
+
+	// 4. Test arrays of type that has no default constructor
+	TestClassNoDefaultConstructor* no_def_ctor = MEMORY2_NEW_ARRAY(TestClassNoDefaultConstructor, sa, 8, 42);
+	assert(no_def_ctor);
+	assert(no_def_ctor[0].get_index() == 42);
+	MEMORY2_DELETE_ARRAY(sa, no_def_ctor);
 }
 
 UNITTEST(memory_allocator_linear)
@@ -729,9 +737,9 @@ UNITTEST(memory_allocator_linear)
 
 	// 2. Test linear allocator with arrays
 	Allocator s2 = memory_allocator_default(MEMORY_ZONE_DEFAULT);
-	TestDevice* items = MEMORY2_NEW_ARRAY(s2, TestDevice, 64);
+	TestDevice* items = MEMORY2_NEW_ARRAY(TestDevice, s2, 64);
 	MEMORY2_DELETE_ARRAY(s2, items);
-	int* items2 = MEMORY2_NEW_ARRAY(s2, int, 8);
+	int* items2 = MEMORY2_NEW_ARRAY(int, s2, 8);
 	for (size_t index = 0; index < 8; ++index)
 	{
 		items2[index] = int(index * 2);
@@ -944,6 +952,131 @@ UNITTEST(str)
 	char base[] = "string test number one";
 	result = core::str::case_insensitive_compare(base, "string test number one", 0);
 	TEST_ASSERT(result == 0, case_insensitive_compare);
+
+
+	// Test parse_value_from_string
+	uint32_t int_val = 0;
+	float float_val = 0.0f;
+
+	core::str::parse_value_from_string(&int_val, "2");
+	assert(int_val == 2);
+
+	core::str::parse_value_from_string(&float_val, "2.8");
+	assert((2.8 - float_val) < FLT_EPSILON);
+}
+
+
+// ---------------------------------------------------------------------
+// string: Test the custom string class.
+// ---------------------------------------------------------------------
+UNITTEST(string)
+{
+	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+
+	gemini::string test = string_create(allocator, "Hello There");
+
+	gemini::string blah = string_create(allocator, "Hello There");
+	bool matches = test == blah;
+	LOGV("matches = %i\n", matches);
+
+	gemini::string extended = string_concat(allocator, test, blah);
+	LOGV("extended is %s\n", extended.c_str());
+
+	Array<gemini::string> pieces(allocator);
+	pieces.push_back(test);
+	pieces.push_back(blah);
+	pieces.push_back(extended);
+
+	for (size_t index = 0; index < pieces.size(); ++index)
+	{
+		gemini::string& s = pieces[index];
+		LOGV("s = %i -> %s\n", index, s.c_str());
+	}
+
+
+	gemini::string user_name = string_substr(allocator, "Hello my name is Adam and I welcome you to Tiki", 17, 4);
+	LOGV("username = %s\n", user_name.c_str());
+
+	gemini::string format_str = string_create(allocator, core::str::format("Hello there are %i", 74));
+	LOGV("value: %s\n", format_str.c_str());
+
+	string_destroy(allocator, format_str);
+	string_destroy(allocator, user_name);
+	string_destroy(allocator, test);
+	string_destroy(allocator, blah);
+	string_destroy(allocator, extended);
+
+
+#if 0
+	// Test initialization from static const char* and
+	// stack-based const char* data sources.
+	str_t static_test(allocator, "welp");
+	LOGV("Well, it is: '%s'\n", static_test.c_str());
+
+	char stack_data[] = "I think this works well enough to start using from.";
+	str_t stack_test(allocator,  stack_data);
+	LOGV("stack_test is \"%s\"\n", stack_test.c_str());
+
+	// Test stack based substr
+	str_t subset(allocator, stack_data, 24, 7);
+	LOGV("data is '%s'\n", subset.c_str());
+
+	if (subset == "enough ")
+	{
+		LOGV("data matches!\n");
+
+		// If you hit this, something went horribly wrong.
+		assert(subset[0] == 'e');
+	}
+
+	LOGV("size of subset is: %i bytes\n", subset.size());
+	LOGV("size of test is: %i bytes\n", static_test.size());
+	LOGV("test is %i characters\n", static_test.length());
+
+	str_t copy_on_write(allocator, stack_data);
+	str_t another_copy(allocator, stack_data);
+	str_t and_yet_another(allocator, stack_data);
+
+	stack_data[0] = 'W';
+
+	// ensure that all copies reference the same data.
+	LOGV("copy_on_write[0] = %c (%i)\n", copy_on_write[0], copy_on_write[0]);
+	LOGV("another_copy[0] = %c (%i)\n", another_copy[0], another_copy[0]);
+	LOGV("and_yet_another[0] = %c (%i)\n", and_yet_another[0], and_yet_another[0]);
+	LOGV("stack_data[0] = %c (%i)\n", stack_data[0], stack_data[0]);
+	assert(copy_on_write[0] == another_copy[0] && stack_data[0] == and_yet_another[0] && stack_data[0] == copy_on_write[0]);
+
+	// If you hit this, it means str_t is making a copy of string data outright.
+	assert(copy_on_write[0] == stack_data[0]);
+
+	// second part of copy on write is to actually make the data mutable on write.
+	copy_on_write[0] = 'M';
+
+	// ensure write succeeded
+	assert(copy_on_write[0] == 'M');
+
+	// ensure write didn't overwrite original data.
+	assert(stack_data[0] == 'W');
+
+	// ensure data and copy_on_write point to different buffers.
+	assert(copy_on_write[0] != stack_data[0]);
+
+	// data is now unique in copy_on_write
+	assert(copy_on_write[0] != another_copy[0]);
+
+	// data still matches in another copy
+	assert(stack_data[0] == another_copy[0]);
+
+	// Test explicit copies.
+	char base[] = "Please stand back from the doors.";
+	str_t base_string = str_t::copy(allocator, base);
+	assert(base_string[0] == 'P');
+
+	base_string[0] = 'V';
+	assert(base_string[0] == 'V');
+
+	assert(base[0] != base_string[0]);
+#endif
 }
 
 
@@ -995,7 +1128,7 @@ UNITTEST(typespec)
 	TEST_ASSERT(value == STRING_HASH32("hello"), string_hash32);
 
 	LOGV("type of int is: %s\n", TypeSpecName<uint32_t>::value);
-	LOGV("type of int is: %i\n", TypeSpecIdentifier<uint32_t>::value);
+	LOGV("type id of int is: %i\n", TypeSpecIdentifier<uint32_t>::value);
 	LOGV("size of type uint32_t is %i\n", TypeSpecSize<uint32_t>::value);
 
 	uint32_t b = 32;
@@ -1118,7 +1251,8 @@ UNITTEST(util)
 int main(int, char**)
 {
 	gemini::core_startup();
-	unittest::UnitTest::execute();
+	//unittest::UnitTest::execute();
+	UNITTEST_EXECUTE(string);
 	gemini::core_shutdown();
 	return 0;
 }

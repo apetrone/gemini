@@ -342,6 +342,10 @@ def get_libcore(arguments, target_platform):
 		"src/core/*.cpp",
 		"src/core/*.h",
 
+		"src/core/serialization/archive.h",
+		"src/core/serialization/fieldcollector.h",
+		"src/core/serialization/keyvaluearchive.h",
+
 		"src/core/platform/directory_monitor.h",
 
 		"src/core/platform/graphics_provider.cpp",
@@ -745,6 +749,9 @@ def get_libruntime(arguments, target_platform, libcore):
 
 		"src/runtime/audio_library.cpp",
 		"src/runtime/audio_library.h",
+
+		"src/runtime/text_parser.cpp",
+		"src/runtime/text_parser.h",
 
 		"src/runtime/texture_library.cpp",
 		"src/runtime/texture_library.h",

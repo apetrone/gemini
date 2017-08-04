@@ -76,6 +76,29 @@ namespace core
 			return ::vsnprintf(destination, destination_max_size, format, arg);
 		} // vsnprintf
 
+		bool isnewline(char* string, uint32_t* advance)
+		{
+			uint32_t character_advance = 1;
+			bool result = false;
+			if (*string == '\n')
+			{
+				character_advance = 1;
+				result = true;
+			}
+			else if (*string == '\r' && (*(string + 1) == '\n'))
+			{
+				character_advance = 2;
+				result = true;
+			}
+
+			if (advance)
+			{
+				*advance = character_advance;
+			}
+
+			return result;
+		} // isnewline
+
 		char* copy(char* destination, const char* source, size_t source_bytes)
 		{
 			if (source_bytes == 0)
@@ -273,5 +296,289 @@ namespace core
 			return out;
 		}
 
+
+		template <>
+		void parse_value_from_string(uint32_t* value, const char* token)
+		{
+			*value = static_cast<uint32_t>(atoi(token));
+		}
+
+		template <>
+		void parse_value_from_string(float* value, const char* token)
+		{
+			*value = static_cast<float>(atof(token));
+		}
 	} // namespace str
+
+#if 0
+	str_t::str_t(gemini::Allocator& memory_allocator,
+		const char* str)
+		: allocator(memory_allocator)
+	{
+		// data_size is dirty.
+		flags = 2;
+
+		// data doesn't belong to us, but we can read it.
+		data = const_cast<char*>(str);
+
+		recalculate_size();
+	}
+
+	str_t::str_t(gemini::Allocator& memory_allocator,
+		const char* str,
+		size_t start,
+		size_t length)
+		: allocator(memory_allocator)
+	{
+		// This MUST make an explicit copy because the user asks for a subset of the string.
+		// There's no easy way to do this right now. It's possible that we can keep a separate pointer
+		// to a sub-index within the string -- but this seems like tbe best idea for now.
+		// The biggest reason this must make a copy, is that we need to terminate it correctly
+		// in order to achieve the correct subset of a larger string. If we don't, then a c_str()
+		// operation would result in the original string (since we cannot mutate it without making a copy).
+		flags = 1;
+		reallocate(length);
+		core::str::copy(data, &str[start], data_size);
+		data[length] = '\0';
+	}
+
+	void str_t::reallocate(size_t new_size)
+	{
+		data_size = new_size;
+		data = static_cast<char*>(MEMORY2_ALLOC(allocator, (data_size + 1) * sizeof(uint8_t)));
+	}
+
+	str_t::~str_t()
+	{
+		if (flags & 1)
+		{
+			MEMORY2_DEALLOC(allocator, data);
+			data = nullptr;
+			data_size = 0;
+			flags &= ~1;
+		}
+	}
+
+	void str_t::recalculate_size()
+	{
+		data_size = core::str::len(data);
+		flags &= ~2;
+	}
+
+	bool str_t::operator==(const char* other)
+	{
+		return core::str::case_insensitive_compare(data, other, 0) == 0;
+	}
+
+	str_t& str_t::operator=(const str_t& other)
+	{
+		return *this;
+	}
+
+	size_t str_t::size() const
+	{
+		return data_size * sizeof(char);
+	}
+
+	size_t str_t::length() const
+	{
+		return data_size;
+	}
+
+	const char* str_t::c_str() const
+	{
+		return data;
+	} // c_str
+
+	char& str_t::operator[](int index)
+	{
+		if ((flags & 1) == 0)
+		{
+			// If you hit this conditional,
+			// then this instance doesn't own the data.
+			// User wants to modify the data -- so we need to
+			// create a unique copy for this string so it is mutable.
+			perform_copy_on_write();
+		}
+		assert(index <= data_size);
+		return data[index];
+	} // char& operator[]
+
+	void str_t::perform_copy_on_write()
+	{
+		const char* original_string = data;
+		reallocate(core::str::len(original_string));
+
+		// this instance now owns data.
+		flags = 1;
+
+		core::str::copy(data, original_string, data_size);
+	} // perform_copy_on_write
+
+	str_t str_t::copy(gemini::Allocator& allocator, const char* source)
+	{
+		return str_t(allocator, source);
+	} // static copy
+
+	char str_t::operator[](int index) const
+	{
+		// If you hit this, indexing into data would cause a buffer overrun.
+		assert(index <= data_size);
+		return data[index];
+	} // char operator[]
+
+#endif
+
 } // namespace core
+
+namespace gemini
+{
+	const char& string::operator[](int index) const
+	{
+		return string_data[index];
+	} // const char& operator[]
+
+	char* string_allocate(gemini::Allocator& allocator, size_t length)
+	{
+		char* string_data = reinterpret_cast<char*>(MEMORY2_ALLOC(allocator, sizeof(char) * (length + 1)));
+		memset(string_data, 0, sizeof(char) * length);
+		string_data[length] = '\0';
+		return string_data;
+	} // string_allocate
+
+	string string_create(gemini::Allocator& allocator, const char* data)
+	{
+		string value;
+		value.string_data_size = core::str::len(data);
+
+		char* string_data = string_allocate(allocator, value.string_data_size);
+		memcpy(string_data, data, value.string_data_size);
+		value.string_data = string_data;
+
+		return value;
+	} // string_create
+
+	string string_create(const char* data)
+	{
+		string value;
+		value.string_data_size = core::str::len(data);
+		value.string_data = data;
+		return value;
+	} // string_create
+
+	void string_destroy(gemini::Allocator& allocator, string& string)
+	{
+		MEMORY2_DEALLOC(allocator, const_cast<char*>(string.string_data));
+	} // string_destroy
+
+	string string_concat(gemini::Allocator& allocator, const string& first, const string& second)
+	{
+		string extended;
+		extended.string_data_size = (first.string_data_size + second.string_data_size);
+
+		char* string_data = string_allocate(allocator, extended.string_data_size);
+		core::str::cat(string_data, first.string_data);
+		core::str::cat(string_data, second.string_data);
+		extended.string_data = string_data;
+
+		return extended;
+	} // string_concat
+
+	string string_substr(gemini::Allocator& allocator, const char* source, uint32_t start, uint32_t length)
+	{
+		string substring;
+		char* string_data = string_allocate(allocator, length);
+		core::str::copy(string_data, &source[start], length);
+		string_data[length] = '\0';
+		substring.string_data_size = length;
+		substring.string_data = string_data;
+		return substring;
+	} // string_substr
+
+	void string_split_lines(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, const char* delimiters)
+	{
+		// current is the character cursor we're currently using.
+		// last_character is the last character that is alpha numeric.
+		// prev is the previous character that was alpha numeric.
+		// tokens are usually: (last_character - prev)
+		string::value_type* current = &line.string_data[0];
+		string::value_type* last_character = current;
+		string::value_type* prev = current;
+		size_t delimiter_size = core::str::len(delimiters);
+		uint32_t reading_string = 0;
+
+		for ( ;; )
+		{
+			if (*current == '\0')
+			{
+				//if (reading_string > 0)
+				//{
+				//	LOGW("Unterminated string found.\n");
+				//}
+
+				ptrdiff_t length = (last_character + 1 - prev);
+				if (length > 0)
+				{
+					gemini::string token = string_substr(allocator, prev, 0, static_cast<uint32_t>(length));
+					pieces.push_back(token);
+				}
+				break;
+			}
+
+			uint8_t current_in_delimiters = 0;
+			for (size_t index = 0; index < delimiter_size; ++index)
+			{
+				if (*current == delimiters[index])
+				{
+					current_in_delimiters = 1;
+					break;
+				}
+			}
+
+			if (current_in_delimiters)
+			{
+				ptrdiff_t length = (last_character + 1 - prev);
+				if (isalnum(*prev) && length > 0)
+				{
+					gemini::string token = string_substr(allocator, prev, 0, static_cast<uint32_t>(length));
+					prev = current + 1;
+					pieces.push_back(token);
+				}
+			}
+
+			++current;
+
+			if (!reading_string && *current == '\"')
+			{
+				// start reading a string
+				reading_string = 1;
+				++current;
+				prev = current;
+			}
+			else if (reading_string && *current == '\"')
+			{
+				// finished reading a string
+				reading_string = 0;
+
+				ptrdiff_t length = (last_character + 1 - prev);
+				if (length > 0)
+				{
+					gemini::string token = string_substr(allocator, prev, 0, static_cast<uint32_t>(length));
+					last_character = current;
+					prev = current + 1;
+					++current;
+					pieces.push_back(token);
+				}
+			}
+
+			if (!isalnum(*prev))
+			{
+				prev = current;
+			}
+			if (isalnum(*current))
+			{
+				last_character = current;
+			}
+		}
+	} // string_split_lines
+} // namespace gemini
