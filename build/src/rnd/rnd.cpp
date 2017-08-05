@@ -1315,13 +1315,20 @@ char* string_tokenize(TextFileContext* context, char* str, char* token)
 
 struct str_t
 {
+	// Semi-optimized string class for performant use of string data.
+	// Implements copy-on-write semantics.
+
 	str_t(gemini::Allocator& memory_allocator,
 		const char* str)
 		: allocator(memory_allocator)
 	{
-		flags = 1;
-		reallocate(core::str::len(str));
-		core::str::copy(data, str, data_size);
+		// data_size is dirty.
+		flags = 2;
+
+		// data doesn't belong to us, but we can read it.
+		data = const_cast<char*>(str);
+
+		recalculate_size();
 	}
 
 	str_t(gemini::Allocator& memory_allocator,
@@ -1352,6 +1359,12 @@ struct str_t
 		}
 	}
 
+	void recalculate_size()
+	{
+		data_size = core::str::len(data);
+		flags &= ~2;
+	}
+
 	bool operator==(const char* other)
 	{
 		return core::str::case_insensitive_compare(data, other, 0) == 0;
@@ -1372,6 +1385,31 @@ struct str_t
 		return data;
 	}
 
+	char& operator[](int index)
+	{
+		if ((flags & 1) == 0)
+		{
+			// If you hit this conditional,
+			// then this instance doesn't own the data.
+			// User wants to modify the data -- so we need to
+			// create a unique copy for this string so it is mutable.
+			perform_copy_on_write();
+		}
+		assert(index <= data_size);
+		return data[index];
+	}
+
+	void perform_copy_on_write()
+	{
+		const char* original_string = data;
+		reallocate(core::str::len(original_string));
+
+		// this instance now owns data.
+		flags = 1;
+
+		core::str::copy(data, original_string, data_size);
+	}
+
 	char operator[](int index) const
 	{
 		// If you hit this, indexing into data would cause a buffer overrun.
@@ -1382,10 +1420,11 @@ struct str_t
 	char* data;
 
 	// 1: This string instance owns allocated data that must be deallocated.
+	// 2: data_size is stale
 	uint32_t flags;
 	uint32_t data_size;
 	gemini::Allocator& allocator;
-};
+}; // str_t
 
 
 void test_str()
@@ -1411,6 +1450,40 @@ void test_str()
 	LOGV("size of subset is: %i bytes\n", subset.size());
 	LOGV("size of test is: %i bytes\n", test.size());
 	LOGV("test is %i characters\n", test.length());
+
+	str_t copy_on_write(allocator, data);
+	str_t another_copy(allocator, data);
+	str_t and_yet_another(allocator, data);
+
+	data[0] = 'W';
+
+	// ensure that all copies reference the same data.
+	LOGV("copy_on_write[0] = %c (%i)\n", copy_on_write[0], copy_on_write[0]);
+	LOGV("another_copy[0] = %c (%i)\n", another_copy[0], another_copy[0]);
+	LOGV("and_yet_another[0] = %c (%i)\n", and_yet_another[0], and_yet_another[0]);
+	LOGV("data[0] = %c (%i)\n", data[0], data[0]);
+	assert(copy_on_write[0] == another_copy[0] && data[0] == and_yet_another[0] && data[0] == copy_on_write[0]);
+
+	// If you hit this, it means str_t is making a copy of string data outright.
+	assert(copy_on_write[0] == data[0]);
+
+	// second part of copy on write is to actually make the data mutable on write.
+	copy_on_write[0] = 'M';
+
+	// ensure write succeeded
+	assert(copy_on_write[0] == 'M');
+
+	// ensure write didn't overwrite original data.
+	assert(data[0] == 'W');
+
+	// ensure data and copy_on_write point to different buffers.
+	assert(copy_on_write[0] != data[0]);
+
+	// data is now unique in copy_on_write
+	assert(copy_on_write[0] != another_copy[0]);
+
+	// data still matches in another copy
+	assert(data[0] == another_copy[0]);
 } // test_str
 
 
@@ -1473,6 +1546,7 @@ void test_file_handler(TextFileContext* context)
 	{
 		// read all lines
 		// char token[64] = {0};
+		// str_t line = string_read_line(context);
 		char* line = string_read_line(context);
 		LOGV("[%s] at line %i\n", line, context->current_line);
 
