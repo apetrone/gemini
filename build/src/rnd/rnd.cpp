@@ -1315,23 +1315,30 @@ char* string_tokenize(TextFileContext* context, char* str, char* token)
 
 struct str_t
 {
-	str_t(const char* str)
+	str_t(gemini::Allocator& memory_allocator,
+		const char* str)
+		: allocator(memory_allocator)
 	{
-		allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
 		flags = 1;
-		size = core::str::len(str);
-
-		// Need to copy data from str
-		data = static_cast<char*>(MEMORY2_ALLOC(allocator, (size + 1) * sizeof(uint8_t)));
-		core::str::copy(data, str, size);
+		reallocate(core::str::len(str));
+		core::str::copy(data, str, data_size);
 	}
 
-	str_t(char* str, size_t length)
+	str_t(gemini::Allocator& memory_allocator,
+		const char* str,
+		size_t start,
+		size_t length)
+		: allocator(memory_allocator)
 	{
-		allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
-		flags = 0;
-		size = length;
-		data = str;
+		flags = 1;
+		reallocate(length);
+		core::str::copy(data, &str[start], data_size);
+	}
+
+	void reallocate(size_t new_size)
+	{
+		data_size = new_size;
+		data = static_cast<char*>(MEMORY2_ALLOC(allocator, (data_size + 1) * sizeof(uint8_t)));
 	}
 
 	~str_t()
@@ -1340,8 +1347,24 @@ struct str_t
 		{
 			MEMORY2_DEALLOC(allocator, data);
 			data = nullptr;
+			data_size = 0;
 			flags &= ~1;
 		}
+	}
+
+	bool operator==(const char* other)
+	{
+		return core::str::case_insensitive_compare(data, other, 0) == 0;
+	}
+
+	size_t size() const
+	{
+		return data_size * sizeof(char);
+	}
+
+	size_t length() const
+	{
+		return data_size;
 	}
 
 	const char* c_str() const
@@ -1349,20 +1372,45 @@ struct str_t
 		return data;
 	}
 
+	char operator[](int index) const
+	{
+		// If you hit this, indexing into data would cause a buffer overrun.
+		assert(index <= data_size);
+		return data[index];
+	}
+
 	char* data;
 
 	// 1: This string instance owns allocated data that must be deallocated.
 	uint32_t flags;
-	uint32_t size;
-	gemini::Allocator allocator;
+	uint32_t data_size;
+	gemini::Allocator& allocator;
 };
 
 
 void test_str()
 {
-	str_t test("welp");
+	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	str_t test(allocator, "welp");
 
-	LOGV("Well, it is: %s\n", test.c_str());
+	LOGV("Well, it is: '%s'\n", test.c_str());
+
+	char data[] = "I think this works well enough to start using from.";
+
+	str_t subset(allocator, data, 24, 7);
+	LOGV("data is '%s'\n", subset.c_str());
+
+	if (subset == "enough ")
+	{
+		LOGV("data matches!\n");
+
+		// If you hit this, something went horribly wrong.
+		assert(subset[0] == 'e');
+	}
+
+	LOGV("size of subset is: %i bytes\n", subset.size());
+	LOGV("size of test is: %i bytes\n", test.size());
+	LOGV("test is %i characters\n", test.length());
 } // test_str
 
 
