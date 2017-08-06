@@ -995,7 +995,7 @@ UNITTEST(typespec)
 	TEST_ASSERT(value == STRING_HASH32("hello"), string_hash32);
 
 	LOGV("type of int is: %s\n", TypeSpecName<uint32_t>::value);
-	LOGV("type of int is: %i\n", TypeSpecIdentifier<uint32_t>::value);
+	LOGV("type id of int is: %i\n", TypeSpecIdentifier<uint32_t>::value);
 	LOGV("size of type uint32_t is %i\n", TypeSpecSize<uint32_t>::value);
 
 	uint32_t b = 32;
