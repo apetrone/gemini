@@ -1337,6 +1337,12 @@ struct str_t
 		size_t length)
 		: allocator(memory_allocator)
 	{
+		// This MUST make an explicit copy because the user asks for a subset of the string.
+		// There's no easy way to do this right now. It's possible that we can keep a separate pointer
+		// to a sub-index within the string -- but this seems like tbe best idea for now.
+		// The biggest reason this must make a copy, is that we need to terminate it correctly
+		// in order to achieve the correct subset of a larger string. If we don't, then a c_str()
+		// operation would result in the original string (since we cannot mutate it without making a copy).
 		flags = 1;
 		reallocate(length);
 		core::str::copy(data, &str[start], data_size);
