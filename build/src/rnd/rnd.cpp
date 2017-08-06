@@ -1416,6 +1416,11 @@ struct str_t
 		core::str::copy(data, original_string, data_size);
 	}
 
+	static str_t copy(gemini::Allocator& allocator, const char* source)
+	{
+		return str_t(allocator, source);
+	}
+
 	char operator[](int index) const
 	{
 		// If you hit this, indexing into data would cause a buffer overrun.
@@ -1490,6 +1495,16 @@ void test_str()
 
 	// data still matches in another copy
 	assert(data[0] == another_copy[0]);
+
+	// Test explicit copies.
+	char base[] = "Please stand back from the doors.";
+	str_t base_string = str_t::copy(allocator, base);
+	assert(base_string[0] == 'P');
+
+	base_string[0] = 'V';
+	assert(base_string[0] == 'V');
+
+	assert(base[0] != base_string[0]);
 } // test_str
 
 
