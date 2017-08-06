@@ -98,4 +98,36 @@ namespace core
 			return 0x0;
 		}
 	} // namespace str
+
+	struct str_t
+	{
+		// Semi-optimized string class for performant use of string data.
+		// Implements copy-on-write semantics.
+
+		str_t(gemini::Allocator& memory_allocator,
+			const char* str);
+		str_t(gemini::Allocator& memory_allocator,
+			const char* str,
+			size_t start,
+			size_t length);
+		void reallocate(size_t new_size);
+		~str_t();
+		void recalculate_size();
+		bool operator==(const char* other);
+		size_t size() const;
+		size_t length() const;
+		const char* c_str() const;
+		char& operator[](int index);
+		void perform_copy_on_write();
+		static str_t copy(gemini::Allocator& allocator, const char* source);
+		char operator[](int index) const;
+
+		char* data;
+
+		// 1: This string instance owns allocated data that must be deallocated.
+		// 2: data_size is stale
+		uint32_t flags;
+		uint32_t data_size;
+		gemini::Allocator& allocator;
+	}; // str_t
 } // namespace core

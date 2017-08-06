@@ -946,6 +946,83 @@ UNITTEST(str)
 	TEST_ASSERT(result == 0, case_insensitive_compare);
 }
 
+// ---------------------------------------------------------------------
+// str_t: Test the custom string class.
+// ---------------------------------------------------------------------
+UNITTEST(str_t)
+{
+	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+
+	// Test initialization from static const char* and
+	// stack-based const char* data sources.
+	str_t static_test(allocator, "welp");
+	LOGV("Well, it is: '%s'\n", static_test.c_str());
+
+	char stack_data[] = "I think this works well enough to start using from.";
+	str_t stack_test(allocator,  stack_data);
+	LOGV("stack_test is \"%s\"\n", stack_test.c_str());
+
+	// Test stack based substr
+	str_t subset(allocator, stack_data, 24, 7);
+	LOGV("data is '%s'\n", subset.c_str());
+
+	if (subset == "enough ")
+	{
+		LOGV("data matches!\n");
+
+		// If you hit this, something went horribly wrong.
+		assert(subset[0] == 'e');
+	}
+
+	LOGV("size of subset is: %i bytes\n", subset.size());
+	LOGV("size of test is: %i bytes\n", static_test.size());
+	LOGV("test is %i characters\n", static_test.length());
+
+	str_t copy_on_write(allocator, stack_data);
+	str_t another_copy(allocator, stack_data);
+	str_t and_yet_another(allocator, stack_data);
+
+	stack_data[0] = 'W';
+
+	// ensure that all copies reference the same data.
+	LOGV("copy_on_write[0] = %c (%i)\n", copy_on_write[0], copy_on_write[0]);
+	LOGV("another_copy[0] = %c (%i)\n", another_copy[0], another_copy[0]);
+	LOGV("and_yet_another[0] = %c (%i)\n", and_yet_another[0], and_yet_another[0]);
+	LOGV("stack_data[0] = %c (%i)\n", stack_data[0], stack_data[0]);
+	assert(copy_on_write[0] == another_copy[0] && stack_data[0] == and_yet_another[0] && stack_data[0] == copy_on_write[0]);
+
+	// If you hit this, it means str_t is making a copy of string data outright.
+	assert(copy_on_write[0] == stack_data[0]);
+
+	// second part of copy on write is to actually make the data mutable on write.
+	copy_on_write[0] = 'M';
+
+	// ensure write succeeded
+	assert(copy_on_write[0] == 'M');
+
+	// ensure write didn't overwrite original data.
+	assert(stack_data[0] == 'W');
+
+	// ensure data and copy_on_write point to different buffers.
+	assert(copy_on_write[0] != stack_data[0]);
+
+	// data is now unique in copy_on_write
+	assert(copy_on_write[0] != another_copy[0]);
+
+	// data still matches in another copy
+	assert(stack_data[0] == another_copy[0]);
+
+	// Test explicit copies.
+	char base[] = "Please stand back from the doors.";
+	str_t base_string = str_t::copy(allocator, base);
+	assert(base_string[0] == 'P');
+
+	base_string[0] = 'V';
+	assert(base_string[0] == 'V');
+
+	assert(base[0] != base_string[0]);
+}
+
 
 TYPESPEC_REGISTER_POD(uint32_t);
 

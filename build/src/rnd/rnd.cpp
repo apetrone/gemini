@@ -5,16 +5,16 @@
 #include <runtime/runtime.h>
 
 
-#include <core/core.h>
-#include <core/logging.h>
-#include <core/typedefs.h>
-#include <core/fixedarray.h>
-#include <core/stackstring.h>
-#include <core/interpolation.h>
 #include <core/argumentparser.h>
+#include <core/core.h>
+#include <core/datastream.h>
+#include <core/fixedarray.h>
+#include <core/logging.h>
+#include <core/interpolation.h>
 #include <core/mem.h>
 #include <core/stackstring.h>
-#include <core/datastream.h>
+#include <core/str.h>
+#include <core/typedefs.h>
 
 #include <json/json.h>
 
@@ -1312,202 +1312,6 @@ char* string_tokenize(TextFileContext* context, char* str, char* token)
 	return current;
 }
 
-
-struct str_t
-{
-	// Semi-optimized string class for performant use of string data.
-	// Implements copy-on-write semantics.
-
-	str_t(gemini::Allocator& memory_allocator,
-		const char* str)
-		: allocator(memory_allocator)
-	{
-		// data_size is dirty.
-		flags = 2;
-
-		// data doesn't belong to us, but we can read it.
-		data = const_cast<char*>(str);
-
-		recalculate_size();
-	}
-
-	str_t(gemini::Allocator& memory_allocator,
-		const char* str,
-		size_t start,
-		size_t length)
-		: allocator(memory_allocator)
-	{
-		// This MUST make an explicit copy because the user asks for a subset of the string.
-		// There's no easy way to do this right now. It's possible that we can keep a separate pointer
-		// to a sub-index within the string -- but this seems like tbe best idea for now.
-		// The biggest reason this must make a copy, is that we need to terminate it correctly
-		// in order to achieve the correct subset of a larger string. If we don't, then a c_str()
-		// operation would result in the original string (since we cannot mutate it without making a copy).
-		flags = 1;
-		reallocate(length);
-		core::str::copy(data, &str[start], data_size);
-	}
-
-	void reallocate(size_t new_size)
-	{
-		data_size = new_size;
-		data = static_cast<char*>(MEMORY2_ALLOC(allocator, (data_size + 1) * sizeof(uint8_t)));
-	}
-
-	~str_t()
-	{
-		if (flags & 1)
-		{
-			MEMORY2_DEALLOC(allocator, data);
-			data = nullptr;
-			data_size = 0;
-			flags &= ~1;
-		}
-	}
-
-	void recalculate_size()
-	{
-		data_size = core::str::len(data);
-		flags &= ~2;
-	}
-
-	bool operator==(const char* other)
-	{
-		return core::str::case_insensitive_compare(data, other, 0) == 0;
-	}
-
-	size_t size() const
-	{
-		return data_size * sizeof(char);
-	}
-
-	size_t length() const
-	{
-		return data_size;
-	}
-
-	const char* c_str() const
-	{
-		return data;
-	}
-
-	char& operator[](int index)
-	{
-		if ((flags & 1) == 0)
-		{
-			// If you hit this conditional,
-			// then this instance doesn't own the data.
-			// User wants to modify the data -- so we need to
-			// create a unique copy for this string so it is mutable.
-			perform_copy_on_write();
-		}
-		assert(index <= data_size);
-		return data[index];
-	}
-
-	void perform_copy_on_write()
-	{
-		const char* original_string = data;
-		reallocate(core::str::len(original_string));
-
-		// this instance now owns data.
-		flags = 1;
-
-		core::str::copy(data, original_string, data_size);
-	}
-
-	static str_t copy(gemini::Allocator& allocator, const char* source)
-	{
-		return str_t(allocator, source);
-	}
-
-	char operator[](int index) const
-	{
-		// If you hit this, indexing into data would cause a buffer overrun.
-		assert(index <= data_size);
-		return data[index];
-	}
-
-	char* data;
-
-	// 1: This string instance owns allocated data that must be deallocated.
-	// 2: data_size is stale
-	uint32_t flags;
-	uint32_t data_size;
-	gemini::Allocator& allocator;
-}; // str_t
-
-
-void test_str()
-{
-	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
-	str_t test(allocator, "welp");
-
-	LOGV("Well, it is: '%s'\n", test.c_str());
-
-	char data[] = "I think this works well enough to start using from.";
-
-	str_t subset(allocator, data, 24, 7);
-	LOGV("data is '%s'\n", subset.c_str());
-
-	if (subset == "enough ")
-	{
-		LOGV("data matches!\n");
-
-		// If you hit this, something went horribly wrong.
-		assert(subset[0] == 'e');
-	}
-
-	LOGV("size of subset is: %i bytes\n", subset.size());
-	LOGV("size of test is: %i bytes\n", test.size());
-	LOGV("test is %i characters\n", test.length());
-
-	str_t copy_on_write(allocator, data);
-	str_t another_copy(allocator, data);
-	str_t and_yet_another(allocator, data);
-
-	data[0] = 'W';
-
-	// ensure that all copies reference the same data.
-	LOGV("copy_on_write[0] = %c (%i)\n", copy_on_write[0], copy_on_write[0]);
-	LOGV("another_copy[0] = %c (%i)\n", another_copy[0], another_copy[0]);
-	LOGV("and_yet_another[0] = %c (%i)\n", and_yet_another[0], and_yet_another[0]);
-	LOGV("data[0] = %c (%i)\n", data[0], data[0]);
-	assert(copy_on_write[0] == another_copy[0] && data[0] == and_yet_another[0] && data[0] == copy_on_write[0]);
-
-	// If you hit this, it means str_t is making a copy of string data outright.
-	assert(copy_on_write[0] == data[0]);
-
-	// second part of copy on write is to actually make the data mutable on write.
-	copy_on_write[0] = 'M';
-
-	// ensure write succeeded
-	assert(copy_on_write[0] == 'M');
-
-	// ensure write didn't overwrite original data.
-	assert(data[0] == 'W');
-
-	// ensure data and copy_on_write point to different buffers.
-	assert(copy_on_write[0] != data[0]);
-
-	// data is now unique in copy_on_write
-	assert(copy_on_write[0] != another_copy[0]);
-
-	// data still matches in another copy
-	assert(data[0] == another_copy[0]);
-
-	// Test explicit copies.
-	char base[] = "Please stand back from the doors.";
-	str_t base_string = str_t::copy(allocator, base);
-	assert(base_string[0] == 'P');
-
-	base_string[0] = 'V';
-	assert(base_string[0] == 'V');
-
-	assert(base[0] != base_string[0]);
-} // test_str
-
-
 char* string_read_line(TextFileContext* context)
 {	
 	for ( ;; )
@@ -1624,9 +1428,7 @@ int main(int, char**)
 //	test_serialization();
 //	test_reflection();
 
-	// read_file("/home/apetrone/gemini/build/bin/debug_x86_64/input.conf");
-
-	test_str();
+	read_file("/home/apetrone/gemini/build/bin/debug_x86_64/input.conf");
 
 #if defined(PLATFORM_LINUX) && 0
 	const size_t event_size = sizeof(struct input_event);

@@ -274,4 +274,114 @@ namespace core
 		}
 
 	} // namespace str
+
+	str_t::str_t(gemini::Allocator& memory_allocator,
+		const char* str)
+		: allocator(memory_allocator)
+	{
+		// data_size is dirty.
+		flags = 2;
+
+		// data doesn't belong to us, but we can read it.
+		data = const_cast<char*>(str);
+
+		recalculate_size();
+	}
+
+	str_t::str_t(gemini::Allocator& memory_allocator,
+		const char* str,
+		size_t start,
+		size_t length)
+		: allocator(memory_allocator)
+	{
+		// This MUST make an explicit copy because the user asks for a subset of the string.
+		// There's no easy way to do this right now. It's possible that we can keep a separate pointer
+		// to a sub-index within the string -- but this seems like tbe best idea for now.
+		// The biggest reason this must make a copy, is that we need to terminate it correctly
+		// in order to achieve the correct subset of a larger string. If we don't, then a c_str()
+		// operation would result in the original string (since we cannot mutate it without making a copy).
+		flags = 1;
+		reallocate(length);
+		core::str::copy(data, &str[start], data_size);
+	}
+
+	void str_t::reallocate(size_t new_size)
+	{
+		data_size = new_size;
+		data = static_cast<char*>(MEMORY2_ALLOC(allocator, (data_size + 1) * sizeof(uint8_t)));
+	}
+
+	str_t::~str_t()
+	{
+		if (flags & 1)
+		{
+			MEMORY2_DEALLOC(allocator, data);
+			data = nullptr;
+			data_size = 0;
+			flags &= ~1;
+		}
+	}
+
+	void str_t::recalculate_size()
+	{
+		data_size = core::str::len(data);
+		flags &= ~2;
+	}
+
+	bool str_t::operator==(const char* other)
+	{
+		return core::str::case_insensitive_compare(data, other, 0) == 0;
+	}
+
+	size_t str_t::size() const
+	{
+		return data_size * sizeof(char);
+	}
+
+	size_t str_t::length() const
+	{
+		return data_size;
+	}
+
+	const char* str_t::c_str() const
+	{
+		return data;
+	} // c_str
+
+	char& str_t::operator[](int index)
+	{
+		if ((flags & 1) == 0)
+		{
+			// If you hit this conditional,
+			// then this instance doesn't own the data.
+			// User wants to modify the data -- so we need to
+			// create a unique copy for this string so it is mutable.
+			perform_copy_on_write();
+		}
+		assert(index <= data_size);
+		return data[index];
+	} // char& operator[]
+
+	void str_t::perform_copy_on_write()
+	{
+		const char* original_string = data;
+		reallocate(core::str::len(original_string));
+
+		// this instance now owns data.
+		flags = 1;
+
+		core::str::copy(data, original_string, data_size);
+	} // perform_copy_on_write
+
+	str_t str_t::copy(gemini::Allocator& allocator, const char* source)
+	{
+		return str_t(allocator, source);
+	} // static copy
+
+	char str_t::operator[](int index) const
+	{
+		// If you hit this, indexing into data would cause a buffer overrun.
+		assert(index <= data_size);
+		return data[index];
+	} // char operator[]
 } // namespace core
