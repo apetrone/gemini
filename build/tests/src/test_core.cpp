@@ -55,6 +55,8 @@ using namespace core::util;
 using namespace gemini;
 
 
+// A class with no default constructor for purposes
+// of testing with various core utilities.
 class TestClassNoDefaultConstructor
 {
 public:
@@ -713,9 +715,16 @@ UNITTEST(memory)
 	MEMORY2_DELETE(sa, three);
 
 	// 3. Test arrays
-	TestDevice* devices = MEMORY2_NEW_ARRAY(sa, TestDevice, 64);
+	TestDevice* devices = MEMORY2_NEW_ARRAY(TestDevice, sa, 64);
 	TEST_ASSERT_TRUE(devices != nullptr);
 	MEMORY2_DELETE_ARRAY(sa, devices);
+
+
+	// 4. Test arrays of type that has no default constructor
+	TestClassNoDefaultConstructor* no_def_ctor = MEMORY2_NEW_ARRAY(TestClassNoDefaultConstructor, sa, 8, 42);
+	assert(no_def_ctor);
+	assert(no_def_ctor[0].get_index() == 42);
+	MEMORY2_DELETE_ARRAY(sa, no_def_ctor);
 }
 
 UNITTEST(memory_allocator_linear)
@@ -729,9 +738,9 @@ UNITTEST(memory_allocator_linear)
 
 	// 2. Test linear allocator with arrays
 	Allocator s2 = memory_allocator_default(MEMORY_ZONE_DEFAULT);
-	TestDevice* items = MEMORY2_NEW_ARRAY(s2, TestDevice, 64);
+	TestDevice* items = MEMORY2_NEW_ARRAY(TestDevice, s2, 64);
 	MEMORY2_DELETE_ARRAY(s2, items);
-	int* items2 = MEMORY2_NEW_ARRAY(s2, int, 8);
+	int* items2 = MEMORY2_NEW_ARRAY(int, s2, 8);
 	for (size_t index = 0; index < 8; ++index)
 	{
 		items2[index] = int(index * 2);

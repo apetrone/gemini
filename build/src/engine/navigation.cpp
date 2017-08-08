@@ -263,7 +263,7 @@ namespace gemini
 			// allocate an array which can hold the max number of triangles you need to process
 			// across all meshes
 
-			unsigned char* triangle_areas = MEMORY2_NEW_ARRAY(_state->allocator, unsigned char, total_triangles);
+			unsigned char* triangle_areas = MEMORY2_NEW_ARRAY(unsigned char, _state->allocator, total_triangles);
 			if (!triangle_areas)
 			{
 				LOGE("unable to allocate triangle areas\n");

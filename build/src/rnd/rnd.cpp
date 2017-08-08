@@ -123,10 +123,10 @@ void test_memory()
 	gemini::Allocator test_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
 	int* a = MEMORY2_NEW(test_allocator, int;
 	BaseClass* foo = MEMORY2_NEW(test_allocator, DerivedClass);
-	BaseClass* values = MEMORY2_NEW_ARRAY(test_allocator, DerivedClass, 1024);
-	DerivedClass* derived = MEMORY2_NEW_ARRAY(test_allocator, DerivedClass, 512);
+	BaseClass* values = MEMORY2_NEW_ARRAY(DerivedClass, test_allocator, 1024);
+	DerivedClass* derived = MEMORY2_NEW_ARRAY(DerivedClass, test_allocator, 512);
 
-	uint64_t* sixyfours = MEMORY2_NEW_ARRAY(test_allocator, uint64_t, 16384);
+	uint64_t* sixyfours = MEMORY2_NEW_ARRAY(uint64_t, test_allocator, 16384);
 
 	MEMORY2_DELETE(test_allocator, a);
 	MEMORY2_DELETE(test_allocator, foo);
@@ -926,153 +926,6 @@ void test_devices()
 
 #endif
 
-// test out reading BNO055.
-
-struct DataInput
-{
-	bool execute;
-
-	glm::quat orientation;
-	platform::Serial* device;
-	platform::Thread* thread_data;
-//	EventQueueType* event_queue;
-};
-
-// raw data read from BNO055;
-// quaternion data is 16-bit x 4 values
-const size_t TOTAL_SENSORS = 20;
-
-struct bno055_packet_t
-{
-	uint8_t header;
-	uint8_t data[8 * TOTAL_SENSORS];
-	uint8_t footer;
-
-	bno055_packet_t()
-	{
-		header = 0xba;
-		footer = 0xff;
-	}
-
-	bool is_valid() const
-	{
-		return (header == 0xba) && (footer == 0xff);
-	}
-
-	glm::quat get_orientation(uint32_t sensor_index = 0) const
-	{
-		int16_t x = 0;
-		int16_t y = 0;
-		int16_t z = 0;
-		int16_t w = 0;
-
-		const uint8_t* buffer = (data + (sensor_index * 8));
-
-		// they are 16-bit LSB
-		x = (((uint16_t)buffer[3]) << 8) | ((uint16_t)buffer[2]);
-		y = (((uint16_t)buffer[5]) << 8) | ((uint16_t)buffer[4]);
-		z = (((uint16_t)buffer[7]) << 8) | ((uint16_t)buffer[6]);
-		w = (((uint16_t)buffer[1]) << 8) | ((uint16_t)buffer[0]);
-
-		const double QUANTIZE = (1.0 / 16384.0);
-
-		return glm::quat(w * QUANTIZE, x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
-	}
-};
-
-void data_thread(platform::Thread* thread)
-{
-	DataInput* block = static_cast<DataInput*>(thread->user_data);
-
-	LOGV("entering data thread\n");
-
-	const size_t PACKET_SIZE = sizeof(bno055_packet_t);
-	const size_t MAX_PACKET_DATA = 4 * PACKET_SIZE;
-	uint8_t buffer[MAX_PACKET_DATA];
-	size_t current_index = 0;
-
-	while(block->execute)
-	{
-		size_t bytes_read = platform::serial_read(block->device, &buffer[current_index], PACKET_SIZE);
-		if (bytes_read > 0)
-		{
-//			LOGV("read bytes: %i\n", bytes_read);
-			size_t last_index = current_index;
-			current_index += bytes_read;
-
-			// scan for a valid packet
-			assert(last_index < (MAX_PACKET_DATA - sizeof(bno055_packet_t)));
-			uint8_t* head = &buffer[last_index];
-
-			// try to search the entire length of a packet
-			for (size_t index = 0; index < sizeof(bno055_packet_t); ++index)
-			{
-				bno055_packet_t* packet = reinterpret_cast<bno055_packet_t*>(head);
-				if (packet->is_valid())
-				{
-//					gemini::GameMessage message;
-//					message.type = gemini::GameMessage::Orientation;
-
-					glm::quat q = packet->get_orientation(0);
-					// this bit of code converts the coordinate system of the BNO055
-					// to that of gemini.
-//					glm::quat flipped(q.w, q.x, -q.z, -q.y);
-//					glm::quat y = glm::quat(glm::vec3(0, mathlib::degrees_to_radians(180), 0));
-//					glm::quat result = glm::inverse(y * flipped);
-					LOGV("q[0]: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
-
-					q = packet->get_orientation(1);
-					LOGV("q[1]: %2.2f, %2.2f, %2.2f, %2.2f\n", q.x, q.y, q.z, q.w);
-
-//					block->event_queue->push_back(message);
-
-					// handle the packet and reset the data
-
-					memset(buffer, 0, MAX_PACKET_DATA);
-
-					current_index = 0;
-					break;
-				}
-			}
-		}
-		else
-		{
-			LOGV("no bytes read!\n");
-		}
-	}
-
-	LOGV("exiting data thread\n");
-}
-
-void test_bno055()
-{
-	DataInput data_input;
-#if defined(PLATFORM_APPLE) || defined(PLATFORM_LINUX)
-	const char* serial_device = "/dev/cu.usbserial-AH02QPX7";
-#elif defined(PLATFORM_WINDOWS)
-	const char* serial_device = "COM3";
-#endif
-	data_input.device = platform::serial_open(serial_device, 115200);
-	if (data_input.device)
-	{
-		assert(data_input.device != nullptr);
-		data_input.execute = 1;
-
-		data_input.thread_data = platform::thread_create(data_thread, &data_input);
-
-		LOGV("reading data...\n");
-
-		while (true)
-		{
-			// process!
-		}
-	}
-	else
-	{
-		LOGE("Could not open device\n");
-	}
-}
-
 //#define ENABLE_BSDIFF 1
 
 #if defined(ENABLE_BSDIFF)
@@ -1223,6 +1076,8 @@ void present_dialogue(DialogueNode* node)
 #include <core/datastream.h>
 using namespace gemini;
 
+using namespace core;
+
 struct TextFileContext
 {
 	core::util::DataStream* stream;
@@ -1278,7 +1133,6 @@ void string_copy_token(char* token, const char* source, size_t length)
 
 char* string_tokenize(TextFileContext* context, char* str, char* token)
 {
-	const size_t TOKEN_SIZE = 64;
 	uint8_t read_token = 0;
 	char* current = str;
 	for ( ;; )
