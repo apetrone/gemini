@@ -116,8 +116,14 @@ namespace core
 		void recalculate_size();
 		bool operator==(const char* other);
 		str_t& operator=(const str_t& other);
+
+		// returns the size of the data in bytes
 		size_t size() const;
+
+		// returns the length of the string in characters
 		size_t length() const;
+
+		// returns a c-style string
 		const char* c_str() const;
 		char& operator[](int index);
 		void perform_copy_on_write();
