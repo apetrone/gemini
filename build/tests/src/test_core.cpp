@@ -719,7 +719,6 @@ UNITTEST(memory)
 	TEST_ASSERT_TRUE(devices != nullptr);
 	MEMORY2_DELETE_ARRAY(sa, devices);
 
-
 	// 4. Test arrays of type that has no default constructor
 	TestClassNoDefaultConstructor* no_def_ctor = MEMORY2_NEW_ARRAY(TestClassNoDefaultConstructor, sa, 8, 42);
 	assert(no_def_ctor);

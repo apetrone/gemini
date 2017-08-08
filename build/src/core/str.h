@@ -110,10 +110,12 @@ namespace core
 			const char* str,
 			size_t start,
 			size_t length);
+
 		void reallocate(size_t new_size);
 		~str_t();
 		void recalculate_size();
 		bool operator==(const char* other);
+		str_t& operator=(const str_t& other);
 		size_t size() const;
 		size_t length() const;
 		const char* c_str() const;

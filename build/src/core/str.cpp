@@ -303,6 +303,7 @@ namespace core
 		flags = 1;
 		reallocate(length);
 		core::str::copy(data, &str[start], data_size);
+		data[length] = '\0';
 	}
 
 	void str_t::reallocate(size_t new_size)
@@ -331,6 +332,11 @@ namespace core
 	bool str_t::operator==(const char* other)
 	{
 		return core::str::case_insensitive_compare(data, other, 0) == 0;
+	}
+
+	str_t& str_t::operator=(const str_t& other)
+	{
+		return *this;
 	}
 
 	size_t str_t::size() const
