@@ -1167,7 +1167,7 @@ char* string_tokenize(TextFileContext* context, char* str, char* token)
 }
 
 char* string_read_line(TextFileContext* context)
-{	
+{
 	for ( ;; )
 	{
 		if (text_eat_comments(context))

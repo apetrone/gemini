@@ -954,13 +954,49 @@ UNITTEST(str)
 	TEST_ASSERT(result == 0, case_insensitive_compare);
 }
 
+
 // ---------------------------------------------------------------------
-// str_t: Test the custom string class.
+// string: Test the custom string class.
 // ---------------------------------------------------------------------
-UNITTEST(str_t)
+UNITTEST(string)
 {
 	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
 
+	gemini::string test = string_create(allocator, "Hello There");
+
+	gemini::string blah = string_create(allocator, "Hello There");
+	bool matches = test == blah;
+	LOGV("matches = %i\n", matches);
+
+	gemini::string extended = string_concat(allocator, test, blah);
+	LOGV("extended is %s\n", extended.c_str());
+
+	Array<gemini::string> pieces(allocator);
+	pieces.push_back(test);
+	pieces.push_back(blah);
+	pieces.push_back(extended);
+
+	for (size_t index = 0; index < pieces.size(); ++index)
+	{
+		gemini::string& s = pieces[index];
+		LOGV("s = %i -> %s\n", index, s.c_str());
+	}
+
+
+	gemini::string user_name = string_substr(allocator, "Hello my name is Adam and I welcome you to Tiki", 17, 4);
+	LOGV("username = %s\n", user_name.c_str());
+
+	gemini::string format_str = string_create(allocator, core::str::format("Hello there are %i", 74));
+	LOGV("value: %s\n", format_str.c_str());
+
+	string_destroy(allocator, format_str);
+	string_destroy(allocator, user_name);
+	string_destroy(allocator, test);
+	string_destroy(allocator, blah);
+	string_destroy(allocator, extended);
+
+
+#if 0
 	// Test initialization from static const char* and
 	// stack-based const char* data sources.
 	str_t static_test(allocator, "welp");
@@ -1029,6 +1065,7 @@ UNITTEST(str_t)
 	assert(base_string[0] == 'V');
 
 	assert(base[0] != base_string[0]);
+#endif
 }
 
 
@@ -1203,7 +1240,8 @@ UNITTEST(util)
 int main(int, char**)
 {
 	gemini::core_startup();
-	unittest::UnitTest::execute();
+	//unittest::UnitTest::execute();
+	UNITTEST_EXECUTE(string);
 	gemini::core_shutdown();
 	return 0;
 }

@@ -99,6 +99,7 @@ namespace core
 		}
 	} // namespace str
 
+#if 0
 	struct str_t
 	{
 		// Semi-optimized string class for performant use of string data.
@@ -138,4 +139,73 @@ namespace core
 		uint32_t data_size;
 		gemini::Allocator& allocator;
 	}; // str_t
+#endif
+
 } // namespace core
+
+namespace gemini
+{
+
+	// strings are immutable. You must use the string_* functions to operate
+	// on them.
+	struct string
+	{
+		size_t string_data_size;
+		const char* string_data;
+
+		string()
+		{
+			string_data = nullptr;
+			string_data_size = 0;
+		} // string
+
+		string(const string& other)
+		{
+			string_data = other.string_data;
+			string_data_size = other.string_data_size;
+		} // string
+
+		size_t size() const
+		{
+			return string_data_size * sizeof(unsigned char);
+		} // size
+
+		size_t length() const
+		{
+			return string_data_size;
+		} // length
+
+		bool operator==(const string& other) const
+		{
+			if (other.string_data_size != string_data_size)
+			{
+				return false;
+			}
+
+			if (core::str::case_insensitive_compare(other.string_data, string_data, string_data_size) != 0)
+			{
+				return false;
+			}
+
+			return true;
+		} // operator==
+
+		string& operator=(const string& other)
+		{
+			string_data = other.string_data;
+			string_data_size = other.string_data_size;
+			return *this;
+		} // operator=
+
+		const char* c_str() const
+		{
+			return string_data;
+		} // c_str
+	}; // str_t
+
+	char* string_allocate(gemini::Allocator& allocator, size_t length);
+	string string_create(gemini::Allocator& allocator, const char* data);
+	void string_destroy(gemini::Allocator& allocator, string& string);
+	string string_concat(gemini::Allocator& allocator, const string& first, const string& second);
+	string string_substr(gemini::Allocator& allocator, const char* source, uint32_t start, uint32_t length);
+} // namespace gemini

@@ -275,6 +275,7 @@ namespace core
 
 	} // namespace str
 
+#if 0
 	str_t::str_t(gemini::Allocator& memory_allocator,
 		const char* str)
 		: allocator(memory_allocator)
@@ -390,4 +391,61 @@ namespace core
 		assert(index <= data_size);
 		return data[index];
 	} // char operator[]
+
+#endif
+
 } // namespace core
+
+namespace gemini
+{
+
+
+	char* string_allocate(gemini::Allocator& allocator, size_t length)
+	{
+		char* string_data = reinterpret_cast<char*>(MEMORY2_ALLOC(allocator, sizeof(char) * (length + 1)));
+		memset(string_data, 0, sizeof(char) * length);
+		string_data[length] = '\0';
+		return string_data;
+	}
+
+	string string_create(gemini::Allocator& allocator, const char* data)
+	{
+		string value;
+		value.string_data_size = core::str::len(data);
+
+		char* string_data = string_allocate(allocator, value.string_data_size);
+		memcpy(string_data, data, value.string_data_size);
+		value.string_data = string_data;
+
+		return value;
+	} // string_create
+
+	void string_destroy(gemini::Allocator& allocator, string& string)
+	{
+		MEMORY2_DEALLOC(allocator, const_cast<char*>(string.string_data));
+	} // string_destroy
+
+	string string_concat(gemini::Allocator& allocator, const string& first, const string& second)
+	{
+		string extended;
+		extended.string_data_size = (first.string_data_size + second.string_data_size);
+
+		char* string_data = string_allocate(allocator, extended.string_data_size);
+		core::str::cat(string_data, first.string_data);
+		core::str::cat(string_data, second.string_data);
+		extended.string_data = string_data;
+
+		return extended;
+	} // string_concat
+
+	string string_substr(gemini::Allocator& allocator, const char* source, uint32_t start, uint32_t length)
+	{
+		string substring;
+		char* string_data = string_allocate(allocator, length);
+		core::str::copy(string_data, &source[start], length);
+		string_data[length] = '\0';
+		substring.string_data_size = length;
+		substring.string_data = string_data;
+		return substring;
+	} // string_substr
+} // namespace gemini
