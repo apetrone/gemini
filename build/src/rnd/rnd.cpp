@@ -1080,6 +1080,7 @@ using namespace core;
 
 struct TextFileContext
 {
+	gemini::Allocator* allocator;
 	core::util::DataStream* stream;
 	uint32_t current_line;
 	uint32_t current_column;
@@ -1087,16 +1088,40 @@ struct TextFileContext
 };
 
 
+bool isnewline(char* str, uint32_t* advance = nullptr)
+{
+	uint32_t character_advance = 1;
+	uint32_t result = 0;
+	if (*str == '\n')
+	{
+		character_advance = 1;
+		result = 1;
+	}
+	else if (*str == '\r' && (*(str + 1) == '\n'))
+	{
+		character_advance = 2;
+		result = 1;
+	}
+
+	if (advance)
+	{
+		*advance = character_advance;
+	}
+
+	return result;
+}
+
 void text_advance_character(TextFileContext* context)
 {
-	if (*context->current == '\n')
+	uint32_t advance = 1;
+	if (isnewline(context->current, &advance))
 	{
-		LOGV("found newline!\n");
+		//LOGV("found newline!\n");
 		++context->current_line;
 		context->current_column = 0;
 	}
-	++context->current;
-	++context->current_column;
+	context->current += advance;
+	context->current_column += advance;
 } // text_advance_character
 
 uint32_t text_eat_comments(TextFileContext* context)
@@ -1104,11 +1129,11 @@ uint32_t text_eat_comments(TextFileContext* context)
 	char comment_char = '#';
 	if (*context->current == comment_char)
 	{
-		LOGV("found comment at line %i, col %i\n", context->current_line, context->current_column);
+		//LOGV("found comment at line %i, col %i\n", context->current_line, context->current_column);
 		for ( ;; )
 		{
 			uint32_t bail = 0;
-			if (*context->current == '\n')
+			if (isnewline(context->current))
 			{
 				bail = 1;
 			}
@@ -1122,7 +1147,7 @@ uint32_t text_eat_comments(TextFileContext* context)
 		}
 	}
 
-	LOGV("no comment found on line %i\n", context->current_line);
+	//LOGV("no comment found on line %i\n", context->current_line);
 	return 0;
 }
 
@@ -1166,10 +1191,38 @@ char* string_tokenize(TextFileContext* context, char* str, char* token)
 	return current;
 }
 
-char* string_read_line(TextFileContext* context)
+char* text_advance_newline(TextFileContext* context, uint32_t* advance = nullptr)
+{
+	uint32_t character_advance = 0;
+	if (*context->current == '\n')
+	{
+		character_advance = 1;
+		++context->current;
+		context->current_column++;
+	}
+	else if (*context->current == '\r' && (*(context->current + 1) == '\n'))
+	{
+		character_advance = 2;
+		context->current += 2;
+		context->current_column += 2;
+	}
+
+	if (advance)
+	{
+		*advance = character_advance;
+	}
+	return context->current;
+}
+
+gemini::string text_read_line(TextFileContext* context)
 {
 	for ( ;; )
 	{
+		if (*context->current == '\0')
+		{
+			assert(0);
+		}
+
 		if (text_eat_comments(context))
 		{
 			// LOGV("skipping comment line at %i\n", context->current_line);
@@ -1191,25 +1244,33 @@ char* string_read_line(TextFileContext* context)
 	char* first_character = context->current;
 	for ( ;; )
 	{
-		if (*context->current == '\n')
+		uint32_t advance;
+		if (isnewline(context->current, &advance))
 		{
+			//LOGV("found newline!\n");
+			++context->current_line;
+			context->current_column = 0;
+
 			// advance the current character and truncate this
 			// string.
-			// str_t(context->current, string_length);
 			char* newline = context->current;
-			++context->current;
-			*newline = '\0';
 
-			// size_t string_length = newline - first_character;
-			// return str_t(first_character, string_length);
+			uint32_t total_advance = 0;
+			newline = text_advance_newline(context, &total_advance);
+
+			size_t string_length = newline - first_character - advance;
+			return string_substr(*context->allocator, first_character, 0, string_length);
 			break;
 		}
 
+		context->current += advance;
+		context->current_column += advance;
+
 		// eat characters until we hit a newline
-		text_advance_character(context);
+		//text_advance_character(context);
 	}
 
-	return first_character;
+	return string_create(*context->allocator, first_character);
 }
 
 void test_file_handler(TextFileContext* context)
@@ -1217,26 +1278,36 @@ void test_file_handler(TextFileContext* context)
 	// loop through the whole data stream
 	// uint32_t data_size = context->stream->get_data_size();
 	char* data = reinterpret_cast<char*>(context->stream->get_data());
-	context->current_line = 1;
+	context->current_line = 0;
 	context->current_column = 1;
 	context->current = data;
 
 	while (context->current && *context->current)
 	{
 		// read all lines
-		// char token[64] = {0};
-		// str_t line = string_read_line(context);
-		char* line = string_read_line(context);
-		LOGV("[%s] at line %i\n", line, context->current_line);
+		gemini::string line = text_read_line(context);
+		LOGV("[%s] at line %i\n", line.c_str(), context->current_line);
 
-		if (*line == '/')
+		if (line[0] == '/')
 		{
 			LOGV("Found a directory declaration at line %i\n", context->current_line);
 			continue;
 		}
 
 		// Split string into pieces at the equals sign
-		// Array<String> pieces = string_split_lines(line, '=');
+		Array<gemini::string> pieces(*context->allocator);
+		string_split_lines(*context->allocator, pieces, line, '=');
+		if (pieces.size() != 2)
+		{
+			LOGV("malformed data on line %i\n", context->current_line);
+			continue;
+		}
+
+		//LOGV("pieces = %i\n", pieces.size());
+		//for (size_t index = 0; index < pieces.size(); ++index)
+		//{
+		//	LOGV("%i -> %s\n", index, pieces[index].c_str());
+		//}
 	}
 
 	LOGV("read file with %i lines\n", context->current_line);
@@ -1251,6 +1322,7 @@ void read_file(const char* path)
 	core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
 	if (filesystem->file_exists(path, false))
 	{
+		const uint64_t start_time = platform::microseconds();
 		gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
 		Array<unsigned char> data(allocator);
 		filesystem->load_file(data, path);
@@ -1260,7 +1332,15 @@ void read_file(const char* path)
 		stream.init(memory, memory_size);
 
 		context.stream = &stream;
+
+		char string_mem[8192];
+		gemini::Allocator string_allocator = gemini::memory_allocator_linear(gemini::MEMORY_ZONE_DEFAULT, string_mem, 8192);
+		context.allocator = &string_allocator;
+
 		test_file_handler(&context);
+
+		uint64_t delta_time = platform::microseconds() - start_time;
+		LOGV("parsed file in %2.2fms\n", delta_time * MillisecondsPerMicrosecond);
 	}
 	else
 	{
@@ -1282,7 +1362,8 @@ int main(int, char**)
 //	test_serialization();
 //	test_reflection();
 
-	read_file("/home/apetrone/gemini/build/bin/debug_x86_64/input.conf");
+	//read_file("/home/apetrone/gemini/build/bin/debug_x86_64/input.conf");
+	read_file("X:/gemini/build/tests/input.conf");
 
 #if defined(PLATFORM_LINUX) && 0
 	const size_t event_size = sizeof(struct input_event);

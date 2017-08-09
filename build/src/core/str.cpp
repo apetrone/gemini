@@ -398,7 +398,11 @@ namespace core
 
 namespace gemini
 {
-
+	const char& string::operator[](int index) const
+	{
+		assert(index <= string_data_size);
+		return string_data[index];
+	} // const char& operator[]
 
 	char* string_allocate(gemini::Allocator& allocator, size_t length)
 	{
@@ -448,4 +452,32 @@ namespace gemini
 		substring.string_data = string_data;
 		return substring;
 	} // string_substr
+
+	void string_split_lines(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, char delimiter)
+	{
+		string::value_type* current = &line.string_data[0];
+		string::value_type* prev = current;
+		for ( ;; )
+		{
+			if (*current == '\0')
+			{
+				gemini::string token = string_substr(allocator, prev, 0, (current - prev));
+				pieces.push_back(token);
+				break;
+			}
+
+			if (*current == delimiter)
+			{
+				uint32_t length = (current - prev);
+				if (length > 0)
+				{
+					gemini::string token = string_substr(allocator, prev, 0, length);
+					prev = current + 1;
+					pieces.push_back(token);
+				}
+			}
+
+			++current;
+		}
+	} // string_split_lines
 } // namespace gemini

@@ -52,11 +52,14 @@ namespace core
 
 				if (file_size > 0)
 				{
-					buffer.resize(file_size, 0);
+					buffer.resize(file_size + 1, 0);
 				}
 
 				platform::fs_read(handle, &buffer[0], 1, file_size);
 				platform::fs_close(handle);
+
+				// Ensure we terminate the buffer.
+				buffer[file_size] = '\0';
 			}
 		} // internal_load_file
 
@@ -212,7 +215,7 @@ namespace core
 			platform::PathString fullpath;
 			absolute_path_from_relative(fullpath, relative_path, content_directory());
 
-			load_file(buffer, fullpath());		
+			load_file(buffer, fullpath());
 		} // virtual_load_file
 
 		void FileSystemInterface::free_file_memory(void* memory)

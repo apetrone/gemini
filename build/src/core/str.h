@@ -26,9 +26,11 @@
 
 #include "typedefs.h"
 #include "mem.h"
+#include <core/array.h>
 
 #include <string>
 #include <vector>
+
 
 typedef std::string String;
 
@@ -150,6 +152,8 @@ namespace gemini
 	// on them.
 	struct string
 	{
+		typedef const char value_type;
+
 		size_t string_data_size;
 		const char* string_data;
 
@@ -201,6 +205,8 @@ namespace gemini
 		{
 			return string_data;
 		} // c_str
+
+		const char& operator[](int index) const;
 	}; // str_t
 
 	char* string_allocate(gemini::Allocator& allocator, size_t length);
@@ -208,4 +214,6 @@ namespace gemini
 	void string_destroy(gemini::Allocator& allocator, string& string);
 	string string_concat(gemini::Allocator& allocator, const string& first, const string& second);
 	string string_substr(gemini::Allocator& allocator, const char* source, uint32_t start, uint32_t length);
+
+	void string_split_lines(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, char delimiter = ' ');
 } // namespace gemini
