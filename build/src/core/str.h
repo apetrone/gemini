@@ -99,6 +99,10 @@ namespace core
 		{
 			return 0x0;
 		}
+
+
+		template <class T>
+		void parse_value_from_string(T* value, const char* token);
 	} // namespace str
 
 #if 0
@@ -215,5 +219,5 @@ namespace gemini
 	string string_concat(gemini::Allocator& allocator, const string& first, const string& second);
 	string string_substr(gemini::Allocator& allocator, const char* source, uint32_t start, uint32_t length);
 
-	void string_split_lines(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, char delimiter = ' ');
+	void string_split_lines(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, const char* delimiters = "\t ");
 } // namespace gemini

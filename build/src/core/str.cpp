@@ -273,6 +273,18 @@ namespace core
 			return out;
 		}
 
+
+		template <>
+		void parse_value_from_string(uint32_t* value, const char* token)
+		{
+			*value = atoi(token);
+		}
+
+		template <>
+		void parse_value_from_string(float* value, const char* token)
+		{
+			*value = atof(token);
+		}
 	} // namespace str
 
 #if 0
@@ -410,7 +422,7 @@ namespace gemini
 		memset(string_data, 0, sizeof(char) * length);
 		string_data[length] = '\0';
 		return string_data;
-	}
+	} // string_allocate
 
 	string string_create(gemini::Allocator& allocator, const char* data)
 	{
@@ -453,23 +465,37 @@ namespace gemini
 		return substring;
 	} // string_substr
 
-	void string_split_lines(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, char delimiter)
+	void string_split_lines(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, const char* delimiters)
 	{
 		string::value_type* current = &line.string_data[0];
 		string::value_type* prev = current;
+		size_t delimiter_size = core::str::len(delimiters);
 		for ( ;; )
 		{
 			if (*current == '\0')
 			{
-				gemini::string token = string_substr(allocator, prev, 0, (current - prev));
-				pieces.push_back(token);
+				if ((current - prev) > 0)
+				{
+					gemini::string token = string_substr(allocator, prev, 0, (current - prev));
+					pieces.push_back(token);
+				}
 				break;
 			}
 
-			if (*current == delimiter)
+			uint8_t current_in_delimiters = 0;
+			for (size_t index = 0; index < delimiter_size; ++index)
+			{
+				if (*current == delimiters[index])
+				{
+					current_in_delimiters = 1;
+					break;
+				}
+			}
+
+			if (current_in_delimiters)
 			{
 				uint32_t length = (current - prev);
-				if (length > 0)
+				if (isalnum(*prev) && length > 0)
 				{
 					gemini::string token = string_substr(allocator, prev, 0, length);
 					prev = current + 1;
@@ -478,6 +504,10 @@ namespace gemini
 			}
 
 			++current;
+			if (!isalnum(*prev))
+			{
+				prev = current;
+			}
 		}
 	} // string_split_lines
 } // namespace gemini

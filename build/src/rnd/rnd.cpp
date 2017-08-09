@@ -1085,7 +1085,8 @@ struct TextFileContext
 	uint32_t current_line;
 	uint32_t current_column;
 	char* current;
-};
+	void (*line_handler)(struct TextFileContext* context, const gemini::string& line, void* user_data);
+}; // TextFileContext
 
 
 bool isnewline(char* str, uint32_t* advance = nullptr)
@@ -1109,7 +1110,7 @@ bool isnewline(char* str, uint32_t* advance = nullptr)
 	}
 
 	return result;
-}
+} // isnewline
 
 void text_advance_character(TextFileContext* context)
 {
@@ -1124,16 +1125,28 @@ void text_advance_character(TextFileContext* context)
 	context->current_column += advance;
 } // text_advance_character
 
+uint32_t text_stream_position(TextFileContext* context)
+{
+	uint8_t* position = reinterpret_cast<uint8_t*>(context->current);
+	uint8_t* stream = context->stream->get_data();
+	return position - stream;
+} // text_stream_position
+
+bool text_eof(TextFileContext* context)
+{
+	uint32_t stream_position = text_stream_position(context);
+	return (stream_position >= context->stream->get_data_size());
+} // text_eof
+
 uint32_t text_eat_comments(TextFileContext* context)
 {
 	char comment_char = '#';
 	if (*context->current == comment_char)
 	{
-		//LOGV("found comment at line %i, col %i\n", context->current_line, context->current_column);
 		for ( ;; )
 		{
 			uint32_t bail = 0;
-			if (isnewline(context->current))
+			if (text_eof(context) || isnewline(context->current))
 			{
 				bail = 1;
 			}
@@ -1147,14 +1160,16 @@ uint32_t text_eat_comments(TextFileContext* context)
 		}
 	}
 
-	//LOGV("no comment found on line %i\n", context->current_line);
 	return 0;
-}
+} // text_eat_comments
+
+#if 0
 
 void string_copy_token(char* token, const char* source, size_t length)
 {
 	memcpy(token, source, length);
 }
+
 
 char* string_tokenize(TextFileContext* context, char* str, char* token)
 {
@@ -1190,6 +1205,7 @@ char* string_tokenize(TextFileContext* context, char* str, char* token)
 	}
 	return current;
 }
+#endif
 
 char* text_advance_newline(TextFileContext* context, uint32_t* advance = nullptr)
 {
@@ -1214,104 +1230,146 @@ char* text_advance_newline(TextFileContext* context, uint32_t* advance = nullptr
 	return context->current;
 }
 
-gemini::string text_read_line(TextFileContext* context)
+
+uint32_t text_read_lines(TextFileContext* context, void* user_data)
 {
-	for ( ;; )
-	{
-		if (*context->current == '\0')
-		{
-			assert(0);
-		}
+	// This expects the line_handler to be set.
+	assert(context->line_handler);
 
-		if (text_eat_comments(context))
-		{
-			// LOGV("skipping comment line at %i\n", context->current_line);
-			continue;
-		}
-
-		if (isspace(*context->current))
-		{
-			text_advance_character(context);
-			continue;
-		}
-		else
-		{
-			// LOGV("found character %c [%i] at line %i, col %i\n",  *context->current, *context->current, context->current_line, context->current_column);
-			break;
-		}
-	}
-
-	char* first_character = context->current;
-	for ( ;; )
-	{
-		uint32_t advance;
-		if (isnewline(context->current, &advance))
-		{
-			//LOGV("found newline!\n");
-			++context->current_line;
-			context->current_column = 0;
-
-			// advance the current character and truncate this
-			// string.
-			char* newline = context->current;
-
-			uint32_t total_advance = 0;
-			newline = text_advance_newline(context, &total_advance);
-
-			size_t string_length = newline - first_character - advance;
-			return string_substr(*context->allocator, first_character, 0, string_length);
-			break;
-		}
-
-		context->current += advance;
-		context->current_column += advance;
-
-		// eat characters until we hit a newline
-		//text_advance_character(context);
-	}
-
-	return string_create(*context->allocator, first_character);
-}
-
-void test_file_handler(TextFileContext* context)
-{
-	// loop through the whole data stream
-	// uint32_t data_size = context->stream->get_data_size();
+	// initialize the context
 	char* data = reinterpret_cast<char*>(context->stream->get_data());
 	context->current_line = 0;
 	context->current_column = 1;
 	context->current = data;
 
-	while (context->current && *context->current)
+	// declare some locals we'll use to parse lines.
+	char* line_start = nullptr;
+	char* last_character = nullptr;
+	uint32_t reading_token = 0;
+
+	while (!text_eof(context))
 	{
-		// read all lines
-		gemini::string line = text_read_line(context);
-		LOGV("[%s] at line %i\n", line.c_str(), context->current_line);
+		// TODO: Strip comments at end of lines
 
-		if (line[0] == '/')
+		if (!reading_token)
 		{
-			LOGV("Found a directory declaration at line %i\n", context->current_line);
+			if (text_eat_comments(context))
+			{
+				// LOGV("skipping comment line at %i\n", context->current_line);
+				continue;
+			}
+
+			if (isspace(*context->current))
+			{
+				text_advance_character(context);
+				continue;
+			}
+		}
+
+		// LOGV("found character %c [%i] at line %i, col %i\n",  *context->current, *context->current, context->current_line, context->current_column);
+		if (!reading_token)
+		{
+			line_start = context->current;
+			reading_token = 1;
+		}
+		else
+		{
+			char* prev_char = last_character + 1;
+			if (text_eat_comments(context))
+			{
+				// Found comments while reading until EOL or EOF;
+				// either way, we use the truncated line here.
+				gemini::string token = string_substr(*context->allocator, line_start, 0, (prev_char - line_start));
+				context->line_handler(context, token, user_data);
+				reading_token = 0;
+				line_start = nullptr;
+				continue;
+			}
+		}
+
+		// Found newline sequence (either '\r\n' or '\n')
+		uint32_t advance;
+		if (isnewline(context->current, &advance))
+		{
+			++context->current_line;
+			context->current_column = 1;
+
+			char* newline = context->current;
+
+			uint32_t total_advance = 0;
+			newline = text_advance_newline(context, &total_advance);
+
+			size_t string_length = newline - line_start - advance;
+
+			gemini::string token = string_substr(*context->allocator, line_start, 0, string_length);
+			context->line_handler(context, token, user_data);
+			reading_token = 0;
+			line_start = nullptr;
 			continue;
 		}
 
-		// Split string into pieces at the equals sign
-		Array<gemini::string> pieces(*context->allocator);
-		string_split_lines(*context->allocator, pieces, line, '=');
-		if (pieces.size() != 2)
+		context->current += advance;
+		if (isalnum(*context->current))
 		{
-			LOGV("malformed data on line %i\n", context->current_line);
-			continue;
+			last_character = context->current;
 		}
-
-		//LOGV("pieces = %i\n", pieces.size());
-		//for (size_t index = 0; index < pieces.size(); ++index)
-		//{
-		//	LOGV("%i -> %s\n", index, pieces[index].c_str());
-		//}
+		context->current_column += advance;
 	}
 
-	LOGV("read file with %i lines\n", context->current_line);
-}
+	if (reading_token)
+	{
+		// We hit this when the parser reaches the EOF, but is still reading a
+		// token and there is no trailing newline in the file. We still must
+		// handle the final line though.
+		size_t string_length = context->current - line_start;
+		gemini::string token = string_substr(*context->allocator, line_start, 0, string_length);
+		context->line_handler(context, token, user_data);
+	}
+
+	// We increment this here to indicate we've read until the last line;
+	// which at EOF, we have.
+	context->current_line++;
+
+	return 0;
+} // text_read_lines
+
+
+void load_lines(TextFileContext* context, const gemini::string& line, void* user_data)
+{
+	//LOGV("[%s] at line %i\n", line.c_str(), context->current_line);
+
+	//if (line[0] == '/')
+	//{
+	//	LOGV("Found a directory declaration at line %i\n", context->current_line);
+	//	return;
+	//}
+
+	// Split string into pieces at the equals sign
+	Array<gemini::string> pieces(*context->allocator);
+	string_split_lines(*context->allocator, pieces, line, "=");
+	if (pieces.size() != 2)
+	{
+		LOGV("malformed data on line %i\n", context->current_line);
+		return;
+	}
+
+	gemini::string& key = pieces[0];
+	gemini::string& value = pieces[1];
+
+	LOGV("key = \"%s\"; value = \"%s\"\n", key.c_str(), value.c_str());
+} // load_lines
+
+void test_styles(TextFileContext* context, const gemini::string& line, void* user_data)
+{
+	LOGV("[%s] at line %i\n", line.c_str(), context->current_line);
+
+	// Split string into pieces at the equals sign
+	Array<gemini::string> pieces(*context->allocator);
+	string_split_lines(*context->allocator, pieces, line, "\t ");
+
+	LOGV("total tokens on line = %i\n", pieces.size());
+
+} // test_styles
 
 void read_file(const char* path)
 {
@@ -1333,11 +1391,15 @@ void read_file(const char* path)
 
 		context.stream = &stream;
 
-		char string_mem[8192];
-		gemini::Allocator string_allocator = gemini::memory_allocator_linear(gemini::MEMORY_ZONE_DEFAULT, string_mem, 8192);
+		char string_mem[16384];
+		gemini::Allocator string_allocator = gemini::memory_allocator_linear(gemini::MEMORY_ZONE_DEFAULT, string_mem, 16384);
 		context.allocator = &string_allocator;
 
-		test_file_handler(&context);
+		//context.line_handler = load_lines;
+		context.line_handler = test_styles;
+		text_read_lines(&context, nullptr);
+
+		LOGV("read file with %i lines\n", context.current_line);
 
 		uint64_t delta_time = platform::microseconds() - start_time;
 		LOGV("parsed file in %2.2fms\n", delta_time * MillisecondsPerMicrosecond);
@@ -1363,7 +1425,9 @@ int main(int, char**)
 //	test_reflection();
 
 	//read_file("/home/apetrone/gemini/build/bin/debug_x86_64/input.conf");
-	read_file("X:/gemini/build/tests/input.conf");
+	//read_file("X:/gemini/build/tests/input.conf");
+	read_file("X:/gemini/build/assets/conf/ui.styles");
+
 
 #if defined(PLATFORM_LINUX) && 0
 	const size_t event_size = sizeof(struct input_event);

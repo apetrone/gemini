@@ -952,6 +952,17 @@ UNITTEST(str)
 	char base[] = "string test number one";
 	result = core::str::case_insensitive_compare(base, "string test number one", 0);
 	TEST_ASSERT(result == 0, case_insensitive_compare);
+
+
+	// Test parse_value_from_string
+	uint32_t int_val = 0;
+	float float_val = 0.0f;
+
+	core::str::parse_value_from_string(&int_val, "2");
+	assert(int_val == 2);
+
+	core::str::parse_value_from_string(&float_val, "2.8");
+	assert((2.8 - float_val) < FLT_EPSILON);
 }
 
 
