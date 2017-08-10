@@ -1299,7 +1299,7 @@ uint32_t text_read_lines(TextFileContext* context, void* user_data)
 			uint32_t total_advance = 0;
 			newline = text_advance_newline(context, &total_advance);
 
-			size_t string_length = newline - line_start - advance;
+			uint32_t string_length = newline - line_start - advance;
 
 			gemini::string token = string_substr(*context->allocator, line_start, 0, string_length);
 			context->line_handler(context, token, user_data);
@@ -1359,15 +1359,177 @@ void load_lines(TextFileContext* context, const gemini::string& line, void* user
 	LOGV("key = \"%s\"; value = \"%s\"\n", key.c_str(), value.c_str());
 } // load_lines
 
+#include <core/typespec.h>
+
+TYPESPEC_REGISTER_POD(uint32_t);
+
+struct StyleTest
+{
+	uint32_t label_margin;
+	uint32_t background_color;
+	uint32_t foreground_color;
+	//gemini::string font;
+}; // StyleTest
+
+
+template <class T>
+struct NameValuePair
+{
+	const char* name;
+	T& value;
+	size_t offset;
+
+	NameValuePair(const char* _name, T&& _value, size_t member_offset)
+		: name(_name)
+		, value(_value)
+		, offset(member_offset)
+	{
+	}
+
+private:
+	NameValuePair & operator=(NameValuePair const &) = delete;
+};
+
+
+template <class T>
+NameValuePair<T> make_nvp(const char* name, T& value, size_t member_offset)
+{
+	//const char* chr = typespec_name_from_value(&value);
+	//LOGV("type is %s\n", chr);
+	return NameValuePair<T>(name, std::forward<T>(value), member_offset);
+}
+
+template <class ArchiveType>
+struct ArchiveInterface
+{
+	ArchiveInterface()
+	{
+	}
+
+	ArchiveType& instance()
+	{
+		return *static_cast<ArchiveType*>(this);
+	}
+
+	template <class T>
+	ArchiveType& test(NameValuePair<T> nvp)
+	{
+		instance().collect(nvp);
+		return instance();
+	}
+};
+
+
+struct FieldCollector : public ArchiveInterface<FieldCollector>
+{
+	gemini::Allocator allocator;
+	Array<gemini::string> fields;
+	Array<size_t> offsets;
+
+	FieldCollector()
+		: allocator(gemini::memory_allocator_default(MEMORY_ZONE_DEFAULT))
+		, fields(allocator)
+		, offsets(allocator)
+	{
+	}
+
+	template <class T>
+	void collect(NameValuePair<T> nvp)
+	{
+		fields.push_back(string_create(allocator, nvp.name));
+		offsets.push_back(nvp.offset);
+	}
+
+	~FieldCollector()
+	{
+		for (size_t index = 0; index < fields.size(); ++index)
+		{
+			string_destroy(allocator, fields[index]);
+		}
+	}
+};
+
+
+template <class T>
+struct FieldData
+{
+};
+
+
+template <class T, class X>
+size_t member_offset(T* instance, X* member)
+{
+	return (char*)member - (char*)instance;
+}
+
+
+#define MAKE_PROPERTY(instance, name) make_nvp(#name, instance->name, member_offset(instance, &instance->name))
+
+template <>
+struct FieldData<StyleTest>
+{
+	template <class Archive>
+	void serialize(Archive& archive, StyleTest* instance)
+	{
+		archive.test(MAKE_PROPERTY(instance, label_margin));
+		archive.test(MAKE_PROPERTY(instance, background_color));
+		archive.test(MAKE_PROPERTY(instance, foreground_color));
+	}
+};
+
+
+template <class T, class Archive>
+void gather_fields(Archive& archive, T* instance)
+{
+	FieldData<T>().serialize(archive, instance);
+}
+
+
+
+
+
+//template <class Archive>
+//void gather_fields(Archive& archive, StyleTest* instance)
+//{
+//	static Field field_label_margin("label_margin", offsetof(StyleTest, label_margin)); archive.add(&field_label_margin);
+//}
+
+
 void test_styles(TextFileContext* context, const gemini::string& line, void* user_data)
 {
-	LOGV("[%s] at line %i\n", line.c_str(), context->current_line);
+	//LOGV("[%s] at line %i\n", line.c_str(), context->current_line);
 
 	// Split string into pieces at the equals sign
 	Array<gemini::string> pieces(*context->allocator);
-	string_split_lines(*context->allocator, pieces, line, "\t ");
+	string_split_lines(*context->allocator, pieces, line, "=");
 
-	LOGV("total tokens on line = %i\n", pieces.size());
+	//LOGV("total tokens on line = %i\n", pieces.size());
+	//for (size_t index = 0; index < pieces.size(); ++index)
+	//{
+	//	LOGV("%i -> '%s'\n", index, pieces[index].c_str());
+	//}
+	if (pieces.size() < 2)
+	{
+		return;
+	}
+	gemini::string& key = pieces[0];
+	//gemini::string& value = pieces[1];
+
+	gemini::Allocator test = gemini::memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
+	FieldCollector collector;
+	StyleTest* style_test = nullptr;
+	gather_fields(collector, style_test);
+	//const Field* field = collector.first;
+	for (size_t index = 0; index < collector.fields.size(); ++index)
+	{
+		size_t offset = collector.offsets[index];
+		gemini::string& field_name = collector.fields[index];
+		if (key == field_name)
+		{
+			LOGV("field: \"%s\" @ %i bytes\n", field_name.c_str(), offset);
+		}
+	}
 
 } // test_styles
 

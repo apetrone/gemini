@@ -198,6 +198,11 @@ namespace gemini
 			return true;
 		} // operator==
 
+		bool operator==(const char* other)
+		{
+			return core::str::case_insensitive_compare(string_data, other, 0) == 0;
+		} // operator==
+
 		string& operator=(const string& other)
 		{
 			string_data = other.string_data;

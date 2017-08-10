@@ -467,16 +467,22 @@ namespace gemini
 
 	void string_split_lines(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, const char* delimiters)
 	{
+		// current is the character cursor we're currently using.
+		// last_character is the last character that is alpha numeric.
+		// prev is the previous character that was alpha numeric.
+		// tokens are usually: (last_character - prev)
 		string::value_type* current = &line.string_data[0];
+		string::value_type* last_character = current;
 		string::value_type* prev = current;
 		size_t delimiter_size = core::str::len(delimiters);
 		for ( ;; )
 		{
 			if (*current == '\0')
 			{
-				if ((current - prev) > 0)
+				uint32_t length = (last_character + 1 - prev);
+				if (length > 0)
 				{
-					gemini::string token = string_substr(allocator, prev, 0, (current - prev));
+					gemini::string token = string_substr(allocator, prev, 0, length);
 					pieces.push_back(token);
 				}
 				break;
@@ -494,7 +500,7 @@ namespace gemini
 
 			if (current_in_delimiters)
 			{
-				uint32_t length = (current - prev);
+				uint32_t length = (last_character + 1 - prev);
 				if (isalnum(*prev) && length > 0)
 				{
 					gemini::string token = string_substr(allocator, prev, 0, length);
@@ -507,6 +513,10 @@ namespace gemini
 			if (!isalnum(*prev))
 			{
 				prev = current;
+			}
+			if (isalnum(*current))
+			{
+				last_character = current;
 			}
 		}
 	} // string_split_lines
