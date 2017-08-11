@@ -1479,11 +1479,6 @@ SERIALIZER_SET_DISPATCH(StyleTest, SerializerType_INTERNAL);
 SERIALIZER_SET_DISPATCH(uint32_t, SerializerType_POD);
 
 
-//template <class Archive>
-//void serialize(Archive& archive, uint32_t& instance)
-//{
-//}
-
 template <class ArchiveType>
 struct ArchiveInterface
 {
@@ -1510,13 +1505,6 @@ struct ArchiveInterface
 		return instance();
 	}
 
-	//template <class T>
-	//ArchiveType& operator>>(T& value)
-	//{
-	//	load(value);
-	//	return instance();
-	//}
-
 	template <class T>
 	void serialize(T& instance)
 	{
@@ -1529,11 +1517,11 @@ struct ArchiveInterface
 		serialize(value);
 	}
 
-	//template <class T>
-	//void load(T& value)
-	//{
-	//	serialize(value);
-	//}
+	template <class T>
+	void process(T& instance)
+	{
+		LOGV("processing '%s'\n", TypeSpecName<T>::value);
+	}
 };
 
 
@@ -1610,6 +1598,7 @@ struct SerializeDispatcherPOD
 	{
 		LOGV("POD dispatch; type is '%s', size is %i\n", typespec_name_from_value<T>(&instance), TypeSpecSize<T>::value);
 		//serialize(archive, instance);
+		archive.process(instance);
 	}
 };
 
