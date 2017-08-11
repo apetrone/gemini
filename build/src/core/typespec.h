@@ -28,6 +28,8 @@
 #include <stddef.h>
 #include <core/str.h> // for STRING_HASH32
 
+#include <type_traits>
+
 #define TYPESPEC_REGISTER_NAME(C)\
 	template <>\
 	const char* TypeSpecName< C >::value = #C
@@ -163,3 +165,14 @@ size_t typespec_identifier_from_value(T*)
 {
 	return TypeSpecIdentifier<T>::value;
 }
+
+
+template <class T>
+struct typespec_is_pod
+{
+	enum
+	{
+		value = std::is_trivially_constructible<T>::value
+		//value = std::is_pod<T>::value
+	};
+};

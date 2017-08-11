@@ -1092,16 +1092,16 @@ struct TextFileContext
 bool isnewline(char* str, uint32_t* advance = nullptr)
 {
 	uint32_t character_advance = 1;
-	uint32_t result = 0;
+	bool result = false;
 	if (*str == '\n')
 	{
 		character_advance = 1;
-		result = 1;
+		result = true;
 	}
 	else if (*str == '\r' && (*(str + 1) == '\n'))
 	{
 		character_advance = 2;
-		result = 1;
+		result = true;
 	}
 
 	if (advance)
@@ -1363,23 +1363,18 @@ void load_lines(TextFileContext* context, const gemini::string& line, void* user
 
 TYPESPEC_REGISTER_POD(uint32_t);
 
-struct StyleTest
-{
-	uint32_t label_margin;
-	uint32_t background_color;
-	uint32_t foreground_color;
-	//gemini::string font;
-}; // StyleTest
+
+
 
 
 template <class T>
-struct NameValuePair
+struct FieldKeyValuePair
 {
 	const char* name;
 	T& value;
-	size_t offset;
+	intptr_t offset;
 
-	NameValuePair(const char* _name, T&& _value, size_t member_offset)
+	FieldKeyValuePair(const char* _name, T&& _value, intptr_t member_offset)
 		: name(_name)
 		, value(_value)
 		, offset(member_offset)
@@ -1387,17 +1382,107 @@ struct NameValuePair
 	}
 
 private:
-	NameValuePair & operator=(NameValuePair const &) = delete;
+	FieldKeyValuePair & operator=(FieldKeyValuePair const &) = delete;
 };
 
 
 template <class T>
-NameValuePair<T> make_nvp(const char* name, T& value, size_t member_offset)
+FieldKeyValuePair<T> make_field_key_value_pair(const char* name, T& value, intptr_t member_offset)
 {
 	//const char* chr = typespec_name_from_value(&value);
 	//LOGV("type is %s\n", chr);
-	return NameValuePair<T>(name, std::forward<T>(value), member_offset);
+	return FieldKeyValuePair<T>(name, std::forward<T>(value), member_offset);
 }
+
+
+
+
+enum
+{
+	SerializerType_UNDEFINED,
+	SerializerType_INTERNAL,
+	SerializerType_EXTERNAL,
+	SerializerType_POD
+};
+
+
+template <class T>
+struct SerializerType
+{
+	enum
+	{
+		value = SerializerType_UNDEFINED
+	};
+};
+
+template <bool, class T, class F>
+struct If;
+
+template <class T, class F>
+struct If<false, T, F>
+{
+	typedef F type;
+};
+
+template <class T, class F>
+struct If<true, T, F>
+{
+	typedef T type;
+};
+
+template <class T, class X>
+intptr_t member_offset(T* instance, X* member)
+{
+	return (char*)member - (char*)instance;
+}
+
+
+#define MAKE_INSTANCE_MEMBER(instance, name) make_field_key_value_pair(#name, instance.name, member_offset(&instance, &instance.name))
+#define MAKE_MEMBER(name) make_field_key_value_pair(#name, name, member_offset(this, &name))
+
+
+
+struct StyleTest
+{
+	uint32_t label_margin;
+	uint32_t background_color;
+	uint32_t foreground_color;
+	//gemini::string font;
+
+	template <class Archive>
+	void serialize(Archive& archive)
+	{
+		archive & MAKE_MEMBER(label_margin);
+		archive & MAKE_MEMBER(background_color);
+		archive & MAKE_MEMBER(foreground_color);
+	}
+}; // StyleTest
+
+
+TYPESPEC_REGISTER_CLASS(StyleTest);
+
+
+#define SERIALIZER_SET_DISPATCH(C, type) \
+	template <>\
+	struct SerializerType<C>\
+	{\
+		enum\
+		{\
+			value = type\
+		};\
+	};
+
+
+SERIALIZER_SET_DISPATCH(StyleTest, SerializerType_INTERNAL);
+
+
+SERIALIZER_SET_DISPATCH(uint32_t, SerializerType_POD);
+
+
+//template <class Archive>
+//void serialize(Archive& archive, uint32_t& instance)
+//{
+//}
 
 template <class ArchiveType>
 struct ArchiveInterface
@@ -1412,11 +1497,43 @@ struct ArchiveInterface
 	}
 
 	template <class T>
-	ArchiveType& test(NameValuePair<T> nvp)
+	ArchiveType& operator&(FieldKeyValuePair<T> pair)
 	{
-		instance().collect(nvp);
+		instance().collect(pair);
 		return instance();
 	}
+
+	template <class T>
+	ArchiveType& operator<<(const T& value)
+	{
+		save(const_cast<T&>(value));
+		return instance();
+	}
+
+	//template <class T>
+	//ArchiveType& operator>>(T& value)
+	//{
+	//	load(value);
+	//	return instance();
+	//}
+
+	template <class T>
+	void serialize(T& instance)
+	{
+		SerializeDispatcher(*this, instance);
+	}
+
+	template <class T>
+	void save(T& value)
+	{
+		serialize(value);
+	}
+
+	//template <class T>
+	//void load(T& value)
+	//{
+	//	serialize(value);
+	//}
 };
 
 
@@ -1424,7 +1541,7 @@ struct FieldCollector : public ArchiveInterface<FieldCollector>
 {
 	gemini::Allocator allocator;
 	Array<gemini::string> fields;
-	Array<size_t> offsets;
+	Array<intptr_t> offsets;
 
 	FieldCollector()
 		: allocator(gemini::memory_allocator_default(MEMORY_ZONE_DEFAULT))
@@ -1434,7 +1551,7 @@ struct FieldCollector : public ArchiveInterface<FieldCollector>
 	}
 
 	template <class T>
-	void collect(NameValuePair<T> nvp)
+	void collect(FieldKeyValuePair<T> nvp)
 	{
 		fields.push_back(string_create(allocator, nvp.name));
 		offsets.push_back(nvp.offset);
@@ -1447,52 +1564,87 @@ struct FieldCollector : public ArchiveInterface<FieldCollector>
 			string_destroy(allocator, fields[index]);
 		}
 	}
-};
+}; // FieldCollector
+
+
+
 
 
 template <class T>
-struct FieldData
-{
-};
-
-
-template <class T, class X>
-size_t member_offset(T* instance, X* member)
-{
-	return (char*)member - (char*)instance;
-}
-
-
-#define MAKE_PROPERTY(instance, name) make_nvp(#name, instance->name, member_offset(instance, &instance->name))
-
-template <>
-struct FieldData<StyleTest>
+struct SerializeDispatcherUndefined
 {
 	template <class Archive>
-	void serialize(Archive& archive, StyleTest* instance)
+	void dispatch(Archive& archive, T& instance)
 	{
-		archive.test(MAKE_PROPERTY(instance, label_margin));
-		archive.test(MAKE_PROPERTY(instance, background_color));
-		archive.test(MAKE_PROPERTY(instance, foreground_color));
+		static_assert(0, "T is being serialized with no serializer type.");
 	}
 };
 
-
-template <class T, class Archive>
-void gather_fields(Archive& archive, T* instance)
+template <class T>
+struct SerializeDispatcherInternal
 {
-	FieldData<T>().serialize(archive, instance);
+	template <class Archive>
+	void dispatch(Archive& archive, T& instance)
+	{
+		LOGV("internal dispatch; type is '%s'\n", TypeSpecName<T>::value);
+		instance.serialize(archive);
+	}
+};
+
+template <class T>
+struct SerializeDispatcherExternal
+{
+	template <class Archive>
+	void dispatch(Archive& archive, T& instance)
+	{
+		LOGV("external dispatch\n");
+		serialize(archive, instance);
+	}
+};
+
+template <class T>
+struct SerializeDispatcherPOD
+{
+	template <class Archive>
+	void dispatch(Archive& archive, T& instance)
+	{
+		LOGV("POD dispatch; type is '%s', size is %i\n", typespec_name_from_value<T>(&instance), TypeSpecSize<T>::value);
+		//serialize(archive, instance);
+	}
+};
+
+template <class Archive, class T>
+void SerializeDispatcher(Archive& archive, T& instance)
+{
+	If <!std::is_class<T>::value,
+		SerializeDispatcherPOD<T>,
+		If <SerializerType<T>::value == SerializerType_INTERNAL,
+			SerializeDispatcherInternal<T>,
+			If <SerializerType<T>::value == SerializerType_EXTERNAL,
+				SerializeDispatcherExternal<T>,
+				SerializeDispatcherUndefined<T>>::type>::type>::type dispatcher;
+
+	dispatcher.dispatch(archive, instance);
 }
 
 
 
+template <class Archive, class T>
+void serialize(Archive& archive, T& instance)
+{
+	// If you hit this, T was defined with an external serializer
+	// but a specialization for this function could not be found for T.
+	static_assert(0, "EXTERNAL serializer missing for class T");
+}
 
 
-//template <class Archive>
-//void gather_fields(Archive& archive, StyleTest* instance)
-//{
-//	static Field field_label_margin("label_margin", offsetof(StyleTest, label_margin)); archive.add(&field_label_margin);
-//}
+template <class Archive>
+void serialize(Archive& archive, StyleTest& instance)
+{
+	archive & MAKE_INSTANCE_MEMBER(instance, label_margin);
+	archive & MAKE_INSTANCE_MEMBER(instance, background_color);
+	archive & MAKE_INSTANCE_MEMBER(instance, foreground_color);
+}
 
 
 void test_styles(TextFileContext* context, const gemini::string& line, void* user_data)
@@ -1518,20 +1670,30 @@ void test_styles(TextFileContext* context, const gemini::string& line, void* use
 	gemini::Allocator test = gemini::memory_allocator_default(MEMORY_ZONE_DEFAULT);
 
 	FieldCollector collector;
-	StyleTest* style_test = nullptr;
-	gather_fields(collector, style_test);
+	//StyleTest* style_test = nullptr;
+	//serialize(collector, style_test);
+
+	StyleTest st;
+	collector << st;
+
+
+	uint32_t val;
+	collector << val;
+
+	//collector.serialize(st);
+
 	//const Field* field = collector.first;
 	for (size_t index = 0; index < collector.fields.size(); ++index)
 	{
-		size_t offset = collector.offsets[index];
+		intptr_t offset = collector.offsets[index];
 		gemini::string& field_name = collector.fields[index];
 		if (key == field_name)
 		{
 			LOGV("field: \"%s\" @ %i bytes\n", field_name.c_str(), offset);
 		}
 	}
-
 } // test_styles
+
 
 void read_file(const char* path)
 {
@@ -1570,7 +1732,7 @@ void read_file(const char* path)
 	{
 		LOGV("No file found.\n");
 	}
-}
+} // read_file
 
 
 int main(int, char**)
