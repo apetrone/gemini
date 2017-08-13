@@ -358,6 +358,7 @@ namespace gemini
 // keyvaluearchive.h
 #include <core/hashset.h>
 #include <core/logging.h>
+#include <core/mathlib.h>
 
 namespace gemini
 {
@@ -445,6 +446,22 @@ namespace gemini
 				value = new char[field_value.size() + 1];
 				value[field_value.size()] = '\0';
 				core::str::copy(value, field_value.string_data, field_value.string_data_size);
+			}
+		}
+
+		template <>
+		void load(glm::vec4& value)
+		{
+			if (items.has_key(current_field_name))
+			{
+				gemini::string field_value = items.get(current_field_name);
+				int results = sscanf_s(field_value.c_str(),
+					"%f %f %f %f",
+					&value.x, &value.y, &value.z, &value.w);
+				if (results < 4)
+				{
+					LOGV("Error reading vec4.\n");
+				}
 			}
 		}
 

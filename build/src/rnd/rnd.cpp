@@ -1166,6 +1166,8 @@ struct StyleTest
 	float another_val;
 	char* font_name;
 
+	glm::vec4 button_background_color;
+
 	template <class Archive>
 	void serialize(Archive& archive)
 	{
@@ -1176,6 +1178,7 @@ struct StyleTest
 		archive & MAKE_MEMBER(step_value);
 		archive & MAKE_MEMBER(another_val);
 		archive & MAKE_MEMBER(font_name);
+		archive & MAKE_MEMBER(button_background_color);
 	}
 
 	StyleTest()
@@ -1249,8 +1252,9 @@ void read_file(const char* path)
 
 		context.stream = &stream;
 
-		char string_mem[16384];
-		gemini::Allocator string_allocator = gemini::memory_allocator_linear(gemini::MEMORY_ZONE_DEFAULT, string_mem, 16384);
+		const size_t STRING_MEM_SIZE = 4096;
+		char string_mem[STRING_MEM_SIZE];
+		gemini::Allocator string_allocator = gemini::memory_allocator_linear(gemini::MEMORY_ZONE_DEFAULT, string_mem, STRING_MEM_SIZE);
 		context.allocator = &string_allocator;
 
 		// gather the fields here.
@@ -1292,7 +1296,6 @@ int main(int, char**)
 //	test_serialization();
 //	test_reflection();
 
-	//read_file("/home/apetrone/gemini/build/bin/debug_x86_64/input.conf");
 	//read_file("X:/gemini/build/tests/input.conf");
 	read_file("X:/gemini/build/assets/conf/ui.styles");
 
