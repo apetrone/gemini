@@ -22,20 +22,37 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#pragma once
 
-
-
+#include <core/mem.h>
 #include <core/typedefs.h>
-#include <core/typespec.h>
-#include <core/serialization.h>
+#include <core/str.h>
 
-TYPESPEC_REGISTER_POD(int32_t);
-TYPESPEC_REGISTER_POD(uint32_t);
-TYPESPEC_REGISTER_POD(float);
-TYPESPEC_REGISTER_POD(double);
-
+namespace core
+{
+	namespace util
+	{
+		class DataStream;
+	}
+}
 
 namespace gemini
 {
-	SERIALIZER_SET_DISPATCH(uint32_t, SerializerType_POD);
+
+	struct TextFileContext
+	{
+		gemini::Allocator* allocator;
+		core::util::DataStream* stream;
+		uint32_t current_line;
+		uint32_t current_column;
+		char* current;
+		void(*line_handler)(struct TextFileContext* context, const gemini::string& line, void* user_data);
+	}; // TextFileContext
+
+	void text_advance_character(TextFileContext* context);
+	uint32_t text_stream_position(TextFileContext* context);
+	bool text_eof(TextFileContext* context);
+	uint32_t text_eat_comments(TextFileContext* context);
+	char* text_advance_newline(TextFileContext* context, uint32_t* advance = nullptr);
+	uint32_t text_read_lines(TextFileContext* context, void* user_data);
 } // namespace gemini

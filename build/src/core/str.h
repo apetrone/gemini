@@ -51,6 +51,9 @@ namespace core
 		int sprintf(char* destination, size_t destination_max_size, const char* format, ...);
 		int vsnprintf(char* destination, size_t destination_max_size, const char* format, va_list arg);
 
+		// returns if newline is at string; returns true for \r\n or \n
+		bool isnewline(char* string, uint32_t* advance = nullptr);
+
 		// pass 0 for source_bytes in order to count the source string; (runs len on it)
 		char* copy(char* destination, const char* source, size_t source_bytes);
 		size_t len(const char* str);
@@ -216,7 +219,7 @@ namespace gemini
 		} // c_str
 
 		const char& operator[](int index) const;
-	}; // str_t
+	}; // string
 
 	char* string_allocate(gemini::Allocator& allocator, size_t length);
 	string string_create(gemini::Allocator& allocator, const char* data);

@@ -76,6 +76,29 @@ namespace core
 			return ::vsnprintf(destination, destination_max_size, format, arg);
 		} // vsnprintf
 
+		bool isnewline(char* string, uint32_t* advance)
+		{
+			uint32_t character_advance = 1;
+			bool result = false;
+			if (*string == '\n')
+			{
+				character_advance = 1;
+				result = true;
+			}
+			else if (*string == '\r' && (*(string + 1) == '\n'))
+			{
+				character_advance = 2;
+				result = true;
+			}
+
+			if (advance)
+			{
+				*advance = character_advance;
+			}
+
+			return result;
+		} // isnewline
+
 		char* copy(char* destination, const char* source, size_t source_bytes)
 		{
 			if (source_bytes == 0)
