@@ -109,6 +109,8 @@ struct TypeSpecInfo
 	virtual const char* name() const = 0;
 
 	virtual size_t identifier() const = 0;
+
+	virtual size_t size() const = 0;
 };
 
 template <class T>
@@ -122,6 +124,11 @@ struct TypeSpecInstanceInfo : public TypeSpecInfo
 	virtual size_t identifier() const
 	{
 		return TypeSpecIdentifier<T>::value;
+	}
+
+	virtual size_t size() const
+	{
+		return TypeSpecSize<T>::value;
 	}
 }; // TypeSpecInstanceInfo
 

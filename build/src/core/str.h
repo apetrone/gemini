@@ -220,6 +220,7 @@ namespace gemini
 
 	char* string_allocate(gemini::Allocator& allocator, size_t length);
 	string string_create(gemini::Allocator& allocator, const char* data);
+	string string_create(const char* data);
 	void string_destroy(gemini::Allocator& allocator, string& string);
 	string string_concat(gemini::Allocator& allocator, const string& first, const string& second);
 	string string_substr(gemini::Allocator& allocator, const char* source, uint32_t start, uint32_t length);

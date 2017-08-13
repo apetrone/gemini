@@ -436,6 +436,14 @@ namespace gemini
 		return value;
 	} // string_create
 
+	string string_create(const char* data)
+	{
+		string value;
+		value.string_data_size = core::str::len(data);
+		value.string_data = data;
+		return value;
+	} // string_create
+
 	void string_destroy(gemini::Allocator& allocator, string& string)
 	{
 		MEMORY2_DEALLOC(allocator, const_cast<char*>(string.string_data));
@@ -475,10 +483,17 @@ namespace gemini
 		string::value_type* last_character = current;
 		string::value_type* prev = current;
 		size_t delimiter_size = core::str::len(delimiters);
+		uint32_t reading_string = 0;
+
 		for ( ;; )
 		{
 			if (*current == '\0')
 			{
+				//if (reading_string > 0)
+				//{
+				//	LOGW("Unterminated string found.\n");
+				//}
+
 				uint32_t length = (last_character + 1 - prev);
 				if (length > 0)
 				{
@@ -510,6 +525,30 @@ namespace gemini
 			}
 
 			++current;
+
+			if (!reading_string && *current == '\"')
+			{
+				// start reading a string
+				reading_string = 1;
+				++current;
+				prev = current;
+			}
+			else if (reading_string && *current == '\"')
+			{
+				// finished reading a string
+				reading_string = 0;
+
+				uint32_t length = (last_character + 1 - prev);
+				if (length > 0)
+				{
+					gemini::string token = string_substr(allocator, prev, 0, length);
+					last_character = current;
+					prev = current + 1;
+					++current;
+					pieces.push_back(token);
+				}
+			}
+
 			if (!isalnum(*prev))
 			{
 				prev = current;
