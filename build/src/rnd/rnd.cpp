@@ -1360,11 +1360,8 @@ void load_lines(TextFileContext* context, const gemini::string& line, void* user
 	LOGV("key = \"%s\"; value = \"%s\"\n", key.c_str(), value.c_str());
 } // load_lines
 
+#include <core/serialization.h>
 #include <core/typespec.h>
-
-TYPESPEC_REGISTER_POD(uint32_t);
-TYPESPEC_REGISTER_POD(float);
-
 
 
 
