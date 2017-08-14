@@ -383,21 +383,11 @@ namespace gemini
 			IsLoading = 1;
 		}
 
-		template <class T>
-		void handle_field(FieldKeyValuePair<T>& nvp)
-		{
-
-			LOGV("handle field KeyValueReader\n");
-			//TypeSpecInfo* typeinfo = typespec_make_info<T>();
-			//info.push_back(typeinfo);
-			//fields.push_back(string_create(allocator, nvp.name));
-			//offsets.push_back(nvp.offset);
-		}
-
 		void set_item(gemini::string key, gemini::string value)
 		{
 			items[key] = value;
 		}
+
 
 		template <class T>
 		void load_pair(const FieldKeyValuePair<T>& pair)
@@ -427,13 +417,12 @@ namespace gemini
 			assert(0);
 		}
 
-
+	private:
 		void set_next_name(const char* name)
 		{
 			current_field_name = string_create(allocator, name);
 		}
 
-	private:
 		gemini::Allocator& allocator;
 		gemini::string current_field_name;
 		HashSet<gemini::string, gemini::string> items;
