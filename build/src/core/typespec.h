@@ -183,3 +183,11 @@ struct typespec_is_pod
 		//value = std::is_pod<T>::value
 	};
 };
+
+template <class T>
+struct typespec_is_class
+{	enum
+	{
+		value = std::is_class<T>::value
+	};
+};

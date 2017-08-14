@@ -26,7 +26,7 @@
 
 
 #include <core/logging.h>
-
+#include <core/typespec.h>
 
 namespace gemini
 {
@@ -46,7 +46,36 @@ namespace gemini
 	};
 } // namespace gemini
 
+// Static Asserts cannot be used for the default / fallback templates
+// because GCC/Clang will compile all templates regardless if they're in-use
+// or not.
 
+
+// This is used to set the serializer dispatch method for a type
+#define SERIALIZER_SET_DISPATCH(C, type) \
+	template <>\
+	struct SerializerType<C>\
+	{\
+		enum\
+		{\
+			value = type\
+		};\
+	}
+
+// SerializerTypes
+enum
+{
+	SerializerType_UNDEFINED,
+	SerializerType_INTERNAL,
+	SerializerType_EXTERNAL,
+	SerializerType_POD
+};
+
+template <class T>
+struct SerializerType
+{
+	static constexpr uint32_t value = SerializerType_UNDEFINED;
+};
 
 namespace gemini
 {
@@ -58,18 +87,6 @@ namespace gemini
 
 	// This is used in internal serializers to define an alias to a member variable.
 	#define MAKE_MEMBER_ALIAS(variable, name) make_field_key_value_pair(#name, variable, member_offset(this, &variable))
-
-	// This is used to set the serializer dispatch method for a type
-	#define SERIALIZER_SET_DISPATCH(C, type) \
-		template <>\
-		struct SerializerType<C>\
-		{\
-			enum\
-			{\
-				value = type\
-			};\
-		};
-
 
 	template <class T>
 	struct FieldKeyValuePair
@@ -95,16 +112,6 @@ namespace gemini
 	{
 		return FieldKeyValuePair<T>(name, std::forward<T>(value), member_offset);
 	}
-
-	// SerializerTypes
-	enum
-	{
-		SerializerType_UNDEFINED,
-		SerializerType_INTERNAL,
-		SerializerType_EXTERNAL,
-		SerializerType_POD
-	};
-
 
 	// An internal Serializer example
 	/*
@@ -132,13 +139,6 @@ namespace gemini
 		}
 	*/
 
-
-	template <class T>
-	struct SerializerType
-	{
-		static constexpr uint32_t value = SerializerType_UNDEFINED;
-	};
-
 	template <class T, class X>
 	intptr_t member_offset(T* instance, X* member)
 	{
@@ -154,7 +154,9 @@ namespace gemini
 		template <class Archive>
 		void dispatch(Archive& archive, FieldKeyValuePair<T>& pair)
 		{
-			static_assert(0, "T is being serialized with no serializer type.");
+			// If you hit this,
+			// T is being serialized with no defined serializer type.
+			assert(0);
 		}
 	};
 
@@ -173,7 +175,7 @@ namespace gemini
 	struct SerializeDispatcherExternal
 	{
 		template <class Archive>
-		void dispatch(Archive& archiv, FieldKeyValuePair<T>& pair)
+		void dispatch(Archive& archive, FieldKeyValuePair<T>& pair)
 		{
 			LOGV("external dispatch\n");
 			serialize(archive, pair.value);
@@ -201,13 +203,21 @@ namespace gemini
 	template <class Archive, class T>
 	void SerializeDispatcher(Archive& archive, FieldKeyValuePair<T>& pair)
 	{
-		If <!std::is_class<T>::value,
-			SerializeDispatcherPOD<T>,
-			If <SerializerType<T>::value == SerializerType_INTERNAL,
-			SerializeDispatcherInternal<T>,
-			If <SerializerType<T>::value == SerializerType_EXTERNAL,
-			SerializeDispatcherExternal<T>,
-			SerializeDispatcherUndefined<T>>::type>::type>::type dispatcher;
+		typename If <!typespec_is_class<T>::value, // If T is not a class...
+			SerializeDispatcherPOD<T>, // use POD dispatcher
+
+			// otherwise if T uses internal serializer
+			typename If <SerializerType<T>::value == SerializerType_INTERNAL,
+				// dispatcher is internal
+				SerializeDispatcherInternal<T>,
+
+				// else if T uses external serializer
+				typename If <SerializerType<T>::value == SerializerType_EXTERNAL,
+					// dispatcher is external
+					SerializeDispatcherExternal<T>,
+					// else, serializer is undefined.
+
+					SerializeDispatcherUndefined<T>>::type >::type>::type dispatcher;
 
 		dispatcher.dispatch(archive, pair);
 	} // SerializeDispatcher
@@ -219,7 +229,7 @@ namespace gemini
 	{
 		// If you hit this, T was defined with an external serializer
 		// but a specialization for this function could not be found for T.
-		static_assert(0, "EXTERNAL serializer missing for class T");
+		assert(0);
 	}
 
 } // namespace gemini
@@ -241,7 +251,7 @@ namespace gemini
 		}
 
 		template <class T>
-		ArchiveType& operator&(FieldKeyValuePair<T>& pair)
+		ArchiveType& operator&(const FieldKeyValuePair<T>& pair)
 		{
 			if (IsSaving)
 			{
@@ -263,7 +273,7 @@ namespace gemini
 		}
 
 		template <class T>
-		void save_pair(FieldKeyValuePair<T>& pair)
+		void save_pair(const FieldKeyValuePair<T>& pair)
 		{
 			instance().save(pair.value);
 		}
@@ -279,11 +289,11 @@ namespace gemini
 		template <class T>
 		void load_pair(FieldKeyValuePair<T>& pair)
 		{
-			instance().load(pair.value);
+			instance().load(const_cast<T&>(pair.value));
 		}
 
 		template <class T>
-		void save(T& value)
+		void save(const T& value)
 		{
 			//' If you hit this, no save function was specified for the derived
 			// class being used.
@@ -390,21 +400,21 @@ namespace gemini
 		}
 
 		template <class T>
-		void load_pair(FieldKeyValuePair<T>& pair)
+		void load_pair(const FieldKeyValuePair<T>& pair)
 		{
 			instance().prologue(pair);
-			instance().load(pair.value);
+			instance().load(const_cast<T&>(pair.value));
 			instance().epilogue(pair);
 		}
 
 		template <class T>
-		void prologue(FieldKeyValuePair<T>& pair)
+		void prologue(const FieldKeyValuePair<T>& pair)
 		{
 			set_next_name(pair.name);
 		}
 
 		template <class T>
-		void epilogue(FieldKeyValuePair<T>& pair)
+		void epilogue(const FieldKeyValuePair<T>& pair)
 		{
 			string_destroy(allocator, current_field_name);
 		}
@@ -417,65 +427,66 @@ namespace gemini
 			assert(0);
 		}
 
-		template <>
-		void load(uint32_t& value)
-		{
-			if (items.has_key(current_field_name))
-			{
-				gemini::string field_value = items.get(current_field_name);
-				value = atoi(field_value.c_str());
-			}
-		}
-
-		template <>
-		void load(float& value)
-		{
-			if (items.has_key(current_field_name))
-			{
-				gemini::string field_value = items.get(current_field_name);
-				value = atof(field_value.c_str());
-			}
-		}
-
-		template <>
-		void load(char*& value)
-		{
-			if (items.has_key(current_field_name))
-			{
-				gemini::string field_value = items.get(current_field_name);
-				value = new char[field_value.size() + 1];
-				value[field_value.size()] = '\0';
-				core::str::copy(value, field_value.string_data, field_value.string_data_size);
-			}
-		}
-
-		template <>
-		void load(glm::vec4& value)
-		{
-			if (items.has_key(current_field_name))
-			{
-				gemini::string field_value = items.get(current_field_name);
-				int results = sscanf_s(field_value.c_str(),
-					"%f %f %f %f",
-					&value.x, &value.y, &value.z, &value.w);
-				if (results < 4)
-				{
-					LOGV("Error reading vec4.\n");
-				}
-			}
-		}
-
 
 		void set_next_name(const char* name)
 		{
 			current_field_name = string_create(allocator, name);
 		}
 
+	private:
+		gemini::Allocator& allocator;
+		gemini::string current_field_name;
 		HashSet<gemini::string, gemini::string> items;
 
-	private:
-		gemini::string current_field_name;
-		gemini::Allocator& allocator;
-
 	}; // KeyValueReader
+
+
+	template <>
+	void KeyValueReader::load(uint32_t& value)
+	{
+		if (items.has_key(current_field_name))
+		{
+			gemini::string field_value = items.get(current_field_name);
+			value = atoi(field_value.c_str());
+		}
+	}
+
+	template <>
+	void KeyValueReader::load(float& value)
+	{
+		if (items.has_key(current_field_name))
+		{
+			gemini::string field_value = items.get(current_field_name);
+			value = atof(field_value.c_str());
+		}
+	}
+
+	template <>
+	void KeyValueReader::load(char*& value)
+	{
+		if (items.has_key(current_field_name))
+		{
+			gemini::string field_value = items.get(current_field_name);
+			value = new char[field_value.size() + 1];
+			value[field_value.size()] = '\0';
+			core::str::copy(value, field_value.string_data, field_value.string_data_size);
+		}
+	}
+
+	template <>
+	void KeyValueReader::load(glm::vec4& value)
+	{
+		if (items.has_key(current_field_name))
+		{
+			gemini::string field_value = items.get(current_field_name);
+			int results = sscanf(field_value.c_str(),
+				"%f %f %f %f",
+				&value.x, &value.y, &value.z, &value.w);
+			if (results < 4)
+			{
+				LOGV("Error reading vec4.\n");
+			}
+		}
+	}
+
 } // namespace gemini
