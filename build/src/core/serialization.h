@@ -54,16 +54,13 @@ namespace gemini
 // This is used to set the serializer dispatch method for a type
 #define SERIALIZER_SET_DISPATCH(C, type) \
 	template <>\
-	struct SerializerType<C>\
+	struct SerializerDispatchType<C>\
 	{\
-		enum\
-		{\
-			value = type\
-		};\
+		static constexpr SerializerType value = type;\
 	}
 
 // SerializerTypes
-enum
+enum SerializerType
 {
 	SerializerType_UNDEFINED,
 	SerializerType_INTERNAL,
@@ -72,9 +69,9 @@ enum
 };
 
 template <class T>
-struct SerializerType
+struct SerializerDispatchType
 {
-	static constexpr uint32_t value = SerializerType_UNDEFINED;
+	static constexpr SerializerType value = SerializerType_UNDEFINED;
 };
 
 namespace gemini
@@ -207,12 +204,12 @@ namespace gemini
 			SerializeDispatcherPOD<T>, // use POD dispatcher
 
 			// otherwise if T uses internal serializer
-			typename If <SerializerType<T>::value == SerializerType_INTERNAL,
+			typename If <SerializerDispatchType<T>::value == SerializerType_INTERNAL,
 				// dispatcher is internal
 				SerializeDispatcherInternal<T>,
 
 				// else if T uses external serializer
-				typename If <SerializerType<T>::value == SerializerType_EXTERNAL,
+				typename If <SerializerDispatchType<T>::value == SerializerType_EXTERNAL,
 					// dispatcher is external
 					SerializeDispatcherExternal<T>,
 					// else, serializer is undefined.
@@ -293,7 +290,7 @@ namespace gemini
 		}
 
 		template <class T>
-		void save(const T& value)
+		void save(const T& /*value*/)
 		{
 			//' If you hit this, no save function was specified for the derived
 			// class being used.
@@ -301,7 +298,7 @@ namespace gemini
 		}
 
 		template <class T>
-		void load(T& value)
+		void load(T& /*value*/)
 		{
 			//' If you hit this, no load function was specified for the derived
 			// class being used.

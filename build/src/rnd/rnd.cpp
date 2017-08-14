@@ -1288,7 +1288,7 @@ int main(int, char**)
 	gemini::core_startup();
 	gemini::runtime_startup("arcfusion.net/gemini/rnd");
 
-	gemini::Allocator default_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	// gemini::Allocator default_allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
 
 //	test_memory();
 //	test_maths();
