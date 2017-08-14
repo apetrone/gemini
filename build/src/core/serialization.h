@@ -414,7 +414,7 @@ namespace gemini
 		}
 
 		template <class T>
-		void epilogue(const FieldKeyValuePair<T>& pair)
+		void epilogue(const FieldKeyValuePair<T>& /*pair*/)
 		{
 			string_destroy(allocator, current_field_name);
 		}
@@ -438,6 +438,7 @@ namespace gemini
 		gemini::string current_field_name;
 		HashSet<gemini::string, gemini::string> items;
 
+		KeyValueReader& operator=(const KeyValueReader& other) = delete;
 	}; // KeyValueReader
 
 
@@ -447,7 +448,7 @@ namespace gemini
 		if (items.has_key(current_field_name))
 		{
 			gemini::string field_value = items.get(current_field_name);
-			value = atoi(field_value.c_str());
+			value = static_cast<uint32_t>(atoi(field_value.c_str()));
 		}
 	}
 
@@ -457,7 +458,7 @@ namespace gemini
 		if (items.has_key(current_field_name))
 		{
 			gemini::string field_value = items.get(current_field_name);
-			value = atof(field_value.c_str());
+			value = static_cast<float>(atof(field_value.c_str()));
 		}
 	}
 

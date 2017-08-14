@@ -1213,7 +1213,7 @@ struct StyleTestInstanceData
 };
 
 //
-void test_styles(TextFileContext* context, const gemini::string& line, void* user_data)
+void line_parse_keyvalues(TextFileContext* context, const gemini::string& line, void* user_data)
 {
 	StyleTestInstanceData* data = reinterpret_cast<StyleTestInstanceData*>(user_data);
 
@@ -1229,7 +1229,7 @@ void test_styles(TextFileContext* context, const gemini::string& line, void* use
 	gemini::string& value = pieces[1];
 
 	data->archive.set_item(key, value);
-} // test_styles
+} // line_parse_keyvalues
 
 
 void read_file(const char* path)
@@ -1266,7 +1266,7 @@ void read_file(const char* path)
 		//instance_data.collector << test;
 
 		//context.line_handler = load_lines;
-		context.line_handler = test_styles;
+		context.line_handler = line_parse_keyvalues;
 		text_read_lines(&context, &instance_data);
 
 		LOGV("read file with %i lines\n", context.current_line);
