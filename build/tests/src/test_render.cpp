@@ -655,10 +655,10 @@ Options:
 		static float accumulator = 0;
 
 		// calculate delta ticks in milliseconds
-		params.framedelta_milliseconds = (current_time - last_time)*0.001f;
+		params.framedelta_milliseconds = (current_time - last_time) * MillisecondsPerMicrosecond;
 
 		// cache the value in seconds
-		params.framedelta_seconds = params.framedelta_milliseconds*0.001f;
+		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 
 		last_time = current_time;
 
@@ -684,7 +684,7 @@ Options:
 	virtual void tick()
 	{
 		update();
-		countdown -= kernel::parameters().framedelta_milliseconds;
+		countdown -= kernel::parameters().framedelta_seconds;
 
 		platform::update(kernel::parameters().framedelta_milliseconds);
 
