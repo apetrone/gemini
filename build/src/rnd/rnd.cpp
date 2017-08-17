@@ -1201,21 +1201,10 @@ TYPESPEC_REGISTER_CLASS(StyleTest);
 SERIALIZER_SET_DISPATCH(StyleTest, SerializerType_INTERNAL);
 
 
-struct StyleTestInstanceData
-{
-	StyleTest* instance;
-	KeyValueReader archive;
-
-	StyleTestInstanceData(gemini::Allocator& _allocator)
-		: archive(_allocator)
-	{
-	}
-};
-
 //
 void line_parse_keyvalues(TextFileContext* context, const gemini::string& line, void* user_data)
 {
-	StyleTestInstanceData* data = reinterpret_cast<StyleTestInstanceData*>(user_data);
+	KeyValueReader* archive = reinterpret_cast<KeyValueReader*>(user_data);
 
 	// Split string into pieces at the equals sign
 	Array<gemini::string> pieces(*context->allocator);
@@ -1228,7 +1217,7 @@ void line_parse_keyvalues(TextFileContext* context, const gemini::string& line, 
 	gemini::string& key = pieces[0];
 	gemini::string& value = pieces[1];
 
-	data->archive.set_item(key, value);
+	archive->set_item(key, value);
 } // line_parse_keyvalues
 
 
@@ -1261,17 +1250,15 @@ void read_file(const char* path)
 		// get the instance of the style test.
 		StyleTest test;
 
-		StyleTestInstanceData instance_data(allocator);
-		instance_data.instance = &test;
-		//instance_data.collector << test;
+		KeyValueReader archive(allocator);
 
 		//context.line_handler = load_lines;
 		context.line_handler = line_parse_keyvalues;
-		text_read_lines(&context, &instance_data);
+		text_read_lines(&context, &archive);
 
 		LOGV("read file with %i lines\n", context.current_line);
 
-		instance_data.archive >> test;
+		archive >> test;
 
 		uint64_t delta_time = platform::microseconds() - start_time;
 		LOGV("parsed file in %2.2fms\n", delta_time * MillisecondsPerMicrosecond);
