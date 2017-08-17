@@ -300,13 +300,13 @@ namespace core
 		template <>
 		void parse_value_from_string(uint32_t* value, const char* token)
 		{
-			*value = atoi(token);
+			*value = static_cast<uint32_t>(atoi(token));
 		}
 
 		template <>
 		void parse_value_from_string(float* value, const char* token)
 		{
-			*value = atof(token);
+			*value = static_cast<float>(atof(token));
 		}
 	} // namespace str
 
@@ -435,7 +435,6 @@ namespace gemini
 {
 	const char& string::operator[](int index) const
 	{
-		assert(index <= string_data_size);
 		return string_data[index];
 	} // const char& operator[]
 
@@ -517,10 +516,10 @@ namespace gemini
 				//	LOGW("Unterminated string found.\n");
 				//}
 
-				uint32_t length = (last_character + 1 - prev);
+				ptrdiff_t length = (last_character + 1 - prev);
 				if (length > 0)
 				{
-					gemini::string token = string_substr(allocator, prev, 0, length);
+					gemini::string token = string_substr(allocator, prev, 0, static_cast<uint32_t>(length));
 					pieces.push_back(token);
 				}
 				break;
@@ -538,10 +537,10 @@ namespace gemini
 
 			if (current_in_delimiters)
 			{
-				uint32_t length = (last_character + 1 - prev);
+				ptrdiff_t length = (last_character + 1 - prev);
 				if (isalnum(*prev) && length > 0)
 				{
-					gemini::string token = string_substr(allocator, prev, 0, length);
+					gemini::string token = string_substr(allocator, prev, 0, static_cast<uint32_t>(length));
 					prev = current + 1;
 					pieces.push_back(token);
 				}
@@ -561,10 +560,10 @@ namespace gemini
 				// finished reading a string
 				reading_string = 0;
 
-				uint32_t length = (last_character + 1 - prev);
+				ptrdiff_t length = (last_character + 1 - prev);
 				if (length > 0)
 				{
-					gemini::string token = string_substr(allocator, prev, 0, length);
+					gemini::string token = string_substr(allocator, prev, 0, static_cast<uint32_t>(length));
 					last_character = current;
 					prev = current + 1;
 					++current;

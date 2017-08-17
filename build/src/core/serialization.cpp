@@ -34,7 +34,10 @@ TYPESPEC_REGISTER_POD(uint32_t);
 TYPESPEC_REGISTER_POD(float);
 TYPESPEC_REGISTER_POD(double);
 
+SERIALIZER_SET_DISPATCH(int32_t, SerializerType_POD);
 SERIALIZER_SET_DISPATCH(uint32_t, SerializerType_POD);
+SERIALIZER_SET_DISPATCH(float, SerializerType_POD);
+SERIALIZER_SET_DISPATCH(double, SerializerType_POD);
 
 namespace gemini
 {
