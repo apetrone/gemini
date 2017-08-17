@@ -248,7 +248,7 @@ namespace gemini
 		}
 
 		template <class T>
-		ArchiveType& operator&(const FieldKeyValuePair<T>& pair)
+		ArchiveType& operator& (const FieldKeyValuePair<T>& pair)
 		{
 			if (IsSaving)
 			{
@@ -262,7 +262,7 @@ namespace gemini
 		}
 
 		template <class T>
-		ArchiveType& operator<<(const T& value)
+		ArchiveType& operator<< (const T& value)
 		{
 			FieldKeyValuePair<T> pair("Unnamed", std::forward<T>(const_cast<T&>(value)), 0);
 			SerializeDispatcher<ArchiveType, T>(instance(), pair);
@@ -276,7 +276,7 @@ namespace gemini
 		}
 
 		template <class T>
-		ArchiveType& operator >> (T& value)
+		ArchiveType& operator>> (T& value)
 		{
 			FieldKeyValuePair<T> pair("Unnamed", std::forward<T>(value), 0);
 			SerializeDispatcher(instance(), pair);
