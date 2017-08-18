@@ -342,6 +342,10 @@ def get_libcore(arguments, target_platform):
 		"src/core/*.cpp",
 		"src/core/*.h",
 
+		"src/core/serialization/archive.h",
+		"src/core/serialization/fieldcollector.h",
+		"src/core/serialization/keyvaluearchive.h",
+
 		"src/core/platform/directory_monitor.h",
 
 		"src/core/platform/graphics_provider.cpp",

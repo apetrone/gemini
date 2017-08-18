@@ -84,7 +84,7 @@ Usage:
 Options:
 	-h, --help				Show this help screen
 	--version				Display the version number
-	--platform <platform>	Target platform: [windows, linux, macosx, ios, android, raspberrypi]
+	--platform <platform>	Target platform: [windows, linux, raspberrypi]
 	)";
 
 	if (!parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
