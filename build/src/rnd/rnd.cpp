@@ -1204,7 +1204,7 @@ SERIALIZER_SET_DISPATCH(StyleTest, SerializerType_INTERNAL);
 //
 void line_parse_keyvalues(TextFileContext* context, const gemini::string& line, void* user_data)
 {
-	KeyValueReader* archive = reinterpret_cast<KeyValueReader*>(user_data);
+	KeyValueArchive* archive = reinterpret_cast<KeyValueArchive*>(user_data);
 
 	// Split string into pieces at the equals sign
 	Array<gemini::string> pieces(*context->allocator);
@@ -1250,7 +1250,7 @@ void read_file(const char* path)
 		// get the instance of the style test.
 		StyleTest test;
 
-		KeyValueReader archive(allocator);
+		KeyValueArchive archive(allocator);
 
 		//context.line_handler = load_lines;
 		context.line_handler = line_parse_keyvalues;
@@ -1300,7 +1300,7 @@ int main(int, char**)
 			LOGV("> [%i] -> %s\n", index, collector.fields[index].c_str());
 		}
 
-		KeyValueReader reader(allocator);
+		KeyValueArchive reader(allocator);
 		gemini::string key;
 		gemini::string margin_value;
 
