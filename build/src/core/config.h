@@ -112,6 +112,7 @@
 	#define PLATFORM_FILESYSTEM_SUPPORT 1
 	#define PLATFORM_POSIX 1
 #elif defined(__linux__)
+	#include <stddef.h> // for ptrdiff_t, etc.
 	#if defined(PLATFORM_RASPBERRYPI)
 		// specifically built for RaspberryPi
 		#define PLATFORM_NAME "raspberrypi"
