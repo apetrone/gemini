@@ -26,6 +26,7 @@
 #include "str.h"
 #include "config.h"
 
+#include <core/typedefs.h>
 
 // TODO: replace this with a non-C-runtime function.
 #include <platform/platform.h>
