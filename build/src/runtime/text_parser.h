@@ -52,4 +52,5 @@ namespace gemini
 	uint32_t text_eat_comments(TextFileContext* context);
 	char* text_advance_newline(TextFileContext* context, uint32_t* advance = nullptr);
 	uint32_t text_read_lines(TextFileContext* context, void* user_data);
+	uint32_t text_context_from_file(TextFileContext* context, const char* path);
 } // namespace gemini

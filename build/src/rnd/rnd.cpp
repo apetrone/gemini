@@ -1221,26 +1221,7 @@ void line_parse_keyvalues(TextFileContext* context, const gemini::string& line, 
 } // line_parse_keyvalues
 
 
-uint32_t text_context_from_file( TextFileContext* context, const char* path, bool relative)
-{
-	core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
-	if (!filesystem->virtual_file_exists(path))
-	{
-		return 1;
-	}
 
-
-	platform::Result result = filesystem->virtual_load_file(context->file_data, path);
-	if (result.failed())
-	{
-		return 1;
-	}
-
-	char* memory = reinterpret_cast<char*>(&context->file_data[0]);
-	context->stream.init(memory, context->file_data.size());
-
-	return 0;
-}
 
 
 void read_file(const char* path)
@@ -1250,7 +1231,7 @@ void read_file(const char* path)
 	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
 	TextFileContext context(allocator);
 
-	if (text_context_from_file(&context, path, false) == 0)
+	if (text_context_from_file(&context, path) == 0)
 	{
 		const uint64_t start_time = platform::microseconds();
 
