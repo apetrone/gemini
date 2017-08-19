@@ -1020,7 +1020,7 @@ void test_endian()
 	buffer[0] = 0x0F & mz;
 	buffer[1] = 0xF0 & mz;
 
-	uint32_t* val = reinterpret_cast<uint32_t*>(buffer);
+	//uint32_t* val = reinterpret_cast<uint32_t*>(buffer);
 }
 
 // #include <core/logging.h>
@@ -1221,24 +1221,38 @@ void line_parse_keyvalues(TextFileContext* context, const gemini::string& line, 
 } // line_parse_keyvalues
 
 
+uint32_t text_context_from_file( TextFileContext* context, const char* path, bool relative)
+{
+	core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
+	if (!filesystem->virtual_file_exists(path))
+	{
+		return 1;
+	}
+
+
+	platform::Result result = filesystem->virtual_load_file(context->file_data, path);
+	if (result.failed())
+	{
+		return 1;
+	}
+
+	char* memory = reinterpret_cast<char*>(&context->file_data[0]);
+	context->stream.init(memory, context->file_data.size());
+
+	return 0;
+}
+
+
 void read_file(const char* path)
 {
 	LOGV("reading file: %s\n", path);
 
-	TextFileContext context;
+	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	TextFileContext context(allocator);
 
 	if (text_context_from_file(&context, path) == 0)
 	{
 		const uint64_t start_time = platform::microseconds();
-		gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
-		Array<unsigned char> data(allocator);
-		filesystem->load_file(data, path);
-		char* memory = reinterpret_cast<char*>(&data[0]);
-		size_t memory_size = data.size();
-		core::util::MemoryStream stream;
-		stream.init(memory, memory_size);
-
-		context.stream = &stream;
 
 		const size_t STRING_MEM_SIZE = 4096;
 		char string_mem[STRING_MEM_SIZE];
@@ -1283,7 +1297,9 @@ int main(int, char**)
 //	test_reflection();
 
 	//read_file("X:/gemini/build/tests/input.conf");
-	read_file("X:/gemini/build/assets/conf/ui.styles");
+
+	core::filesystem::instance()->virtual_add_root("X:/gemini/build/assets");
+	read_file("conf/ui.styles");
 
 
 #if 0

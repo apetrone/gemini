@@ -30,6 +30,11 @@
 
 namespace gemini
 {
+	TextFileContext::TextFileContext(gemini::Allocator& allocator)
+		: file_data(allocator)
+	{
+	}
+
 	void text_advance_character(TextFileContext* context)
 	{
 		uint32_t advance = 1;
@@ -47,14 +52,14 @@ namespace gemini
 	uint32_t text_stream_position(TextFileContext* context)
 	{
 		uint8_t* position = reinterpret_cast<uint8_t*>(context->current);
-		uint8_t* stream = context->stream->get_data();
+		uint8_t* stream = context->stream.get_data();
 		return position - stream;
 	} // text_stream_position
 
 	bool text_eof(TextFileContext* context)
 	{
 		uint32_t stream_position = text_stream_position(context);
-		return (stream_position >= context->stream->get_data_size());
+		return (stream_position >= context->stream.get_data_size());
 	} // text_eof
 
 	uint32_t text_eat_comments(TextFileContext* context)
@@ -113,7 +118,7 @@ namespace gemini
 		assert(context->line_handler);
 
 		// initialize the context
-		char* data = reinterpret_cast<char*>(context->stream->get_data());
+		char* data = reinterpret_cast<char*>(context->stream.get_data());
 		context->current_line = 0;
 		context->current_column = 1;
 		context->current = data;

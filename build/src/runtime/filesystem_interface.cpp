@@ -33,12 +33,12 @@ namespace core
 	namespace filesystem
 	{
 		// internal functions here
-		void _internal_load_file(Array<unsigned char>& buffer, const char* absolute_path)
+		platform::Result _internal_load_file(Array<unsigned char>& buffer, const char* absolute_path)
 		{
 			if (!platform::fs_file_exists(absolute_path))
 			{
 				LOGE("File does not exist! \"%s\" (at \"%s\")\n", absolute_path);
-				return;
+				return platform::Result::failure("File does not exist");
 			}
 
 			platform::File handle = platform::fs_open(absolute_path, platform::FileMode_Read);
@@ -60,16 +60,30 @@ namespace core
 
 				// Ensure we terminate the buffer.
 				buffer[file_size] = '\0';
+
+				return platform::Result::success();
 			}
 		} // internal_load_file
 
 		FileSystemInterface::FileSystemInterface()
 		{
 			allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_FILESYSTEM);
+			search_paths = nullptr;
 		}
 
 		FileSystemInterface::~FileSystemInterface()
 		{
+			// Purge all virtual search paths
+			DirectorySearchPath* current = search_paths;
+
+			while (current)
+			{
+				DirectorySearchPath* temp = current;
+				current = current->next;
+				MEMORY2_DELETE(allocator, temp);
+			}
+
+			search_paths = nullptr;
 		}
 
 		void FileSystemInterface::startup()
@@ -148,16 +162,66 @@ namespace core
 			}
 		}
 
+		platform::Result FileSystemInterface::virtual_add_root(const char* absolute_path)
+		{
+			// User wants to add path to search list.
+
+
+			// We should check for duplicates in the search path.
+			DirectorySearchPath* current = search_paths;
+			uint32_t found_path = 0;
+
+			while (current)
+			{
+				if (current->path == absolute_path)
+				{
+					found_path = 1;
+					break;
+				}
+				current = current->next;
+			}
+
+			if (found_path)
+			{
+				// This path already exists.
+				return platform::Result::failure("Path already exists in virtual search paths.");
+			}
+
+			// Then, add the search path to the list.
+			DirectorySearchPath* directory_path = MEMORY2_NEW(allocator, DirectorySearchPath);
+			directory_path->path = absolute_path;
+			directory_path->next = search_paths;
+			search_paths = directory_path;
+
+			return platform::Result::success();
+		}
+
 		bool FileSystemInterface::virtual_file_exists(const char* relative_path) const
 		{
-			return file_exists(relative_path, true);
+			DirectorySearchPath* current = search_paths;
+			while (current)
+			{
+				platform::PathString fullpath;
+				absolute_path_from_relative(fullpath, relative_path, current->path);
+				fullpath.normalize(PATH_SEPARATOR);
+				LOGV("Checking path \"%s\"\n", fullpath());
+				if (platform::fs_file_exists(fullpath()))
+				{
+					return true;
+				}
+				current = current->next;
+			}
+
+			return false;
 		}
 
 		bool FileSystemInterface::virtual_directory_exists(const char* relative_path) const
 		{
+			// TODO: Search all directories for requested directory.
 			return directory_exists(relative_path, true);
 		}
 
+#if 0
 		char* FileSystemInterface::virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length)
 		{
 			size_t file_size;
@@ -168,11 +232,11 @@ namespace core
 				return 0;
 			}
 
-			StackString<MAX_PATH_SIZE> fullpath;
-			absolute_path_from_relative(fullpath, relative_path, content_directory());
-			if (!file_exists(fullpath(), false))
+			//StackString<MAX_PATH_SIZE> fullpath;
+			//absolute_path_from_relative(fullpath, relative_path, content_directory());
+			if (!current)
 			{
-				LOGE("File does not exist! \"%s\" (at \"%s\")\n", relative_path, fullpath());
+				LOGE("File does not exist in %i search paths \"%s\"\n", relative_path, total_paths);
 				return 0;
 			}
 
@@ -209,23 +273,33 @@ namespace core
 
 			return buffer;
 		} // virtual load file
-
-		void FileSystemInterface::virtual_load_file(Array<unsigned char>& buffer, const char* relative_path)
+#endif
+		platform::Result FileSystemInterface::virtual_load_file(Array<unsigned char>& buffer, const char* relative_path)
 		{
+			DirectorySearchPath* current = search_paths;
+			uint32_t total_paths = 0;
 			platform::PathString fullpath;
-			absolute_path_from_relative(fullpath, relative_path, content_directory());
+			while (current)
+			{
+				++total_paths;
 
-			load_file(buffer, fullpath());
+				absolute_path_from_relative(fullpath, relative_path, current->path);
+				fullpath.normalize(PATH_SEPARATOR);
+				if (platform::fs_file_exists(fullpath()))
+				{
+					// Current is the search path we'll use.
+					break;
+				}
+				current = current->next;
+			}
+
+			platform::Result result = load_file(buffer, fullpath());
+			return result;
 		} // virtual_load_file
 
-		void FileSystemInterface::free_file_memory(void* memory)
+		platform::Result FileSystemInterface::load_file(Array<unsigned char>& buffer, const char* absolute_path)
 		{
-			MEMORY2_DEALLOC(allocator, memory);
-		} // free_file_memory
-
-		void FileSystemInterface::load_file(Array<unsigned char>& buffer, const char* absolute_path)
-		{
-			_internal_load_file(buffer, absolute_path);
+			return _internal_load_file(buffer, absolute_path);
 		} // load_file
 	} // namespace filesystem
 } // namespace core

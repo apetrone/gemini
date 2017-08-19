@@ -35,11 +35,6 @@ namespace core
 	{
 		class FileSystemInterface : public IFileSystem
 		{
-			::platform::PathString root_path;
-			::platform::PathString user_application_path;
-			::platform::PathString content_path;
-
-			gemini::Allocator allocator;
 		public:
 			FileSystemInterface();
 			virtual ~FileSystemInterface();
@@ -59,13 +54,29 @@ namespace core
 			virtual const ::platform::PathString& user_application_directory() const;
 			virtual void user_application_directory(const ::platform::PathString& application_directory);
 
+			virtual platform::Result virtual_add_root(const char* absolute_path);
+
 			virtual bool virtual_file_exists(const char* relative_path) const;
 			virtual bool virtual_directory_exists(const char* relative_path) const;
-			virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length);
-			virtual void virtual_load_file(Array<unsigned char>& buffer, const char* relative_path);
+			//virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length);
+			virtual platform::Result virtual_load_file(Array<unsigned char>& buffer, const char* relative_path);
 
-			virtual void free_file_memory(void* memory);
-			virtual void load_file(Array<unsigned char>& buffer, const char* absolute_path) ;
+			virtual platform::Result load_file(Array<unsigned char>& buffer, const char* absolute_path);
+
+		private:
+			struct DirectorySearchPath
+			{
+				::platform::PathString path;
+				struct DirectorySearchPath* next;
+			};
+
+			DirectorySearchPath* search_paths;
+
+			::platform::PathString root_path;
+			::platform::PathString user_application_path;
+			::platform::PathString content_path;
+
+			gemini::Allocator allocator;
 		};
 	} // namespace filesystem
 } // namespace core

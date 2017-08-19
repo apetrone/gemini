@@ -24,29 +24,26 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <core/array.h>
 #include <core/mem.h>
 #include <core/typedefs.h>
 #include <core/str.h>
+#include <core/datastream.h>
 
-namespace core
-{
-	namespace util
-	{
-		class DataStream;
-	}
-}
 
 namespace gemini
 {
-
 	struct TextFileContext
 	{
 		gemini::Allocator* allocator;
-		core::util::DataStream* stream;
+		core::util::MemoryStream stream;
+		Array<unsigned char> file_data;
 		uint32_t current_line;
 		uint32_t current_column;
 		char* current;
 		void(*line_handler)(struct TextFileContext* context, const gemini::string& line, void* user_data);
+
+		TextFileContext(gemini::Allocator& allocator);
 	}; // TextFileContext
 
 	void text_advance_character(TextFileContext* context);
