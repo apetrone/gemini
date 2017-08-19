@@ -1010,6 +1010,8 @@ Options:
 			// the content directory is where we'll find our assets
 			filesystem->content_directory(content_path);
 
+			filesystem->virtual_add_root(content_path());
+
 			// load engine settings (from content path)
 			runtime_load_application_config(config);
 

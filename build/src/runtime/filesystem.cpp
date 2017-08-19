@@ -113,14 +113,16 @@ namespace core
 			}
 		}
 
-		void* audiofile_to_buffer(const char* filename, size_t& buffer_length)
+#if 0
+		platform::Result audiofile_to_buffer(Array<unsigned char>& buffer, const char* filename)
 		{
 	#if defined(PLATFORM_IPHONEOS)
 			return mobile_audio_file_to_buffer(filename, buffer_length);
 	#else
-			return filesystem::instance()->virtual_load_file(filename, 0, &buffer_length);
+			return filesystem::instance()->virtual_load_file(buffer, filename);
 	#endif
 		} // audiofile_to_buffer
+#endif
 
 //		int read_file_stats(const char* fullpath, FileStats& stats)
 //		{

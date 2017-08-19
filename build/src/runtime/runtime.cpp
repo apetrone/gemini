@@ -131,9 +131,12 @@ namespace gemini
 		{
 			// default path setup
 			platform::PathString application_path = platform::get_user_application_directory(application_data_path);
-			core::filesystem::instance()->root_directory(root_path);
-			core::filesystem::instance()->content_directory(content_path);
-			core::filesystem::instance()->user_application_directory(application_path);
+			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
+			filesystem->root_directory(root_path);
+			filesystem->content_directory(content_path);
+			filesystem->user_application_directory(application_path);
+			filesystem->virtual_add_root(root_path());
+			filesystem->virtual_add_root(content_path());
 		}
 
 #if defined(PLATFORM_FILESYSTEM_SUPPORT)

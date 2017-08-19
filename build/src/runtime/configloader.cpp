@@ -56,16 +56,15 @@ namespace core
 
 		bool json_load_with_callback(const char* filename, JsonLoaderCallback callback, void* context, bool)
 		{
-			size_t buffer_size = 0;
-			char * buffer = 0;
 			bool is_success = false;
 
 			// load the file into a memory buffer
-			buffer = core::filesystem::instance()->virtual_load_file(filename, 0, &buffer_size);
-			if ( buffer )
+			gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+			Array<unsigned char> buffer(allocator);
+			core::filesystem::instance()->virtual_load_file(buffer, filename);
+			if (!buffer.empty())
 			{
-				is_success = parse_json_string_with_callback( buffer, buffer_size, callback, context );
-				core::filesystem::instance()->free_file_memory(buffer);
+				is_success = parse_json_string_with_callback(reinterpret_cast<char*>(&buffer[0]), buffer.size(), callback, context );
 			}
 			else
 			{
@@ -77,5 +76,5 @@ namespace core
 
 			return is_success;
 		} // json_load_with_callback
-	} // mamespace util
+	} // namespace util
 } // namespace core

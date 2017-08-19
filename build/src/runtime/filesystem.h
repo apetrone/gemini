@@ -60,6 +60,11 @@ namespace core
 			virtual const ::platform::PathString& user_application_directory() const = 0;
 			virtual void user_application_directory(const ::platform::PathString& application_directory) = 0;
 
+			// Adds a search path to the virtual file system
+			// These will be searched in the reverse order they are added.
+			// i.e. So the last directory added will have precedence over the first.
+			virtual platform::Result virtual_add_root(const char* absolute_path) = 0;
+
 			// virtual file system functions
 			virtual bool virtual_file_exists(const char* relative_path) const = 0;
 			virtual bool virtual_directory_exists(const char* relative_path) const = 0;
@@ -68,13 +73,11 @@ namespace core
 			// bufferLength will contain the size of the buffer
 			// if buffer is null, a new buffer is allocated and must be DEALLOC'd after use
 			// if buffer is not null, bufferLength should contain the size of the buffer which will not be exceeded.
-			virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) = 0;
+			//virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) = 0;
 
-			virtual void virtual_load_file(Array<unsigned char>& buffer, const char* relative_path) = 0;
+			virtual platform::Result virtual_load_file(Array<unsigned char>& buffer, const char* relative_path) = 0;
 
-			virtual void free_file_memory(void* memory) = 0;
-
-			virtual void load_file(Array<unsigned char>& buffer, const char* absolute_path) = 0;
+			virtual platform::Result load_file(Array<unsigned char>& buffer, const char* absolute_path) = 0;
 		};
 
 
@@ -83,7 +86,7 @@ namespace core
 
 		// read an audio file to memory
 		// this provides an abstraction between platforms; but likely needs to belong elsewhere?
-		void* audiofile_to_buffer(const char* filename, size_t& buffer_length);
+		//platform::Result audiofile_to_buffer(Array<unsigned char>& buffer, const char* filename);
 
 		void truncate_string_at_path(char* path, const char* substr);
 
