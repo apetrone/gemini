@@ -1222,8 +1222,9 @@ Options:
 
 			if (game_interface)
 			{
-				game_interface->fixed_step(params.current_physics_tick, params.step_interval_seconds);
-				engine::instance()->physics()->step_simulation(params.step_interval_seconds);
+				const float game_step_seconds = (params.game_time_scale * params.step_interval_seconds);
+				game_interface->fixed_step(params.current_physics_tick, game_step_seconds);
+				engine::instance()->physics()->step_simulation(game_step_seconds);
 			}
 
 
@@ -1238,7 +1239,7 @@ Options:
 
 		if (game_interface)
 		{
-			game_interface->tick(params.current_physics_tick, params.framedelta_seconds);
+			game_interface->tick(params.current_physics_tick, params.game_delta_milliseconds * SecondsPerMillisecond);
 
 			if (reset_queue)
 			{
@@ -1283,7 +1284,7 @@ Options:
 			params.step_alpha -= 1.0f;
 		}
 
-		animation::update(kernel::parameters().framedelta_seconds);
+		animation::update(kernel::parameters().game_delta_milliseconds * SecondsPerMillisecond);
 		hotloading::tick();
 		post_tick();
 		kernel::parameters().current_frame++;
