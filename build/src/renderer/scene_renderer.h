@@ -142,6 +142,18 @@ namespace gemini
 
 	// check to see if an animation is playing
 	bool render_scene_animation_is_playing(RenderScene* scene, uint32_t component_id, uint32_t instance_id);
+
+	// returns how many frames are in the instance
+	uint32_t render_scene_animation_total_frames(RenderScene* scene, uint32_t component_id, uint32_t instance_index);
+
+	// returns the current frame index of the playing animation.
+	// returns 0 if no animation is playing.
+	uint32_t render_scene_animation_current_frame(RenderScene* scene, uint32_t component_id);
+
+	// sets the frame of the currently playing animation
+	// no-op if there's no playing animation
+	void render_scene_animation_set_frame(RenderScene* scene, uint32_t component_id, uint32_t frame);
+
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device);
 	void render_scene_destroy(RenderScene* scene, render2::Device* device);
 	void render_scene_draw(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::RenderTarget* render_target = nullptr);

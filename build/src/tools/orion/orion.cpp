@@ -634,6 +634,7 @@ private:
 	GUIRenderer* gui_renderer;
 	gui::Panel* main_panel;
 	SpringPanel* spring_panel;
+	gui::Timeline* timeline;
 #if TEST_TELEMETRY_SYSTEM
 	TelemetryPanel* telemetry_panel;
 #endif
@@ -693,6 +694,7 @@ private:
 	uint32_t current_mesh_animation;
 	uint32_t animated_mesh;
 	uint32_t enable_animation;
+	uint32_t mesh_animation_index;
 
 	glm::vec3* lines;
 	size_t current_line_index;
@@ -723,6 +725,7 @@ public:
 		, current_mesh_animation(0)
 		, animated_mesh(0)
 		, enable_animation(1)
+		, mesh_animation_index(0)
 	{
 		yaw = 0.0f;
 		pitch = 0.0f;
@@ -734,6 +737,8 @@ public:
 		should_move_view = false;
 
 		asset_processor = nullptr;
+
+		timeline = nullptr;
 	}
 
 	virtual ~EditorKernel()
@@ -804,8 +809,17 @@ public:
 				{
 					current_mesh_animation = 0;
 				}
+
 				LOGV("Playing animation: \"%s\"\n", mesh_animations[current_mesh_animation]());
-				render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
+				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
+
+				// update the timeline with the new animation
+				if (timeline)
+				{
+					timeline->set_frame(0);
+					uint32_t total_frames = render_scene_animation_total_frames(render_scene, animated_mesh, mesh_animation_index);
+					timeline->set_frame_range(0, total_frames);
+				}
 			}
 			else if (event.key == BUTTON_SPACE)
 			{
@@ -1252,6 +1266,11 @@ public:
 		render_scene->light_position_world.x = cosf(value);
 		render_scene->light_position_world.y = 2.0f;
 		render_scene->light_position_world.z = sinf(value);
+
+		// disable automatic animation advance if the user is scrubbing.
+		enable_animation = 0;
+
+		render_scene_animation_set_frame(render_scene, animated_mesh, current_frame);
 	}
 
 	void render_main_content(render2::RenderTarget* render_target)
@@ -1685,7 +1704,7 @@ Options:
 #endif
 
 #if ENABLE_UI
-			gui::Timeline* timeline = new gui::Timeline(main_panel);
+			timeline = new gui::Timeline(main_panel);
 			timeline->set_frame_range(0, 30);
 			timeline->on_scrubber_changed.bind<EditorKernel, &EditorKernel::timeline_scrubber_changed>(this);
 			timeline->set_frame(0);
@@ -1788,7 +1807,7 @@ Options:
 			if (!mesh_animations.empty())
 			{
 				// Start playing the first animation if there are animations.
-				render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0]());
+				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0]());
 			}
 		}
 #endif
@@ -1889,13 +1908,20 @@ Options:
 			{
 				if (enable_animation)
 				{
-					render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
+					mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
 				}
 			}
 		}
 
 		if (enable_animation)
 		{
+			// TODO: update the timeline
+			uint32_t current_frame = render_scene_animation_current_frame(render_scene, animated_mesh);
+			if (timeline)
+			{
+				timeline->set_frame(current_frame);
+			}
+
 			animation::update(kernel::parameters().framedelta_seconds);
 		}
 

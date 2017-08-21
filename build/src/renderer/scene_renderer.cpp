@@ -316,6 +316,58 @@ namespace gemini
 		return false;
 	}
 
+	uint32_t render_scene_animation_total_frames(RenderScene* scene, uint32_t component_id, uint32_t instance_index)
+	{
+		// If you hit this, an invalid component id was passed in
+		assert(component_id > 0);
+		component_id--;
+
+		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
+		animation::AnimatedInstance* instance = component->sequence_instances[component->current_sequence_index];
+		assert(instance);
+		if (instance)
+		{
+			animation::Sequence* sequence = animation::get_sequence_by_index(instance->sequence_index);
+			return uint32_t(sequence->duration_seconds / sequence->frame_delay_seconds);
+		}
+
+		return 0;
+	} // render_scene_animation_total_frames
+
+	void render_scene_animation_set_frame(RenderScene* scene, uint32_t component_id, uint32_t frame)
+	{
+		// If you hit this, an invalid component id was passed in
+		assert(component_id > 0);
+		component_id--;
+
+		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
+		animation::AnimatedInstance* instance = component->sequence_instances[component->current_sequence_index];
+		assert(instance);
+		if (instance)
+		{
+			animation::Sequence* sequence = animation::get_sequence_by_index(instance->sequence_index);
+			instance->local_time_seconds = sequence->frame_delay_seconds * frame;
+		}
+	} // render_scene_animation_set_frame
+
+	uint32_t render_scene_animation_current_frame(RenderScene* scene, uint32_t component_id)
+	{
+		// If you hit this, an invalid component id was passed in
+		assert(component_id > 0);
+		component_id--;
+
+		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
+		animation::AnimatedInstance* instance = component->sequence_instances[component->current_sequence_index];
+		assert(instance);
+		if (instance)
+		{
+			animation::Sequence* sequence = animation::get_sequence_by_index(instance->sequence_index);
+			return uint32_t(instance->local_time_seconds / sequence->frame_delay_seconds);
+		}
+
+		return 0;
+	} // render_scene_animation_current_frame
+
 
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device)
 	{
