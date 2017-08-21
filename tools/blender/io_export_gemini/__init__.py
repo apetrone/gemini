@@ -253,7 +253,8 @@ class Vertex(object):
 			self.normal.z,
 			self.u,
 			self.v,
-			self.material_id)
+			self.material_id,
+			str(self.weights))
 
 	def __lt__(self, other):
 		return self.__hash__() < other.__hash__()
