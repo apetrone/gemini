@@ -727,7 +727,10 @@ class GeminiModel(object):
 
 		# used for coordinate conversion
 		# Assume -Z forward with Y-Up.
-		self.global_matrix = axis_conversion(to_forward='-Z', to_up='Y').to_4x4()
+		if self.coordinate_system == COORDINATE_SYSTEM_YUP:
+			self.global_matrix = axis_conversion(to_forward='-Z', to_up='Y').to_4x4()
+		else:
+			self.global_matrix = Matrix()
 
 		self.filepath = kwargs.get("filepath", None)
 
