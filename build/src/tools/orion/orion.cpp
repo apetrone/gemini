@@ -32,6 +32,8 @@
 #include <runtime/hotloading.h>
 #include <runtime/standaloneresourcecache.h>
 
+#include <runtime/mesh.h>
+
 #include <platform/input.h>
 #include <platform/kernel.h>
 #include <platform/platform.h>
@@ -82,6 +84,7 @@ using namespace gemini;
 #define TEST_SPRING_SYSTEM 0
 #define TEST_TELEMETRY_SYSTEM 0
 #define TEST_TELEMETRY_HOST 0
+#define DRAW_IMOCAP 0
 
 #define DRAW_LINES 0
 const size_t TOTAL_LINES = 256;
@@ -674,6 +677,12 @@ private:
 	gemini::Allocator sensor_allocator;
 	gemini::Allocator render_allocator;
 	gemini::Allocator debugdraw_allocator;
+	gemini::Allocator default_allocator;
+
+	Array<core::StackString<32>> mesh_animations;
+	uint32_t current_mesh_animation;
+	uint32_t animated_mesh;
+	uint32_t enable_animation;
 
 	glm::vec3* lines;
 	size_t current_line_index;
@@ -700,6 +709,9 @@ public:
 		, lines(nullptr)
 		, current_line_index(0)
 		, mocap_frames(sensor_allocator, 0)
+		, mesh_animations(default_allocator)
+		, current_mesh_animation(0)
+		, enable_animation(1)
 	{
 		yaw = 0.0f;
 		pitch = 0.0f;
@@ -778,6 +790,22 @@ public:
 				image.create(render_target->width, render_target->height, 4);
 				device->render_target_read_pixels(render_target, image);
 				image::save_image_to_file(image, "test.png");
+			}
+
+			if (event.key == BUTTON_F5)
+			{
+				++current_mesh_animation;
+				if (current_mesh_animation >= mesh_animations.size())
+				{
+					current_mesh_animation = 0;
+				}
+				LOGV("Playing animation: \"%s\"\n", mesh_animations[current_mesh_animation]());
+				render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
+			}
+			else if (event.key == BUTTON_SPACE)
+			{
+				enable_animation = !enable_animation;
+				LOGV("Animation is now %s\n", enable_animation ? "ON" : "OFF");
 			}
 		}
 	}
@@ -1327,6 +1355,8 @@ Options:
 		watch_path.append("materials");
 		monitor_materials = directory_monitor_add(watch_path(), monitor_delegate);
 
+		default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
 		// initialize the renderer
 		{
 			render_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
@@ -1433,6 +1463,29 @@ Options:
 
 		animation::startup(asset_allocator);
 
+#if 1
+		glm::mat4 ident;
+		AssetHandle skeleton_mesh = mesh_load("models/cube_rig2/cube_rig2");
+		animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, 0, ident);
+
+		Mesh* mesh = mesh_from_handle(skeleton_mesh);
+		if (mesh)
+		{
+			HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
+			for (; iter != mesh->sequence_index_by_name.end(); ++iter)
+			{
+				LOGV("Found animation: %s\n", iter.key()());
+				mesh_animations.push_back(iter.key());
+			}
+
+			if (!mesh_animations.empty())
+			{
+				// Start playing the first animation if there are animations.
+				render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0]());
+			}
+		}
+#endif
+
 #if 0
 		AssetHandle test_mesh = mesh_load("models/vault");
 		//AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
@@ -1460,7 +1513,7 @@ Options:
 			uint32_t component_id = render_scene_add_animated_mesh(render_scene, animated_mesh, entity_index, transform);
 			if (index == 2)
 			{
-				render_scene_animation_play(render_scene, component_id, "wiggle");
+				render_scene_animation_play(render_scene, component_id, "wiggle");a
 			}
 			else
 			{
@@ -1751,6 +1804,15 @@ Options:
 		notify_client_tick(&notify_client);
 		tick_queued_asset_changes(*queued_asset_changes, kernel::parameters().framedelta_seconds);
 
+		// See if we need to poke the animated mesh.
+		if (render_scene_animation_finished(render_scene, animated_mesh))
+		{
+			if (enable_animation)
+			{
+				render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
+			}
+		}
+
 		animation::update(kernel::parameters().framedelta_seconds);
 
 		render_scene_update(render_scene, &entity_render_state);
@@ -1797,6 +1859,7 @@ Options:
 		debugdraw::text(20, yoffset+48, core::str::format("Camera: %2.2f, %2.2f, %2.2f [%2.2f, %2.2f]", camera.get_position().x, camera.get_position().y, camera.get_position().z, camera.get_yaw(), camera.get_pitch()), gemini::Color(1.0f, 1.0f, 1.0f));
 		debugdraw::text(20, yoffset + 64, core::str::format("debug bytes/sec: %i\n", tel_viewer.bytes_per_second), gemini::Color(1.0f, 1.0f, 1.0f));
 
+#if DRAW_IMOCAP
 		glm::quat local_rotations[IMOCAP_TOTAL_SENSORS];
 
 		// We need to adjust the coordinate frame from the sensor to the engine.
@@ -1860,6 +1923,8 @@ Options:
 			debugdraw::sphere(origin, Color::from_rgba(255, 0, 0, 255), 0.025f);
 		}
 
+#endif
+
 #if DRAW_LINES
 		// draw all lines
 		glm::vec3 last_line = lines[0];
@@ -1872,6 +1937,7 @@ Options:
 		}
 #endif
 
+#if DRAW_IMOCAP
 		if (is_recording_frames)
 		{
 			memcpy(mocap_frame.poses, local_rotations, sizeof(glm::quat) * IMOCAP_TOTAL_SENSORS);
@@ -1880,6 +1946,7 @@ Options:
 
 			mocap_frames.push_back(mocap_frame);
 		}
+#endif
 		//debugdraw::axes(glm::mat4(1.0f), 1.0f);
 
 		platform::window::Frame window_frame = platform::window::get_frame(main_window);
@@ -2024,6 +2091,8 @@ Options:
 		// must be shut down before the animations; as they're referenced.
 		render_scene_destroy(render_scene, device);
 		render_scene_shutdown();
+
+		mesh_animations.clear();
 
 #if TEST_TELEMETRY_HOST
 		telemetry_host_shutdown();
