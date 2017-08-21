@@ -1894,7 +1894,10 @@ Options:
 			}
 		}
 
-		animation::update(kernel::parameters().framedelta_seconds);
+		if (enable_animation)
+		{
+			animation::update(kernel::parameters().framedelta_seconds);
+		}
 
 		render_scene_update(render_scene, &entity_render_state);
 
