@@ -587,6 +587,16 @@ void TelemetryPanel::handle_event(gui::EventArgs& args)
 struct EditorEnvironment
 {
 	Project* project;
+
+	uint32_t open_last_project_on_start;
+	gemini::string last_project;
+
+	EditorEnvironment()
+		: project(nullptr)
+		, open_last_project_on_start(0)
+	{
+
+	}
 };
 
 class EditorKernel : public kernel::IKernel,
@@ -711,6 +721,7 @@ public:
 		, mocap_frames(sensor_allocator, 0)
 		, mesh_animations(default_allocator)
 		, current_mesh_animation(0)
+		, animated_mesh(0)
 		, enable_animation(1)
 	{
 		yaw = 0.0f;
@@ -723,16 +734,10 @@ public:
 		should_move_view = false;
 
 		asset_processor = nullptr;
-
-		memset(&environment, 0, sizeof(EditorEnvironment));
 	}
 
 	virtual ~EditorKernel()
 	{
-		if (environment.project)
-		{
-			delete environment.project;
-		}
 	}
 
 	virtual bool is_active() const { return active; }
@@ -1012,16 +1017,30 @@ public:
 		if (result.succeeded())
 		{
 			platform::PathString project_path = paths[0];
-			project_path.append(PATH_SEPARATOR_STRING);
-			project_path.append("project.conf");
 
-			environment.project = Project::open_project(project_path());
+			open_project_at_root(project_path);
 
-			camera.set_position(environment.project->camera_position);
-			camera.set_yaw(environment.project->camera_yaw);
-			camera.set_pitch(environment.project->camera_pitch);
+			//camera.set_position(environment.project->camera_position);
+			//camera.set_yaw(environment.project->camera_yaw);
+			//camera.set_pitch(environment.project->camera_pitch);
 		}
 	}
+
+	void open_project_at_root(const PathString& project_root)
+	{
+		PathString project_path = project_root;
+
+		PathString asset_root = gemini::runtime_platform_asset_root(project_root);
+
+
+		// Add the project path to the list of virtual search paths.
+		core::filesystem::instance()->virtual_add_root(asset_root());
+
+		project_path.append(PATH_SEPARATOR_STRING);
+		project_path.append("project.conf");
+
+		environment.project = Project::open_project(project_path());
+	} // open_project_at_root
 
 	void on_file_save_project()
 	{
@@ -1196,6 +1215,36 @@ public:
 	}
 
 
+	void load_preferences(const PathString& preferences_file)
+	{
+		environment.last_project = string_create(default_allocator, "x:/games/vrpowergrid");
+		environment.open_last_project_on_start = 1;
+	}
+
+	void save_preferences(const PathString& preferences_file)
+	{
+		//gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+		//core::util::ResizableMemoryStream stream(allocator);
+
+		//uint32_t name_length = name.length();
+		//stream.write(&name_length, sizeof(uint32_t));
+		//stream.write(&name[0], name_length);
+
+		//stream.write(&camera_position, sizeof(glm::vec3));
+		//stream.write(&camera_yaw, sizeof(float));
+		//stream.write(&camera_pitch, sizeof(float));
+
+		platform::File handle = platform::fs_open(preferences_file(), platform::FileMode_Write);
+		if (!handle.is_open())
+		{
+			LOGW("Unable to open file: %s\n", preferences_file.c_str());
+			return;// platform::Result::failure("Couldn't open file");
+		}
+
+		//platform::fs_write(handle, stream.get_data(), 1, stream.get_data_size());
+		platform::fs_close(handle);
+	}
+
 	void timeline_scrubber_changed(size_t current_frame)
 	{
 		value = mathlib::PI * 2.0 * (current_frame / 30.0f);
@@ -1270,7 +1319,7 @@ Options:
 		std::function<void(const char*)> custom_path_setup = [&](const char* application_data_path)
 		{
 			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
-			PathString root_path = platform::get_program_directory();
+			platform::PathString root_path = platform::get_program_directory();
 
 			// the root path is the current binary path
 			filesystem->root_directory(root_path);
@@ -1284,11 +1333,31 @@ Options:
 			//load_config(config);
 
 			// the application path can be specified in the config (per-game basis)
-			//const platform::PathString application_path = platform::get_user_application_directory(config.application_directory.c_str());
-			filesystem->user_application_directory(application_data_path);
+			const platform::PathString application_path = platform::get_user_application_directory(application_data_path);
+			filesystem->user_application_directory(application_path);
 		};
 
 		gemini::runtime_startup("arcfusion.net/orion", custom_path_setup);
+
+		default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
+		// try to load editor preferences...
+		{
+			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
+			PathString user_preferences_file = filesystem->user_application_directory();
+
+			user_preferences_file.append(PATH_SEPARATOR_STRING);
+			user_preferences_file.append("editor.preferences");
+
+			if (filesystem->file_exists(user_preferences_file(), false))
+			{
+				load_preferences(user_preferences_file);
+			}
+			else
+			{
+				save_preferences(user_preferences_file);
+			}
+		}
 
 		// create a platform window
 		{
@@ -1354,8 +1423,6 @@ Options:
 		watch_path.append(PATH_SEPARATOR_STRING);
 		watch_path.append("materials");
 		monitor_materials = directory_monitor_add(watch_path(), monitor_delegate);
-
-		default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 
 		// initialize the renderer
 		{
@@ -1462,67 +1529,6 @@ Options:
 		render_scene = render_scene_create(render_allocator, device);
 
 		animation::startup(asset_allocator);
-
-#if 1
-		glm::mat4 ident;
-		AssetHandle skeleton_mesh = mesh_load("models/cube_rig2/cube_rig2");
-		animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, 0, ident);
-
-		Mesh* mesh = mesh_from_handle(skeleton_mesh);
-		if (mesh)
-		{
-			HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
-			for (; iter != mesh->sequence_index_by_name.end(); ++iter)
-			{
-				LOGV("Found animation: %s\n", iter.key()());
-				mesh_animations.push_back(iter.key());
-			}
-
-			if (!mesh_animations.empty())
-			{
-				// Start playing the first animation if there are animations.
-				render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0]());
-			}
-		}
-#endif
-
-#if 0
-		AssetHandle test_mesh = mesh_load("models/vault");
-		//AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
-		AssetHandle animated_mesh;
-		animated_mesh = mesh_load("models/cube_rig/cube_rig");
-		//animated_mesh = mesh_load("models/chest_rig/chest_rig");
-		//animated_mesh = mesh_load("models/isocarbon_rig/isocarbon_rig");
-
-		glm::mat4 transform(1.0f);
-
-		const uint32_t TOTAL_STATIC_MESHES = 1;
-
-		for (size_t index = 0; index < TOTAL_STATIC_MESHES; ++index)
-		{
-			uint16_t entity_index = index;
-			render_scene_add_static_mesh(render_scene, test_mesh, entity_index, transform);
-			entity_render_state.model_matrix[entity_index] = transform;
-			transform = glm::translate(transform, glm::vec3(1.5f, 0.0f, 0.0f));
-		}
-
-		transform = glm::rotate(transform, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		for (size_t index = 0; index < 4; ++index)
-		{
-			uint16_t entity_index = TOTAL_STATIC_MESHES + index;
-			uint32_t component_id = render_scene_add_animated_mesh(render_scene, animated_mesh, entity_index, transform);
-			if (index == 2)
-			{
-				render_scene_animation_play(render_scene, component_id, "wiggle");a
-			}
-			else
-			{
-				render_scene_animation_play(render_scene, component_id, "idle");
-			}
-			entity_render_state.model_matrix[entity_index] = transform;
-			transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
-		}
-#endif
 
 		// initialize debug draw
 		debugdraw::startup(debugdraw_allocator, device);
@@ -1754,6 +1760,78 @@ Options:
 
 		last_time = platform::microseconds();
 
+		// At this point the editor is ready to go.
+		if (environment.open_last_project_on_start && !environment.last_project.empty())
+		{
+			open_project_at_root(environment.last_project.c_str());
+		}
+
+
+
+
+
+#if 1
+		glm::mat4 ident;
+		AssetHandle skeleton_mesh = mesh_load("models/cube_rig2/cube_rig2");
+		animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, 0, ident);
+
+		Mesh* mesh = mesh_from_handle(skeleton_mesh);
+		if (mesh)
+		{
+			HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
+			for (; iter != mesh->sequence_index_by_name.end(); ++iter)
+			{
+				LOGV("Found animation: %s\n", iter.key()());
+				mesh_animations.push_back(iter.key());
+			}
+
+			if (!mesh_animations.empty())
+			{
+				// Start playing the first animation if there are animations.
+				render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0]());
+			}
+		}
+#endif
+
+#if 0
+		AssetHandle test_mesh = mesh_load("models/vault");
+		//AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
+		AssetHandle animated_mesh;
+		animated_mesh = mesh_load("models/cube_rig/cube_rig");
+		//animated_mesh = mesh_load("models/chest_rig/chest_rig");
+		//animated_mesh = mesh_load("models/isocarbon_rig/isocarbon_rig");
+
+		glm::mat4 transform(1.0f);
+
+		const uint32_t TOTAL_STATIC_MESHES = 1;
+
+		for (size_t index = 0; index < TOTAL_STATIC_MESHES; ++index)
+		{
+			uint16_t entity_index = index;
+			render_scene_add_static_mesh(render_scene, test_mesh, entity_index, transform);
+			entity_render_state.model_matrix[entity_index] = transform;
+			transform = glm::translate(transform, glm::vec3(1.5f, 0.0f, 0.0f));
+		}
+
+		transform = glm::rotate(transform, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		for (size_t index = 0; index < 4; ++index)
+		{
+			uint16_t entity_index = TOTAL_STATIC_MESHES + index;
+			uint32_t component_id = render_scene_add_animated_mesh(render_scene, animated_mesh, entity_index, transform);
+			if (index == 2)
+			{
+				render_scene_animation_play(render_scene, component_id, "wiggle"); a
+			}
+			else
+			{
+				render_scene_animation_play(render_scene, component_id, "idle");
+			}
+			entity_render_state.model_matrix[entity_index] = transform;
+			transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
+		}
+#endif
+
+
 		return kernel::NoError;
 	}
 
@@ -1805,11 +1883,14 @@ Options:
 		tick_queued_asset_changes(*queued_asset_changes, kernel::parameters().framedelta_seconds);
 
 		// See if we need to poke the animated mesh.
-		if (render_scene_animation_finished(render_scene, animated_mesh))
+		if (animated_mesh != 0)
 		{
-			if (enable_animation)
+			if (render_scene_animation_finished(render_scene, animated_mesh))
 			{
-				render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
+				if (enable_animation)
+				{
+					render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
+				}
 			}
 		}
 
@@ -2093,6 +2174,17 @@ Options:
 		render_scene_shutdown();
 
 		mesh_animations.clear();
+
+
+		if (environment.project)
+		{
+			delete environment.project;
+		}
+
+		if (environment.last_project.size() > 0)
+		{
+			string_destroy(default_allocator, environment.last_project);
+		}
 
 #if TEST_TELEMETRY_HOST
 		telemetry_host_shutdown();
