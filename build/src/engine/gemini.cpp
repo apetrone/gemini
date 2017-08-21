@@ -984,13 +984,7 @@ Options:
 		}
 		else
 		{
-			// dev builds (passed by -game) are located at:
-			// "<game_path>/builds/<PLATFORM_NAME>"
-			content_path = game_path;
-			content_path.append(PATH_SEPARATOR_STRING);
-			content_path.append("builds");
-			content_path.append(PATH_SEPARATOR_STRING);
-			content_path.append(PLATFORM_NAME);
+			content_path = runtime_platform_asset_root(game_path);
 		}
 
 		// setup filesystem paths

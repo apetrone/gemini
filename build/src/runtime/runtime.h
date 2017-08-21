@@ -364,4 +364,6 @@ namespace gemini
 	void runtime_load_rapid();
 	void runtime_unload_rapid();
 	struct RapidInterface* runtime_rapid();
+
+	platform::PathString runtime_platform_asset_root(const platform::PathString& root);
 } // namespace gemini

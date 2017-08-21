@@ -941,4 +941,15 @@ namespace gemini
 		return &rapid;
 	}
 
+	platform::PathString runtime_platform_asset_root(const platform::PathString& root)
+	{
+		// dev builds (passed by -game) are located at:
+		// "<game_path>/builds/<PLATFORM_NAME>"
+		platform::PathString content_path = root;
+		content_path.append(PATH_SEPARATOR_STRING);
+		content_path.append("builds");
+		content_path.append(PATH_SEPARATOR_STRING);
+		content_path.append(PLATFORM_NAME);
+		return content_path;
+	} // runtime_platform_asset_root
 } // namespace gemini
