@@ -624,7 +624,7 @@ namespace gemini
 				++scene->stat_animated_meshes_drawn;
 
 				// Enable this to debug bone transforms
-#if 0
+#if 1
 				if (mesh->skeleton.size() > 0)
 				{
 					glm::vec3 position; // render position
@@ -633,6 +633,13 @@ namespace gemini
 					const glm::mat4* model_poses = instance->bone_transforms;
 					//const glm::vec3* hitboxes = model_instance->get_hitboxes();
 
+					for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
+					{
+						size_t transform_index = bone_index;
+						const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
+						debugdraw::axes(world_pose, 0.15f, 0.0f);
+					}
+#if 0
 					// draw individual links for each bone to represent the skeleton
 					for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
 					{
@@ -661,6 +668,7 @@ namespace gemini
 						//const glm::vec3& positive_extents = hitboxes[bone_index];
 						//debugdraw::box(box_center - positive_extents, box_center + positive_extents, gemini::Color(0.0f, 0.5f, 0.5f));
 					}
+#endif
 				}
 #endif
 			}

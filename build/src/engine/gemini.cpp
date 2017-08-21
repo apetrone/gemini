@@ -77,10 +77,6 @@
 
 #include <rapid/rapid.h>
 
-// uncomment this to draw bone debug information
-//#define GEMINI_DEBUG_BONES
-
-
 // enable this if you want to visualize the frame rate over time
 #define DEBUG_FRAMERATE
 

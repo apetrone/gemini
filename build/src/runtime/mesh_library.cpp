@@ -202,8 +202,8 @@ namespace gemini
 			if (!state.mesh->skeleton.empty())
 			{
 				// blend weight array must match the total vertices
+				LOGV("blend_weights.size = %i, geometry->total_vertices = %i\n", blend_weights.size(), geometry->total_vertices);
 				assert(blend_weights.size() == geometry->total_vertices);
-				//LOGV("blend_weights.size = %i, geometry->total_vertices = %i\n", blend_weights.size(), geometry->total_vertices);
 
 				// load animation data
 
@@ -265,9 +265,10 @@ namespace gemini
 
 					// assign these values to the blend_weights and blend_indices index
 					state.mesh->blend_indices[weight_id] = glm::vec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
-					//LOGV("[%i] indices: %i %i %i %i\n", weight_id, bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
 					state.mesh->blend_weights[weight_id] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
-//					LOGV("weights: %2.2f %2.2f %2.2f %2.f\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
+
+					//LOGV("[%i] indices: %i %i %i %i\n", weight_id, bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
+					//LOGV("[%i] weights: %2.2f %2.2f %2.2f %2.2f\n", weight_id, bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
 				}
 
 
