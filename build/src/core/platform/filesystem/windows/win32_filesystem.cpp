@@ -167,7 +167,7 @@ namespace platform
 			if (last_error == ERROR_SHARING_VIOLATION)
 			{
 				LOGW("The process cannot access the file because it is "
-					"being used by another process.");
+					"being used by another process.\n");
 			}
 		}
 
