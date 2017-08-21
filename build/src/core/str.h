@@ -154,7 +154,6 @@ namespace core
 
 namespace gemini
 {
-
 	// strings are immutable. You must use the string_* functions to operate
 	// on them.
 	struct string
@@ -185,6 +184,11 @@ namespace gemini
 		{
 			return string_data_size;
 		} // length
+
+		bool empty() const
+		{
+			return string_data_size == 0;
+		} // empty
 
 		bool operator==(const string& other) const
 		{
