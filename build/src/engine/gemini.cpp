@@ -1164,7 +1164,7 @@ Options:
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
 
-		params.game_delta_milliseconds = (params.framedelta_milliseconds * params.game_time_scale);
+		params.simulation_delta_seconds = (params.framedelta_milliseconds * params.simulation_time_scale) * SecondsPerMillisecond;
 
 		interpolate_alpha += kernel::parameters().framedelta_seconds;
 
@@ -1212,7 +1212,7 @@ Options:
 
 			if (game_interface)
 			{
-				const float game_step_seconds = (params.game_time_scale * params.step_interval_seconds);
+				const float game_step_seconds = (params.simulation_time_scale * params.step_interval_seconds);
 				game_interface->fixed_step(params.current_physics_tick, game_step_seconds);
 				engine::instance()->physics()->step_simulation(game_step_seconds);
 			}
@@ -1229,7 +1229,7 @@ Options:
 
 		if (game_interface)
 		{
-			game_interface->tick(params.current_physics_tick, params.game_delta_milliseconds * SecondsPerMillisecond);
+			game_interface->tick(params.current_physics_tick, params.simulation_delta_seconds);
 
 			if (reset_queue)
 			{
@@ -1274,7 +1274,7 @@ Options:
 			params.step_alpha -= 1.0f;
 		}
 
-		animation::update(kernel::parameters().game_delta_milliseconds * SecondsPerMillisecond);
+		animation::update(kernel::parameters().simulation_delta_seconds);
 		hotloading::tick();
 		post_tick();
 		kernel::parameters().current_frame++;

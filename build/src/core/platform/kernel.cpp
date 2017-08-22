@@ -90,8 +90,8 @@ namespace kernel
 		step_interval_seconds = 0;
 		use_vsync = true;
 
-		game_time_scale = 1.0f;
-		game_delta_milliseconds = 0.0f;
+		simulation_time_scale = 1.0f;
+		simulation_delta_seconds = 0.0f;
 
 		// we should default to swapping buffers ourself
 		swap_buffers = 1;

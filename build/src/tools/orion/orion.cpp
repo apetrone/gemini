@@ -1922,7 +1922,7 @@ Options:
 				timeline->set_frame(current_frame);
 			}
 
-			animation::update(kernel::parameters().framedelta_seconds);
+			animation::update(kernel::parameters().simulation_delta_seconds);
 		}
 
 		render_scene_update(render_scene, &entity_render_state);
@@ -2165,6 +2165,8 @@ Options:
 
 		// calculate delta ticks in milliseconds
 		params.framedelta_milliseconds = (current_time - last_time) * MillisecondsPerMicrosecond;
+
+		params.simulation_delta_seconds = (params.framedelta_milliseconds * params.simulation_time_scale) * SecondsPerMillisecond;
 
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;

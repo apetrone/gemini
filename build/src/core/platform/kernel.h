@@ -70,9 +70,9 @@ namespace kernel
 		float framedelta_seconds;
 		float framedelta_milliseconds;
 
-		// Game time (which can be affected by scale)
-		float game_delta_milliseconds;
-		float game_time_scale;
+		// Simulation time (which can be affected by scale)
+		float simulation_delta_seconds;
+		float simulation_time_scale;
 
 		// the current tick (physics step)
 		uint64_t current_physics_tick;
