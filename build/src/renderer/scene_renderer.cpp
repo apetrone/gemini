@@ -328,7 +328,7 @@ namespace gemini
 		if (instance)
 		{
 			animation::Sequence* sequence = animation::get_sequence_by_index(instance->sequence_index);
-			return uint32_t(sequence->duration_seconds / sequence->frame_delay_seconds);
+			return uint32_t(ceil(sequence->duration_seconds / sequence->frame_delay_seconds));
 		}
 
 		return 0;

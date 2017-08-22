@@ -812,14 +812,7 @@ public:
 
 				LOGV("Playing animation: \"%s\"\n", mesh_animations[current_mesh_animation]());
 				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
-
-				// update the timeline with the new animation
-				if (timeline)
-				{
-					timeline->set_frame(0);
-					uint32_t total_frames = render_scene_animation_total_frames(render_scene, animated_mesh, mesh_animation_index);
-					timeline->set_frame_range(0, total_frames);
-				}
+				update_timeline_frames();
 			}
 			else if (event.key == BUTTON_SPACE)
 			{
@@ -836,6 +829,19 @@ public:
 				kernel::parameters().simulation_time_scale += 0.1f;
 				LOGV("set scale to %2.2f\n", kernel::parameters().simulation_time_scale);
 			}
+		}
+	}
+
+	void update_timeline_frames()
+	{
+		// update the timeline with the new animation
+		if (timeline)
+		{
+			timeline->set_frame(0);
+			uint32_t total_frames = render_scene_animation_total_frames(render_scene, animated_mesh, mesh_animation_index);
+
+			LOGV("total frames: %i\n", total_frames);
+			timeline->set_frame_range(0, total_frames);
 		}
 	}
 
@@ -1271,7 +1277,9 @@ public:
 
 	void timeline_scrubber_changed(size_t current_frame)
 	{
-		value = mathlib::PI * 2.0 * (current_frame / 30.0f);
+		int lower, upper;
+		timeline->get_frame_range(lower, upper);
+		value = mathlib::PI * 2.0 * (current_frame / static_cast<float>(upper));
 
 		render_scene->light_position_world.x = cosf(value);
 		render_scene->light_position_world.y = 2.0f;
@@ -1818,6 +1826,7 @@ Options:
 			{
 				// Start playing the first animation if there are animations.
 				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0]());
+				update_timeline_frames();
 			}
 		}
 #endif

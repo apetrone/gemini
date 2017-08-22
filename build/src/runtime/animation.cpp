@@ -355,6 +355,8 @@ namespace gemini
 				int32_t fps_rate = frames_per_second.asInt();
 				sequence->frame_delay_seconds = (1.0f/(float)fps_rate);
 
+				LOGV("frames_per_second = %i (frame delay = %2.2f)\n", fps_rate, sequence->frame_delay_seconds);
+
 				// 1. allocate enough space for each bone
 				sequence->animation_set.allocate(bones_array.size() * ANIMATION_KEYFRAME_VALUES_MAX, KeyframeList(sequence->allocator));
 
@@ -452,7 +454,7 @@ namespace gemini
 							ry.set_key(index, t, y);
 							rz.set_key(index, t, z);
 							rw.set_key(index, t, w);
-//							LOGV("t=%2.2f, %g %g %g %g\n", t, x, y, z, w);
+							//LOGV("t=%2.2f, %g %g %g %g\n", t, x, y, z, w);
 						}
 					}
 #endif

@@ -59,6 +59,8 @@ namespace gui
 		void set_frame(size_t frame);
 		virtual bool point_in_capture_rect(const Point&) const override;
 
+		void get_frame_range(int& lower_frame_limit, int& upper_frame_limit);
+
 	private:
 		size_t left_margin;
 		size_t current_frame;

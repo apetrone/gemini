@@ -976,7 +976,7 @@ class GeminiModel(object):
 
 		# in order to retrieve pose data; we need to explicitly
 		# set the frame before we retrieve data.
-		bpy.context.scene.frame_set(1)
+		bpy.context.scene.frame_set(bpy.context.scene.frame_start)
 
 		# scan through scene objects
 		for index, obj in enumerate(bpy.context.scene.objects):

@@ -191,4 +191,10 @@ namespace gui
 	{
 		return true;
 	} // point_in_capture_rect
+
+	void Timeline::get_frame_range(int& lower_frame_limit, int& upper_frame_limit)
+	{
+		lower_frame_limit = lower_limit;
+		upper_frame_limit = upper_limit;
+	}
 } // namespace gui
