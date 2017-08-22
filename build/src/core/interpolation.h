@@ -113,8 +113,8 @@ namespace gemini
 		// they 'mix' to an invalid quaternion (NaN, NaN, NaN, NaN)
 		//return glm::mix( a, b, t );
 
-		//	Groovounet: If you need a slerp that always take the short path, let me recommend to you to use shortMix.
-		//	return glm::shortMix(a, b, t);
+		// Groovounet: If you need a slerp that always take the short path, let me recommend to you to use shortMix.
+		//return glm::shortMix(a, b, t);
 	}
 
 

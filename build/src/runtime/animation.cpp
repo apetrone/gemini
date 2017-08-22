@@ -149,28 +149,31 @@ namespace gemini
 				uint32_t next_key = key + 1;
 				if (t_seconds < keyframe->seconds)
 				{
-					if (key == 0)
-					{
-						// can't get previous; lerp forward
-						Keyframe* next = &keyframelist->keys[next_key];
-						delta = (next->seconds - keyframe->seconds);
-						value_a = next->value;
-						value_b = keyframe->value;
+					return keyframe->value;
+					//if (key == 0)
+					//{
+					//	// can't get previous; lerp forward
+					//	Keyframe* next = &keyframelist->keys[next_key];
+					//	delta = (next->seconds - keyframe->seconds);
+					//	value_a = next->value;
+					//	value_b = keyframe->value;
 
-						float alpha = (delta / frame_delay_seconds);
-						return gemini::lerp(value_a, value_b, alpha);
-					}
-					else
-					{
-						// This assumes that the animation is evenly sampled
-						// across key frames by frame_delay_seconds.
-						// If it isn't, we could use
-						// (keyframe->seconds - prev_keyframe->seconds) as
-						// the denominator instead of frame_delay_seconds.
-						Keyframe* prev_keyframe = &keyframelist->keys[key - 1];
-						float alpha = (t_seconds - prev_keyframe->seconds) / frame_delay_seconds;
-						return gemini::lerp(prev_keyframe->value, keyframe->value, alpha);
-					}
+					//	float alpha = (delta / frame_delay_seconds);
+					//	//return gemini::lerp(value_a, value_b, alpha);
+					//	return value_a;
+					//}
+					//else
+					//{
+					//	// This assumes that the animation is evenly sampled
+					//	// across key frames by frame_delay_seconds.
+					//	// If it isn't, we could use
+					//	// (keyframe->seconds - prev_keyframe->seconds) as
+					//	// the denominator instead of frame_delay_seconds.
+					//	//Keyframe* prev_keyframe = &keyframelist->keys[key - 1];
+					//	//float alpha = (t_seconds - prev_keyframe->seconds) / frame_delay_seconds;
+					//	//return gemini::lerp(prev_keyframe->value, keyframe->value, alpha);
+					//	return keyframe->value;
+					//}
 				}
 				else if (last_key == key)
 				{

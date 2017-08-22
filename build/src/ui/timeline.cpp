@@ -46,7 +46,7 @@ namespace gui
 	void TimelineScrubber::render(gui::Compositor* /*compositor*/, gui::Renderer* /*renderer*/, gui::render::CommandList& render_commands)
 	{
 		// TODO: we should get this from the style
-		gemini::Color scrubber_highlight = gemini::Color::from_rgba(255, 128, 0, 32);
+		gemini::Color scrubber_highlight = gemini::Color::from_rgba(255, 128, 0, 96);
 		gemini::Color scrubber_outline = gemini::Color::from_rgba(255, 128, 0, 192);
 
 		// draw the main highlight fill

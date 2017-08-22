@@ -77,6 +77,8 @@ namespace gemini
 		// currently playing sequence
 		uint32_t current_sequence_index;
 
+		animation::Pose last_pose;
+
 		// array of all sequence instances for the associated mesh
 		Array<animation::AnimatedInstance*> sequence_instances;
 	}; // AnimatedMeshComponent
@@ -165,5 +167,5 @@ namespace gemini
 
 	void render_sky(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 
-	void render_scene_update(RenderScene* scene, EntityRenderState* state);
+	void render_scene_update(RenderScene* scene, EntityRenderState* state, float step_alpha = 0.0f);
 } // namespace gemini

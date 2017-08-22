@@ -121,7 +121,7 @@ namespace platform
 					Button::BUTTON_INVALID, // VK_MBUTTON
 					Button::BUTTON_INVALID, // VK_XBUTTON1
 					Button::BUTTON_INVALID, // VK_XBUTTON2
-					Button::BUTTON_INVALID, // undefined
+					Button::BUTTON_INVALID, // undefined 0x07 unassigned
 					Button::BUTTON_BACKSPACE,
 					Button::BUTTON_TAB,
 					Button::BUTTON_INVALID,	// reserved (0x0A-0x0B)
@@ -134,7 +134,7 @@ namespace platform
 					Button::BUTTON_LCONTROL,
 					Button::BUTTON_LALT,
 					Button::BUTTON_PAUSE,
-					Button::BUTTON_CAPSLOCK,
+					Button::BUTTON_CAPSLOCK, // VK_CAPITAL
 					Button::BUTTON_INVALID, // IME Kana/Hanguel mode; VK_KANA/VK_HANGUEL/VK_HANGUL
 					Button::BUTTON_INVALID, // undefined
 					Button::BUTTON_INVALID, // IME Junja mode; VK_JUNJA
@@ -265,6 +265,15 @@ namespace platform
 					Button::BUTTON_INVALID,
 					Button::BUTTON_INVALID,
 					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID, // 97-9F unassigned
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID,
+					Button::BUTTON_INVALID, // 0x9F
 					Button::BUTTON_LSHIFT,
 					Button::BUTTON_RSHIFT,
 					Button::BUTTON_LCONTROL,
@@ -290,7 +299,17 @@ namespace platform
 					Button::BUTTON_INVALID, // VK_LAUNCH_APP1
 					Button::BUTTON_INVALID, // VK_LAUNCH_APP2
 					Button::BUTTON_INVALID, // Reserved (0xB8-0xB9)
+					Button::BUTTON_INVALID,
+
 					// All keys below are OEM reserved keys.
+
+					Button::BUTTON_INVALID, // VK_OEM_1
+					Button::BUTTON_PLUS, // VK_OEM_PLUS
+					Button::BUTTON_INVALID, // VK_OEM_COMMA
+					Button::BUTTON_MINUS, // VK_OEM_MINUS
+					Button::BUTTON_INVALID, // VK_OEM_PERIOD
+					Button::BUTTON_INVALID, // VK_OEM_2
+					Button::BUTTON_INVALID, // VK_OEM_3
 				};
 
 				const size_t max_keys = sizeof(keymap) / sizeof(Button);

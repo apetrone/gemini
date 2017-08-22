@@ -826,6 +826,16 @@ public:
 				enable_animation = !enable_animation;
 				LOGV("Animation is now %s\n", enable_animation ? "ON" : "OFF");
 			}
+			else if (event.key == BUTTON_MINUS)
+			{
+				kernel::parameters().simulation_time_scale -= 0.1f;
+				LOGV("set scale to %2.2f\n", kernel::parameters().simulation_time_scale);
+			}
+			else if (event.key == BUTTON_PLUS)
+			{
+				kernel::parameters().simulation_time_scale += 0.1f;
+				LOGV("set scale to %2.2f\n", kernel::parameters().simulation_time_scale);
+			}
 		}
 	}
 
@@ -1887,6 +1897,16 @@ Options:
 		uint64_t current_time = platform::microseconds();
 		platform::update(kernel::parameters().framedelta_milliseconds);
 
+		static float accumulator = 0.0f;
+
+		accumulator += kernel::parameters().framedelta_seconds;
+		while (accumulator >= kernel::parameters().step_interval_seconds)
+		{
+			accumulator -= kernel::parameters().step_interval_seconds;
+		}
+
+		kernel::parameters().step_alpha = glm::clamp(static_cast<float>(accumulator / kernel::parameters().step_interval_seconds), 0.0f, 1.0f);
+
 		telemetry_viewer_tick(&tel_viewer, kernel::parameters().framedelta_seconds);
 
 		// while i debug network stuff; don't do this...
@@ -1925,7 +1945,7 @@ Options:
 			animation::update(kernel::parameters().simulation_delta_seconds);
 		}
 
-		render_scene_update(render_scene, &entity_render_state);
+		render_scene_update(render_scene, &entity_render_state, kernel::parameters().step_alpha);
 
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;

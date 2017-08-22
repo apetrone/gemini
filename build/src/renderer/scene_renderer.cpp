@@ -676,7 +676,7 @@ namespace gemini
 				++scene->stat_animated_meshes_drawn;
 
 				// Enable this to debug bone transforms
-#if 0
+#if 1
 				if (mesh->skeleton.size() > 0)
 				{
 					glm::vec3 position; // render position
@@ -685,17 +685,17 @@ namespace gemini
 					const glm::mat4* model_poses = instance->bone_transforms;
 					//const glm::vec3* hitboxes = model_instance->get_hitboxes();
 
-					for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
-					{
-						size_t transform_index = bone_index;
-						const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
-						debugdraw::axes(world_pose, 0.15f, 0.0f);
-					}
-#if 0
+					//for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
+					//{
+					//	size_t transform_index = bone_index;
+					//	const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
+					//	debugdraw::axes(world_pose, 0.15f, 0.0f);
+					//}
+#if 1
 					// draw individual links for each bone to represent the skeleton
 					for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
 					{
-						size_t transform_index = mesh->skeleton.size() + bone_index;
+						size_t transform_index = bone_index;
 						Joint* joint = &mesh->skeleton[bone_index];
 						if (joint->parent_index != -1)
 						{
@@ -766,7 +766,7 @@ namespace gemini
 		device->destroy_serializer(serializer);
 	} // render_sky
 
-	void _render_set_animation_pose(AnimatedMeshComponent* component, animation::Pose& pose)
+	void _render_set_animation_pose(AnimatedMeshComponent* component, const animation::Pose& pose, float alpha)
 	{
 		// You've hit the upper bounds for skeletal bones for a single
 		// model. Congrats.
@@ -780,13 +780,18 @@ namespace gemini
 			return;
 		}
 
+		animation::Pose interpolated_pose;
+
 		for (size_t index = 0; index < mesh->skeleton.size(); ++index)
 		{
 			Joint* joint = &mesh->skeleton[index];
 
+			interpolated_pose.pos[index] = gemini::lerp(component->last_pose.pos[index], pose.pos[index], alpha);
+			interpolated_pose.rot[index] = gemini::slerp(component->last_pose.rot[index], pose.rot[index], alpha);
+
 			glm::mat4 parent_pose;
-			glm::mat4 local_rotation = glm::toMat4(pose.rot[index]);
-			glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), pose.pos[index]);
+			glm::mat4 local_rotation = glm::toMat4(interpolated_pose.rot[index]);
+			glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), interpolated_pose.pos[index]);
 
 			const glm::mat4 local_pose = local_transform * local_rotation;
 			if (joint->parent_index > -1)
@@ -808,9 +813,25 @@ namespace gemini
 			//debugdraw::box(-dims + pos, dims + pos, gemini::Color(0.0f, 1.0f, 1.0f));
 			//debugdraw::axes(glm::mat4(hitbox->rotation) * model_pose, 1.0f, 0.0f);
 		}
+
+		component->last_pose = pose;
 	} // _render_set_animation_pose
 
-	void render_scene_update(RenderScene* scene, EntityRenderState* state)
+
+	//void mix_poses(glm::vec3* p0, glm::quat* r0, glm::vec3* p1, glm::quat* r1, glm::vec3* rpos, glm::quat* rrot, size_t total_bones, float alpha)
+	//{
+	//	for (size_t i = 0; i < total_bones; ++i)
+	//	{
+	//		glm::vec3& position = rpos[i];
+	//		glm::quat& rotation = rrot[i];
+
+	//		position = lerp(p0[i], p1[i], alpha);
+	//		rotation = slerp(r0[i], r1[i], alpha);
+	//	}
+	//}
+
+
+	void render_scene_update(RenderScene* scene, EntityRenderState* state, float step_alpha)
 	{
 		// extract data from static meshes
 		Freelist<StaticMeshComponent*>::Iterator iter = scene->static_meshes.begin();
@@ -835,13 +856,13 @@ namespace gemini
 				// TODO: determine how to get the blended pose; for now just use the first animated instance.
 				animated_instance_get_pose(component->sequence_instances[component->current_sequence_index], pose);
 
-				Mesh* mesh = mesh_from_handle(component->mesh_handle);
-				if (!mesh)
-				{
-					return;
-				}
+				//Mesh* mesh = mesh_from_handle(component->mesh_handle);
+				//if (!mesh)
+				//{
+				//	return;
+				//}
 
-				_render_set_animation_pose(component, pose);
+				_render_set_animation_pose(component, pose, step_alpha);
 			}
 		}
 	} // render_scene_update
