@@ -691,6 +691,7 @@ namespace gemini
 					//	const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
 					//	debugdraw::axes(world_pose, 0.15f, 0.0f);
 					//}
+
 #if 1
 					// draw individual links for each bone to represent the skeleton
 					for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
@@ -786,8 +787,13 @@ namespace gemini
 		{
 			Joint* joint = &mesh->skeleton[index];
 
+#if 1
+			interpolated_pose.pos[index] = pose.pos[index];
+			interpolated_pose.rot[index] = pose.rot[index];
+#else
 			interpolated_pose.pos[index] = gemini::lerp(component->last_pose.pos[index], pose.pos[index], alpha);
 			interpolated_pose.rot[index] = gemini::slerp(component->last_pose.rot[index], pose.rot[index], alpha);
+#endif
 
 			glm::mat4 parent_pose;
 			glm::mat4 local_rotation = glm::toMat4(interpolated_pose.rot[index]);
@@ -856,11 +862,11 @@ namespace gemini
 				// TODO: determine how to get the blended pose; for now just use the first animated instance.
 				animated_instance_get_pose(component->sequence_instances[component->current_sequence_index], pose);
 
-				//Mesh* mesh = mesh_from_handle(component->mesh_handle);
-				//if (!mesh)
-				//{
-				//	return;
-				//}
+				Mesh* mesh = mesh_from_handle(component->mesh_handle);
+				if (!mesh)
+				{
+					return;
+				}
 
 				_render_set_animation_pose(component, pose, step_alpha);
 			}

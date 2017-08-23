@@ -149,31 +149,29 @@ namespace gemini
 				uint32_t next_key = key + 1;
 				if (t_seconds < keyframe->seconds)
 				{
-					return keyframe->value;
-					//if (key == 0)
-					//{
-					//	// can't get previous; lerp forward
-					//	Keyframe* next = &keyframelist->keys[next_key];
-					//	delta = (next->seconds - keyframe->seconds);
-					//	value_a = next->value;
-					//	value_b = keyframe->value;
+					//return keyframe->value;
+					if (key == 0)
+					{
+						// can't get previous; lerp forward
+						Keyframe* next = &keyframelist->keys[next_key];
+						delta = (next->seconds - keyframe->seconds);
+						value_a = next->value;
+						value_b = keyframe->value;
 
-					//	float alpha = (delta / frame_delay_seconds);
-					//	//return gemini::lerp(value_a, value_b, alpha);
-					//	return value_a;
-					//}
-					//else
-					//{
-					//	// This assumes that the animation is evenly sampled
-					//	// across key frames by frame_delay_seconds.
-					//	// If it isn't, we could use
-					//	// (keyframe->seconds - prev_keyframe->seconds) as
-					//	// the denominator instead of frame_delay_seconds.
-					//	//Keyframe* prev_keyframe = &keyframelist->keys[key - 1];
-					//	//float alpha = (t_seconds - prev_keyframe->seconds) / frame_delay_seconds;
-					//	//return gemini::lerp(prev_keyframe->value, keyframe->value, alpha);
-					//	return keyframe->value;
-					//}
+						float alpha = (delta / frame_delay_seconds);
+						return gemini::lerp(value_a, value_b, alpha);
+					}
+					else
+					{
+						// This assumes that the animation is evenly sampled
+						// across key frames by frame_delay_seconds.
+						// If it isn't, we could use
+						// (keyframe->seconds - prev_keyframe->seconds) as
+						// the denominator instead of frame_delay_seconds.
+						Keyframe* prev_keyframe = &keyframelist->keys[key - 1];
+						float alpha = (t_seconds - prev_keyframe->seconds) / frame_delay_seconds;
+						return gemini::lerp(prev_keyframe->value, keyframe->value, alpha);
+					}
 				}
 				else if (last_key == key)
 				{
@@ -376,17 +374,18 @@ namespace gemini
 					Joint* joint = mesh_find_bone_named(mesh, node_name.c_str());
 					assert(joint != 0);
 
-//					LOGV("reading keyframes for bone \"%s\", joint->index = %i\n", joint->name(), joint->index);
-
 					KeyframeList* kfl = &sequence->animation_set[joint->index * ANIMATION_KEYFRAME_VALUES_MAX];
+
+					// When reading the values for each block, we'll keep an
+					// increment of the physical time value so it isn't read
+					// out of the JSON file and rounded.
 
 					// translation
 					{
 //						LOGV("translation keyframes\n");
 						const Json::Value& tr_values = translation_keys["value"];
-						const Json::Value& tr_times = translation_keys["time"];
 
-						assert(!tr_values.isNull() && !tr_times.isNull());
+						assert(!tr_values.isNull());
 
 						// In Json, there are EQUAL entries for each scale/rotation/translation tracks.
 						// This MAY NOT be like this in other formats -- so revisit this later.
@@ -399,21 +398,21 @@ namespace gemini
 						KeyframeList& tz = kfl[2];
 						tz.allocate(total_keys); tz.duration_seconds = duration_seconds.asFloat();
 
+						float t = 0.0f;
 						for (unsigned int index = 0; index < tr_values.size(); ++index)
 						{
 							const Json::Value& value = tr_values[index];
-							const Json::Value& time = tr_times[index];
 
 							float x = value[0].asFloat();
 							float y = value[1].asFloat();
 							float z = value[2].asFloat();
 
-							float t = time.asFloat();
+							t += sequence->frame_delay_seconds;
 
 							tx.set_key(index, t, x);
 							ty.set_key(index, t, y);
 							tz.set_key(index, t, z);
-//							LOGV("t=%2.2f, %g %g %g\n", t, x, y, z);
+//							LOGV("t=%2.2f, %2.2f %2.2f %2.2f\n", t, x, y, z);
 						}
 					}
 
@@ -421,9 +420,8 @@ namespace gemini
 					{
 //						LOGV("rotation keyframes\n");
 						const Json::Value& values = rotation_keys["value"];
-						const Json::Value& times = rotation_keys["time"];
 
-						assert(!values.isNull() && !times.isNull());
+						assert(!values.isNull());
 
 						// In Json, there are EQUAL entries for each scale/rotation/translation tracks.
 						// This MAY NOT be like this in other formats -- so revisit this later.
@@ -438,23 +436,23 @@ namespace gemini
 						KeyframeList& rw = kfl[6];
 						rw.allocate(total_keys); rw.duration_seconds = duration_seconds.asFloat();
 
+						float t = 0.0f;
 						for (unsigned int index = 0; index < values.size(); ++index)
 						{
 							const Json::Value& value = values[index];
-							const Json::Value& time = times[index];
 
 							float x = value[0].asFloat();
 							float y = value[1].asFloat();
 							float z = value[2].asFloat();
 							float w = value[3].asFloat();
 
-							float t = time.asFloat();
+							t += sequence->frame_delay_seconds;
 
 							rx.set_key(index, t, x);
 							ry.set_key(index, t, y);
 							rz.set_key(index, t, z);
 							rw.set_key(index, t, w);
-							//LOGV("t=%2.2f, %g %g %g %g\n", t, x, y, z, w);
+//							LOGV("t=%2.2f, %2.2f %2.2f %2.2f %2.2f\n", t, x, y, z, w);
 						}
 					}
 #endif

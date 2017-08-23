@@ -862,7 +862,6 @@ class GeminiModel(object):
 				#
 				# scale = []
 				# obj["scale"] = {
-				# 	"time": time_values,
 				# 	"value": scale
 				# }
 
@@ -872,7 +871,6 @@ class GeminiModel(object):
 				rotation = []
 				#euler = [] # for debugging
 				obj["rotation"] = {
-					"time": time_values,
 					"value": rotation
 				#	"euler": euler,
 				}
@@ -882,17 +880,12 @@ class GeminiModel(object):
 				#
 				translation = []
 				obj["translation"] = {
-					"time": time_values,
 					"value": translation
 				}
 
 				# set the current frame
 				for frame in range(self.frame_start, self.frame_end):
 					bpy.context.scene.frame_set(frame)
-
-					# populate the time
-					current_time_seconds = (frame / float(scene_fps)) - sequence_time_begin
-					time_values.append(current_time_seconds)
 
 					global_tx = Matrix()
 
