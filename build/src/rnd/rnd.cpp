@@ -10,7 +10,6 @@
 #include <core/datastream.h>
 #include <core/fixedarray.h>
 #include <core/logging.h>
-#include <core/interpolation.h>
 #include <core/mem.h>
 #include <core/stackstring.h>
 #include <core/str.h>

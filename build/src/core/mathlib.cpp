@@ -303,6 +303,72 @@ namespace mathlib
 	} // transform_point
 } // namespace mathlib
 
+namespace gemini
+{
+
+	inline glm::quat custom_slerp(const glm::quat& q1, const glm::quat& q2, float t)
+	{
+		const double SLERP_TOLERANCE = 1.0e-5;
+		glm::quat out;
+		glm::quat q2b;
+
+		float sq1, sq2;
+		float cosom = q1[0] * q2[0] + q1[1] * q2[1] + q1[2] * q2[2] + q1[3] * q2[3];
+
+		if (cosom < 0.0f)
+		{
+			cosom = -cosom;
+			q2b[0] = -q2[0];
+			q2b[1] = -q2[1];
+			q2b[2] = -q2[2];
+			q2b[3] = -q2[3];
+		}
+		else
+		{
+			q2b = q2;
+		}
+
+		if ((1.0f + cosom) > SLERP_TOLERANCE)
+		{
+			if ((1.0f - cosom) > SLERP_TOLERANCE)
+			{
+				float om = (float)acos(cosom);
+				float rsinom = (float)(1.0f / sin(om));
+
+				sq1 = (float)sin((1.0f - t) * om) * rsinom;
+				sq2 = (float)sin(t * om) * rsinom;
+			}
+			else
+			{
+				sq1 = (float)(1.0f - t);
+				sq2 = t;
+			}
+
+			out[3] = sq1 * q1[3] + sq2 * q2b[3];
+			out[0] = sq1 * q1[0] + sq2 * q2b[0];
+			out[1] = sq1 * q1[1] + sq2 * q2b[1];
+			out[2] = sq1 * q1[2] + sq2 * q2b[2];
+		}
+		else
+		{
+			sq1 = (float)sin((1.0f - t) * 0.5f * mathlib::PI);
+			sq2 = (float)sin(t * 0.5f * mathlib::PI);
+
+			out[3] = sq1 * q1[3] + sq2 * q1[2];
+			out[0] = sq1 * q1[0] + sq2 * q1[1];
+			out[1] = sq1 * q1[1] + sq2 * q1[0];
+			out[2] = sq1 * q1[2] + sq2 * q1[3];
+		}
+
+		return out;
+	}
+
+	glm::quat interpolate(const glm::quat& start, const glm::quat& end, float alpha)
+	{
+		return slerp(start, end, alpha);
+	}
+} // namespace gemini
+
 #if 0
 
 // given vertices a, b, and c, find the center of the triangle

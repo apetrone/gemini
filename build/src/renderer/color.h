@@ -25,7 +25,6 @@
 #pragma once
 
 #include <core/typedefs.h>
-#include <core/interpolation.h>
 
 namespace gemini
 {
@@ -47,16 +46,5 @@ namespace gemini
 		float alpha;
 	}; // Color
 
-
-	template <>
-	struct Interpolator<Color>
-	{
-		Color operator()( const Color & start, const Color & end, float t )
-		{
-			return Color( lerp( start.red, end.red, t ),
-						 lerp( start.green, end.green, t ),
-						 lerp( start.blue, end.blue, t ),
-						 lerp( start.alpha, end.alpha, t ) );
-		}
-	}; // Interpolator
+	Color interpolate(const Color& start, const Color& end, float alpha);
 } // namespace gemini

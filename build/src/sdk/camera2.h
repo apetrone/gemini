@@ -27,7 +27,6 @@
 #include <core/mathlib.h>
 #include <core/typedefs.h>
 #include <renderer/color.h>
-#include <core/interpolation.h>
 #include <runtime/debugvar.h>
 #include <runtime/runtime.h>
 

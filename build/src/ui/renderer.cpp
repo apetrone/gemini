@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 #include "ui/renderer.h"
 #include "ui/compositor.h"
+#include <core/mathlib.h>
 
 namespace gui
 {

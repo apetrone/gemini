@@ -212,6 +212,38 @@ namespace mathlib
 	glm::vec3 transform_point(const glm::mat4& matrix, const glm::vec3& point);
 } // namespace mathlib
 
+namespace gemini
+{
+	template <class Type>
+	Type lerp(const Type & a, const Type & b, float t)
+	{
+		return glm::mix(a, b, t);
+	}
+
+	inline glm::quat custom_slerp(const glm::quat& q1, const glm::quat& q2, float t);
+
+	template <class Type>
+	Type slerp(const Type & a, const Type & b, float t)
+	{
+		return custom_slerp(a, b, t);
+
+		// glm::mix has a bug where if the angles of the quaternions are too close;
+		// they 'mix' to an invalid quaternion (NaN, NaN, NaN, NaN)
+		//return glm::mix( a, b, t );
+
+		// Groovounet: If you need a slerp that always take the short path, let me recommend to you to use shortMix.
+		//return glm::shortMix(a, b, t);
+	}
+
+	template <class T>
+	T interpolate(const T& start, const T& end, float alpha)
+	{
+		return lerp(start, end, alpha);
+	}
+
+	glm::quat interpolate(const glm::quat& start, const glm::quat& end, float alpha);
+} // namespace gemini
+
 #if 0
 struct Segment
 {

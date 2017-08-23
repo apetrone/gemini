@@ -26,7 +26,6 @@
 
 #include <core/mathlib.h>
 #include <core/typedefs.h>
-#include <core/interpolation.h>
 #include <core/logging.h>
 
 #include <renderer/debug_draw.h>

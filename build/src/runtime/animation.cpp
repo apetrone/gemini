@@ -28,7 +28,6 @@
 #include <core/mem.h>
 #include <core/linearfreelist.h>
 #include <core/logging.h>
-#include <core/interpolation.h>
 #include <core/mathlib.h>
 #include <core/stackstring.h>
 
@@ -43,8 +42,6 @@
 
 
 #include <vector>
-
-using gemini::animation::Keyframe;
 
 using namespace platform;
 
@@ -76,32 +73,37 @@ namespace gemini
 		// KeyframeList
 		//
 
-		KeyframeList::KeyframeList(gemini::Allocator& _allocator)
+		template <class T>
+		KeyframeList<T>::KeyframeList(gemini::Allocator& _allocator)
 			: allocator(_allocator)
-			, keys(0)
+			, keys(nullptr)
 			, total_keys(0)
 			, duration_seconds(0.0f)
 		{
 		}
 
-		KeyframeList::~KeyframeList()
+		template <class T>
+		KeyframeList<T>::~KeyframeList()
 		{
 			deallocate();
 		}
 
-		void KeyframeList::allocate(size_t key_count)
+		template <class T>
+		void KeyframeList<T>::allocate(size_t key_count)
 		{
 			total_keys = static_cast<uint32_t>(key_count);
-			keys = MEMORY2_NEW_ARRAY(Keyframe, allocator, total_keys);
+			keys = MEMORY2_NEW_ARRAY(Keyframe<T>, allocator, total_keys);
 		}
 
-		void KeyframeList::deallocate()
+		template <class T>
+		void KeyframeList<T>::deallocate()
 		{
 			MEMORY2_DELETE_ARRAY(allocator, keys);
 			total_keys = 0;
 		}
 
-		void KeyframeList::set_key(const size_t index, const float seconds, const float value)
+		template <class T>
+		void KeyframeList<T>::set_key(const size_t index, const float seconds, const T& value)
 		{
 			keys[index].seconds = seconds;
 			keys[index].value = value;
@@ -111,26 +113,30 @@ namespace gemini
 		// Channel
 		//
 
-		Channel::Channel(float* target, bool should_wrap)
+		template <class T>
+		Channel<T>::Channel(float* target, bool should_wrap)
 		{
 			keyframelist = 0;
 			wrap = should_wrap;
 		}
 
-		Channel::~Channel()
+		template <class T>
+		Channel<T>::~Channel()
 		{
 		}
 
-		void Channel::set_keyframe_list(KeyframeList* source_keyframe_list)
+		template <class T>
+		void Channel<T>::set_keyframe_list(KeyframeList<T>* source_keyframe_list)
 		{
 			keyframelist = source_keyframe_list;
 		}
 
-		float Channel::evaluate(float t_seconds, float frame_delay_seconds) const
+		template <class T>
+		T Channel<T>::evaluate(float t_seconds, float frame_delay_seconds) const
 		{
 			if (keyframelist->duration_seconds == 0)
 			{
-				return 0.0f;
+				return T();
 			}
 
 			uint32_t last_key = (keyframelist->total_keys - 1);
@@ -138,14 +144,14 @@ namespace gemini
 			// TODO: Perform a direct lookup into the array with some math.
 			// this hasn't been a performance problem yet, fix it when it comes up.
 			float delta;
-			float value_a;
-			float value_b;
+			T value_a;
+			T value_b;
 			for (uint32_t key = 0; key < keyframelist->total_keys; ++key)
 			{
 				// alpha is calculated by dividing the deltas: (a/b)
 				// a. The delta between the current simulation time and the last key frame's time
 				// b. The delta between the next key frame's time and the last key frame's time.
-				Keyframe* keyframe = &keyframelist->keys[key];
+				gemini::animation::Keyframe<T>* keyframe = &keyframelist->keys[key];
 				uint32_t next_key = key + 1;
 				if (t_seconds < keyframe->seconds)
 				{
@@ -153,13 +159,11 @@ namespace gemini
 					if (key == 0)
 					{
 						// can't get previous; lerp forward
-						Keyframe* next = &keyframelist->keys[next_key];
+						gemini::animation::Keyframe<T>* next = &keyframelist->keys[next_key];
 						delta = (next->seconds - keyframe->seconds);
 						value_a = next->value;
 						value_b = keyframe->value;
-
-						float alpha = (delta / frame_delay_seconds);
-						return gemini::lerp(value_a, value_b, alpha);
+						return gemini::interpolate(value_a, value_b, (delta / frame_delay_seconds));
 					}
 					else
 					{
@@ -168,9 +172,9 @@ namespace gemini
 						// If it isn't, we could use
 						// (keyframe->seconds - prev_keyframe->seconds) as
 						// the denominator instead of frame_delay_seconds.
-						Keyframe* prev_keyframe = &keyframelist->keys[key - 1];
+						gemini::animation::Keyframe<T>* prev_keyframe = &keyframelist->keys[key - 1];
 						float alpha = (t_seconds - prev_keyframe->seconds) / frame_delay_seconds;
-						return gemini::lerp(prev_keyframe->value, keyframe->value, alpha);
+						return gemini::interpolate(prev_keyframe->value, keyframe->value, alpha);
 					}
 				}
 				else if (last_key == key)
@@ -178,18 +182,19 @@ namespace gemini
 					// next key would wrap: We may just be able to
 					// return the last/first value.
 					next_key = 0;
-					Keyframe* next = &keyframelist->keys[last_key];
+					gemini::animation::Keyframe<T>* next = &keyframelist->keys[last_key];
 					return next->value;
 				}
 			}
 
-			return 0.0f;
+			return T();
 		} // evaluate
 
 		// Sequence
 		Sequence::Sequence(gemini::Allocator& _allocator)
 			: allocator(_allocator)
-			, animation_set(allocator)
+			, translations(allocator)
+			, rotations(allocator)
 		{
 		}
 
@@ -197,15 +202,17 @@ namespace gemini
 		AnimatedInstance::AnimatedInstance(gemini::Allocator& allocator)
 			: local_time_seconds(0.0)
 			, flags(Flags::Idle)
-			, animation_set(allocator)
-			, channel_set(allocator)
+			, translations(allocator)
+			, rotations(allocator)
+			, translation_channel(allocator)
+			, rotation_channel(allocator)
 		{
 		}
 
 		AnimatedInstance::~AnimatedInstance()
 		{
-			animation_set.clear();
-			channel_set.clear();
+			translation_channel.clear();
+			rotation_channel.clear();
 		}
 
 		void AnimatedInstance::initialize(Sequence* sequence)
@@ -213,13 +220,18 @@ namespace gemini
 			sequence_index = sequence->index;
 
 			// reserve enough space
-			animation_set.allocate(sequence->animation_set.size());
-			channel_set.allocate(sequence->animation_set.size());
-
-			for (size_t index = 0; index < sequence->animation_set.size(); ++index)
+			translation_channel.allocate(sequence->translations.size());
+			for (size_t bone_index = 0; bone_index < sequence->translations.size(); ++bone_index)
 			{
-				Channel& channel = channel_set[index];
-				channel.set_keyframe_list(&sequence->animation_set[index]);
+				Channel<glm::vec3>& channel = translation_channel[bone_index];
+				channel.set_keyframe_list(&sequence->translations[bone_index]);
+			}
+
+			rotation_channel.allocate(sequence->rotations.size());
+			for (size_t bone_index = 0; bone_index < sequence->rotations.size(); ++bone_index)
+			{
+				Channel<glm::quat>& channel = rotation_channel[bone_index];
+				channel.set_keyframe_list(&sequence->rotations[bone_index]);
 			}
 		}
 
@@ -356,7 +368,8 @@ namespace gemini
 				LOGV("frames_per_second = %i (frame delay = %2.2f)\n", fps_rate, sequence->frame_delay_seconds);
 
 				// 1. allocate enough space for each bone
-				sequence->animation_set.allocate(bones_array.size() * ANIMATION_KEYFRAME_VALUES_MAX, KeyframeList(sequence->allocator));
+				sequence->translations.allocate(bones_array.size(), KeyframeList<glm::vec3>(sequence->allocator));
+				sequence->rotations.allocate(bones_array.size(), KeyframeList<glm::quat>(sequence->allocator));
 
 				Json::ValueIterator node_iter = bones_array.begin();
 				size_t node_index = 0;
@@ -374,8 +387,6 @@ namespace gemini
 					Joint* joint = mesh_find_bone_named(mesh, node_name.c_str());
 					assert(joint != 0);
 
-					KeyframeList* kfl = &sequence->animation_set[joint->index * ANIMATION_KEYFRAME_VALUES_MAX];
-
 					// When reading the values for each block, we'll keep an
 					// increment of the physical time value so it isn't read
 					// out of the JSON file and rounded.
@@ -391,14 +402,10 @@ namespace gemini
 						// This MAY NOT be like this in other formats -- so revisit this later.
 						int total_keys = tr_values.size();
 
-						KeyframeList& tx = kfl[0];
-						tx.allocate(total_keys); tx.duration_seconds = duration_seconds.asFloat();
-						KeyframeList& ty = kfl[1];
-						ty.allocate(total_keys); ty.duration_seconds = duration_seconds.asFloat();
-						KeyframeList& tz = kfl[2];
-						tz.allocate(total_keys); tz.duration_seconds = duration_seconds.asFloat();
+						KeyframeList<glm::vec3>* translation = &sequence->translations[joint->index];
+						translation->allocate(tr_values.size());
+						translation->duration_seconds = duration_seconds.asFloat();
 
-						float t = 0.0f;
 						for (unsigned int index = 0; index < tr_values.size(); ++index)
 						{
 							const Json::Value& value = tr_values[index];
@@ -407,11 +414,9 @@ namespace gemini
 							float y = value[1].asFloat();
 							float z = value[2].asFloat();
 
-							t += sequence->frame_delay_seconds;
+							const float time_seconds = (sequence->frame_delay_seconds * index);
 
-							tx.set_key(index, t, x);
-							ty.set_key(index, t, y);
-							tz.set_key(index, t, z);
+							translation->set_key(index, time_seconds, glm::vec3(x, y, z));
 //							LOGV("t=%2.2f, %2.2f %2.2f %2.2f\n", t, x, y, z);
 						}
 					}
@@ -427,16 +432,10 @@ namespace gemini
 						// This MAY NOT be like this in other formats -- so revisit this later.
 						int total_keys = values.size();
 
-						KeyframeList& rx = kfl[3];
-						rx.allocate(total_keys); rx.duration_seconds = duration_seconds.asFloat();
-						KeyframeList& ry = kfl[4];
-						ry.allocate(total_keys); ry.duration_seconds = duration_seconds.asFloat();
-						KeyframeList& rz = kfl[5];
-						rz.allocate(total_keys); rz.duration_seconds = duration_seconds.asFloat();
-						KeyframeList& rw = kfl[6];
-						rw.allocate(total_keys); rw.duration_seconds = duration_seconds.asFloat();
+						KeyframeList<glm::quat>* rotation = &sequence->rotations[joint->index];
+						rotation->allocate(values.size());
+						rotation->duration_seconds = duration_seconds.asFloat();
 
-						float t = 0.0f;
 						for (unsigned int index = 0; index < values.size(); ++index)
 						{
 							const Json::Value& value = values[index];
@@ -446,12 +445,9 @@ namespace gemini
 							float z = value[2].asFloat();
 							float w = value[3].asFloat();
 
-							t += sequence->frame_delay_seconds;
+							const float time_seconds = (sequence->frame_delay_seconds * index);
 
-							rx.set_key(index, t, x);
-							ry.set_key(index, t, y);
-							rz.set_key(index, t, z);
-							rw.set_key(index, t, w);
+							rotation->set_key(index, time_seconds, glm::quat(w, x, y, z));
 //							LOGV("t=%2.2f, %2.2f %2.2f %2.2f %2.2f\n", t, x, y, z, w);
 						}
 					}
@@ -473,6 +469,7 @@ namespace gemini
 			}
 
 			Sequence* sequence = MEMORY2_NEW(allocator, Sequence)(allocator);
+			sequence->index = -1;
 			platform::PathString filepath = name;
 			filepath.append(".animation");
 			AnimationSequenceLoadData data;
@@ -595,7 +592,7 @@ namespace gemini
 			const glm::vec2 origin(10.0f, 30.0f);
 #endif
 
-			const size_t total_joints = instance->animation_set.size() / ANIMATION_KEYFRAME_VALUES_MAX;
+			const size_t total_joints = instance->rotation_channel.size();
 
 			// If you hit this, there are more joints than expected in this animation_set.
 			assert(total_joints < MAX_BONES);
@@ -606,25 +603,10 @@ namespace gemini
 
 			for (size_t bone_index = 0; bone_index < total_joints; ++bone_index)
 			{
-				animation::Channel* channel = &instance->channel_set[bone_index * ANIMATION_KEYFRAME_VALUES_MAX];
-
-				const animation::Channel& tx = channel[0];
-				const animation::Channel& ty = channel[1];
-				const animation::Channel& tz = channel[2];
-				glm::vec3& pos = pose.pos[bone_index];
-				pos = glm::vec3(tx.evaluate(instance->local_time_seconds, frame_delay_seconds),
-								ty.evaluate(instance->local_time_seconds, frame_delay_seconds),
-								tz.evaluate(instance->local_time_seconds, frame_delay_seconds));
-
-				const animation::Channel& rx = channel[3];
-				const animation::Channel& ry = channel[4];
-				const animation::Channel& rz = channel[5];
-				const animation::Channel& rw = channel[6];
-				glm::quat& rot = pose.rot[bone_index];
-				rot = glm::quat(rw.evaluate(instance->local_time_seconds, frame_delay_seconds),
-								rx.evaluate(instance->local_time_seconds, frame_delay_seconds),
-								ry.evaluate(instance->local_time_seconds, frame_delay_seconds),
-								rz.evaluate(instance->local_time_seconds, frame_delay_seconds));
+				animation::Channel<glm::vec3>* translation_channel = &instance->translation_channel[bone_index];
+				animation::Channel<glm::quat>* rotation_channel = &instance->rotation_channel[bone_index];
+				pose.pos[bone_index] = translation_channel->evaluate(instance->local_time_seconds, frame_delay_seconds);
+				pose.rot[bone_index] = rotation_channel->evaluate(instance->local_time_seconds, frame_delay_seconds);
 
 #if defined(GEMINI_DEBUG_BONES)
 				debugdraw::text(origin.x,
@@ -636,15 +618,6 @@ namespace gemini
 #endif
 			}
 		} // animation_instance_get_pose
-
-		//void animation_interpolate_pose(Pose& out, Pose& last_pose, Pose& curr_pose, float t)
-		//{
-		//	for (size_t index = 0; index < MAX_BONES; ++index)
-		//	{
-		//		out.pos[index] = lerp(last_pose.pos[index], curr_pose.pos[index], t);
-		//		out.rot[index] = slerp(last_pose.rot[index], curr_pose.rot[index], t);
-		//	}
-		//} // animation_interpolate_pose
 
 	} // namespace animation
 } // namespace gemini

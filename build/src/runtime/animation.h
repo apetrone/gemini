@@ -37,22 +37,24 @@ namespace gemini
 	struct Allocator;
 	struct Mesh;
 
-	const size_t ANIMATION_KEYFRAME_VALUES_MAX = 7;
-
 	namespace animation
 	{
-		struct Keyframe
+		#pragma push pack(16)
+		template <class T>
+		struct PLATFORM_ALIGN(16) Keyframe
 		{
 			// absolute time for the keyframe
 			float seconds;
 
 			// value at seconds
-			float value;
+			T value;
 		}; // Keyframe
+		#pragma pop
 
+		template <class T>
 		struct KeyframeList
 		{
-			Keyframe* keys;
+			Keyframe<T>* keys;
 			uint32_t total_keys;
 			float duration_seconds;
 			gemini::Allocator& allocator;
@@ -62,16 +64,17 @@ namespace gemini
 
 			void allocate(size_t key_count);
 			void deallocate();
-			void set_key(const size_t index, const float seconds, const float value);
+			void set_key(const size_t index, const float seconds, const T& value);
 		}; // KeyframeList
 
 		// This contains a stateful representation of a KeyframeList.
 		// It only uses the key frame list as a source of data.
+		template <class T>
 		class Channel
 		{
 		private:
 			// source key frame list
-			KeyframeList* keyframelist;
+			KeyframeList<T>* keyframelist;
 
 			// is this a loopable anim; if so, we ignore the last keyframe and wrap
 			// because keyframe[first] == keyframe[last]
@@ -81,10 +84,10 @@ namespace gemini
 			Channel(float* target = 0, bool should_wrap = true);
 			~Channel();
 
-			void set_keyframe_list(KeyframeList* source_keyframe_list);
+			void set_keyframe_list(KeyframeList<T>* source_keyframe_list);
 
 			// evaluate this channel at time t_seconds
-			float evaluate(float t_seconds, float frame_delay_seconds) const;
+			T evaluate(float t_seconds, float frame_delay_seconds) const;
 		}; // Channel
 
 
@@ -109,7 +112,8 @@ namespace gemini
 			SequenceId index;
 			gemini::Allocator& allocator;
 
-			FixedArray<KeyframeList> animation_set;
+			FixedArray<KeyframeList<glm::vec3>> translations;
+			FixedArray<KeyframeList<glm::quat>> rotations;
 
 			Sequence(gemini::Allocator& allocator);
 		}; // Sequence
@@ -126,8 +130,11 @@ namespace gemini
 			SequenceId index;
 			float local_time_seconds;
 			SequenceId sequence_index;
-			FixedArray<float> animation_set;
-			FixedArray<Channel> channel_set;
+			FixedArray<glm::vec3> translations;
+			FixedArray<glm::quat> rotations;
+			FixedArray<Channel<glm::vec3>> translation_channel;
+			FixedArray<Channel<glm::quat>> rotation_channel;
+
 			Flags flags;
 
 			AnimatedInstance(gemini::Allocator& allocator);

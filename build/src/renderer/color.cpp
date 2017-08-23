@@ -23,7 +23,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include <core/typedefs.h>
+#include <core/mathlib.h>
 #include <renderer/color.h>
+
 
 namespace gemini
 {
@@ -105,5 +107,13 @@ namespace gemini
 	bool Color::operator==(const Color& other) const
 	{
 		return (red == other.red) && (green == other.green) && (blue == other.blue) && (alpha == other.alpha);
+	}
+
+	Color interpolate(const Color& start, const Color& end, float alpha)
+	{
+		return Color(lerp(start.red, end.red, alpha),
+			lerp(start.green, end.green, alpha),
+			lerp(start.blue, end.blue, alpha),
+			lerp(start.alpha, end.alpha, alpha));
 	}
 } // namespace gemini

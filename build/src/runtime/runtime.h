@@ -28,9 +28,7 @@
 #include <core/util.h> // for std::function
 #include <platform/platform.h>
 
-// TODO: for test slerp: move this elsewhere
 #include <core/mathlib.h>
-#include <core/interpolation.h>
 
 #include <renderer/renderer.h>
 
