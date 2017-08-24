@@ -837,10 +837,8 @@ public:
 		// update the timeline with the new animation
 		if (timeline)
 		{
-			timeline->set_frame(0);
 			uint32_t total_frames = render_scene_animation_total_frames(render_scene, animated_mesh, mesh_animation_index);
-
-			LOGV("total frames: %i\n", total_frames);
+			timeline->set_frame(0);
 			timeline->set_frame_range(0, total_frames);
 		}
 	}
@@ -1426,9 +1424,14 @@ Options:
 			//camera.set_pitch(31.65f);
 
 			// test for rendering cubes
-			camera.set_position(glm::vec3(-2.10f, 1.24f, 1.10f));
-			camera.set_yaw(71.70f);
-			camera.set_pitch(12.45f);
+			//camera.set_position(glm::vec3(-2.10f, 1.24f, 1.10f));
+			//camera.set_yaw(71.70f);
+			//camera.set_pitch(12.45f);
+
+			// test for rendering cube_rig2
+			camera.set_position(glm::vec3(-1.51, 3.67f, 1.21f));
+			camera.set_yaw(52.35f);
+			camera.set_pitch(48.90f);
 
 			camera.set_type(Camera::FIRST_PERSON);
 			camera.update_view();
@@ -1930,18 +1933,6 @@ Options:
 		notify_client_tick(&notify_client);
 		tick_queued_asset_changes(*queued_asset_changes, kernel::parameters().framedelta_seconds);
 
-		// See if we need to poke the animated mesh.
-		if (animated_mesh != 0)
-		{
-			if (render_scene_animation_finished(render_scene, animated_mesh))
-			{
-				if (enable_animation)
-				{
-					mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
-				}
-			}
-		}
-
 		if (enable_animation)
 		{
 			// TODO: update the timeline
@@ -1955,6 +1946,18 @@ Options:
 		}
 
 		render_scene_update(render_scene, &entity_render_state, kernel::parameters().step_alpha);
+
+		// See if we need to poke the animated mesh.
+		if (animated_mesh != 0)
+		{
+			if (render_scene_animation_finished(render_scene, animated_mesh))
+			{
+				if (enable_animation)
+				{
+					mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
+				}
+			}
+		}
 
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
