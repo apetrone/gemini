@@ -769,7 +769,7 @@ namespace gemini
 		device->destroy_serializer(serializer);
 	} // render_sky
 
-	void _render_set_animation_pose(AnimatedMeshComponent* component, const animation::Pose& pose, float alpha)
+	void _render_set_animation_pose(RenderScene* scene, AnimatedMeshComponent* component, const animation::Pose& pose, float alpha)
 	{
 		// You've hit the upper bounds for skeletal bones for a single
 		// model. Congrats.
@@ -789,13 +789,16 @@ namespace gemini
 		{
 			Joint* joint = &mesh->skeleton[index];
 
-#if 0
-			interpolated_pose.pos[index] = pose.pos[index];
-			interpolated_pose.rot[index] = pose.rot[index];
-#else
-			interpolated_pose.pos[index] = gemini::lerp(component->last_pose.pos[index], pose.pos[index], alpha);
-			interpolated_pose.rot[index] = gemini::slerp(component->last_pose.rot[index], pose.rot[index], alpha);
-#endif
+			if (scene->interpolate_animated_poses)
+			{
+				interpolated_pose.pos[index] = gemini::lerp(component->last_pose.pos[index], pose.pos[index], alpha);
+				interpolated_pose.rot[index] = gemini::slerp(component->last_pose.rot[index], pose.rot[index], alpha);
+			}
+			else
+			{
+				interpolated_pose.pos[index] = pose.pos[index];
+				interpolated_pose.rot[index] = pose.rot[index];
+			}
 
 			glm::mat4 parent_pose;
 			glm::mat4 local_rotation = glm::toMat4(interpolated_pose.rot[index]);
@@ -870,7 +873,7 @@ namespace gemini
 					return;
 				}
 
-				_render_set_animation_pose(component, pose, step_alpha);
+				_render_set_animation_pose(scene, component, pose, step_alpha);
 			}
 		}
 	} // render_scene_update
