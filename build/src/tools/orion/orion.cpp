@@ -822,12 +822,14 @@ public:
 			else if (event.key == BUTTON_MINUS)
 			{
 				kernel::parameters().simulation_time_scale -= 0.1f;
-				LOGV("set scale to %2.2f\n", kernel::parameters().simulation_time_scale);
+				kernel::parameters().simulation_time_scale = glm::clamp(kernel::parameters().simulation_time_scale, 0.0f, 3.0f);
+				LOGV("set timescale to %2.2f\n", kernel::parameters().simulation_time_scale);
 			}
 			else if (event.key == BUTTON_PLUS)
 			{
 				kernel::parameters().simulation_time_scale += 0.1f;
-				LOGV("set scale to %2.2f\n", kernel::parameters().simulation_time_scale);
+				kernel::parameters().simulation_time_scale = glm::clamp(kernel::parameters().simulation_time_scale, 0.0f, 3.0f);
+				LOGV("set timescale to %2.2f\n", kernel::parameters().simulation_time_scale);
 			}
 		}
 	}
