@@ -415,7 +415,6 @@ namespace gemini
 
 	void model_config_handler(TextFileContext* context, const gemini::string& line, void* user_data)
 	{
-		LOGV("line=%s\n", line.c_str());
 		ModelConfigBlock* block = reinterpret_cast<ModelConfigBlock*>(user_data);
 
 		Array<gemini::string> pieces(*context->allocator);
