@@ -132,7 +132,7 @@ namespace gemini
 		}
 
 		template <class T>
-		T Channel<T>::evaluate(float t_seconds, float frame_delay_seconds) const
+		T Channel<T>::evaluate(float t_seconds, float frame_delay_seconds, bool looping) const
 		{
 			if (keyframelist->duration_seconds == 0)
 			{
@@ -155,7 +155,6 @@ namespace gemini
 				uint32_t next_key = key + 1;
 				if (t_seconds < keyframe->seconds)
 				{
-					//return keyframe->value;
 					//if (key == 0)
 					//{
 					//	// can't get previous; lerp forward
@@ -182,10 +181,12 @@ namespace gemini
 					// if the animation loops, we must do this lerp.
 					// next key would wrap: We may just be able to
 					// return the last/first value.
-					//next_key = 0;
-					//gemini::animation::Keyframe<T>* first_keyframe = &keyframelist->keys[next_key];
-					//gemini::animation::Keyframe<T>* last_keyframe = &keyframelist->keys[last_key];
-					//return gemini::interpolate(last_keyframe->value, first_keyframe->value, ((t_seconds - last_keyframe->seconds) / frame_delay_seconds));
+					if (looping)
+					{
+						gemini::animation::Keyframe<T>* first_keyframe = &keyframelist->keys[0];
+						gemini::animation::Keyframe<T>* last_keyframe = &keyframelist->keys[last_key];
+						return gemini::interpolate(last_keyframe->value, first_keyframe->value, ((t_seconds - last_keyframe->seconds) / frame_delay_seconds));
+					}
 
 					// if the animation doesn't loop. this is fine.
 					return keyframe->value;
@@ -242,19 +243,17 @@ namespace gemini
 
 		void AnimatedInstance::advance(float delta_seconds)
 		{
-			if (flags == Flags::Playing)
-			{
-				local_time_seconds += delta_seconds;
-			}
+			local_time_seconds += delta_seconds;
 
 			Sequence* sequence = animation::get_sequence_by_index(sequence_index);
 			assert(sequence != 0);
 
 			if (local_time_seconds > sequence->duration_seconds)
 			{
-				// If aniumation is looping
-				//local_time_seconds -= sequence->duration_seconds;
-				// else
+				if (sequence->looping)
+				{
+					local_time_seconds = 0;
+				}
 				flags = Flags::Finished;
 			}
 		}
@@ -479,13 +478,16 @@ namespace gemini
 
 			Sequence* sequence = MEMORY2_NEW(allocator, Sequence)(allocator);
 			sequence->index = -1;
+			sequence->looping = 0;
 			platform::PathString filepath = name;
 			filepath.append(".animation");
+
 			AnimationSequenceLoadData data;
 			data.mesh = mesh;
 			data.sequence = sequence;
 			sequence->name = name;
-			LOGV("loading animation %s\n", filepath());
+			LOGV("loading animation \"%s\"\n", filepath());
+
 			if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(filepath(), detail::load_animation_from_json, &data, true))
 			{
 				sequence->index = _animation_state->sequences.acquire();
@@ -610,12 +612,13 @@ namespace gemini
 			assert(sequence);
 			float frame_delay_seconds = sequence->frame_delay_seconds;
 
+
 			for (size_t bone_index = 0; bone_index < total_joints; ++bone_index)
 			{
 				animation::Channel<glm::vec3>* translation_channel = &instance->translation_channel[bone_index];
 				animation::Channel<glm::quat>* rotation_channel = &instance->rotation_channel[bone_index];
-				pose.pos[bone_index] = translation_channel->evaluate(instance->local_time_seconds, frame_delay_seconds);
-				pose.rot[bone_index] = rotation_channel->evaluate(instance->local_time_seconds, frame_delay_seconds);
+				pose.pos[bone_index] = translation_channel->evaluate(instance->local_time_seconds, frame_delay_seconds, sequence->looping);
+				pose.rot[bone_index] = rotation_channel->evaluate(instance->local_time_seconds, frame_delay_seconds, sequence->looping);
 
 #if defined(GEMINI_DEBUG_BONES)
 				debugdraw::text(origin.x,

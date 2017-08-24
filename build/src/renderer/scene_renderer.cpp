@@ -299,7 +299,6 @@ namespace gemini
 		{
 			return instance->is_finished();
 		}
-
 		return false;
 	}
 
@@ -311,8 +310,11 @@ namespace gemini
 
 		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
 		animation::AnimatedInstance* instance = component->sequence_instances[instance_id];
-		// TODO: implement is playing!
-		assert(0);
+		assert(instance);
+		if (instance)
+		{
+			return instance->is_playing();
+		}
 		return false;
 	}
 

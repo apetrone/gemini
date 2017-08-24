@@ -87,7 +87,8 @@ namespace gemini
 			void set_keyframe_list(KeyframeList<T>* source_keyframe_list);
 
 			// evaluate this channel at time t_seconds
-			T evaluate(float t_seconds, float frame_delay_seconds) const;
+			// behavior will vary based on whether or not the animation is looping.
+			T evaluate(float t_seconds, float frame_delay_seconds, bool looping = false) const;
 		}; // Channel
 
 
@@ -107,6 +108,8 @@ namespace gemini
 			// length of this sequence in seconds
 			float duration_seconds;
 			float frame_delay_seconds;
+
+			uint32_t looping;
 
 			core::StackString<64> name;
 			SequenceId index;
