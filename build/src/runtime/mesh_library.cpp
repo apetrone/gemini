@@ -35,6 +35,9 @@
 #include <core/logging.h>
 #include <core/mem.h>
 
+#include <runtime/text_parser.h>
+#include <core/serialization.h>
+
 //#include "assets.h" // for materials
 //#include "assets/asset_mesh.h"
 
@@ -403,6 +406,54 @@ namespace gemini
 	} // collect_scene_Data
 
 
+	struct ModelConfigBlock
+	{
+		gemini::Mesh* mesh;
+		animation::Sequence* sequence;
+		uint32_t looping;
+	};
+
+	void model_config_handler(TextFileContext* context, const gemini::string& line, void* user_data)
+	{
+		LOGV("line=%s\n", line.c_str());
+		ModelConfigBlock* block = reinterpret_cast<ModelConfigBlock*>(user_data);
+
+		Array<gemini::string> pieces(*context->allocator);
+		string_split_lines(*context->allocator, pieces, line, ":");
+		if (pieces.size() < 2)
+		{
+			LOGV("Error parsing line %i; expecting key=value\n", context->current_line);
+			return;
+		}
+
+		const gemini::string& key = pieces[0];
+		const gemini::string& value = pieces[1];
+		if (key == "animation")
+		{
+			// TODO: Set data on animation sequence name.
+			animation::SequenceId index = block->mesh->sequence_index_by_name[key.c_str()];
+			animation::Sequence* sequence = animation::get_sequence_by_index(index);
+			assert(sequence);
+			block->sequence = sequence;
+		}
+		else
+		{
+			if (!block->sequence)
+			{
+				LOGW("Trying to set parameter \"%s\" without specifying which sequence.\n", key);
+				return;
+			}
+			else
+			{
+				if (key == "looping")
+				{
+					uint32_t loop_value = atoi(value.c_str());
+					block->sequence->looping = loop_value;
+				}
+			}
+		}
+	}
+
 	core::util::ConfigLoadStatus load_json_model(const Json::Value& root, void* data)
 	{
 		MeshLibrary::LoadState* load_state = reinterpret_cast<MeshLibrary::LoadState*>(data);
@@ -477,6 +528,29 @@ namespace gemini
 				assert(basename.size() < 32);
 				mesh->sequence_index_by_name[basename()] = animation_index;
 			}
+		}
+
+		// Determine if there's a model config file.
+		// This holds metadata for animations and other bits of information
+		// that I haven't figured out a better place to store them yet.
+		platform::PathString config_file_uri = load_state->asset_uri.dirname();
+		config_file_uri.append(PATH_SEPARATOR_STRING);
+		config_file_uri.append("model.conf");
+		TextFileContext context(*load_state->allocator);
+		if (text_context_from_file(&context, config_file_uri()) == 0)
+		{
+			const size_t STRING_MEM_SIZE = 4096;
+			char string_mem[STRING_MEM_SIZE];
+			gemini::Allocator string_allocator = gemini::memory_allocator_linear(gemini::MEMORY_ZONE_DEFAULT, string_mem, STRING_MEM_SIZE);
+			context.allocator = &string_allocator;
+			context.line_handler = model_config_handler;
+
+			ModelConfigBlock block;
+			block.mesh = mesh;
+			block.sequence = nullptr;
+
+			text_read_lines(&context, &block);
+			LOGV("read \"%s\"; %i lines\n", config_file_uri(), context.current_line);
 		}
 
 		// try loading embedded collision geometry

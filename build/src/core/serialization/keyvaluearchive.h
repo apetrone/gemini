@@ -24,7 +24,6 @@
 // -------------------------------------------------------------
 #pragma once
 
-
 #include <core/hashset.h>
 #include <core/logging.h>
 #include <core/mathlib.h>
@@ -67,12 +66,55 @@ namespace gemini
 			string_destroy(allocator, current_field_name);
 		}
 
-
 		template <class T>
 		void load(T& value)
 		{
 			// If you hit this, then the archive couldn't resolve the correct type.
 			assert(0);
+		}
+
+		void load(uint32_t& value)
+		{
+			if (items.has_key(current_field_name))
+			{
+				gemini::string field_value = items.get(current_field_name);
+				value = static_cast<uint32_t>(atoi(field_value.c_str()));
+			}
+		}
+
+		void load(float& value)
+		{
+			if (items.has_key(current_field_name))
+			{
+				gemini::string field_value = items.get(current_field_name);
+				value = static_cast<float>(atof(field_value.c_str()));
+			}
+		}
+
+		void load(char*& value)
+		{
+			if (items.has_key(current_field_name))
+			{
+				gemini::string field_value = items.get(current_field_name);
+				value = new char[field_value.size() + 1];
+				value[field_value.size()] = '\0';
+				core::str::copy(value, field_value.string_data, field_value.string_data_size);
+			}
+		}
+
+		void load(glm::vec4& value)
+		{
+			if (items.has_key(current_field_name))
+			{
+				gemini::string field_value = items.get(current_field_name);
+				int results = sscanf(field_value.c_str(),
+					"%f %f %f %f",
+					&value.x, &value.y, &value.z, &value.w);
+				if (results < 4)
+				{
+					LOGV("Error reading vec4.\n");
+				}
+			}
 		}
 
 	private:
@@ -87,54 +129,4 @@ namespace gemini
 
 		KeyValueArchive& operator=(const KeyValueArchive& other) = delete;
 	}; // KeyValueArchive
-
-
-	template <>
-	void KeyValueArchive::load(uint32_t& value)
-	{
-		if (items.has_key(current_field_name))
-		{
-			gemini::string field_value = items.get(current_field_name);
-			value = static_cast<uint32_t>(atoi(field_value.c_str()));
-		}
-	}
-
-	template <>
-	void KeyValueArchive::load(float& value)
-	{
-		if (items.has_key(current_field_name))
-		{
-			gemini::string field_value = items.get(current_field_name);
-			value = static_cast<float>(atof(field_value.c_str()));
-		}
-	}
-
-	template <>
-	void KeyValueArchive::load(char*& value)
-	{
-		if (items.has_key(current_field_name))
-		{
-			gemini::string field_value = items.get(current_field_name);
-			value = new char[field_value.size() + 1];
-			value[field_value.size()] = '\0';
-			core::str::copy(value, field_value.string_data, field_value.string_data_size);
-		}
-	}
-
-	template <>
-	void KeyValueArchive::load(glm::vec4& value)
-	{
-		if (items.has_key(current_field_name))
-		{
-			gemini::string field_value = items.get(current_field_name);
-			int results = sscanf(field_value.c_str(),
-				"%f %f %f %f",
-				&value.x, &value.y, &value.z, &value.w);
-			if (results < 4)
-			{
-				LOGV("Error reading vec4.\n");
-			}
-		}
-	}
-
 } // namespace gemini

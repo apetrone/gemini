@@ -1076,6 +1076,7 @@ void present_dialogue(DialogueNode* node)
 
 #include <core/datastream.h>
 #include <runtime/text_parser.h>
+#include <core/serialization.h>
 using namespace gemini;
 
 using namespace core;
@@ -1200,26 +1201,6 @@ TYPESPEC_REGISTER_CLASS(StyleTest);
 SERIALIZER_SET_DISPATCH(StyleTest, SerializerType_INTERNAL);
 
 
-//
-void line_parse_keyvalues(TextFileContext* context, const gemini::string& line, void* user_data)
-{
-	KeyValueArchive* archive = reinterpret_cast<KeyValueArchive*>(user_data);
-
-	// Split string into pieces at the equals sign
-	Array<gemini::string> pieces(*context->allocator);
-	string_split_lines(*context->allocator, pieces, line, "=");
-
-	if (pieces.size() < 2)
-	{
-		return;
-	}
-	gemini::string& key = pieces[0];
-	gemini::string& value = pieces[1];
-
-	archive->set_item(key, value);
-} // line_parse_keyvalues
-
-
 uint32_t text_context_from_file( TextFileContext* context, const char* path, bool relative)
 {
 	core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
@@ -1265,7 +1246,7 @@ void read_file(const char* path)
 		KeyValueArchive archive(allocator);
 
 		//context.line_handler = load_lines;
-		context.line_handler = line_parse_keyvalues;
+		context.line_handler = text_line_parse_keyvalues;
 		text_read_lines(&context, &archive);
 
 		LOGV("read file with %i lines\n", context.current_line);

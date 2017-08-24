@@ -25,6 +25,7 @@
 
 #include <runtime/text_parser.h>
 #include <core/datastream.h>
+#include <core/serialization.h>
 #include <runtime/filesystem.h>
 
 
@@ -59,7 +60,7 @@ namespace gemini
 	bool text_eof(TextFileContext* context)
 	{
 		uint32_t stream_position = text_stream_position(context);
-		return (stream_position >= context->stream.get_data_size());
+		return (stream_position >= context->stream.get_data_size() - 1);
 	} // text_eof
 
 	uint32_t text_eat_comments(TextFileContext* context)
@@ -111,6 +112,24 @@ namespace gemini
 		return context->current;
 	} // text_advance_newlines
 
+
+	void text_line_parse_keyvalues(TextFileContext* context, const gemini::string& line, void* user_data)
+	{
+		KeyValueArchive* archive = reinterpret_cast<KeyValueArchive*>(user_data);
+
+		// Split string into pieces at the equals sign
+		Array<gemini::string> pieces(*context->allocator);
+		string_split_lines(*context->allocator, pieces, line, "=");
+
+		if (pieces.size() < 2)
+		{
+			return;
+		}
+		gemini::string& key = pieces[0];
+		gemini::string& value = pieces[1];
+
+		archive->set_item(key, value);
+	} // text_line_parse_keyvalues
 
 	uint32_t text_read_lines(TextFileContext* context, void* user_data)
 	{
@@ -223,15 +242,17 @@ namespace gemini
 			return 1;
 		}
 
-
 		platform::Result result = filesystem->virtual_load_file(context->file_data, path);
 		if (result.failed())
 		{
 			return 1;
 		}
 
-		char* memory = reinterpret_cast<char*>(&context->file_data[0]);
-		context->stream.init(memory, context->file_data.size());
+		if (!context->file_data.empty())
+		{
+			char* memory = reinterpret_cast<char*>(&context->file_data[0]);
+			context->stream.init(memory, context->file_data.size());
+		}
 
 		return 0;
 	} // text_context_from_file

@@ -53,14 +53,13 @@ namespace core
 				if (file_size > 0)
 				{
 					buffer.resize(file_size + 1, 0);
+					platform::fs_read(handle, &buffer[0], 1, file_size);
+
+					// Ensure we terminate the buffer.
+					buffer[file_size] = '\0';
 				}
 
-				platform::fs_read(handle, &buffer[0], 1, file_size);
 				platform::fs_close(handle);
-
-				// Ensure we terminate the buffer.
-				buffer[file_size] = '\0';
-
 				return platform::Result::success();
 			}
 		} // internal_load_file
