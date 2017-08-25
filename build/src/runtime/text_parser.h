@@ -35,6 +35,11 @@ namespace gemini
 {
 	struct TextFileContext
 	{
+		// This allocator should be considered a temp allocator and nothing
+		// will be kept after parsing concludes.
+
+		// Pass an allocator as user_data if you wish to allocate for longer
+		// term.
 		gemini::Allocator* allocator;
 		core::util::MemoryStream stream;
 		Array<unsigned char> file_data;

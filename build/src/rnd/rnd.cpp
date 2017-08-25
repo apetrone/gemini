@@ -1201,28 +1201,6 @@ TYPESPEC_REGISTER_CLASS(StyleTest);
 SERIALIZER_SET_DISPATCH(StyleTest, SerializerType_INTERNAL);
 
 
-uint32_t text_context_from_file( TextFileContext* context, const char* path, bool relative)
-{
-	core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
-	if (!filesystem->virtual_file_exists(path))
-	{
-		return 1;
-	}
-
-
-	platform::Result result = filesystem->virtual_load_file(context->file_data, path);
-	if (result.failed())
-	{
-		return 1;
-	}
-
-	char* memory = reinterpret_cast<char*>(&context->file_data[0]);
-	context->stream.init(memory, context->file_data.size());
-
-	return 0;
-}
-
-
 void read_file(const char* path)
 {
 	LOGV("reading file: %s\n", path);

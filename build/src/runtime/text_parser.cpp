@@ -128,6 +128,7 @@ namespace gemini
 		gemini::string& key = pieces[0];
 		gemini::string& value = pieces[1];
 
+		assert(archive);
 		archive->set_item(key, value);
 	} // text_line_parse_keyvalues
 
@@ -138,9 +139,16 @@ namespace gemini
 
 		// initialize the context
 		char* data = reinterpret_cast<char*>(context->stream.get_data());
+
 		context->current_line = 0;
 		context->current_column = 1;
 		context->current = data;
+
+		if (data == nullptr)
+		{
+			LOGW("No data to read.\n");
+			return 0;
+		}
 
 		// declare some locals we'll use to parse lines.
 		char* line_start = nullptr;
