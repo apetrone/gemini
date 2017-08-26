@@ -208,8 +208,6 @@ namespace gemini
 		AnimatedInstance::AnimatedInstance(gemini::Allocator& allocator)
 			: local_time_seconds(0.0)
 			, flags(Flags::Idle)
-			, translations(allocator)
-			, rotations(allocator)
 			, translation_channel(allocator)
 			, rotation_channel(allocator)
 		{

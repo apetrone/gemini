@@ -133,8 +133,6 @@ namespace gemini
 			SequenceId index;
 			float local_time_seconds;
 			SequenceId sequence_index;
-			FixedArray<glm::vec3> translations;
-			FixedArray<glm::quat> rotations;
 			FixedArray<Channel<glm::vec3>> translation_channel;
 			FixedArray<Channel<glm::quat>> rotation_channel;
 
