@@ -39,9 +39,8 @@ namespace gemini
 
 	namespace animation
 	{
-		#pragma push pack(16)
 		template <class T>
-		struct PLATFORM_ALIGN(16) Keyframe
+		struct Keyframe
 		{
 			// absolute time for the keyframe
 			float seconds;
@@ -49,7 +48,6 @@ namespace gemini
 			// value at seconds
 			T value;
 		}; // Keyframe
-		#pragma pop
 
 		template <class T>
 		struct KeyframeList

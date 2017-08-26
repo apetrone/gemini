@@ -45,6 +45,8 @@
 
 using namespace platform;
 
+#define GEMINI_INTERPOLATE_KEYFRAMES 1
+
 namespace gemini
 {
 	namespace animation
@@ -172,8 +174,12 @@ namespace gemini
 						// (keyframe->seconds - prev_keyframe->seconds) as
 						// the denominator instead of frame_delay_seconds.
 						gemini::animation::Keyframe<T>* prev_keyframe = &keyframelist->keys[key - 1];
+#if GEMINI_INTERPOLATE_KEYFRAMES
 						float alpha = (t_seconds - prev_keyframe->seconds) / frame_delay_seconds;
 						return gemini::interpolate(prev_keyframe->value, keyframe->value, alpha);
+#else
+						return prev_keyframe->value;
+#endif
 					}
 				}
 				else if (last_key == key)
@@ -183,9 +189,14 @@ namespace gemini
 					// return the last/first value.
 					if (looping)
 					{
-						gemini::animation::Keyframe<T>* first_keyframe = &keyframelist->keys[0];
+
 						gemini::animation::Keyframe<T>* last_keyframe = &keyframelist->keys[last_key];
+#if GEMINI_INTERPOLATE_KEYFRAMES
+						gemini::animation::Keyframe<T>* first_keyframe = &keyframelist->keys[0];
 						return gemini::interpolate(last_keyframe->value, first_keyframe->value, ((t_seconds - last_keyframe->seconds) / frame_delay_seconds));
+#else
+						return last_keyframe->value;
+#endif
 					}
 
 					// if the animation doesn't loop. this is fine.

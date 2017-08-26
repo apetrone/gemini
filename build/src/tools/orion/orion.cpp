@@ -1810,31 +1810,8 @@ Options:
 
 
 
-
-
-#if 1
-		glm::mat4 ident;
-		AssetHandle skeleton_mesh = mesh_load("models/cube_rig2/cube_rig2");
-		animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, 0, ident);
-
-		Mesh* mesh = mesh_from_handle(skeleton_mesh);
-		if (mesh)
-		{
-			HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
-			for (; iter != mesh->sequence_index_by_name.end(); ++iter)
-			{
-				LOGV("Found animation: %s\n", iter.key()());
-				mesh_animations.push_back(iter.key());
-			}
-
-			if (!mesh_animations.empty())
-			{
-				// Start playing the first animation if there are animations.
-				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0]());
-				update_timeline_frames();
-			}
-		}
-#endif
+		test_load_model("models/cube_rig2/cube_rig2");
+		//test_load_model("models/spiderbot/spiderbot");
 
 #if 0
 		AssetHandle test_mesh = mesh_load("models/vault");
@@ -1876,6 +1853,31 @@ Options:
 
 
 		return kernel::NoError;
+	}
+
+	void test_load_model(const char* model_path)
+	{
+		glm::mat4 ident;
+		AssetHandle skeleton_mesh = mesh_load(model_path);
+		animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, 0, ident);
+
+		Mesh* mesh = mesh_from_handle(skeleton_mesh);
+		if (mesh)
+		{
+			HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
+			for (; iter != mesh->sequence_index_by_name.end(); ++iter)
+			{
+				LOGV("Found animation: %s\n", iter.key()());
+				mesh_animations.push_back(iter.key());
+			}
+
+			if (!mesh_animations.empty())
+			{
+				// Start playing the first animation if there are animations.
+				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0]());
+				update_timeline_frames();
+			}
+		}
 	}
 
 	void tick_queued_asset_changes(PathDelayHashSet& hashset, float tick_seconds)

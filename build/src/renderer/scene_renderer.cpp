@@ -789,20 +789,9 @@ namespace gemini
 		{
 			Joint* joint = &mesh->skeleton[index];
 
-			if (scene->interpolate_animated_poses)
-			{
-				interpolated_pose.pos[index] = gemini::lerp(component->last_pose.pos[index], pose.pos[index], alpha);
-				interpolated_pose.rot[index] = gemini::slerp(component->last_pose.rot[index], pose.rot[index], alpha);
-			}
-			else
-			{
-				interpolated_pose.pos[index] = pose.pos[index];
-				interpolated_pose.rot[index] = pose.rot[index];
-			}
-
 			glm::mat4 parent_pose;
-			glm::mat4 local_rotation = glm::toMat4(interpolated_pose.rot[index]);
-			glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), interpolated_pose.pos[index]);
+			glm::mat4 local_rotation = glm::toMat4(pose.rot[index]);
+			glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), pose.pos[index]);
 
 			const glm::mat4 local_pose = local_transform * local_rotation;
 			if (joint->parent_index > -1)

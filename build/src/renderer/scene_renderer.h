@@ -89,10 +89,8 @@ namespace gemini
 		Freelist<StaticMeshComponent*> static_meshes;
 		Array<AnimatedMeshComponent*> animated_meshes;
 
-
 		uint32_t stat_static_meshes_drawn;
 		uint32_t stat_animated_meshes_drawn;
-		uint32_t interpolate_animated_poses;
 
 		render2::Pipeline* static_mesh_pipeline;
 		render2::Pipeline* animated_mesh_pipeline;
@@ -117,7 +115,6 @@ namespace gemini
 			, animated_mesh_pipeline(nullptr)
 			, sky_pipeline(nullptr)
 			, screen_quad(nullptr)
-			, interpolate_animated_poses(1)
 		{
 		}
 	}; // RenderScene
