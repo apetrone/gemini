@@ -612,6 +612,7 @@ class AnimatedSequence(Node):
 
 		self.type = Node.ANIM
 		self.duration_seconds = 0
+		self.total_frames = 0
 		self.frames_per_second = -1
 		self.name = kwargs.get("name", None)
 #
@@ -735,10 +736,6 @@ class GeminiModel(object):
 
 		self.filepath = kwargs.get("filepath", None)
 
-		# animation export range
-		self.frame_start = kwargs.get("frame_start", 0)
-		self.frame_end = kwargs.get("frame_end", 0)
-
 		# Export selected meshes only
 		self.selected_only = kwargs.get("selected_only", False)
 
@@ -748,8 +745,6 @@ class GeminiModel(object):
 		self.armature_pose_position = None
 
 		self.file_handle = None
-
-		print("export range: %i -> %i" % (self.frame_start, self.frame_end))
 
 		# internal state for handling materials
 		self.material_index = 0
@@ -824,8 +819,6 @@ class GeminiModel(object):
 
 		scene_fps = bpy.context.scene.render.fps
 
-		sequence_time_begin = self.frame_start / float(scene_fps)
-
 		# place the armature in POSE position
 		self.armature.data.pose_position = 'POSE'
 
@@ -837,10 +830,11 @@ class GeminiModel(object):
 			sequence = AnimatedSequence()
 			sequence.name = action.name
 			sequence.frames_per_second = scene_fps
-			sequence.duration_seconds = sequence_duration = (self.frame_end - self.frame_start) / scene_fps
+			sequence.total_frames = int(action.frame_range.y) - int(action.frame_range.x)
+			sequence.duration_seconds = sequence.total_frames / scene_fps
 
 			if self.armature.animation_data is not None:
-				print("Exporting action '%s'" % action.name)
+				print("Exporting action = '{}', total_frames = {}".format(action.name, sequence.total_frames))
 				bpy.context.scene.objects.active = self.armature
 				bpy.ops.object.select_pattern(pattern=self.armature.name)
 				bpy.ops.object.mode_set(mode='POSE')
@@ -884,7 +878,7 @@ class GeminiModel(object):
 				}
 
 				# set the current frame
-				for frame in range(self.frame_start, self.frame_end):
+				for frame in range(int(action.frame_range.x), int(action.frame_range.y) + 1):
 					bpy.context.scene.frame_set(frame)
 
 					global_tx = Matrix()
@@ -1087,8 +1081,6 @@ class export_gemini(bpy.types.Operator):
 			self,
 			coordinate_system = self.coordinate_system,
 			filepath = self.filepath,
-			frame_start = bpy.context.scene.frame_start,
-			frame_end = bpy.context.scene.frame_end + 1,
 			selected_only = self.selected_only
 		)
 
