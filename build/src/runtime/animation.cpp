@@ -374,13 +374,25 @@ namespace gemini
 					return result;
 				}
 
-				sequence->duration_seconds = duration_seconds.asFloat();
+				const Json::Value& total_frames = root["total_frames"];
 
 				std::string animation_title = animation_name.asString();
 				LOGV("animation: \"%s\"\n", animation_title.c_str());
 
 				int32_t fps_rate = frames_per_second.asInt();
 				sequence->frame_delay_seconds = (1.0f/(float)fps_rate);
+
+				// Don't read this from ASCII float -- data loss will result.
+				// Instead, compute this here.
+				if (validate_node(total_frames, "total_frames"))
+				{
+					sequence->duration_seconds = total_frames.asInt() / (float)fps_rate;
+				}
+				else
+				{
+					LOGW("LEGACY WARNING. This animation should be re-exported to correct duration_seconds.\n");
+					sequence->duration_seconds = duration_seconds.asFloat();
+				}
 
 				LOGV("frames_per_second = %i (frame delay = %2.2f)\n", fps_rate, sequence->frame_delay_seconds);
 

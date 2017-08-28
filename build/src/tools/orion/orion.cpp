@@ -1810,8 +1810,9 @@ Options:
 
 
 
-		test_load_model("models/cube_rig2/cube_rig2");
+		//test_load_model("models/cube_rig2/cube_rig2");
 		//test_load_model("models/spiderbot/spiderbot");
+		test_load_model("models/test_model/test_model");
 
 #if 0
 		AssetHandle test_mesh = mesh_load("models/vault");
