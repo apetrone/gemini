@@ -41,6 +41,7 @@ namespace gemini
 		, skeleton(_allocator)
 		, hitboxes(_allocator)
 		, collision_geometry(nullptr)
+		, attachments(_allocator)
 	{
 	} // Mesh
 

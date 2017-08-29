@@ -537,6 +537,19 @@ namespace gemini
 				}
 			}
 
+			uint8_t prev_in_delimiters = 0;
+			if (prev)
+			{
+				for (size_t index = 0; index < delimiter_size; ++index)
+				{
+					if (*prev== delimiters[index])
+					{
+						prev_in_delimiters = 1;
+						break;
+					}
+				}
+			}
+
 			if (current_in_delimiters)
 			{
 				ptrdiff_t length = (last_character + 1 - prev);
@@ -555,7 +568,11 @@ namespace gemini
 				// start reading a string
 				reading_string = 1;
 				++current;
-				prev = current;
+
+				if (prev_in_delimiters)
+				{
+					prev = current;
+				}
 			}
 			else if (reading_string && *current == '\"')
 			{

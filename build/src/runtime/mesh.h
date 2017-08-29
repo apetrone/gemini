@@ -78,6 +78,16 @@ namespace gemini
 		uint16_t total_indices;
 	}; // CollisionGeometry
 
+
+	struct ModelAttachment
+	{
+		// attachment name
+		core::StackString<32> name;
+
+		// target bone index
+		int32_t bone_index;
+	}; // ModelAttachment
+
 	struct Mesh
 	{
 		Mesh(gemini::Allocator& allocator);
@@ -113,6 +123,8 @@ namespace gemini
 
 		// collision geometry
 		CollisionGeometry* collision_geometry;
+
+		Array<ModelAttachment> attachments;
 	}; // Mesh
 
 	// initialize a mesh by allocating memory

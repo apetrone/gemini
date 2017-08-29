@@ -435,7 +435,7 @@ namespace gemini
 			assert(sequence);
 			block->sequence = sequence;
 		}
-		else
+		else if (key == "looping")
 		{
 			if (!block->sequence)
 			{
@@ -444,11 +444,50 @@ namespace gemini
 			}
 			else
 			{
-				if (key == "looping")
+				uint32_t loop_value = atoi(value.c_str());
+				block->sequence->looping = loop_value;
+			}
+		}
+		else if (key == "attachment")
+		{
+			if (block->mesh->skeleton.empty())
+			{
+				LOGW("Attempting to add an attachment to mesh with no skeleton on line %i\n", context->current_line);
+				return;
+			}
+			Array<gemini::string> params(*context->allocator);
+			string_split_lines(*context->allocator, params, value);
+
+			if (params.size() < 2)
+			{
+				LOGW("attachment command requires two parameters.\n");
+				return;
+			}
+			const gemini::string& attachment_name = params[0];
+			const gemini::string& target_bone = params[1];
+
+			int32_t target_index = -1;
+			for (size_t bone_index = 0; bone_index < block->mesh->skeleton.size(); ++bone_index)
+			{
+				if (target_bone == block->mesh->skeleton[bone_index].name())
 				{
-					uint32_t loop_value = atoi(value.c_str());
-					block->sequence->looping = loop_value;
+					ModelAttachment attachment;
+					target_index = bone_index;
+					attachment.bone_index = bone_index;
+					attachment.name = attachment_name.c_str();
+					block->mesh->attachments.push_back(attachment);
+					LOGV("create attachment named \"%s\" with target \"%s\" (bone_index = %i)\n",
+						attachment_name.c_str(),
+						target_bone.c_str(),
+						bone_index);
+					break;
 				}
+			}
+			if (target_index == -1)
+			{
+				LOGW("Unable to create attachment \"%s\"; bone \"%s\" does not exist!\n",
+					attachment_name.c_str(),
+					target_bone.c_str());
 			}
 		}
 	}
