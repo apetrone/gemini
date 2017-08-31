@@ -131,24 +131,24 @@ namespace gemini
 	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
 
 	// returns the instance id for an animation
-	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name, uint32_t channel=0);
+	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name, uint32_t layer);
 
 	// returns true if the current animation has finished playing
-	bool render_scene_animation_finished(RenderScene* scene, uint32_t component_id);
+	bool render_scene_animation_finished(RenderScene* scene, uint32_t component_id, uint32_t layer);
 
 	// check to see if an animation is playing
-	bool render_scene_animation_is_playing(RenderScene* scene, uint32_t component_id, uint32_t instance_id);
+	bool render_scene_animation_is_playing(RenderScene* scene, uint32_t component_id, uint32_t layer);
 
 	// returns how many frames are in the instance
-	uint32_t render_scene_animation_total_frames(RenderScene* scene, uint32_t component_id, uint32_t instance_index);
+	uint32_t render_scene_animation_total_frames(RenderScene* scene, uint32_t component_id, uint32_t layer);
 
 	// returns the current frame index of the playing animation.
 	// returns 0 if no animation is playing.
-	uint32_t render_scene_animation_current_frame(RenderScene* scene, uint32_t component_id);
+	uint32_t render_scene_animation_current_frame(RenderScene* scene, uint32_t component_id, uint32_t layer);
 
 	// sets the frame of the currently playing animation
 	// no-op if there's no playing animation
-	void render_scene_animation_set_frame(RenderScene* scene, uint32_t component_id, uint32_t frame);
+	void render_scene_animation_set_frame(RenderScene* scene, uint32_t component_id, uint32_t frame, uint32_t layer);
 
 	// Fetch the current animation pose for component_id
 	void render_scene_animation_get_pose(RenderScene* scene, uint32_t component_id, animation::Pose& pose);

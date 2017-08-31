@@ -562,18 +562,6 @@ namespace gemini
 			}
 		}
 
-		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, Mesh* mesh)
-		{
-			Sequence* sequence = load_sequence_from_file(allocator, name, mesh);
-			if (sequence)
-			{
-				AnimatedInstance* instance = create_sequence_instance(allocator, sequence->index);
-				return instance->index;
-			}
-
-			return -1;
-		}
-
 		SequenceId find_sequence(const char* name)
 		{
 			if (_sequences_by_name->has_key(name))
@@ -591,11 +579,9 @@ namespace gemini
 			return _animation_state->sequences.from_handle(index);
 		}
 
-		AnimatedInstance* create_sequence_instance(gemini::Allocator& allocator, SequenceId index)
+		AnimatedInstance* create_sequence_instance(gemini::Allocator& allocator)
 		{
-			Sequence* source = get_sequence_by_index(index);
 			AnimatedInstance* instance = MEMORY2_NEW(allocator, AnimatedInstance)(allocator);
-			instance->initialize(source);
 			instance->index = _animation_state->instances.acquire();
 			_animation_state->instances.set(instance->index, instance);
 			return instance;

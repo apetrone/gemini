@@ -811,7 +811,7 @@ public:
 				}
 
 				LOGV("Playing animation: \"%s\"\n", mesh_animations[current_mesh_animation]());
-				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
+				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation](), 0);
 				update_timeline_frames();
 			}
 			else if (event.key == BUTTON_SPACE)
@@ -839,7 +839,7 @@ public:
 		// update the timeline with the new animation
 		if (timeline)
 		{
-			uint32_t total_frames = render_scene_animation_total_frames(render_scene, animated_mesh, mesh_animation_index);
+			uint32_t total_frames = render_scene_animation_total_frames(render_scene, animated_mesh, 0);
 			timeline->set_frame(0);
 			timeline->set_frame_range(0, total_frames);
 		}
@@ -1288,7 +1288,7 @@ public:
 		// disable automatic animation advance if the user is scrubbing.
 		enable_animation = 0;
 
-		render_scene_animation_set_frame(render_scene, animated_mesh, current_frame);
+		render_scene_animation_set_frame(render_scene, animated_mesh, current_frame, 0);
 	}
 
 	void render_main_content(render2::RenderTarget* render_target)
@@ -1875,7 +1875,7 @@ Options:
 			if (!mesh_animations.empty())
 			{
 				// Start playing the first animation if there are animations.
-				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0]());
+				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0](), 0);
 				update_timeline_frames();
 			}
 		}
@@ -1941,7 +1941,7 @@ Options:
 		if (enable_animation)
 		{
 			// TODO: update the timeline
-			uint32_t current_frame = render_scene_animation_current_frame(render_scene, animated_mesh);
+			uint32_t current_frame = render_scene_animation_current_frame(render_scene, animated_mesh, 0);
 			if (timeline)
 			{
 				timeline->set_frame(current_frame);
@@ -1955,11 +1955,11 @@ Options:
 		// See if we need to poke the animated mesh.
 		if (animated_mesh != 0)
 		{
-			if (render_scene_animation_finished(render_scene, animated_mesh))
+			if (render_scene_animation_finished(render_scene, animated_mesh, 0))
 			{
 				if (enable_animation)
 				{
-					mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation]());
+					mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation](), 0);
 				}
 			}
 		}

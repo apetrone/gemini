@@ -223,20 +223,17 @@ namespace gemini
 		component->current_sequence_index = 0;
 
 		size_t total_layers = 1;
-		void* memory = MEMORY2_ALLOC(*scene->allocator, sizeof(animation::AnimatedInstance*) * mesh->sequences.size() * total_layers);
+		void* memory = MEMORY2_ALLOC(*scene->allocator, sizeof(animation::AnimatedInstance*) * total_layers);
 		component->sequence_instances = reinterpret_cast<animation::AnimatedInstance**>(memory);
-		memset(component->sequence_instances, 0, sizeof(animation::AnimatedInstance*) * mesh->sequences.size() * total_layers);
+		memset(component->sequence_instances, 0, sizeof(animation::AnimatedInstance*) * total_layers);
 
 		// iterate over all sequences and create sequence instances
 		// for this AnimationMeshComponent.
 		const size_t total_sequences = mesh->sequences.size();
-		for (size_t layer_index = 0; layer_index < total_layers; ++layer_index)
+		for (size_t layer_index = 0; layer_index < MAX_ANIMATED_MESH_LAYERS; ++layer_index)
 		{
-			for (size_t sequence = 0; sequence < total_sequences; ++sequence)
-			{
-				animation::AnimatedInstance* instance = animation::create_sequence_instance(*scene->allocator, mesh->sequences[sequence]);
-				component->sequence_instances[(layer_index * total_sequences) + sequence] = instance;
-			}
+			animation::AnimatedInstance* instance = animation::create_sequence_instance(*scene->allocator);
+			component->sequence_instances[layer_index] = instance;
 		}
 
 		for (size_t index = 0; index < mesh->skeleton.size(); ++index)
@@ -274,7 +271,7 @@ namespace gemini
 	} // render_scene_add_static_mesh
 
 
-	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name, uint32_t channel)
+	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name, uint32_t layer)
 	{
 		// If you hit this, an invalid component id was passed in
 		assert(component_id > 0);
@@ -294,24 +291,27 @@ namespace gemini
 			return 0;
 		}
 
-		uint32_t instance_index = mesh->sequence_index_by_name[animation_name];
-		animation::AnimatedInstance* instance = component->sequence_instances[instance_index];
+		uint32_t sequence_index = mesh->sequence_index_by_name[animation_name];
+
+		// grab the instance for this layer
+		animation::AnimatedInstance* instance = component->sequence_instances[layer];
+		instance->initialize(animation::get_sequence_by_index(sequence_index));
 		instance->flags = animation::AnimatedInstance::Flags::Playing;
 		instance->local_time_seconds = 0.0f;
 		//LOGV("playing animation: %s\n", animation_name);
-		component->current_sequence_index = instance_index;
+		component->current_sequence_index = sequence_index;
 
-		return instance_index;
+		return sequence_index;
 	}
 
-	bool render_scene_animation_finished(RenderScene* scene, uint32_t component_id)
+	bool render_scene_animation_finished(RenderScene* scene, uint32_t component_id, uint32_t layer)
 	{
 		// If you hit this, an invalid component id was passed in
 		assert(component_id > 0);
 		component_id--;
 
 		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
-		animation::AnimatedInstance* instance = component->sequence_instances[component->current_sequence_index];
+		animation::AnimatedInstance* instance = component->sequence_instances[layer];
 		assert(instance);
 		if (instance)
 		{
@@ -320,14 +320,14 @@ namespace gemini
 		return false;
 	}
 
-	bool render_scene_animation_is_playing(RenderScene* scene, uint32_t component_id, uint32_t instance_id)
+	bool render_scene_animation_is_playing(RenderScene* scene, uint32_t component_id, uint32_t layer)
 	{
 		// If you hit this, an invalid component id was passed in
 		assert(component_id > 0);
 		component_id--;
 
 		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
-		animation::AnimatedInstance* instance = component->sequence_instances[instance_id];
+		animation::AnimatedInstance* instance = component->sequence_instances[layer];
 		assert(instance);
 		if (instance)
 		{
@@ -336,14 +336,20 @@ namespace gemini
 		return false;
 	}
 
-	uint32_t render_scene_animation_total_frames(RenderScene* scene, uint32_t component_id, uint32_t instance_index)
+	uint32_t render_scene_animation_total_frames(RenderScene* scene, uint32_t component_id, uint32_t layer)
 	{
 		// If you hit this, an invalid component id was passed in
 		assert(component_id > 0);
 		component_id--;
 
 		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
-		animation::AnimatedInstance* instance = component->sequence_instances[component->current_sequence_index];
+
+		if (!component->sequence_instances)
+		{
+			return 0;
+		}
+
+		animation::AnimatedInstance* instance = component->sequence_instances[layer];
 		assert(instance);
 		if (instance)
 		{
@@ -354,14 +360,14 @@ namespace gemini
 		return 0;
 	} // render_scene_animation_total_frames
 
-	void render_scene_animation_set_frame(RenderScene* scene, uint32_t component_id, uint32_t frame)
+	void render_scene_animation_set_frame(RenderScene* scene, uint32_t component_id, uint32_t frame, uint32_t layer)
 	{
 		// If you hit this, an invalid component id was passed in
 		assert(component_id > 0);
 		component_id--;
 
 		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
-		animation::AnimatedInstance* instance = component->sequence_instances[component->current_sequence_index];
+		animation::AnimatedInstance* instance = component->sequence_instances[layer];
 		assert(instance);
 		if (instance)
 		{
@@ -379,8 +385,9 @@ namespace gemini
 		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
 		assert(component);
 
-		assert(component->current_sequence_index >= 0);
-		animation::AnimatedInstance* instance = component->sequence_instances[component->current_sequence_index];
+		//assert(component->current_sequence_index >= 0);
+		// TODO: Aggregate the pose for ALL layers here.
+		animation::AnimatedInstance* instance = component->sequence_instances[0];
 		assert(instance);
 
 		animation::Pose pre_pose;
@@ -419,14 +426,14 @@ namespace gemini
 		}
 	} // render_scene_animation_get_pose
 
-	uint32_t render_scene_animation_current_frame(RenderScene* scene, uint32_t component_id)
+	uint32_t render_scene_animation_current_frame(RenderScene* scene, uint32_t component_id, uint32_t layer)
 	{
 		// If you hit this, an invalid component id was passed in
 		assert(component_id > 0);
 		component_id--;
 
 		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
-		animation::AnimatedInstance* instance = component->sequence_instances[component->current_sequence_index];
+		animation::AnimatedInstance* instance = component->sequence_instances[layer];
 		assert(instance);
 		if (instance)
 		{
@@ -541,15 +548,10 @@ namespace gemini
 			return;
 		}
 
-		size_t total_sequences = _render_scene_total_sequences_from_component(component);
-		const size_t total_layers = 1;
-		for (size_t layer_index = 0; layer_index < total_layers; ++layer_index)
+		for (size_t layer_index = 0; layer_index < MAX_ANIMATED_MESH_LAYERS; ++layer_index)
 		{
-			for (size_t sequence_index = 0; sequence_index < total_sequences; ++sequence_index)
-			{
-				animation::AnimatedInstance* instance = component->sequence_instances[(total_sequences * layer_index) + sequence_index];
-				animation::destroy_sequence_instance(*scene->allocator, instance);
-			}
+			animation::AnimatedInstance* instance = component->sequence_instances[layer_index];
+			animation::destroy_sequence_instance(*scene->allocator, instance);
 		}
 		MEMORY2_DEALLOC(*scene->allocator, component->sequence_instances);
 
@@ -923,7 +925,7 @@ namespace gemini
 				component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
 
 				// TODO: determine how to get the blended pose; for now just use the first animated instance.
-				animated_instance_get_pose(component->sequence_instances[component->current_sequence_index], pose);
+				animated_instance_get_pose(component->sequence_instances[0], pose);
 
 				Mesh* mesh = mesh_from_handle(component->mesh_handle);
 				if (!mesh)

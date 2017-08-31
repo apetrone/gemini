@@ -485,14 +485,14 @@ public:
 	virtual void play_animation(IModelInstanceData* model, const char* animation_name)
 	{
 		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
-		render_scene_animation_play(render_scene, instance->get_component_index(), animation_name);
+		render_scene_animation_play(render_scene, instance->get_component_index(), animation_name, 0);
 	}
 
 	virtual bool is_animation_finished(IModelInstanceData* model)
 	{
 		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
 
-		return render_scene_animation_finished(render_scene, instance->get_component_index());
+		return render_scene_animation_finished(render_scene, instance->get_component_index(), 0);
 	}
 
 	virtual void get_current_pose(IModelInstanceData* model, animation::Pose& pose)

@@ -154,12 +154,11 @@ namespace gemini
 		void update(float delta_seconds);
 
 		Sequence* load_sequence_from_file(gemini::Allocator& allocator, const char* name, Mesh* mesh);
-		SequenceId load_sequence(gemini::Allocator& allocator, const char* name, Mesh* mesh);
 		SequenceId find_sequence(const char* name);
 		Sequence* get_sequence_by_index(SequenceId index);
 
 		// caller must clean up the returned instance by calling destroy_sequence_instance.
-		AnimatedInstance* create_sequence_instance(gemini::Allocator& allocator, SequenceId index);
+		AnimatedInstance* create_sequence_instance(gemini::Allocator& allocator);
 		void destroy_sequence_instance(gemini::Allocator& allocator, AnimatedInstance* instance);
 		AnimatedInstance* get_instance_by_index(SequenceId index);
 
