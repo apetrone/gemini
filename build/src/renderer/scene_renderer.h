@@ -44,7 +44,7 @@ namespace render2
 
 namespace gemini
 {
-	const size_t MAX_ANIMATED_MESH_LAYERS = 1;
+	const size_t MAX_ANIMATED_MESH_LAYERS = 2;
 
 	struct StaticMeshComponent
 	{

@@ -812,6 +812,8 @@ public:
 
 				LOGV("Playing animation: \"%s\"\n", mesh_animations[current_mesh_animation]());
 				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation](), 0);
+				render_scene_animation_play(render_scene, animated_mesh, "look_right", 1);
+
 				update_timeline_frames();
 			}
 			else if (event.key == BUTTON_SPACE)
@@ -1960,6 +1962,13 @@ Options:
 				if (enable_animation)
 				{
 					mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation](), 0);
+				}
+			}
+			if (render_scene_animation_finished(render_scene, animated_mesh, 1))
+			{
+				if (enable_animation)
+				{
+					render_scene_animation_play(render_scene, animated_mesh, "look_right", 1);
 				}
 			}
 		}

@@ -583,6 +583,9 @@ namespace gemini
 		{
 			AnimatedInstance* instance = MEMORY2_NEW(allocator, AnimatedInstance)(allocator);
 			instance->index = _animation_state->instances.acquire();
+			instance->local_time_seconds = 0.0f;
+			instance->sequence_index = -1;
+			instance->flags = AnimatedInstance::Flags::Idle;
 			_animation_state->instances.set(instance->index, instance);
 			return instance;
 		}
@@ -609,6 +612,10 @@ namespace gemini
 #if defined(GEMINI_DEBUG_BONES)
 			const glm::vec2 origin(10.0f, 30.0f);
 #endif
+			if (instance->sequence_index < 0)
+			{
+				return;
+			}
 
 			const size_t total_joints = instance->rotation_channel.size();
 
