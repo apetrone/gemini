@@ -65,10 +65,18 @@ namespace gemini
 		Array<RenderMeshInfo*> render_meshes;
 	}; // RenderSceneState
 
-	AnimatedMeshComponent::AnimatedMeshComponent(gemini::Allocator& in_allocator)
-		: sequence_instances(in_allocator)
+
+	size_t _render_scene_total_sequences_from_component(AnimatedMeshComponent* component)
 	{
-	}
+		size_t total_sequences = 0;
+		Mesh* mesh = mesh_from_handle(component->mesh_handle);
+		if (mesh)
+		{
+			total_sequences = mesh->sequences.size();
+		}
+		return total_sequences;
+	} // _render_scene_total_sequences_from_component
+
 
 	RenderSceneState* render_scene_state = nullptr;
 
@@ -205,7 +213,8 @@ namespace gemini
 			return 0;
 		}
 
-		AnimatedMeshComponent* component = MEMORY2_NEW(*scene->allocator, AnimatedMeshComponent)(*scene->allocator);
+		AnimatedMeshComponent* component = MEMORY2_NEW(*scene->allocator, AnimatedMeshComponent);
+		component->sequence_instances = nullptr;
 		component->entity_index = entity_index;
 		component->mesh_handle = mesh_handle;
 		component->model_matrix = model_transform;
@@ -213,12 +222,21 @@ namespace gemini
 		component->bone_transforms = (glm::mat4*)MEMORY2_ALLOC(*scene->allocator, sizeof(glm::mat4) * MAX_BONES);
 		component->current_sequence_index = 0;
 
+		size_t total_layers = 1;
+		void* memory = MEMORY2_ALLOC(*scene->allocator, sizeof(animation::AnimatedInstance*) * mesh->sequences.size() * total_layers);
+		component->sequence_instances = reinterpret_cast<animation::AnimatedInstance**>(memory);
+		memset(component->sequence_instances, 0, sizeof(animation::AnimatedInstance*) * mesh->sequences.size() * total_layers);
+
 		// iterate over all sequences and create sequence instances
 		// for this AnimationMeshComponent.
-		for (size_t sequence = 0; sequence < mesh->sequences.size(); ++sequence)
+		const size_t total_sequences = mesh->sequences.size();
+		for (size_t layer_index = 0; layer_index < total_layers; ++layer_index)
 		{
-			animation::AnimatedInstance* instance = animation::create_sequence_instance(*scene->allocator, mesh->sequences[sequence]);
-			component->sequence_instances.push_back(instance);
+			for (size_t sequence = 0; sequence < total_sequences; ++sequence)
+			{
+				animation::AnimatedInstance* instance = animation::create_sequence_instance(*scene->allocator, mesh->sequences[sequence]);
+				component->sequence_instances[(layer_index * total_sequences) + sequence] = instance;
+			}
 		}
 
 		for (size_t index = 0; index < mesh->skeleton.size(); ++index)
@@ -256,7 +274,7 @@ namespace gemini
 	} // render_scene_add_static_mesh
 
 
-	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name)
+	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name, uint32_t channel)
 	{
 		// If you hit this, an invalid component id was passed in
 		assert(component_id > 0);
@@ -351,6 +369,55 @@ namespace gemini
 			instance->local_time_seconds = sequence->frame_delay_seconds * frame;
 		}
 	} // render_scene_animation_set_frame
+
+	void render_scene_animation_get_pose(RenderScene* scene, uint32_t component_id, animation::Pose& pose)
+	{
+		// If you hit this, an invalid component id was passed in
+		assert(component_id > 0);
+		component_id--;
+
+		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
+		assert(component);
+
+		assert(component->current_sequence_index >= 0);
+		animation::AnimatedInstance* instance = component->sequence_instances[component->current_sequence_index];
+		assert(instance);
+
+		animation::Pose pre_pose;
+		animated_instance_get_pose(instance, pre_pose);
+
+		Mesh* mesh = mesh_from_handle(component->mesh_handle);
+		if (!mesh)
+		{
+			return;
+		}
+
+		for (size_t index = 0; index < mesh->skeleton.size(); ++index)
+		{
+			Joint* joint = &mesh->skeleton[index];
+
+			glm::mat4 parent_pose;
+			glm::mat4 local_rotation = glm::toMat4(pre_pose.rot[index]);
+			glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), pre_pose.pos[index]);
+
+			const glm::mat4 local_pose = local_transform * local_rotation;
+			if (joint->parent_index > -1)
+			{
+				parent_pose = component->bone_transforms[joint->parent_index];
+			}
+
+			// this will be cached in local transforms
+			glm::mat4 local_bone_pose = mesh->bind_poses[index] * local_pose;
+
+			// this will be used for skinning in the vertex shader
+			component->bone_transforms[index] = parent_pose * local_bone_pose;
+
+			// now convert back to position and rotation... if we can.
+			const glm::mat4 world_matrix = component->bone_transforms[index];
+			pose.rot[index] = glm::toQuat(world_matrix);
+			pose.pos[index] = glm::vec3(glm::column(world_matrix, 3));
+		}
+	} // render_scene_animation_get_pose
 
 	uint32_t render_scene_animation_current_frame(RenderScene* scene, uint32_t component_id)
 	{
@@ -474,11 +541,17 @@ namespace gemini
 			return;
 		}
 
-		for (size_t sequence_index = 0; sequence_index < component->sequence_instances.size(); ++sequence_index)
+		size_t total_sequences = _render_scene_total_sequences_from_component(component);
+		const size_t total_layers = 1;
+		for (size_t layer_index = 0; layer_index < total_layers; ++layer_index)
 		{
-			animation::AnimatedInstance* instance = component->sequence_instances[sequence_index];
-			animation::destroy_sequence_instance(*scene->allocator, instance);
+			for (size_t sequence_index = 0; sequence_index < total_sequences; ++sequence_index)
+			{
+				animation::AnimatedInstance* instance = component->sequence_instances[(total_sequences * layer_index) + sequence_index];
+				animation::destroy_sequence_instance(*scene->allocator, instance);
+			}
 		}
+		MEMORY2_DEALLOC(*scene->allocator, component->sequence_instances);
 
 		MEMORY2_DEALLOC(*scene->allocator, component->bone_transforms);
 	} // _render_scene_remove_animated_instances
@@ -769,7 +842,7 @@ namespace gemini
 		device->destroy_serializer(serializer);
 	} // render_sky
 
-	void _render_set_animation_pose(RenderScene* scene, AnimatedMeshComponent* component, const animation::Pose& pose, float alpha)
+	void _render_set_animation_pose(RenderScene* scene, AnimatedMeshComponent* component, const animation::Pose& pose)
 	{
 		// You've hit the upper bounds for skeletal bones for a single
 		// model. Congrats.
@@ -782,8 +855,6 @@ namespace gemini
 		{
 			return;
 		}
-
-		animation::Pose interpolated_pose;
 
 		for (size_t index = 0; index < mesh->skeleton.size(); ++index)
 		{
@@ -813,8 +884,6 @@ namespace gemini
 			//debugdraw::box(-dims + pos, dims + pos, gemini::Color(0.0f, 1.0f, 1.0f));
 			//debugdraw::axes(glm::mat4(hitbox->rotation) * model_pose, 1.0f, 0.0f);
 		}
-
-		component->last_pose = pose;
 	} // _render_set_animation_pose
 
 
@@ -831,7 +900,7 @@ namespace gemini
 	//}
 
 
-	void render_scene_update(RenderScene* scene, EntityRenderState* state, float step_alpha)
+	void render_scene_update(RenderScene* scene, EntityRenderState* state)
 	{
 		// extract data from static meshes
 		Freelist<StaticMeshComponent*>::Iterator iter = scene->static_meshes.begin();
@@ -862,7 +931,7 @@ namespace gemini
 					return;
 				}
 
-				_render_set_animation_pose(scene, component, pose, step_alpha);
+				_render_set_animation_pose(scene, component, pose);
 			}
 		}
 	} // render_scene_update

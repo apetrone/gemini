@@ -1950,7 +1950,7 @@ Options:
 			animation::update(kernel::parameters().simulation_delta_seconds);
 		}
 
-		render_scene_update(render_scene, &entity_render_state, kernel::parameters().step_alpha);
+		render_scene_update(render_scene, &entity_render_state);
 
 		// See if we need to poke the animated mesh.
 		if (animated_mesh != 0)

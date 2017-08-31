@@ -646,7 +646,7 @@ namespace gemini
 					origin.y + (12.0f * bone_index),
 					core::str::format("%2i) '%s' | rot: [%2.2f, %2.2f, %2.2f, %2.2f]", bone_index,
 						"",//mesh->skeleton[bone_index].name(),
-						rot.x, rot.y, rot.z, rot.w),
+						pose.rot[bone_index].x, pose.rot[bone_index].y, pose.rot[bone_index].z, pose.rot[bone_index].w),
 					Color(0.0f, 0.0f, 0.0f));
 #endif
 			}

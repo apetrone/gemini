@@ -38,6 +38,8 @@ namespace core
 	}
 }
 
+
+
 namespace gemini
 {
 	class IEntityManager;
@@ -55,6 +57,11 @@ namespace gemini
 	class IAudioInterface;
 	class IExperimental;
 	class IEngineEntity;
+
+	namespace animation
+	{
+		struct Pose;
+	}
 
 	class IEngineInterface
 	{
@@ -96,6 +103,7 @@ namespace gemini
 
 		virtual void play_animation(class IModelInstanceData* model, const char* name) = 0;
 		virtual bool is_animation_finished(IModelInstanceData* model) = 0;
+		virtual void get_current_pose(IModelInstanceData* model, animation::Pose& pose) = 0;
 	};
 
 	namespace engine

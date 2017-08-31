@@ -495,6 +495,12 @@ public:
 		return render_scene_animation_finished(render_scene, instance->get_component_index());
 	}
 
+	virtual void get_current_pose(IModelInstanceData* model, animation::Pose& pose)
+	{
+		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
+		render_scene_animation_get_pose(render_scene, instance->get_component_index(), pose);
+	}
+
 	// IModelInterface
 	virtual int32_t create_instance_data(uint16_t entity_index, const char* model_path);
 	virtual void destroy_instance_data(int32_t index);

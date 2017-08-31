@@ -44,6 +44,8 @@ namespace render2
 
 namespace gemini
 {
+	const size_t MAX_ANIMATED_MESH_LAYERS = 1;
+
 	struct StaticMeshComponent
 	{
 		AssetHandle mesh_handle;
@@ -56,8 +58,6 @@ namespace gemini
 
 	struct AnimatedMeshComponent
 	{
-		AnimatedMeshComponent(gemini::Allocator& allocator);
-
 		AssetHandle mesh_handle;
 		uint16_t entity_index;
 
@@ -68,19 +68,14 @@ namespace gemini
 		// Assumptions we're going to make for now for simplicity.
 		// An animated mesh will only have ONE geometry chunk.
 
-		// inverse bind poses used by the instance associated with this component.
-		glm::mat4* inverse_bind_poses;
-
 		// local bone transforms (extracted from current pose)
 		glm::mat4* bone_transforms;
 
 		// currently playing sequence
 		uint32_t current_sequence_index;
 
-		animation::Pose last_pose;
-
 		// array of all sequence instances for the associated mesh
-		Array<animation::AnimatedInstance*> sequence_instances;
+		animation::AnimatedInstance** sequence_instances;
 	}; // AnimatedMeshComponent
 
 	struct RenderScene
@@ -136,7 +131,7 @@ namespace gemini
 	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
 
 	// returns the instance id for an animation
-	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name);
+	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name, uint32_t channel=0);
 
 	// returns true if the current animation has finished playing
 	bool render_scene_animation_finished(RenderScene* scene, uint32_t component_id);
@@ -155,6 +150,9 @@ namespace gemini
 	// no-op if there's no playing animation
 	void render_scene_animation_set_frame(RenderScene* scene, uint32_t component_id, uint32_t frame);
 
+	// Fetch the current animation pose for component_id
+	void render_scene_animation_get_pose(RenderScene* scene, uint32_t component_id, animation::Pose& pose);
+
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device);
 	void render_scene_destroy(RenderScene* scene, render2::Device* device);
 	void render_scene_draw(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::RenderTarget* render_target = nullptr);
@@ -166,5 +164,5 @@ namespace gemini
 
 	void render_sky(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 
-	void render_scene_update(RenderScene* scene, EntityRenderState* state, float step_alpha = 0.0f);
+	void render_scene_update(RenderScene* scene, EntityRenderState* state);
 } // namespace gemini
