@@ -501,6 +501,32 @@ public:
 		render_scene_animation_get_pose(render_scene, instance->get_component_index(), pose);
 	}
 
+	virtual void get_attachment_matrix(IModelInstanceData* model, const char* attachment_name, glm::mat4& model_matrix)
+	{
+		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
+		Mesh* mesh = mesh_from_handle(instance->get_mesh_handle());
+		if (!mesh)
+		{
+			return;
+		}
+
+		if (mesh->attachments_by_name.has_key(attachment_name))
+		{
+			core::StackString<32> attachment_key = attachment_name;
+			ModelAttachment* attachment = mesh->attachments_by_name.get(attachment_key);
+			if (!attachment)
+			{
+				return;
+			}
+
+			render_scene_animation_get_bone_transform(render_scene, instance->get_component_index(), attachment->bone_index, model_matrix);
+		}
+		else
+		{
+			LOGW("Attachment \"%s\" could not be found\n", attachment_name);
+		}
+	}
+
 	// IModelInterface
 	virtual int32_t create_instance_data(uint16_t entity_index, const char* model_path);
 	virtual void destroy_instance_data(int32_t index);
@@ -595,6 +621,7 @@ void extract_entities(EntityRenderState* ers, IEngineEntity** entities)
 		IEngineEntity* entity = entities[index];
 		if (entity)
 		{
+			entity->get_parent_matrix(ers->parent_matrix[index]);
 			entity->get_world_transform(ers->position[index], ers->orientation[index]);
 			entity->get_render_position(ers->position[index]);
 			entity->get_pivot_point(ers->pivot_point[index]);
@@ -618,6 +645,7 @@ void interpolate_states(EntityRenderState* out, EntityRenderState* a, EntityRend
 		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
 		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
 
+		out->parent_matrix[index] = a->parent_matrix[index];
 		out->model_matrix[index] = translation * from_pivot * rotation * to_pivot;
 	}
 }
@@ -626,6 +654,7 @@ void copy_state(EntityRenderState* out, EntityRenderState* in)
 {
 	for (size_t index = 0; index < MAX_ENTITIES; ++index)
 	{
+		out->parent_matrix[index] = in->parent_matrix[index];
 		out->orientation[index] = in->orientation[index];
 		out->position[index] = in->position[index];
 		out->pivot_point[index] = in->pivot_point[index];
@@ -1359,6 +1388,22 @@ Options:
 			//	0.0f
 			//);
 
+			render_scene_update(render_scene, &ers);
+
+			AnimatedMeshComponent* an = render_scene->animated_meshes[0];
+
+			Freelist<StaticMeshComponent*>::Iterator it = render_scene->static_meshes.begin();
+			for (; it != render_scene->static_meshes.end(); ++it)
+			{
+				StaticMeshComponent* c = it.data();
+				if (c->entity_index == 8)
+				{
+					//c->model_matrix = glm::mat4(1.0f);
+					c->parent_matrix = an->model_matrix * an->bone_transforms[8];
+				}
+			}
+
+
 			if (debug_camera)
 			{
 				// 5 is centered
@@ -1372,7 +1417,8 @@ Options:
 			const float screen_aspect_ratio = (view.width / (float)view.height);
 			view.projection = glm::perspective(glm::radians(interpolated_camera_state.field_of_view), screen_aspect_ratio, nearz, farz);
 
-			render_scene_update(render_scene, &ers);
+
+
 			render_scene_draw(render_scene, device, view.modelview, view.projection);
 
 			//debugdraw::text(30, 230, core::str::format("static meshes: %i", render_scene->stat_static_meshes_drawn), Color(1.0f, 1.0f, 0.5f));

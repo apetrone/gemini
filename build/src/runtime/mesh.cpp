@@ -42,6 +42,7 @@ namespace gemini
 		, hitboxes(_allocator)
 		, collision_geometry(nullptr)
 		, attachments(_allocator)
+		, attachments_by_name(_allocator)
 	{
 	} // Mesh
 
@@ -118,6 +119,15 @@ namespace gemini
 		MEMORY2_DEALLOC(allocator, mesh->vertices);
 		MEMORY2_DEALLOC(allocator, mesh->indices);
 		MEMORY2_DEALLOC(allocator, mesh->bind_poses);
+
+		if (!mesh->attachments.empty())
+		{
+			for (size_t index = 0; index < mesh->attachments.size(); ++index)
+			{
+				ModelAttachment* attachment = mesh->attachments[index];
+				MEMORY2_DELETE(allocator, attachment);
+			}
+		}
 	} // mesh_destroy
 
 	void mesh_stats(Mesh* mesh, uint32_t& total_vertices, uint32_t& total_indices)

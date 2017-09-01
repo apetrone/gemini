@@ -80,7 +80,7 @@ namespace gemini
 
 	void _render_scene_get_aggregate_pose(Mesh* mesh, AnimatedMeshComponent* component, animation::Pose& pose)
 	{
-		float blend_alpha = 0.5f;
+		float blend_alpha = 0.0f;
 		animation::Pose poses[MAX_ANIMATED_MESH_LAYERS];
 
 		for (size_t layer_index = 0; layer_index < MAX_ANIMATED_MESH_LAYERS; ++layer_index)
@@ -93,11 +93,16 @@ namespace gemini
 			animated_instance_get_pose(instance, *current_pose);
 		}
 
+
+
 		for (size_t index = 0; index < mesh->skeleton.size(); ++index)
 		{
 			// blend the poses
-			pose.rot[index] = gemini::interpolate(poses[0].rot[index], poses[1].rot[index], blend_alpha);
-			pose.pos[index] = gemini::interpolate(poses[0].pos[index], poses[1].pos[index], blend_alpha);
+			//pose.rot[index] = gemini::interpolate(poses[0].rot[index], poses[1].rot[index], blend_alpha);
+			//pose.pos[index] = gemini::interpolate(poses[0].pos[index], poses[1].pos[index], blend_alpha);
+
+			pose.rot[index] = poses[0].rot[index];
+			pose.pos[index] = poses[0].pos[index];
 		}
 	} // _render_scene_get_aggregate_pose
 
@@ -416,6 +421,24 @@ namespace gemini
 
 		_render_scene_get_aggregate_pose(mesh, component, pose);
 	} // render_scene_animation_get_pose
+
+	void render_scene_animation_get_bone_transform(RenderScene* scene, uint32_t component_id, uint32_t bone_index, glm::mat4& model_matrix)
+	{
+		// If you hit this, an invalid component id was passed in
+		assert(component_id > 0);
+		component_id--;
+
+		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
+		assert(component);
+
+		//Mesh* mesh = mesh_from_handle(component->mesh_handle);
+		//if (!mesh)
+		//{
+		//	return;
+		//}
+
+		model_matrix = component->bone_transforms[bone_index];
+	} // render_scene_animation_get_bone_transform
 
 	uint32_t render_scene_animation_current_frame(RenderScene* scene, uint32_t component_id, uint32_t layer)
 	{
@@ -744,7 +767,7 @@ namespace gemini
 				++scene->stat_animated_meshes_drawn;
 
 				// Enable this to debug bone transforms
-#if 1
+#if 0
 				if (mesh->skeleton.size() > 0)
 				{
 					glm::vec3 position; // render position
@@ -753,14 +776,14 @@ namespace gemini
 					const glm::mat4* model_poses = instance->bone_transforms;
 					//const glm::vec3* hitboxes = model_instance->get_hitboxes();
 
-					//for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
-					//{
-					//	size_t transform_index = bone_index;
-					//	const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
-					//	debugdraw::axes(world_pose, 0.15f, 0.0f);
-					//}
+					for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
+					{
+						size_t transform_index = bone_index;
+						const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
+						debugdraw::axes(world_pose, 0.15f, 0.0f);
+					}
 
-#if 1
+#if 0
 					// draw individual links for each bone to represent the skeleton
 					for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
 					{
@@ -899,7 +922,7 @@ namespace gemini
 		for (; iter != scene->static_meshes.end(); ++iter)
 		{
 			StaticMeshComponent* component = iter.data();
-			component->model_matrix = state->model_matrix[component->entity_index];
+			component->model_matrix = state->parent_matrix[component->entity_index] * state->model_matrix[component->entity_index];
 			component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
 		}
 
@@ -909,9 +932,7 @@ namespace gemini
 			AnimatedMeshComponent* component = scene->animated_meshes[index];
 			if (component)
 			{
-				animation::Pose pose;
-
-				component->model_matrix = state->model_matrix[component->entity_index];
+				component->model_matrix = state->parent_matrix[component->entity_index] * state->model_matrix[component->entity_index];
 				component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
 
 				Mesh* mesh = mesh_from_handle(component->mesh_handle);
@@ -922,9 +943,12 @@ namespace gemini
 
 				// TODO: determine how to get the blended pose; for now just use the first animated instance.
 				//animated_instance_get_pose(component->sequence_instances[1], pose);
+				animation::Pose pose;
 				_render_scene_get_aggregate_pose(mesh, component, pose);
+
 				_render_set_animation_pose(scene, component, pose);
 			}
 		}
 	} // render_scene_update
 } // namespace gemini
+

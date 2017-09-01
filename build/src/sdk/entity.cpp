@@ -210,6 +210,11 @@ void Entity::set_render_flags(uint32_t new_flags)
 	render_flags = new_flags;
 }
 
+void Entity::get_parent_matrix(glm::mat4& matrix) const
+{
+	matrix = parent_matrix;
+}
+
 void Entity::get_world_transform(glm::vec3& out_position, glm::quat& out_orientation) const
 {
 	out_position = position;
@@ -239,7 +244,7 @@ void Entity::update(float delta_seconds)
 	local_time += delta_seconds;
 } // update
 
-void Entity::interpolate_state(float alpha)
+void Entity::interpolate_state(float /*alpha*/)
 {
 
 } // interpolate_state
@@ -272,12 +277,12 @@ void Entity::hit(Entity* /*user*/, const glm::vec3& /*force*/, const glm::vec3& 
 
 void Entity::set_physics_from_current_transform()
 {
-	for (size_t index = 0; index < colliders.size(); ++index)
+	for (size_t collider_index = 0; collider_index < colliders.size(); ++collider_index)
 	{
-		physics::ICollisionObject* collider = colliders[index];
-		//  + (-collider_offsets[index])
+		physics::ICollisionObject* collider = colliders[collider_index];
+		//  + (-collider_offsets[collider_index])
 		collider->set_world_transform(position, orientation);
-		collider->set_offset(collider_offsets[index]);
+		collider->set_offset(collider_offsets[collider_index]);
 	}
 }
 
@@ -297,18 +302,18 @@ void Entity::set_current_transform_from_physics(size_t collider_index)
 
 void Entity::set_physics_from_current_velocity()
 {
-	for (size_t index = 0; index < colliders.size(); ++index)
+	for (size_t collider_index = 0; collider_index < colliders.size(); ++collider_index)
 	{
-		physics::ICollisionObject* collider = colliders[index];
+		physics::ICollisionObject* collider = colliders[collider_index];
 		collider->set_linear_velocity(velocity);
 	}
 }
 
 void Entity::set_current_velocity_from_physics()
 {
-	for (size_t index = 0; index < colliders.size(); ++index)
+	for (size_t collider_index = 0; collider_index < colliders.size(); ++collider_index)
 	{
-		physics::ICollisionObject* collider = colliders[index];
+		physics::ICollisionObject* collider = colliders[collider_index];
 		collider->get_linear_velocity(velocity);
 	}
 }
@@ -327,9 +332,9 @@ void Entity::add_collider(physics::ICollisionObject* collider, const glm::vec3& 
 
 void Entity::remove_colliders()
 {
-	for (size_t index = 0; index < colliders.size(); ++index)
+	for (size_t collider_index = 0; collider_index < colliders.size(); ++collider_index)
 	{
-		physics::ICollisionObject* collider = colliders[index];
+		physics::ICollisionObject* collider = colliders[collider_index];
 		engine::instance()->physics()->destroy_object(collider);
 	}
 	colliders.clear();
@@ -408,18 +413,18 @@ const glm::quat& Entity::get_orientation() const
 
 void Entity::apply_impulse(const glm::vec3& impulse, const glm::vec3& local_position)
 {
-	for (size_t index = 0; index < colliders.size(); ++index)
+	for (size_t collider_index = 0; collider_index < colliders.size(); ++collider_index)
 	{
-		physics::ICollisionObject* collider = colliders[index];
+		physics::ICollisionObject* collider = colliders[collider_index];
 		collider->apply_impulse(impulse, local_position);
 	}
 }
 
 void Entity::apply_central_impulse(const glm::vec3& impulse)
 {
-	for (size_t index = 0; index < colliders.size(); ++index)
+	for (size_t collider_index = 0; collider_index < colliders.size(); ++collider_index)
 	{
-		physics::ICollisionObject* collider = colliders[index];
+		physics::ICollisionObject* collider = colliders[collider_index];
 		collider->apply_central_impulse(impulse);
 	}
 }

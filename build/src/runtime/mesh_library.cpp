@@ -409,6 +409,7 @@ namespace gemini
 	struct ModelConfigBlock
 	{
 		gemini::Mesh* mesh;
+		gemini::Allocator* allocator;
 		animation::Sequence* sequence;
 		uint32_t looping;
 	};
@@ -471,11 +472,20 @@ namespace gemini
 			{
 				if (target_bone == block->mesh->skeleton[bone_index].name())
 				{
-					ModelAttachment attachment;
+					ModelAttachment* attachment = MEMORY2_NEW(*block->allocator, ModelAttachment);
+					assert(attachment);
 					target_index = bone_index;
-					attachment.bone_index = bone_index;
-					attachment.name = attachment_name.c_str();
+					attachment->bone_index = bone_index;
+					attachment->name = attachment_name.c_str();
 					block->mesh->attachments.push_back(attachment);
+
+					// Re-visit this and fix the attachment names if you hit
+					// this assert.
+					assert(attachment_name.length() < 32);
+					core::StackString<32> name = attachment_name.c_str();
+
+					block->mesh->attachments_by_name[name] = attachment;
+
 					LOGV("create attachment named \"%s\" with target \"%s\" (bone_index = %i)\n",
 						attachment_name.c_str(),
 						target_bone.c_str(),
@@ -584,6 +594,7 @@ namespace gemini
 			context.line_handler = model_config_handler;
 
 			ModelConfigBlock block;
+			block.allocator = load_state->allocator;
 			block.mesh = mesh;
 			block.sequence = nullptr;
 

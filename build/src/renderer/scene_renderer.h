@@ -52,6 +52,7 @@ namespace gemini
 		uint16_t entity_index;
 
 		// populated in extract phase
+		glm::mat4 parent_matrix;
 		glm::mat4 model_matrix;
 		glm::mat3 normal_matrix;
 	}; // StaticMeshComponent
@@ -62,6 +63,7 @@ namespace gemini
 		uint16_t entity_index;
 
 		// populated in extract phase
+		glm::mat4 parent_matrix;
 		glm::mat4 model_matrix;
 		glm::mat3 normal_matrix;
 
@@ -120,6 +122,7 @@ namespace gemini
 		glm::quat orientation[256];
 		glm::vec3 pivot_point[256];
 
+		glm::mat4 parent_matrix[256];
 		glm::mat4 model_matrix[256];
 	}; // EntityRenderState
 
@@ -152,6 +155,8 @@ namespace gemini
 
 	// Fetch the current animation pose for component_id
 	void render_scene_animation_get_pose(RenderScene* scene, uint32_t component_id, animation::Pose& pose);
+
+	void render_scene_animation_get_bone_transform(RenderScene* scene, uint32_t component_id, uint32_t bone_index, glm::mat4& model_matrix);
 
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device);
 	void render_scene_destroy(RenderScene* scene, render2::Device* device);

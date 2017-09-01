@@ -105,6 +105,8 @@ public:
 	uint16_t index;
 	EntityName name;
 
+	glm::mat4 parent_matrix;
+
 	glm::vec3 position;
 	glm::quat orientation;
 	glm::vec3 velocity;
@@ -121,6 +123,7 @@ public:
 	virtual uint32_t get_render_flags() const;
 	void set_render_flags(uint32_t flags);
 
+	virtual void get_parent_matrix(glm::mat4& matrix) const;
 	virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) const;
 	virtual void get_render_position(glm::vec3& out_position) const { out_position = position; }
 	virtual void get_pivot_point(glm::vec3& out_pivot) const override { out_pivot = pivot_point; }
