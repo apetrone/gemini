@@ -126,6 +126,7 @@ namespace gemini
 
 						if (is_finished_playing)
 						{
+							LOGV("releasing sound index: %i\n", index);
 							// return to the free list
 							sound_list->release(index);
 							--total_active_sounds;
@@ -215,6 +216,7 @@ namespace gemini
 
 			SoundHandle_t handle = sound_list->acquire();
 			SoundInstance* instance = sound_list->from_handle(handle);
+			LOGV("acquire new sound (handle = %i, instance = %x)\n", handle, instance);
 			assert(instance);
 
 			// only if the sound wasn't previously playing.

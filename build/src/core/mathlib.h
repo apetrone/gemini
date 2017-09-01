@@ -214,6 +214,8 @@ namespace mathlib
 
 namespace gemini
 {
+	struct string;
+
 	template <class Type>
 	Type lerp(const Type & a, const Type & b, float t)
 	{
@@ -242,6 +244,9 @@ namespace gemini
 	}
 
 	glm::quat interpolate(const glm::quat& start, const glm::quat& end, float alpha);
+
+	int32_t string_to_vec3(const string& line, glm::vec3& out);
+	int32_t string_to_quat(const string& line, glm::quat& out);
 } // namespace gemini
 
 #if 0

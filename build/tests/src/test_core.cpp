@@ -165,6 +165,36 @@ UNITTEST(Array)
 		LOGV("value %i\n", value);
 	}
 
+	// TODO: try to remove the first and last element in the array.
+	{
+		Array<int> abc(default_allocator, 3);
+		abc.push_back(30);
+		abc.push_back(60);
+		abc.push_back(90);
+		abc.erase(30);
+		LOGV("erase_front\n");
+		for (const int& value : abc)
+		{
+			LOGV("value %i\n", value);
+		}
+		TEST_ASSERT(abc.size() == 2, size_after_erase_front);
+		TEST_ASSERT(abc[0] == 60 && abc[1] == 90, erase_front);
+	}
+
+	{
+		Array<int> abc(default_allocator, 3);
+		abc.push_back(30);
+		abc.push_back(60);
+		abc.push_back(90);
+		abc.erase(90);
+		LOGV("erase_back\n");
+		for (const int& value : abc)
+		{
+			LOGV("value %i\n", value);
+		}
+		TEST_ASSERT(abc.size() == 2, size_after_erase_back);
+		TEST_ASSERT(abc[0] == 30 && abc[1] == 60, erase_back);
+	}
 
 	// test iterators
 	Array<int>::iterator iter = abc.begin();

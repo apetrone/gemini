@@ -49,7 +49,7 @@ namespace gemini
 	struct StaticMeshComponent
 	{
 		AssetHandle mesh_handle;
-		uint16_t entity_index;
+		uint16_t transform_index;
 
 		// populated in extract phase
 		glm::mat4 model_matrix;
@@ -59,7 +59,7 @@ namespace gemini
 	struct AnimatedMeshComponent
 	{
 		AssetHandle mesh_handle;
-		uint16_t entity_index;
+		uint16_t transform_index;
 
 		// populated in extract phase
 		glm::mat4 model_matrix;
@@ -68,11 +68,8 @@ namespace gemini
 		// Assumptions we're going to make for now for simplicity.
 		// An animated mesh will only have ONE geometry chunk.
 
-		// local bone transforms (extracted from current pose)
+		// world-space bone transforms
 		glm::mat4* bone_transforms;
-
-		// currently playing sequence
-		uint32_t current_sequence_index;
 
 		// array of all sequence instances for the associated mesh
 		animation::AnimatedInstance** sequence_instances;
@@ -120,15 +117,19 @@ namespace gemini
 		glm::quat orientation[256];
 		glm::vec3 pivot_point[256];
 
+		glm::mat4 parent_matrix[256];
 		glm::mat4 model_matrix[256];
+
+		// corresponding transform index
+		uint16_t transform_index[256];
 	}; // EntityRenderState
 
 
 	void render_scene_startup(render2::Device* device, Allocator& allocator);
 	void render_scene_shutdown();
 
-	uint32_t render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
-	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
+	uint32_t render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t transform_index);
+	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t transform_index);
 
 	// returns the instance id for an animation
 	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name, uint32_t layer);
@@ -150,9 +151,6 @@ namespace gemini
 	// no-op if there's no playing animation
 	void render_scene_animation_set_frame(RenderScene* scene, uint32_t component_id, uint32_t frame, uint32_t layer);
 
-	// Fetch the current animation pose for component_id
-	void render_scene_animation_get_pose(RenderScene* scene, uint32_t component_id, animation::Pose& pose);
-
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device);
 	void render_scene_destroy(RenderScene* scene, render2::Device* device);
 	void render_scene_draw(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::RenderTarget* render_target = nullptr);
@@ -164,5 +162,8 @@ namespace gemini
 
 	void render_sky(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 
-	void render_scene_update(RenderScene* scene, EntityRenderState* state);
+	void render_scene_update(RenderScene* scene, const glm::mat4* world_matrices);
+
+
+	AnimatedMeshComponent* render_scene_get_animated_component(RenderScene* scene, uint32_t component_id);
 } // namespace gemini

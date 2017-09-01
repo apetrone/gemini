@@ -33,6 +33,7 @@
 #include <runtime/standaloneresourcecache.h>
 
 #include <runtime/mesh.h>
+#include <runtime/transform_graph.h>
 
 #include <platform/input.h>
 #include <platform/kernel.h>
@@ -628,6 +629,7 @@ private:
 //	GLsync fence;
 
 	RenderScene* render_scene;
+	TransformNode* transform_graph;
 
 	gui::Compositor* compositor;
 	gui::Label* log_window;
@@ -1571,6 +1573,7 @@ Options:
 
 
 		render_scene = render_scene_create(render_allocator, device);
+		transform_graph = transform_graph_create_node(render_allocator, "root");
 
 		animation::startup(asset_allocator);
 
@@ -1816,6 +1819,8 @@ Options:
 		//test_load_model("models/spiderbot/spiderbot");
 		test_load_model("models/test_model/test_model");
 
+		//test_load_model("models/test_attachment/test_attachment");
+
 #if 0
 		AssetHandle test_mesh = mesh_load("models/vault");
 		//AssetHandle plane_rig = mesh_load("models/plane_rig/plane");
@@ -1849,6 +1854,7 @@ Options:
 			{
 				render_scene_animation_play(render_scene, component_id, "idle");
 			}
+
 			entity_render_state.model_matrix[entity_index] = transform;
 			transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
 		}
@@ -1860,25 +1866,44 @@ Options:
 
 	void test_load_model(const char* model_path)
 	{
-		glm::mat4 ident;
 		AssetHandle skeleton_mesh = mesh_load(model_path);
-		animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, 0, ident);
 
 		Mesh* mesh = mesh_from_handle(skeleton_mesh);
 		if (mesh)
 		{
-			HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
-			for (; iter != mesh->sequence_index_by_name.end(); ++iter)
+			if (!mesh->skeleton.empty())
 			{
-				LOGV("Found animation: %s\n", iter.key()());
-				mesh_animations.push_back(iter.key());
-			}
+				// load an animated mesh
+				TransformNode* transform_node = transform_graph_create_hierarchy(render_allocator, mesh->skeleton, mesh->attachments, "test");
+				transform_node->entity_index = 0;
+				transform_node->orientation = glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				transform_graph_set_parent(transform_node, transform_graph);
+				animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, transform_node->transform_index);
+				animation_link_transform_and_component(transform_node, render_scene_get_animated_component(render_scene, animated_mesh));
 
-			if (!mesh_animations.empty())
+				HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
+				for (; iter != mesh->sequence_index_by_name.end(); ++iter)
+				{
+					LOGV("Found animation: %s\n", iter.key()());
+					mesh_animations.push_back(iter.key());
+				}
+
+				if (!mesh_animations.empty())
+				{
+					// Start playing the first animation if there are animations.
+					mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0](), 0);
+					update_timeline_frames();
+				}
+			}
+			else
 			{
-				// Start playing the first animation if there are animations.
-				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0](), 0);
-				update_timeline_frames();
+				enable_animation = false;
+
+				// load a static mesh
+				TransformNode* transform_node = transform_graph_create_node(render_allocator, "test");
+				transform_node->entity_index = 0;
+				transform_graph_set_parent(transform_node, transform_graph);
+				animated_mesh = render_scene_add_static_mesh(render_scene, skeleton_mesh, transform_node->transform_index);
 			}
 		}
 	}
@@ -1952,7 +1977,26 @@ Options:
 			animation::update(kernel::parameters().simulation_delta_seconds);
 		}
 
-		render_scene_update(render_scene, &entity_render_state);
+
+		{
+			// Copy frame state for each entity into their respective transform nodes.
+			//transform_graph_copy_frame_state(transform_graph, &frame_state);
+
+			// Update transform nodes with current animation poses
+			animation_update_transform_nodes();
+
+			// get the latest world matrices from the transform graph
+			glm::mat4 world_matrices[256];
+			transform_graph_transform(transform_graph, world_matrices);
+
+			// copy transforms from nodes to animated components
+			animation_update_components();
+
+			// update world matrices for scene rendering
+			render_scene_update(render_scene, world_matrices);
+
+			render_scene_update(render_scene, world_matrices);
+		}
 
 		// See if we need to poke the animated mesh.
 		if (animated_mesh != 0)
@@ -2247,6 +2291,7 @@ Options:
 		notify_server_destroy(&notify_server);
 
 		// must be shut down before the animations; as they're referenced.
+		transform_graph_destroy_node(render_allocator, transform_graph);
 		render_scene_destroy(render_scene, device);
 		render_scene_shutdown();
 

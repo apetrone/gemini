@@ -34,22 +34,22 @@
 #include <core/mathlib.h>
 #include <core/profiler.h>
 
-#include <runtime/assets.h>
-#include <runtime/audio_mixer.h>
-#include <runtime/filesystem.h>
-#include <runtime/runtime.h>
-#include <runtime/standaloneresourcecache.h>
-
 #include <renderer/renderer.h>
 #include <renderer/constantbuffer.h>
 #include <renderer/debug_draw.h>
 #include <renderer/scene_renderer.h>
 
+#include <runtime/animation.h>
+#include <runtime/assets.h>
+#include <runtime/audio_mixer.h>
 #include <runtime/debugvar.h>
 #include <runtime/debug_event.h>
-#include <runtime/keyframechannel.h>
+#include <runtime/filesystem.h>
 #include <runtime/mesh.h>
 #include <runtime/mesh_library.h>
+#include <runtime/keyframechannel.h>
+#include <runtime/runtime.h>
+#include <runtime/standaloneresourcecache.h>
 
 // SDK
 #include <sdk/audio_api.h>
@@ -65,11 +65,11 @@
 #include "input.h"
 
 #include "audio.h"
-#include "animation.h"
 #include "physics/physics.h"
 #include "hotloading.h"
 #include "navigation.h"
 
+#include <runtime/transform_graph.h>
 #include <engine/model_instance_data.h>
 
 // for MAX_BONES
@@ -389,6 +389,7 @@ class EngineInterface : public IEngineInterface, public IModelInterface
 
 public:
 	RenderScene* render_scene;
+	TransformNode* transform_graph;
 
 	EngineInterface(gemini::Allocator& _allocator,
 					IEntityManager* em,
@@ -403,6 +404,7 @@ public:
 		, main_window(window)
 		, device(render_device)
 		, render_scene(nullptr)
+		, transform_graph(nullptr)
 	{
 	}
 
@@ -486,6 +488,7 @@ public:
 	{
 		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
 		render_scene_animation_play(render_scene, instance->get_component_index(), animation_name, 0);
+		//render_scene_animation_play(render_scene, instance->get_component_index(), "look_right", 1);
 	}
 
 	virtual bool is_animation_finished(IModelInstanceData* model)
@@ -495,10 +498,59 @@ public:
 		return render_scene_animation_finished(render_scene, instance->get_component_index(), 0);
 	}
 
-	virtual void get_current_pose(IModelInstanceData* model, animation::Pose& pose)
+	virtual void attach_to_entity(IModelInstanceData* model, IModelInstanceData* parent_model, const char* attachment_name)
 	{
 		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
-		render_scene_animation_get_pose(render_scene, instance->get_component_index(), pose);
+		gemini::ModelInstanceData* parent = reinterpret_cast<gemini::ModelInstanceData*>(parent_model);
+		if (parent && attachment_name)
+		{
+			Mesh* mesh = mesh_from_handle(parent->get_mesh_handle());
+			if (!mesh)
+			{
+				return;
+			}
+
+			if (mesh->attachments_by_name.has_key(attachment_name))
+			{
+				core::StackString<32> attachment_key = attachment_name;
+				ModelAttachment* attachment = mesh->attachments_by_name.get(attachment_key);
+				if (!attachment)
+				{
+					return;
+				}
+
+				TransformNode* parent_node = parent->get_transform_node();
+
+				// If you hit this, the parent node has no bones to attach.
+				assert(!parent_node->bones.empty());
+
+				// index the bone parent
+				TransformNode* bone_parent = parent_node->bones[attachment->bone_index];
+
+				// try to find the named attachment in the hierarchy
+				for (size_t child_index = 0; child_index < bone_parent->children.size(); ++child_index)
+				{
+					if (bone_parent->children[child_index]->name == attachment_name)
+					{
+						TransformNode* child = instance->get_transform_node();
+						transform_graph_set_parent(child, bone_parent->children[child_index]);
+						return;
+					}
+				}
+
+				LOGW("Unable to find attachment bone named %s\n", attachment_name);
+			}
+			else
+			{
+				LOGW("Attachment \"%s\" could not be found\n", attachment_name);
+			}
+		}
+		else
+		{
+			// Detach the instance.
+			TransformNode* node = instance->get_transform_node();
+			transform_graph_set_parent(node, transform_graph);
+		}
 	}
 
 	// IModelInterface
@@ -513,19 +565,34 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 	Mesh* mesh = mesh_from_handle(mesh_handle);
 	if (mesh)
 	{
+		// create the transform node to place it in the transform graph.
+		// Since the transform_graph root has an index of 0; we need
+		// to offset the others somehow.
+		TransformNode* transform_node = nullptr;
+
+		// create the scene component we'll need for rendering
 		uint32_t component_id = 0;
 		if (mesh->skeleton.empty())
 		{
-			component_id = render_scene_add_static_mesh(render_scene, mesh_handle, entity_index, glm::mat4(1.0f));
+			transform_node = transform_graph_create_node(engine_allocator, model_path);
+			transform_node->entity_index = entity_index;
+			transform_graph_set_parent(transform_node, transform_graph);
+			component_id = render_scene_add_static_mesh(render_scene, mesh_handle, transform_node->transform_index);
 		}
 		else
 		{
-			component_id = render_scene_add_animated_mesh(render_scene, mesh_handle, entity_index, glm::mat4(1.0f));
+			transform_node = transform_graph_create_hierarchy(engine_allocator, mesh->skeleton, mesh->attachments, model_path);
+			transform_node->entity_index = entity_index;
+			transform_graph_set_parent(transform_node, transform_graph);
+			component_id = render_scene_add_animated_mesh(render_scene, mesh_handle, transform_node->transform_index);
+
+			animation_link_transform_and_component(transform_node, render_scene_get_animated_component(render_scene, component_id));
 		}
 
 		gemini::ModelInstanceData data(engine_allocator);
 		data.set_mesh_index(mesh_handle);
 		data.set_component_index(component_id);
+		data.set_transform_node(transform_node);
 
 		int32_t index = (int32_t)id_to_instance.size();
 		id_to_instance.insert(ModelInstanceMap::value_type(index, data));
@@ -585,8 +652,22 @@ extern "C"
 }
 #endif
 
+void interpolate_frame_state(TransformFrameState* state, EntityRenderState* a, EntityRenderState* b, float alpha)
+{
+	for (size_t index = 0; index < MAX_ENTITIES; ++index)
+	{
+		glm::quat orientation = gemini::slerp(a->orientation[index], b->orientation[index], alpha);
+		glm::vec3 position = gemini::lerp(a->position[index], b->position[index], alpha);
 
+		// Wait, since when does a pivot point get interpolated ?
+		// I have no idea what this produces.
+		glm::vec3 pivot_point = gemini::lerp(a->pivot_point[index], b->pivot_point[index], alpha);
 
+		state->position[index] = position;
+		state->orientation[index] = orientation;
+		state->pivot_point[index] = pivot_point;
+	}
+}
 
 void extract_entities(EntityRenderState* ers, IEngineEntity** entities)
 {
@@ -602,25 +683,6 @@ void extract_entities(EntityRenderState* ers, IEngineEntity** entities)
 	}
 }
 
-void interpolate_states(EntityRenderState* out, EntityRenderState* a, EntityRenderState* b, float alpha)
-{
-	for (size_t index = 0; index < MAX_ENTITIES; ++index)
-	{
-		glm::quat orientation = gemini::slerp(a->orientation[index], b->orientation[index], alpha);
-		glm::vec3 position = gemini::lerp(a->position[index], b->position[index], alpha);
-
-		// Wait, since when does a pivot point get interpolated ?
-		// I have no idea what this produces.
-		glm::vec3 pivot_point = gemini::lerp(a->pivot_point[index], b->pivot_point[index], alpha);
-
-		glm::mat4 rotation = glm::toMat4(orientation);
-		glm::mat4 translation = glm::translate(glm::mat4(1.0f), position);
-		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
-		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
-
-		out->model_matrix[index] = translation * from_pivot * rotation * to_pivot;
-	}
-}
 
 void copy_state(EntityRenderState* out, EntityRenderState* in)
 {
@@ -683,6 +745,7 @@ private:
 
 	float interpolate_alpha;
 	RenderScene* render_scene;
+	TransformNode* transform_graph;
 	EntityRenderState* entity_render_state;
 
 	CameraState camera_state[2];
@@ -792,6 +855,7 @@ public:
 		, engine_allocator(memory_allocator_default(MEMORY_ZONE_DEFAULT))
 		, queued_messages(nullptr)
 		, interpolate_alpha(0.0f)
+		, transform_graph(nullptr)
 	{
 		game_path = "";
 		enable_telemetry = 0;
@@ -1128,8 +1192,11 @@ Options:
 		// create the render scene
 		render_scene = render_scene_create(engine_allocator, device);
 
+		transform_graph = transform_graph_create_node(engine_allocator, "root");
+
 		EngineInterface* engine_instance = static_cast<EngineInterface*>(engine_interface);
 		engine_instance->render_scene = render_scene;
+		engine_instance->transform_graph = transform_graph;
 
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		setup_gui(device, renderer_allocator, frame.width, frame.height);
@@ -1320,10 +1387,8 @@ Options:
 			glm::vec3 player_offset;
 			game_interface->get_render_view(view, player_offset);
 
-			// interpolate
-			EntityRenderState ers;
-
-			interpolate_states(&ers, &entity_render_state[0], &entity_render_state[1], alpha);
+			TransformFrameState frame_state;
+			interpolate_frame_state(&frame_state, &entity_render_state[0], &entity_render_state[1], alpha);
 
 			CameraState interpolated_camera_state;
 
@@ -1359,6 +1424,25 @@ Options:
 			//	0.0f
 			//);
 
+			// draw the light
+			debugdraw::sphere(render_scene->light_position_world, gemini::Color(0.0f, 1.0f, 1.0f), 0.25f);
+
+			// Copy frame state for each entity into their respective transform nodes.
+			transform_graph_copy_frame_state(transform_graph, &frame_state);
+
+			// Update transform nodes with current animation poses
+			animation_update_transform_nodes();
+
+			// get the latest world matrices from the transform graph
+			glm::mat4 world_matrices[MAX_ENTITIES];
+			transform_graph_transform(transform_graph, world_matrices);
+
+			// copy transforms from nodes to animated components
+			animation_update_components();
+
+			// update world matrices for scene rendering
+			render_scene_update(render_scene, world_matrices);
+
 			if (debug_camera)
 			{
 				// 5 is centered
@@ -1372,7 +1456,6 @@ Options:
 			const float screen_aspect_ratio = (view.width / (float)view.height);
 			view.projection = glm::perspective(glm::radians(interpolated_camera_state.field_of_view), screen_aspect_ratio, nearz, farz);
 
-			render_scene_update(render_scene, &ers);
 			render_scene_draw(render_scene, device, view.modelview, view.projection);
 
 			//debugdraw::text(30, 230, core::str::format("static meshes: %i", render_scene->stat_static_meshes_drawn), Color(1.0f, 1.0f, 0.5f));
@@ -1448,6 +1531,8 @@ Options:
 		{
 			MEMORY2_DELETE(renderer_allocator, resource_cache);
 		}
+
+		transform_graph_destroy_node(engine_allocator, transform_graph);
 
 		render_scene_destroy(render_scene, device);
 		render_scene_shutdown();

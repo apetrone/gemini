@@ -78,30 +78,6 @@ namespace gemini
 	} // _render_scene_total_sequences_from_component
 
 
-	void _render_scene_get_aggregate_pose(Mesh* mesh, AnimatedMeshComponent* component, animation::Pose& pose)
-	{
-		float blend_alpha = 0.5f;
-		animation::Pose poses[MAX_ANIMATED_MESH_LAYERS];
-
-		for (size_t layer_index = 0; layer_index < MAX_ANIMATED_MESH_LAYERS; ++layer_index)
-		{
-			animation::Pose* current_pose = &poses[layer_index];
-
-			animation::AnimatedInstance* instance = component->sequence_instances[layer_index];
-			assert(instance);
-
-			animated_instance_get_pose(instance, *current_pose);
-		}
-
-		for (size_t index = 0; index < mesh->skeleton.size(); ++index)
-		{
-			// blend the poses
-			pose.rot[index] = gemini::interpolate(poses[0].rot[index], poses[1].rot[index], blend_alpha);
-			pose.pos[index] = gemini::interpolate(poses[0].pos[index], poses[1].pos[index], blend_alpha);
-		}
-	} // _render_scene_get_aggregate_pose
-
-
 	RenderSceneState* render_scene_state = nullptr;
 
 	void render_scene_startup(render2::Device* device, Allocator& allocator)
@@ -228,7 +204,7 @@ namespace gemini
 	} // render_scene_track_mesh
 
 
-	uint32_t render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
+	uint32_t render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t transform_index)
 	{
 		Mesh* mesh = mesh_from_handle(mesh_handle);
 		if (!mesh)
@@ -239,12 +215,9 @@ namespace gemini
 
 		AnimatedMeshComponent* component = MEMORY2_NEW(*scene->allocator, AnimatedMeshComponent);
 		component->sequence_instances = nullptr;
-		component->entity_index = entity_index;
+		component->transform_index = transform_index;
 		component->mesh_handle = mesh_handle;
-		component->model_matrix = model_transform;
-		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
 		component->bone_transforms = (glm::mat4*)MEMORY2_ALLOC(*scene->allocator, sizeof(glm::mat4) * MAX_BONES);
-		component->current_sequence_index = 0;
 
 		void* memory = MEMORY2_ALLOC(*scene->allocator, sizeof(animation::AnimatedInstance*) * MAX_ANIMATED_MESH_LAYERS);
 		component->sequence_instances = reinterpret_cast<animation::AnimatedInstance**>(memory);
@@ -270,7 +243,7 @@ namespace gemini
 		return scene->animated_meshes.size();
 	} // render_scene_add_animated_mesh
 
-	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
+	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t transform_index)
 	{
 		Mesh* mesh = mesh_from_handle(mesh_handle);
 		if (!mesh)
@@ -283,10 +256,8 @@ namespace gemini
 		StaticMeshComponent* component = MEMORY2_NEW(*scene->allocator, StaticMeshComponent);
 		assert(component);
 		scene->static_meshes.set(component_handle, component);
-		component->entity_index = entity_index;
+		component->transform_index = transform_index;
 		component->mesh_handle = mesh_handle;
-		component->model_matrix = model_transform;
-		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
 
 		render_scene_track_mesh(scene, mesh_handle);
 
@@ -322,7 +293,6 @@ namespace gemini
 		instance->flags = animation::AnimatedInstance::Flags::Playing;
 		instance->local_time_seconds = 0.0f;
 		//LOGV("playing animation: %s\n", animation_name);
-		//component->current_sequence_index = sequence_index;
 
 		return sequence_index;
 	}
@@ -398,24 +368,6 @@ namespace gemini
 			instance->local_time_seconds = sequence->frame_delay_seconds * frame;
 		}
 	} // render_scene_animation_set_frame
-
-	void render_scene_animation_get_pose(RenderScene* scene, uint32_t component_id, animation::Pose& pose)
-	{
-		// If you hit this, an invalid component id was passed in
-		assert(component_id > 0);
-		component_id--;
-
-		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
-		assert(component);
-
-		Mesh* mesh = mesh_from_handle(component->mesh_handle);
-		if (!mesh)
-		{
-			return;
-		}
-
-		_render_scene_get_aggregate_pose(mesh, component, pose);
-	} // render_scene_animation_get_pose
 
 	uint32_t render_scene_animation_current_frame(RenderScene* scene, uint32_t component_id, uint32_t layer)
 	{
@@ -744,7 +696,7 @@ namespace gemini
 				++scene->stat_animated_meshes_drawn;
 
 				// Enable this to debug bone transforms
-#if 1
+#if 0
 				if (mesh->skeleton.size() > 0)
 				{
 					glm::vec3 position; // render position
@@ -753,12 +705,12 @@ namespace gemini
 					const glm::mat4* model_poses = instance->bone_transforms;
 					//const glm::vec3* hitboxes = model_instance->get_hitboxes();
 
-					//for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
-					//{
-					//	size_t transform_index = bone_index;
-					//	const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
-					//	debugdraw::axes(world_pose, 0.15f, 0.0f);
-					//}
+					for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
+					{
+						size_t transform_index = bone_index;
+						const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
+						debugdraw::axes(world_pose, 0.15f, 0.0f);
+					}
 
 #if 1
 					// draw individual links for each bone to represent the skeleton
@@ -892,14 +844,14 @@ namespace gemini
 	//	}
 	//}
 
-	void render_scene_update(RenderScene* scene, EntityRenderState* state)
+	void render_scene_update(RenderScene* scene, const glm::mat4* world_matrices)
 	{
 		// extract data from static meshes
 		Freelist<StaticMeshComponent*>::Iterator iter = scene->static_meshes.begin();
 		for (; iter != scene->static_meshes.end(); ++iter)
 		{
 			StaticMeshComponent* component = iter.data();
-			component->model_matrix = state->model_matrix[component->entity_index];
+			component->model_matrix = world_matrices[component->transform_index];
 			component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
 		}
 
@@ -909,22 +861,20 @@ namespace gemini
 			AnimatedMeshComponent* component = scene->animated_meshes[index];
 			if (component)
 			{
-				animation::Pose pose;
-
-				component->model_matrix = state->model_matrix[component->entity_index];
+				component->model_matrix = world_matrices[component->transform_index];
 				component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
-
-				Mesh* mesh = mesh_from_handle(component->mesh_handle);
-				if (!mesh)
-				{
-					return;
-				}
-
-				// TODO: determine how to get the blended pose; for now just use the first animated instance.
-				//animated_instance_get_pose(component->sequence_instances[1], pose);
-				_render_scene_get_aggregate_pose(mesh, component, pose);
-				_render_set_animation_pose(scene, component, pose);
 			}
 		}
 	} // render_scene_update
+
+	AnimatedMeshComponent* render_scene_get_animated_component(RenderScene* scene, uint32_t component_id)
+	{
+		assert(component_id > 0);
+		component_id--;
+
+		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
+		assert(component);
+		return component;
+	} // render_scene_get_animated_component
 } // namespace gemini
+

@@ -471,6 +471,7 @@ namespace gemini
 	{
 		MEMORY2_DEALLOC(allocator, const_cast<char*>(string.string_data));
 		string.string_data_size = 0;
+		string.string_data = nullptr;
 	} // string_destroy
 
 	string string_concat(gemini::Allocator& allocator, const string& first, const string& second)
@@ -542,7 +543,7 @@ namespace gemini
 			{
 				for (size_t index = 0; index < delimiter_size; ++index)
 				{
-					if (*prev== delimiters[index])
+					if (*prev == delimiters[index])
 					{
 						prev_in_delimiters = 1;
 						break;
@@ -550,7 +551,7 @@ namespace gemini
 				}
 			}
 
-			if (current_in_delimiters)
+			if (!reading_string && current_in_delimiters)
 			{
 				ptrdiff_t length = (last_character + 1 - prev);
 				if (isalnum(*prev) && length > 0)
@@ -580,7 +581,7 @@ namespace gemini
 				reading_string = 0;
 
 				ptrdiff_t length = (last_character + 1 - prev);
-				if (length > 0)
+				if (length > 0 && current_in_delimiters)
 				{
 					gemini::string token = string_substr(allocator, prev, 0, static_cast<uint32_t>(length));
 					last_character = current;

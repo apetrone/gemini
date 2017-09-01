@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #include "mathlib.h"
 
+#include <core/str.h>
+
 // Let A = N x N matrix
 // Let M = eigenvalue (lambda)
 // Let I = N x N identity matrix
@@ -366,7 +368,19 @@ namespace gemini
 	glm::quat interpolate(const glm::quat& start, const glm::quat& end, float alpha)
 	{
 		return slerp(start, end, alpha);
-	}
+	} // interpolate
+
+
+
+	int32_t string_to_vec3(const gemini::string& line, glm::vec3& out)
+	{
+		return sscanf(line.c_str(), "%f %f %f", &out.x, &out.y, &out.z) != 3;
+	} // string_to_vec3
+
+	int32_t string_to_quat(const gemini::string& line, glm::quat& out)
+	{
+		return sscanf(line.c_str(), "%f %f %f %f", &out.x, &out.y, &out.z, &out.w) != 4;
+	} // string_to_quat
 } // namespace gemini
 
 #if 0

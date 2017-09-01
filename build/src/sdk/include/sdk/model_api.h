@@ -44,10 +44,6 @@ namespace gemini
 
 		virtual void set_animation_enabled(int32_t index, bool enabled) = 0;
 
-		// returns the index of an animation by name
-		// -1 if the animation could not be found.
-		virtual int32_t get_animation_index(const char* name) = 0;
-
 		// add an animation to this model
 		//virtual int32_t add_animation(const char* name) = 0;
 

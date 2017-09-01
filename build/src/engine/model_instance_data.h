@@ -32,6 +32,7 @@
 #include <runtime/animation.h>
 #include <runtime/assets.h>
 #include <runtime/keyframechannel.h>
+#include <runtime/transform_graph.h>
 
 
 namespace gemini
@@ -46,11 +47,7 @@ namespace gemini
 		Mesh* mesh;
 		glm::mat4 transform;
 
-		// parent-local bone transforms
-		glm::mat4* local_bone_transforms;
-
-		// model bone transforms
-		glm::mat4* model_bone_transforms;
+		TransformNode* transform_node;
 
 		uint32_t component_index;
 
@@ -80,7 +77,6 @@ namespace gemini
 		//virtual void set_local_transform(const glm::mat4& _transform);
 		virtual const Hitbox* get_hitboxes() const;
 		virtual void set_animation_enabled(int32_t index, bool enabled);
-		virtual int32_t get_animation_index(const char* name);
 		virtual float get_animation_duration(int32_t index) const;
 		//virtual uint32_t get_total_bones(int32_t /*index*/) const;
 		//virtual int32_t find_bone_named(const char* bone);
@@ -89,6 +85,9 @@ namespace gemini
 		virtual const glm::vec3& get_mins() const;
 		virtual const glm::vec3& get_maxs() const;
 		virtual const glm::vec3& get_center_offset() const;
+
+		virtual void set_transform_node(TransformNode* node);
+		virtual TransformNode* get_transform_node() const;
 	}; // ModelInstanceData
 
 } // namespace gemini

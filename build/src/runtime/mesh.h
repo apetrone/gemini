@@ -86,6 +86,9 @@ namespace gemini
 
 		// target bone index
 		int32_t bone_index;
+
+		glm::vec3 local_translation_offset;
+		glm::quat local_orientation_offset;
 	}; // ModelAttachment
 
 	struct Mesh
@@ -124,7 +127,9 @@ namespace gemini
 		// collision geometry
 		CollisionGeometry* collision_geometry;
 
-		Array<ModelAttachment> attachments;
+		Array<ModelAttachment*> attachments;
+		typedef HashSet<core::StackString<32>, ModelAttachment*> ModelAttachmentHashSet;
+		ModelAttachmentHashSet attachments_by_name;
 	}; // Mesh
 
 	// initialize a mesh by allocating memory
