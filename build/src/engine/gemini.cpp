@@ -70,6 +70,7 @@
 #include "hotloading.h"
 #include "navigation.h"
 
+#include <engine/transform_graph.h>
 #include <engine/model_instance_data.h>
 
 // for MAX_BONES
@@ -389,6 +390,7 @@ class EngineInterface : public IEngineInterface, public IModelInterface
 
 public:
 	RenderScene* render_scene;
+	TransformNode* transform_graph;
 
 	EngineInterface(gemini::Allocator& _allocator,
 					IEntityManager* em,
@@ -403,6 +405,7 @@ public:
 		, main_window(window)
 		, device(render_device)
 		, render_scene(nullptr)
+		, transform_graph(nullptr)
 	{
 	}
 
@@ -539,6 +542,7 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 	Mesh* mesh = mesh_from_handle(mesh_handle);
 	if (mesh)
 	{
+		// create the scene component we'll need for rendering
 		uint32_t component_id = 0;
 		if (mesh->skeleton.empty())
 		{
@@ -555,6 +559,13 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 
 		int32_t index = (int32_t)id_to_instance.size();
 		id_to_instance.insert(ModelInstanceMap::value_type(index, data));
+
+		// create the transform node to place it in the transform graph.
+		// Since the transform_graph root has an index of 0; we need
+		// to offset the others somehow.
+		TransformNode* transform_node = transform_graph_create_node(engine_allocator, model_path);
+		transform_node->data_index = entity_index;
+		transform_graph_set_parent(transform_node, transform_graph);
 
 		return index;
 	}
@@ -629,7 +640,7 @@ void extract_entities(EntityRenderState* ers, IEngineEntity** entities)
 	}
 }
 
-void interpolate_states(EntityRenderState* out, EntityRenderState* a, EntityRenderState* b, float alpha)
+void interpolate_states(glm::mat4* local_matrices, EntityRenderState* a, EntityRenderState* b, float alpha)
 {
 	for (size_t index = 0; index < MAX_ENTITIES; ++index)
 	{
@@ -645,8 +656,7 @@ void interpolate_states(EntityRenderState* out, EntityRenderState* a, EntityRend
 		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
 		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
 
-		out->parent_matrix[index] = a->parent_matrix[index];
-		out->model_matrix[index] = translation * from_pivot * rotation * to_pivot;
+		local_matrices[index] = translation * from_pivot * rotation * to_pivot;
 	}
 }
 
@@ -712,6 +722,7 @@ private:
 
 	float interpolate_alpha;
 	RenderScene* render_scene;
+	TransformNode* transform_graph;
 	EntityRenderState* entity_render_state;
 
 	CameraState camera_state[2];
@@ -821,6 +832,7 @@ public:
 		, engine_allocator(memory_allocator_default(MEMORY_ZONE_DEFAULT))
 		, queued_messages(nullptr)
 		, interpolate_alpha(0.0f)
+		, transform_graph(nullptr)
 	{
 		game_path = "";
 		enable_telemetry = 0;
@@ -1157,8 +1169,11 @@ Options:
 		// create the render scene
 		render_scene = render_scene_create(engine_allocator, device);
 
+		transform_graph = transform_graph_create_node(engine_allocator, "root");
+
 		EngineInterface* engine_instance = static_cast<EngineInterface*>(engine_interface);
 		engine_instance->render_scene = render_scene;
+		engine_instance->transform_graph = transform_graph;
 
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		setup_gui(device, renderer_allocator, frame.width, frame.height);
@@ -1350,9 +1365,10 @@ Options:
 			game_interface->get_render_view(view, player_offset);
 
 			// interpolate
-			EntityRenderState ers;
+			glm::mat4 local_matrices[256];
 
-			interpolate_states(&ers, &entity_render_state[0], &entity_render_state[1], alpha);
+			// Interpolate entity states into an array of local matrices.
+			interpolate_states(local_matrices, &entity_render_state[0], &entity_render_state[1], alpha);
 
 			CameraState interpolated_camera_state;
 
@@ -1388,8 +1404,27 @@ Options:
 			//	0.0f
 			//);
 
-			render_scene_update(render_scene, &ers);
 
+			//transform_graph_set_state(transform_graph, local_matrices);
+
+			//transform_graph_set_state(&transform_graph, nullptr);
+
+
+
+			glm::mat4 world_matrices[256];
+#if 1
+			transform_graph_transform(transform_graph, world_matrices, local_matrices, 256);
+#else
+			// This basically uses the old style transform/update
+			for (size_t index = 0; index < 256; ++index)
+			{
+				world_matrices[index] = local_matrices[index];
+			}
+#endif
+
+			render_scene_update(render_scene, world_matrices);
+
+#if 0
 			AnimatedMeshComponent* an = render_scene->animated_meshes[0];
 
 			Freelist<StaticMeshComponent*>::Iterator it = render_scene->static_meshes.begin();
@@ -1402,7 +1437,7 @@ Options:
 					c->parent_matrix = an->model_matrix * an->bone_transforms[8];
 				}
 			}
-
+#endif
 
 			if (debug_camera)
 			{
@@ -1494,6 +1529,8 @@ Options:
 		{
 			MEMORY2_DELETE(renderer_allocator, resource_cache);
 		}
+
+		transform_graph_destroy_node(engine_allocator, transform_graph);
 
 		render_scene_destroy(render_scene, device);
 		render_scene_shutdown();

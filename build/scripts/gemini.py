@@ -1297,6 +1297,9 @@ def products(arguments, **kwargs):
 		# "src/engine/game/particlesystem.h",
 		# "src/engine/game/particlesystem.cpp",
 
+		"src/engine/transform_graph.h",
+		"src/engine/transform_graph.cpp",
+
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_image.h"),
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_vorbis.c")
 	]

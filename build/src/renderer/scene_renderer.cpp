@@ -915,14 +915,14 @@ namespace gemini
 	//	}
 	//}
 
-	void render_scene_update(RenderScene* scene, EntityRenderState* state)
+	void render_scene_update(RenderScene* scene, const glm::mat4* world_matrices)
 	{
 		// extract data from static meshes
 		Freelist<StaticMeshComponent*>::Iterator iter = scene->static_meshes.begin();
 		for (; iter != scene->static_meshes.end(); ++iter)
 		{
 			StaticMeshComponent* component = iter.data();
-			component->model_matrix = state->parent_matrix[component->entity_index] * state->model_matrix[component->entity_index];
+			component->model_matrix = world_matrices[component->entity_index];
 			component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
 		}
 
@@ -932,7 +932,7 @@ namespace gemini
 			AnimatedMeshComponent* component = scene->animated_meshes[index];
 			if (component)
 			{
-				component->model_matrix = state->parent_matrix[component->entity_index] * state->model_matrix[component->entity_index];
+				component->model_matrix = world_matrices[component->entity_index];
 				component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
 
 				Mesh* mesh = mesh_from_handle(component->mesh_handle);

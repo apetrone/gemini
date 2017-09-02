@@ -52,7 +52,6 @@ namespace gemini
 		uint16_t entity_index;
 
 		// populated in extract phase
-		glm::mat4 parent_matrix;
 		glm::mat4 model_matrix;
 		glm::mat3 normal_matrix;
 	}; // StaticMeshComponent
@@ -63,7 +62,6 @@ namespace gemini
 		uint16_t entity_index;
 
 		// populated in extract phase
-		glm::mat4 parent_matrix;
 		glm::mat4 model_matrix;
 		glm::mat3 normal_matrix;
 
@@ -169,5 +167,5 @@ namespace gemini
 
 	void render_sky(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 
-	void render_scene_update(RenderScene* scene, EntityRenderState* state);
+	void render_scene_update(RenderScene* scene, const glm::mat4* world_matrices);
 } // namespace gemini

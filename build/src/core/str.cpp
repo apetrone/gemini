@@ -471,6 +471,7 @@ namespace gemini
 	{
 		MEMORY2_DEALLOC(allocator, const_cast<char*>(string.string_data));
 		string.string_data_size = 0;
+		string.string_data = nullptr;
 	} // string_destroy
 
 	string string_concat(gemini::Allocator& allocator, const string& first, const string& second)
