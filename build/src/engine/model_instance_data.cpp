@@ -251,4 +251,14 @@ namespace gemini
 	{
 		return mesh->mass_center_offset;
 	}
+
+	void ModelInstanceData::set_transform_node(TransformNode* node)
+	{
+		transform_node = node;
+	} // set_transform_node
+
+	TransformNode* ModelInstanceData::get_transform_node() const
+	{
+		return transform_node;
+	} // get_transform_node
 } // namespace gemini

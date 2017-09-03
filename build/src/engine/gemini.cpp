@@ -99,6 +99,99 @@ using namespace gemini; // for renderer
 gui::Compositor* _compositor = 0;
 
 
+
+struct AnimationController
+{
+	// Target is the AnimatedEntity transform node.
+	// It is assumed that target contains child nodes
+	// that will be populated directly from an animation.
+	TransformNode* target;
+
+	AnimatedMeshComponent* component;
+};
+
+
+std::vector<AnimationController> animation_controllers;
+
+void animation_controller_transfer(AnimationController* controller)
+{
+	// AnimatedMeshComponent -> TransformNode
+
+	// grab current pose from component; transfer to target.
+	Mesh* mesh = mesh_from_handle(controller->component->mesh_handle);
+	if (!mesh)
+	{
+		LOGW("Unable to get mesh to AnimationControlled component %p\n", controller->component);
+		return;
+	}
+
+	// TODO: If there was root animation on this controller; it could
+	// apply it to the animated_node or one of its children.
+
+	animation::Pose pose;
+	// get aggregate pose from component
+	{
+		AnimatedMeshComponent* component = controller->component;
+
+		float blend_alpha = 0.0f;
+		animation::Pose poses[MAX_ANIMATED_MESH_LAYERS];
+
+		for (size_t layer_index = 0; layer_index < MAX_ANIMATED_MESH_LAYERS; ++layer_index)
+		{
+			animation::Pose* current_pose = &poses[layer_index];
+
+			animation::AnimatedInstance* instance = component->sequence_instances[layer_index];
+			assert(instance);
+
+			animated_instance_get_pose(instance, *current_pose);
+		}
+
+		TransformNode* animated_node = controller->target;
+		for (size_t index = 0; index < mesh->skeleton.size(); ++index)
+		{
+			// blend the poses
+			//pose.rot[index] = gemini::interpolate(poses[0].rot[index], poses[1].rot[index], blend_alpha);
+			//pose.pos[index] = gemini::interpolate(poses[0].pos[index], poses[1].pos[index], blend_alpha);
+
+			pose.rot[index] = poses[0].rot[index];
+			pose.pos[index] = poses[0].pos[index];
+
+			const Joint* joint = &mesh->skeleton[index];
+
+			glm::mat4 local_rotation = glm::toMat4(pose.rot[index]);
+			glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), pose.pos[index]);
+
+			TransformNode* child = animated_node->bones[index];
+			child->local_matrix = mesh->bind_poses[index] * (local_transform * local_rotation);
+		}
+	}
+}
+
+void animation_controller_extract(AnimationController* controller)
+{
+	// TransformNode -> AnimatedMeshComponent
+	TransformNode* animated_node = controller->target;
+	AnimatedMeshComponent* component = controller->component;
+
+	Mesh* mesh = mesh_from_handle(controller->component->mesh_handle);
+	if (!mesh)
+	{
+		LOGW("Unable to get mesh to AnimationControlled component %p\n", controller->component);
+		return;
+	}
+
+	const size_t total_children = animated_node->bones.size();
+	for (size_t index = 0; index < total_children; ++index)
+	{
+		TransformNode* child = animated_node->bones[index];
+		// These are WORLD TRANSFORMS
+		// which actually breaks the rest of our matrix evaluation because
+		// we assume the AnimatedMeshComponent's model_matrix has to be
+		// pre-multiplied with each bone transform.
+		component->bone_transforms[index] = child->world_matrix;
+	}
+}
+
 namespace gemini
 {
 	GameMessage event_to_gamemessage(const kernel::KeyboardEvent& event, uint64_t physics_tick);
@@ -504,10 +597,12 @@ public:
 		render_scene_animation_get_pose(render_scene, instance->get_component_index(), pose);
 	}
 
-	virtual void get_attachment_matrix(IModelInstanceData* model, const char* attachment_name, glm::mat4& model_matrix)
+	virtual void attach_to_entity(IModelInstanceData* model, IModelInstanceData* parent_model, const char* attachment_name)
 	{
 		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
-		Mesh* mesh = mesh_from_handle(instance->get_mesh_handle());
+		gemini::ModelInstanceData* parent = reinterpret_cast<gemini::ModelInstanceData*>(parent_model);
+
+		Mesh* mesh = mesh_from_handle(parent->get_mesh_handle());
 		if (!mesh)
 		{
 			return;
@@ -522,7 +617,15 @@ public:
 				return;
 			}
 
-			render_scene_animation_get_bone_transform(render_scene, instance->get_component_index(), attachment->bone_index, model_matrix);
+			TransformNode* parent_node = parent->get_transform_node();
+			// If you hit this, the parent node has no bones to attach.
+			assert(!parent_node->bones.empty());
+
+			TransformNode* child = instance->get_transform_node();
+
+			TransformNode* attachment_node = parent_node->bones[attachment->bone_index];
+
+			transform_graph_set_parent(child, attachment_node);
 		}
 		else
 		{
@@ -562,11 +665,17 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 			transform_node->entity_index = entity_index;
 			transform_graph_set_parent(transform_node, transform_graph);
 			component_id = render_scene_add_animated_mesh(render_scene, mesh_handle, transform_node->transform_index, glm::mat4(1.0f));
+
+			AnimationController controller;
+			controller.target = transform_node;
+			controller.component = render_scene_get_animated_component(render_scene, component_id);
+			animation_controllers.push_back(controller);
 		}
 
 		gemini::ModelInstanceData data(engine_allocator);
 		data.set_mesh_index(mesh_handle);
 		data.set_component_index(component_id);
+		data.set_transform_node(transform_node);
 
 		int32_t index = (int32_t)id_to_instance.size();
 		id_to_instance.insert(ModelInstanceMap::value_type(index, data));
@@ -657,30 +766,10 @@ void extract_entities(EntityRenderState* ers, IEngineEntity** entities)
 			entity->get_world_transform(ers->position[index], ers->orientation[index]);
 			entity->get_render_position(ers->position[index]);
 			entity->get_pivot_point(ers->pivot_point[index]);
-			ers->transform_index[index] = entity->get_transform_index();
 		}
 	}
 }
 
-void interpolate_states(glm::mat4* local_matrices, EntityRenderState* a, EntityRenderState* b, float alpha)
-{
-	for (size_t index = 0; index < MAX_ENTITIES; ++index)
-	{
-		glm::quat orientation = gemini::slerp(a->orientation[index], b->orientation[index], alpha);
-		glm::vec3 position = gemini::lerp(a->position[index], b->position[index], alpha);
-
-		// Wait, since when does a pivot point get interpolated ?
-		// I have no idea what this produces.
-		glm::vec3 pivot_point = gemini::lerp(a->pivot_point[index], b->pivot_point[index], alpha);
-
-		glm::mat4 rotation = glm::toMat4(orientation);
-		glm::mat4 translation = glm::translate(glm::mat4(1.0f), position);
-		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
-		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
-
-		local_matrices[index] = translation * from_pivot * rotation * to_pivot;
-	}
-}
 
 void copy_state(EntityRenderState* out, EntityRenderState* in)
 {
@@ -1386,12 +1475,6 @@ Options:
 			glm::vec3 player_offset;
 			game_interface->get_render_view(view, player_offset);
 
-			// interpolate
-			//glm::mat4 local_matrices[256];
-
-			// Interpolate entity states into an array of local matrices.
-			//interpolate_states(local_matrices, &entity_render_state[0], &entity_render_state[1], alpha);
-
 			TransformFrameState frame_state;
 			interpolate_frame_state(&frame_state, &entity_render_state[0], &entity_render_state[1], alpha);
 
@@ -1429,42 +1512,29 @@ Options:
 			//	0.0f
 			//);
 
-
-			//transform_graph_set_state(transform_graph, local_matrices);
-
-			//transform_graph_set_state(&transform_graph, nullptr);
-
 			// Copy frame state for each entity into their respective transform nodes.
 			transform_graph_copy_frame_state(transform_graph, &frame_state);
 
+			// transfer animation from active sequences to their transform nodes
+			for (AnimationController& controller : animation_controllers)
+			{
+				animation_controller_transfer(&controller);
+			}
+
 
 			glm::mat4 world_matrices[256];
-#if 1
+
+
 			transform_graph_transform(transform_graph, world_matrices);
-#else
-			// This basically uses the old style transform/update
-			for (size_t index = 0; index < 256; ++index)
+
+			// extract world transforms from bone nodes
+			// and copy them to the AnimatedMeshComponent for rendering
+			for (AnimationController& controller : animation_controllers)
 			{
-				world_matrices[index] = local_matrices[index];
+				animation_controller_extract(&controller);
 			}
-#endif
 
 			render_scene_update(render_scene, world_matrices);
-
-#if 0
-			AnimatedMeshComponent* an = render_scene->animated_meshes[0];
-
-			Freelist<StaticMeshComponent*>::Iterator it = render_scene->static_meshes.begin();
-			for (; it != render_scene->static_meshes.end(); ++it)
-			{
-				StaticMeshComponent* c = it.data();
-				if (c->entity_index == 8)
-				{
-					//c->model_matrix = glm::mat4(1.0f);
-					c->parent_matrix = an->model_matrix * an->bone_transforms[8];
-				}
-			}
-#endif
 
 			if (debug_camera)
 			{
@@ -1478,8 +1548,6 @@ Options:
 			const float farz = 4096.0f;
 			const float screen_aspect_ratio = (view.width / (float)view.height);
 			view.projection = glm::perspective(glm::radians(interpolated_camera_state.field_of_view), screen_aspect_ratio, nearz, farz);
-
-
 
 			render_scene_draw(render_scene, device, view.modelview, view.projection);
 

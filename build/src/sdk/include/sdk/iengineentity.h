@@ -55,7 +55,6 @@ namespace gemini
 		// world position and orientation for this entity
 
 		virtual void get_parent_matrix(glm::mat4& matrix) const = 0;
-		virtual uint16_t get_transform_index() const = 0;
 		virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) const = 0;
 
 

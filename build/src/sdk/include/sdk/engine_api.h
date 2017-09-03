@@ -106,7 +106,7 @@ namespace gemini
 		virtual void get_current_pose(IModelInstanceData* model, animation::Pose& pose) = 0;
 
 		// get the model-space matrix for an attachment
-		virtual void get_attachment_matrix(IModelInstanceData* model, const char* attachment_name, glm::mat4& model_matrix) = 0;
+		virtual void attach_to_entity(IModelInstanceData* model, IModelInstanceData* parent_model, const char* attachment_name) = 0;
 	};
 
 	namespace engine

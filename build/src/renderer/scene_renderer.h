@@ -173,4 +173,8 @@ namespace gemini
 	void render_sky(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 
 	void render_scene_update(RenderScene* scene, const glm::mat4* world_matrices);
+
+
+
+	AnimatedMeshComponent* render_scene_get_animated_component(RenderScene* scene, uint32_t component_id);
 } // namespace gemini

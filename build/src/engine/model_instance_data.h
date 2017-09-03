@@ -34,6 +34,9 @@
 #include <runtime/keyframechannel.h>
 
 
+#include <engine/transform_graph.h>
+
+
 namespace gemini
 {
 	struct Mesh;
@@ -45,6 +48,8 @@ namespace gemini
 		AssetHandle mesh_handle;
 		Mesh* mesh;
 		glm::mat4 transform;
+
+		TransformNode* transform_node;
 
 		// parent-local bone transforms
 		glm::mat4* local_bone_transforms;
@@ -89,6 +94,9 @@ namespace gemini
 		virtual const glm::vec3& get_mins() const;
 		virtual const glm::vec3& get_maxs() const;
 		virtual const glm::vec3& get_center_offset() const;
+
+		virtual void set_transform_node(TransformNode* node);
+		virtual TransformNode* get_transform_node() const;
 	}; // ModelInstanceData
 
 } // namespace gemini

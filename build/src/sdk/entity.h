@@ -124,7 +124,6 @@ public:
 	void set_render_flags(uint32_t flags);
 
 	virtual void get_parent_matrix(glm::mat4& matrix) const;
-	virtual uint16_t get_transform_index() const;
 	virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) const;
 	virtual void get_render_position(glm::vec3& out_position) const { out_position = position; }
 	virtual void get_pivot_point(glm::vec3& out_pivot) const override { out_pivot = pivot_point; }

@@ -34,6 +34,7 @@ namespace gemini
 
 	TransformNode::TransformNode(gemini::Allocator& allocator)
 		: children(allocator)
+		, bones(allocator)
 		, parent(nullptr)
 		, entity_index(USHRT_MAX)
 		, transform_index(USHRT_MAX)
@@ -53,6 +54,7 @@ namespace gemini
 		TransformNode* animated_node = MEMORY2_NEW(allocator, TransformNode)(allocator);
 		animated_node->name = string_create(allocator, node_name);
 		animated_node->transform_index = transform_index++;
+		animated_node->bones.resize(skeleton.size());
 
 		const size_t total_joints = skeleton.size();
 		for (size_t index = 0; index < total_joints; ++index)
@@ -61,11 +63,19 @@ namespace gemini
 			TransformNode* child = MEMORY2_NEW(allocator, TransformNode)(allocator);
 			child->name = string_create(allocator, joint.name());
 			child->transform_index = transform_index++;
+
+			TransformNode* parent = animated_node;
 			if (joint.parent_index != -1)
 			{
-				child->parent = animated_node->children[joint.parent_index];
+				parent = animated_node->bones[joint.parent_index];
 			}
-			transform_graph_set_parent(child, animated_node);
+			else
+			{
+				parent = animated_node;
+			}
+
+			animated_node->bones[joint.index] = child;
+			transform_graph_set_parent(child, parent);
 		}
 
 		return animated_node;
@@ -86,15 +96,18 @@ namespace gemini
 	{
 		if (child->parent)
 		{
-			// Remove child from child->parent.
-			for (size_t index = 0; index < parent->children.size(); ++index)
-			{
-				if (parent->children[index] == child)
-				{
-					// TODO: Array Slice!
-					break;
-				}
-			}
+			child->parent->children.erase(child);
+
+			//// Remove child from child->parent.
+			//for (size_t index = 0; index < parent->children.size(); ++index)
+			//{
+			//	if (parent->children[index] == child)
+			//	{
+			//		// TODO: Array Slice!
+			//
+			//		break;
+			//	}
+			//}
 		}
 
 		parent->children.push_back(child);

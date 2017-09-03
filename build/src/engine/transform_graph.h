@@ -49,6 +49,9 @@ namespace gemini
 
 		Array<TransformNode*> children;
 
+		// a flat list of Nodes that this node owns
+		Array<TransformNode*> bones;
+
 		struct TransformNode* parent;
 		glm::mat4 local_matrix;
 		glm::mat4 world_matrix;

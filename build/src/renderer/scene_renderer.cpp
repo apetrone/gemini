@@ -748,6 +748,7 @@ namespace gemini
 				// Are you sure it was uploaded?
 				assert(render_scene_state->render_mesh_by_handle.has_key(instance->mesh_handle));
 
+				instance->model_matrix = glm::mat4(1.0f);
 				serializer->constant("model_matrix", &instance->model_matrix, sizeof(glm::mat4));
 				serializer->constant("normal_matrix", &instance->normal_matrix, sizeof(glm::mat3));
 				serializer->constant("node_transforms[0]", instance->bone_transforms, sizeof(glm::mat4) * MAX_BONES);
@@ -767,7 +768,7 @@ namespace gemini
 				++scene->stat_animated_meshes_drawn;
 
 				// Enable this to debug bone transforms
-#if 0
+#if 1
 				if (mesh->skeleton.size() > 0)
 				{
 					glm::vec3 position; // render position
@@ -779,11 +780,11 @@ namespace gemini
 					for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
 					{
 						size_t transform_index = bone_index;
-						const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
+						const glm::mat4 world_pose = model_poses[transform_index];
 						debugdraw::axes(world_pose, 0.15f, 0.0f);
 					}
 
-#if 0
+#if 1
 					// draw individual links for each bone to represent the skeleton
 					for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
 					{
@@ -795,10 +796,10 @@ namespace gemini
 						}
 						else
 						{
-							last_origin = glm::vec3(instance->model_matrix * glm::vec4(position, 1.0f));
+							last_origin = glm::vec3(model_poses[0] * glm::vec4(position, 1.0f));
 						}
 
-						const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
+						const glm::mat4 world_pose = model_poses[transform_index];
 						glm::vec3 origin = glm::vec3(glm::column(world_pose, 3));
 
 						debugdraw::line(last_origin, origin, Color::from_rgba(255, 128, 0, 255));
@@ -934,28 +935,18 @@ namespace gemini
 			{
 				component->model_matrix = world_matrices[component->transform_index];
 				component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
-
-				Mesh* mesh = mesh_from_handle(component->mesh_handle);
-				if (!mesh)
-				{
-					return;
-				}
-
-				const size_t total_joints = mesh->skeleton.size();
-				for (size_t joint_index = 0; joint_index < total_joints; ++joint_index)
-				{
-					size_t child_index = component->transform_index + joint_index;
-					component->bone_transforms[joint_index] = world_matrices[child_index];
-				}
-
-				// TODO: determine how to get the blended pose; for now just use the first animated instance.
-				//animated_instance_get_pose(component->sequence_instances[1], pose);
-				animation::Pose pose;
-				_render_scene_get_aggregate_pose(mesh, component, pose);
-
-				//_render_set_animation_pose(scene, component, pose);
 			}
 		}
 	} // render_scene_update
+
+	AnimatedMeshComponent* render_scene_get_animated_component(RenderScene* scene, uint32_t component_id)
+	{
+		assert(component_id > 0);
+		component_id--;
+
+		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
+		assert(component);
+		return component;
+	} // render_scene_get_animated_component
 } // namespace gemini
 
