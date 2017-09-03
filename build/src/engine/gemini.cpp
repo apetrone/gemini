@@ -542,15 +542,26 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 	Mesh* mesh = mesh_from_handle(mesh_handle);
 	if (mesh)
 	{
+		// create the transform node to place it in the transform graph.
+		// Since the transform_graph root has an index of 0; we need
+		// to offset the others somehow.
+		TransformNode* transform_node = nullptr;
+
 		// create the scene component we'll need for rendering
 		uint32_t component_id = 0;
 		if (mesh->skeleton.empty())
 		{
-			component_id = render_scene_add_static_mesh(render_scene, mesh_handle, entity_index, glm::mat4(1.0f));
+			transform_node = transform_graph_create_node(engine_allocator, model_path);
+			transform_node->entity_index = entity_index;
+			transform_graph_set_parent(transform_node, transform_graph);
+			component_id = render_scene_add_static_mesh(render_scene, mesh_handle, transform_node->transform_index, glm::mat4(1.0f));
 		}
 		else
 		{
-			component_id = render_scene_add_animated_mesh(render_scene, mesh_handle, entity_index, glm::mat4(1.0f));
+			transform_node = transform_graph_create_hierarchy(engine_allocator, mesh->skeleton, model_path);
+			transform_node->entity_index = entity_index;
+			transform_graph_set_parent(transform_node, transform_graph);
+			component_id = render_scene_add_animated_mesh(render_scene, mesh_handle, transform_node->transform_index, glm::mat4(1.0f));
 		}
 
 		gemini::ModelInstanceData data(engine_allocator);
@@ -559,13 +570,6 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 
 		int32_t index = (int32_t)id_to_instance.size();
 		id_to_instance.insert(ModelInstanceMap::value_type(index, data));
-
-		// create the transform node to place it in the transform graph.
-		// Since the transform_graph root has an index of 0; we need
-		// to offset the others somehow.
-		TransformNode* transform_node = transform_graph_create_node(engine_allocator, model_path);
-		transform_node->data_index = entity_index;
-		transform_graph_set_parent(transform_node, transform_graph);
 
 		return index;
 	}
@@ -622,8 +626,25 @@ extern "C"
 }
 #endif
 
+void interpolate_frame_state(TransformFrameState* state, EntityRenderState* a, EntityRenderState* b, float alpha)
+{
+	for (size_t index = 0; index < MAX_ENTITIES; ++index)
+	{
+		glm::quat orientation = gemini::slerp(a->orientation[index], b->orientation[index], alpha);
+		glm::vec3 position = gemini::lerp(a->position[index], b->position[index], alpha);
 
+		// Wait, since when does a pivot point get interpolated ?
+		// I have no idea what this produces.
+		glm::vec3 pivot_point = gemini::lerp(a->pivot_point[index], b->pivot_point[index], alpha);
 
+		glm::mat4 rotation = glm::toMat4(orientation);
+		glm::mat4 translation = glm::translate(glm::mat4(1.0f), position);
+		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
+		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
+
+		state->local_matrices[index] = translation * from_pivot * rotation * to_pivot;
+	}
+}
 
 void extract_entities(EntityRenderState* ers, IEngineEntity** entities)
 {
@@ -636,6 +657,7 @@ void extract_entities(EntityRenderState* ers, IEngineEntity** entities)
 			entity->get_world_transform(ers->position[index], ers->orientation[index]);
 			entity->get_render_position(ers->position[index]);
 			entity->get_pivot_point(ers->pivot_point[index]);
+			ers->transform_index[index] = entity->get_transform_index();
 		}
 	}
 }
@@ -1365,10 +1387,13 @@ Options:
 			game_interface->get_render_view(view, player_offset);
 
 			// interpolate
-			glm::mat4 local_matrices[256];
+			//glm::mat4 local_matrices[256];
 
 			// Interpolate entity states into an array of local matrices.
-			interpolate_states(local_matrices, &entity_render_state[0], &entity_render_state[1], alpha);
+			//interpolate_states(local_matrices, &entity_render_state[0], &entity_render_state[1], alpha);
+
+			TransformFrameState frame_state;
+			interpolate_frame_state(&frame_state, &entity_render_state[0], &entity_render_state[1], alpha);
 
 			CameraState interpolated_camera_state;
 
@@ -1409,11 +1434,13 @@ Options:
 
 			//transform_graph_set_state(&transform_graph, nullptr);
 
+			// Copy frame state for each entity into their respective transform nodes.
+			transform_graph_copy_frame_state(transform_graph, &frame_state);
 
 
 			glm::mat4 world_matrices[256];
 #if 1
-			transform_graph_transform(transform_graph, world_matrices, local_matrices, 256);
+			transform_graph_transform(transform_graph, world_matrices);
 #else
 			// This basically uses the old style transform/update
 			for (size_t index = 0; index < 256; ++index)

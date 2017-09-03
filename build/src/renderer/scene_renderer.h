@@ -49,7 +49,8 @@ namespace gemini
 	struct StaticMeshComponent
 	{
 		AssetHandle mesh_handle;
-		uint16_t entity_index;
+		//uint16_t entity_index;
+		uint16_t transform_index;
 
 		// populated in extract phase
 		glm::mat4 model_matrix;
@@ -59,7 +60,8 @@ namespace gemini
 	struct AnimatedMeshComponent
 	{
 		AssetHandle mesh_handle;
-		uint16_t entity_index;
+		//uint16_t entity_index;
+		uint16_t transform_index;
 
 		// populated in extract phase
 		glm::mat4 model_matrix;
@@ -122,14 +124,17 @@ namespace gemini
 
 		glm::mat4 parent_matrix[256];
 		glm::mat4 model_matrix[256];
+
+		// corresponding transform index
+		uint16_t transform_index[256];
 	}; // EntityRenderState
 
 
 	void render_scene_startup(render2::Device* device, Allocator& allocator);
 	void render_scene_shutdown();
 
-	uint32_t render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
-	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform);
+	uint32_t render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t transform_index, const glm::mat4& model_transform);
+	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t transform_index, const glm::mat4& model_transform);
 
 	// returns the instance id for an animation
 	uint32_t render_scene_animation_play(RenderScene* scene, uint32_t component_id, const char* animation_name, uint32_t layer);

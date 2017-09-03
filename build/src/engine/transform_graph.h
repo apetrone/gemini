@@ -34,6 +34,15 @@
 
 namespace gemini
 {
+	// This holds the interpolated frame state.
+	struct TransformFrameState
+	{
+		glm::mat4 local_matrices[256];
+		int16_t parent_index[256];
+	};
+
+	struct Joint;
+
 	struct TransformNode
 	{
 		TransformNode(gemini::Allocator& allocator);
@@ -41,21 +50,27 @@ namespace gemini
 		Array<TransformNode*> children;
 
 		struct TransformNode* parent;
-		//glm::mat4 local_matrix;
-		//glm::mat4 world_matrix;
+		glm::mat4 local_matrix;
+		glm::mat4 world_matrix;
 
 		gemini::string name;
-		uint16_t data_index;
+
+		// associated entity
+		uint16_t entity_index;
+		uint16_t transform_index;
 	};
 
 
 	TransformNode* transform_graph_create_node(gemini::Allocator& allocator, const char* node_name);
+	TransformNode* transform_graph_create_hierarchy(gemini::Allocator& allocator, FixedArray<gemini::Joint>& skeleton, const char* node_name);
 	void transform_graph_destroy_node(gemini::Allocator& allocator, TransformNode* node);
 	void transform_graph_set_parent(TransformNode* child, TransformNode* parent);
 
+	// Populate local matrices for entity-backed transform nodes.
+	void transform_graph_copy_frame_state(TransformNode* node, TransformFrameState* state);
 
 	// start with the root node
 	// transform local matrices to world matrices
-	void transform_graph_transform(TransformNode* root, glm::mat4* world_matrices, const glm::mat4* local_matrices, size_t total_matrices);
-	void transform_graph_extract(TransformNode* root, EntityRenderState* entity_state);
+	//void transform_graph_transform_root(TransformNode* root, glm::mat4* world_matrices, const glm::mat4* local_matrices, size_t total_matrices);
+	void transform_graph_transform(TransformNode* node, glm::mat4* world_matrices);
 } // namespace gemini

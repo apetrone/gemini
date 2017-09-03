@@ -210,9 +210,16 @@ void Entity::set_render_flags(uint32_t new_flags)
 	render_flags = new_flags;
 }
 
+
+
 void Entity::get_parent_matrix(glm::mat4& matrix) const
 {
 	matrix = parent_matrix;
+}
+
+uint16_t Entity::get_transform_index() const
+{
+	return USHRT_MAX;
 }
 
 void Entity::get_world_transform(glm::vec3& out_position, glm::quat& out_orientation) const

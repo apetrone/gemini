@@ -23,15 +23,20 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "typedefs.h"
+
 #include <engine/transform_graph.h>
+#include <runtime/mesh.h>
 
 
 namespace gemini
 {
+	static uint16_t transform_index = USHRT_MAX;
+
 	TransformNode::TransformNode(gemini::Allocator& allocator)
 		: children(allocator)
 		, parent(nullptr)
-		, data_index(0)
+		, entity_index(USHRT_MAX)
+		, transform_index(USHRT_MAX)
 	{
 	}
 
@@ -39,7 +44,31 @@ namespace gemini
 	{
 		TransformNode* node = MEMORY2_NEW(allocator, TransformNode)(allocator);
 		node->name = string_create(allocator, node_name);
+		node->transform_index = transform_index++;
 		return node;
+	}
+
+	TransformNode* transform_graph_create_hierarchy(gemini::Allocator& allocator, FixedArray<gemini::Joint>& skeleton, const char* node_name)
+	{
+		TransformNode* animated_node = MEMORY2_NEW(allocator, TransformNode)(allocator);
+		animated_node->name = string_create(allocator, node_name);
+		animated_node->transform_index = transform_index++;
+
+		const size_t total_joints = skeleton.size();
+		for (size_t index = 0; index < total_joints; ++index)
+		{
+			const Joint& joint = skeleton[index];
+			TransformNode* child = MEMORY2_NEW(allocator, TransformNode)(allocator);
+			child->name = string_create(allocator, joint.name());
+			child->transform_index = transform_index++;
+			if (joint.parent_index != -1)
+			{
+				child->parent = animated_node->children[joint.parent_index];
+			}
+			transform_graph_set_parent(child, animated_node);
+		}
+
+		return animated_node;
 	}
 
 	void transform_graph_destroy_node(gemini::Allocator& allocator, TransformNode* node)
@@ -72,27 +101,52 @@ namespace gemini
 		child->parent = parent;
 	}
 
-	void transform_graph_transform(TransformNode* root, glm::mat4* world_matrices, const glm::mat4* local_matrices, size_t total_matrices)
+	void transform_graph_copy_frame_state(TransformNode* node, TransformFrameState* state)
 	{
-		TransformNode* parent = root->parent;
-		if (parent)
+		if (node->entity_index != USHRT_MAX)
 		{
-			world_matrices[root->data_index] = world_matrices[parent->data_index] * local_matrices[root->data_index];
-			//root->world_matrix = parent->world_matrix * root->local_matrix;
-		}
-		else
-		{
-			world_matrices[root->data_index] = local_matrices[root->data_index];
-			//root->world_matrix = root->local_matrix;
+			// This transform node represents an entity.
+			node->local_matrix = state->local_matrices[node->entity_index];
 		}
 
-		for (size_t index = 0; index < root->children.size(); ++index)
+		for (size_t index = 0; index < node->children.size(); ++index)
 		{
-			transform_graph_transform(root->children[index], world_matrices, local_matrices, total_matrices);
+			transform_graph_copy_frame_state(node->children[index], state);
 		}
 	}
 
-	void transform_graph_extract(TransformNode* root, EntityRenderState* entity_state)
+	//void transform_graph_transform_root(TransformNode* root, glm::mat4* world_matrices, const glm::mat4* local_matrices, size_t total_matrices)
+	//{
+	//	// We skip the root node -- because ultimately it lines up with
+	//	// the world entity and shouldn't impose any transforms on the children.
+
+	//	for (size_t index = 0; index < root->children.size(); ++index)
+	//	{
+	//		transform_graph_transform(root->children[index], world_matrices, local_matrices, total_matrices);
+	//	}
+	//}
+
+	void transform_graph_transform(TransformNode* node, glm::mat4* world_matrices)
 	{
+		TransformNode* parent = node->parent;
+		if (parent)
+		{
+			node->world_matrix = parent->world_matrix * node->local_matrix;
+		}
+		else
+		{
+			node->world_matrix = node->local_matrix;
+		}
+
+		if (node->transform_index != USHRT_MAX)
+		{
+			assert(256 > node->transform_index);
+			world_matrices[node->transform_index] = node->world_matrix;
+		}
+
+		for (size_t index = 0; index < node->children.size(); ++index)
+		{
+			transform_graph_transform(node->children[index], world_matrices);
+		}
 	}
 } // namespace gemini

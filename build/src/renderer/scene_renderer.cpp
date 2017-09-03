@@ -233,7 +233,7 @@ namespace gemini
 	} // render_scene_track_mesh
 
 
-	uint32_t render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
+	uint32_t render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t transform_index, const glm::mat4& model_transform)
 	{
 		Mesh* mesh = mesh_from_handle(mesh_handle);
 		if (!mesh)
@@ -244,7 +244,7 @@ namespace gemini
 
 		AnimatedMeshComponent* component = MEMORY2_NEW(*scene->allocator, AnimatedMeshComponent);
 		component->sequence_instances = nullptr;
-		component->entity_index = entity_index;
+		component->transform_index = transform_index;
 		component->mesh_handle = mesh_handle;
 		component->model_matrix = model_transform;
 		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
@@ -275,7 +275,7 @@ namespace gemini
 		return scene->animated_meshes.size();
 	} // render_scene_add_animated_mesh
 
-	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t entity_index, const glm::mat4& model_transform)
+	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t transform_index, const glm::mat4& model_transform)
 	{
 		Mesh* mesh = mesh_from_handle(mesh_handle);
 		if (!mesh)
@@ -288,7 +288,7 @@ namespace gemini
 		StaticMeshComponent* component = MEMORY2_NEW(*scene->allocator, StaticMeshComponent);
 		assert(component);
 		scene->static_meshes.set(component_handle, component);
-		component->entity_index = entity_index;
+		component->transform_index = transform_index;
 		component->mesh_handle = mesh_handle;
 		component->model_matrix = model_transform;
 		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
@@ -922,7 +922,7 @@ namespace gemini
 		for (; iter != scene->static_meshes.end(); ++iter)
 		{
 			StaticMeshComponent* component = iter.data();
-			component->model_matrix = world_matrices[component->entity_index];
+			component->model_matrix = world_matrices[component->transform_index];
 			component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
 		}
 
@@ -932,7 +932,7 @@ namespace gemini
 			AnimatedMeshComponent* component = scene->animated_meshes[index];
 			if (component)
 			{
-				component->model_matrix = world_matrices[component->entity_index];
+				component->model_matrix = world_matrices[component->transform_index];
 				component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(component->model_matrix)));
 
 				Mesh* mesh = mesh_from_handle(component->mesh_handle);
@@ -941,12 +941,19 @@ namespace gemini
 					return;
 				}
 
+				const size_t total_joints = mesh->skeleton.size();
+				for (size_t joint_index = 0; joint_index < total_joints; ++joint_index)
+				{
+					size_t child_index = component->transform_index + joint_index;
+					component->bone_transforms[joint_index] = world_matrices[child_index];
+				}
+
 				// TODO: determine how to get the blended pose; for now just use the first animated instance.
 				//animated_instance_get_pose(component->sequence_instances[1], pose);
 				animation::Pose pose;
 				_render_scene_get_aggregate_pose(mesh, component, pose);
 
-				_render_set_animation_pose(scene, component, pose);
+				//_render_set_animation_pose(scene, component, pose);
 			}
 		}
 	} // render_scene_update
