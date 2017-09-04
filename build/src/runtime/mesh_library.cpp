@@ -34,6 +34,7 @@
 
 #include <core/logging.h>
 #include <core/mem.h>
+#include <core/mathlib.h>
 
 #include <runtime/text_parser.h>
 #include <core/serialization.h>
@@ -483,12 +484,28 @@ namespace gemini
 					if (params_size > 2)
 					{
 						// try to parse positional offset
-						LOGV("TODO: try to parse translation offset\n");
+						glm::vec3 position;
+						if (string_to_vec3(params[2], position) != 0)
+						{
+							LOGW("Unable to parse position from attachment on line %i\n", context->current_line);
+						}
+						else
+						{
+							attachment->local_translation_offset = position;
+						}
 
 						if (params_size > 3)
 						{
 							// try to parse rotational offset
-							LOGV("TODO: try to parse orientation offset\n");
+							glm::quat orientation;
+							if (string_to_quat(params[3], orientation) != 0)
+							{
+								LOGW("Unable to parse orientation from attachment on line %i\n", context->current_line);
+							}
+							else
+							{
+								attachment->local_orientation_offset = orientation;
+							}
 						}
 					}
 

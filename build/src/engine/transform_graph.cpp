@@ -52,14 +52,15 @@ namespace gemini
 		return node;
 	}
 
-	TransformNode* transform_graph_create_hierarchy(gemini::Allocator& allocator, FixedArray<gemini::Joint>& skeleton, const char* node_name)
+	TransformNode* transform_graph_create_hierarchy(gemini::Allocator& allocator, const FixedArray<gemini::Joint>& skeleton, const Array<gemini::ModelAttachment*>& attachments, const char* node_name)
 	{
+		const size_t total_joints = skeleton.size();
+
 		TransformNode* animated_node = MEMORY2_NEW(allocator, TransformNode)(allocator);
 		animated_node->name = string_create(allocator, node_name);
 		animated_node->transform_index = transform_index++;
-		animated_node->bones.resize(skeleton.size());
+		animated_node->bones.resize(total_joints);
 
-		const size_t total_joints = skeleton.size();
 		for (size_t index = 0; index < total_joints; ++index)
 		{
 			const Joint& joint = skeleton[index];
@@ -79,6 +80,20 @@ namespace gemini
 
 			animated_node->bones[joint.index] = child;
 			transform_graph_set_parent(child, parent);
+		}
+
+		// These should be additional named nodes inserted as children
+		// to the skeleton.
+		for (size_t index = 0; index < attachments.size(); ++index)
+		{
+			ModelAttachment* attachment = attachments[index];
+			TransformNode* parent_node = animated_node->bones[attachment->bone_index];
+
+			TransformNode* attachment_node = MEMORY2_NEW(allocator, TransformNode)(allocator);
+			attachment_node->name = string_create(allocator, attachment->name.c_str());
+			attachment_node->position = attachment->local_translation_offset;
+			attachment_node->orientation = attachment->local_orientation_offset;
+			transform_graph_set_parent(attachment_node, parent_node);
 		}
 
 		return animated_node;

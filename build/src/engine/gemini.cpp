@@ -618,14 +618,31 @@ public:
 				}
 
 				TransformNode* parent_node = parent->get_transform_node();
+
 				// If you hit this, the parent node has no bones to attach.
 				assert(!parent_node->bones.empty());
 
+				// index the bone parent
+				TransformNode* bone_parent = parent_node->bones[attachment->bone_index];
+				TransformNode* attachment_node = nullptr;
+
+				// try to find the named attachment in the hierarchy
+				for (size_t child_index = 0; child_index < bone_parent->children.size(); ++child_index)
+				{
+					if (bone_parent->children[child_index]->name == attachment_name)
+					{
+						attachment_node = bone_parent->children[child_index];
+						break;
+					}
+				}
+
+				if (!attachment_node)
+				{
+					LOGW("Unable to find attachment bone named %s\n", attachment_name);
+					return;
+				}
+
 				TransformNode* child = instance->get_transform_node();
-
-				TransformNode* attachment_node = parent_node->bones[attachment->bone_index];
-
-				// TODO: Support position and rotation as piecewise elements of TransformNode.
 				transform_graph_set_parent(child, attachment_node);
 			}
 			else
@@ -669,7 +686,7 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 		}
 		else
 		{
-			transform_node = transform_graph_create_hierarchy(engine_allocator, mesh->skeleton, model_path);
+			transform_node = transform_graph_create_hierarchy(engine_allocator, mesh->skeleton, mesh->attachments, model_path);
 			transform_node->entity_index = entity_index;
 			transform_graph_set_parent(transform_node, transform_graph);
 			component_id = render_scene_add_animated_mesh(render_scene, mesh_handle, transform_node->transform_index, glm::mat4(1.0f));

@@ -43,6 +43,7 @@ namespace gemini
 	};
 
 	struct Joint;
+	struct ModelAttachment;
 
 	struct TransformNode
 	{
@@ -73,7 +74,7 @@ namespace gemini
 
 
 	TransformNode* transform_graph_create_node(gemini::Allocator& allocator, const char* node_name);
-	TransformNode* transform_graph_create_hierarchy(gemini::Allocator& allocator, FixedArray<gemini::Joint>& skeleton, const char* node_name);
+	TransformNode* transform_graph_create_hierarchy(gemini::Allocator& allocator, const FixedArray<gemini::Joint>& skeleton, const Array<gemini::ModelAttachment*>& attachments, const char* node_name);
 	void transform_graph_destroy_node(gemini::Allocator& allocator, TransformNode* node);
 	void transform_graph_set_parent(TransformNode* child, TransformNode* parent);
 
