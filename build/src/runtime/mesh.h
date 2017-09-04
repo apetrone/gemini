@@ -86,6 +86,9 @@ namespace gemini
 
 		// target bone index
 		int32_t bone_index;
+
+		glm::vec3 local_translation_offset;
+		glm::quat local_orientation_offset;
 	}; // ModelAttachment
 
 	struct Mesh

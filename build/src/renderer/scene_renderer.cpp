@@ -249,7 +249,6 @@ namespace gemini
 		component->model_matrix = model_transform;
 		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
 		component->bone_transforms = (glm::mat4*)MEMORY2_ALLOC(*scene->allocator, sizeof(glm::mat4) * MAX_BONES);
-		component->current_sequence_index = 0;
 
 		void* memory = MEMORY2_ALLOC(*scene->allocator, sizeof(animation::AnimatedInstance*) * MAX_ANIMATED_MESH_LAYERS);
 		component->sequence_instances = reinterpret_cast<animation::AnimatedInstance**>(memory);
@@ -327,7 +326,6 @@ namespace gemini
 		instance->flags = animation::AnimatedInstance::Flags::Playing;
 		instance->local_time_seconds = 0.0f;
 		//LOGV("playing animation: %s\n", animation_name);
-		//component->current_sequence_index = sequence_index;
 
 		return sequence_index;
 	}

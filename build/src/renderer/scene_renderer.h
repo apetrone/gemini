@@ -70,11 +70,8 @@ namespace gemini
 		// Assumptions we're going to make for now for simplicity.
 		// An animated mesh will only have ONE geometry chunk.
 
-		// local bone transforms (extracted from current pose)
+		// world-space bone transforms
 		glm::mat4* bone_transforms;
-
-		// currently playing sequence
-		uint32_t current_sequence_index;
 
 		// array of all sequence instances for the associated mesh
 		animation::AnimatedInstance** sequence_instances;

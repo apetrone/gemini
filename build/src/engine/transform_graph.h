@@ -37,8 +37,9 @@ namespace gemini
 	// This holds the interpolated frame state.
 	struct TransformFrameState
 	{
-		glm::mat4 local_matrices[256];
-		int16_t parent_index[256];
+		glm::vec3 position[256];
+		glm::quat orientation[256];
+		glm::vec3 pivot_point[256];
 	};
 
 	struct Joint;
@@ -55,6 +56,13 @@ namespace gemini
 		struct TransformNode* parent;
 		glm::mat4 local_matrix;
 		glm::mat4 world_matrix;
+
+		// Used to post-multiply local matrices; before local->world multiply
+		glm::mat4 bind_pose_matrix;
+
+		glm::vec3 position;
+		glm::quat orientation;
+		glm::vec3 pivot_point;
 
 		gemini::string name;
 

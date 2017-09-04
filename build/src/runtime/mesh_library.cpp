@@ -459,7 +459,8 @@ namespace gemini
 			Array<gemini::string> params(*context->allocator);
 			string_split_lines(*context->allocator, params, value);
 
-			if (params.size() < 2)
+			const size_t params_size = params.size();
+			if (params_size < 2)
 			{
 				LOGW("attachment command requires two parameters.\n");
 				return;
@@ -478,6 +479,18 @@ namespace gemini
 					attachment->bone_index = bone_index;
 					attachment->name = attachment_name.c_str();
 					block->mesh->attachments.push_back(attachment);
+
+					if (params_size > 2)
+					{
+						// try to parse positional offset
+						LOGV("TODO: try to parse translation offset\n");
+
+						if (params_size > 3)
+						{
+							// try to parse rotational offset
+							LOGV("TODO: try to parse orientation offset\n");
+						}
+					}
 
 					// Re-visit this and fix the attachment names if you hit
 					// this assert.

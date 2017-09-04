@@ -158,11 +158,10 @@ void animation_controller_transfer(AnimationController* controller)
 
 			const Joint* joint = &mesh->skeleton[index];
 
-			glm::mat4 local_rotation = glm::toMat4(pose.rot[index]);
-			glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), pose.pos[index]);
-
 			TransformNode* child = animated_node->bones[index];
-			child->local_matrix = mesh->bind_poses[index] * (local_transform * local_rotation);
+			child->position = pose.pos[index];
+			child->orientation = pose.rot[index];
+			child->bind_pose_matrix = mesh->bind_poses[index];
 		}
 	}
 }
@@ -187,7 +186,7 @@ void animation_controller_extract(AnimationController* controller)
 		// These are WORLD TRANSFORMS
 		// which actually breaks the rest of our matrix evaluation because
 		// we assume the AnimatedMeshComponent's model_matrix has to be
-		// pre-multiplied with each bone transform.
+		// post-multiplied with each bone transform.
 		component->bone_transforms[index] = child->world_matrix;
 	}
 }
@@ -601,35 +600,44 @@ public:
 	{
 		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
 		gemini::ModelInstanceData* parent = reinterpret_cast<gemini::ModelInstanceData*>(parent_model);
-
-		Mesh* mesh = mesh_from_handle(parent->get_mesh_handle());
-		if (!mesh)
+		if (parent && attachment_name)
 		{
-			return;
-		}
-
-		if (mesh->attachments_by_name.has_key(attachment_name))
-		{
-			core::StackString<32> attachment_key = attachment_name;
-			ModelAttachment* attachment = mesh->attachments_by_name.get(attachment_key);
-			if (!attachment)
+			Mesh* mesh = mesh_from_handle(parent->get_mesh_handle());
+			if (!mesh)
 			{
 				return;
 			}
 
-			TransformNode* parent_node = parent->get_transform_node();
-			// If you hit this, the parent node has no bones to attach.
-			assert(!parent_node->bones.empty());
+			if (mesh->attachments_by_name.has_key(attachment_name))
+			{
+				core::StackString<32> attachment_key = attachment_name;
+				ModelAttachment* attachment = mesh->attachments_by_name.get(attachment_key);
+				if (!attachment)
+				{
+					return;
+				}
 
-			TransformNode* child = instance->get_transform_node();
+				TransformNode* parent_node = parent->get_transform_node();
+				// If you hit this, the parent node has no bones to attach.
+				assert(!parent_node->bones.empty());
 
-			TransformNode* attachment_node = parent_node->bones[attachment->bone_index];
+				TransformNode* child = instance->get_transform_node();
 
-			transform_graph_set_parent(child, attachment_node);
+				TransformNode* attachment_node = parent_node->bones[attachment->bone_index];
+
+				// TODO: Support position and rotation as piecewise elements of TransformNode.
+				transform_graph_set_parent(child, attachment_node);
+			}
+			else
+			{
+				LOGW("Attachment \"%s\" could not be found\n", attachment_name);
+			}
 		}
 		else
 		{
-			LOGW("Attachment \"%s\" could not be found\n", attachment_name);
+			// Detach the instance.
+			TransformNode* node = instance->get_transform_node();
+			transform_graph_set_parent(node, transform_graph);
 		}
 	}
 
@@ -746,12 +754,9 @@ void interpolate_frame_state(TransformFrameState* state, EntityRenderState* a, E
 		// I have no idea what this produces.
 		glm::vec3 pivot_point = gemini::lerp(a->pivot_point[index], b->pivot_point[index], alpha);
 
-		glm::mat4 rotation = glm::toMat4(orientation);
-		glm::mat4 translation = glm::translate(glm::mat4(1.0f), position);
-		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -pivot_point);
-		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), pivot_point);
-
-		state->local_matrices[index] = translation * from_pivot * rotation * to_pivot;
+		state->position[index] = position;
+		state->orientation[index] = orientation;
+		state->pivot_point[index] = pivot_point;
 	}
 }
 

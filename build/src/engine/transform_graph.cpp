@@ -24,7 +24,10 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 
+#include <core/logging.h>
+
 #include <engine/transform_graph.h>
+
 #include <runtime/mesh.h>
 
 
@@ -94,20 +97,14 @@ namespace gemini
 
 	void transform_graph_set_parent(TransformNode* child, TransformNode* parent)
 	{
+		if (child->parent == parent)
+		{
+			return;
+		}
+
 		if (child->parent)
 		{
 			child->parent->children.erase(child);
-
-			//// Remove child from child->parent.
-			//for (size_t index = 0; index < parent->children.size(); ++index)
-			//{
-			//	if (parent->children[index] == child)
-			//	{
-			//		// TODO: Array Slice!
-			//
-			//		break;
-			//	}
-			//}
 		}
 
 		parent->children.push_back(child);
@@ -119,7 +116,9 @@ namespace gemini
 		if (node->entity_index != USHRT_MAX)
 		{
 			// This transform node represents an entity.
-			node->local_matrix = state->local_matrices[node->entity_index];
+			node->position = state->position[node->entity_index];
+			node->orientation = state->orientation[node->entity_index];
+			node->pivot_point = state->pivot_point[node->entity_index];
 		}
 
 		for (size_t index = 0; index < node->children.size(); ++index)
@@ -128,19 +127,14 @@ namespace gemini
 		}
 	}
 
-	//void transform_graph_transform_root(TransformNode* root, glm::mat4* world_matrices, const glm::mat4* local_matrices, size_t total_matrices)
-	//{
-	//	// We skip the root node -- because ultimately it lines up with
-	//	// the world entity and shouldn't impose any transforms on the children.
-
-	//	for (size_t index = 0; index < root->children.size(); ++index)
-	//	{
-	//		transform_graph_transform(root->children[index], world_matrices, local_matrices, total_matrices);
-	//	}
-	//}
-
 	void transform_graph_transform(TransformNode* node, glm::mat4* world_matrices)
 	{
+		glm::mat4 rotation = glm::toMat4(node->orientation);
+		glm::mat4 translation = glm::translate(glm::mat4(1.0f), node->position);
+		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -node->pivot_point);
+		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), node->pivot_point);
+		node->local_matrix = node->bind_pose_matrix * translation * from_pivot * rotation * to_pivot;
+
 		TransformNode* parent = node->parent;
 		if (parent)
 		{

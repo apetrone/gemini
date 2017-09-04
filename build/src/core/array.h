@@ -182,15 +182,20 @@ public:
 			if (data[index-1] == element)
 			{
 				value_pointer item = &data[index-1];
-				item->~value_type();
 
 				--total_elements;
 
 				// shift elements
 				for (size_t i = 0; i < total_elements; ++i)
 				{
+					if (index + i >= (total_elements + 1))
+					{
+						break;
+					}
 					data[(index-1) + i] = data[index+i];
 				}
+
+				break;
 			}
 		}
 	}
