@@ -1429,6 +1429,9 @@ Options:
 			//	0.0f
 			//);
 
+			// draw the light
+			debugdraw::sphere(render_scene->light_position_world, gemini::Color(0.0f, 1.0f, 1.0f), 0.25f);
+
 			// Copy frame state for each entity into their respective transform nodes.
 			transform_graph_copy_frame_state(transform_graph, &frame_state);
 

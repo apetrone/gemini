@@ -49,27 +49,38 @@ namespace gemini
 
 		Array<TransformNode*> children;
 
-		// a flat list of Nodes that this node owns
+		// a flat list of Nodes that this node owns.
 		Array<TransformNode*> bones;
 
 		struct TransformNode* parent;
+
+		// Individual components before aggregation into local_matrices.
+		glm::vec3 position;
+		glm::quat orientation;
+		glm::vec3 pivot_point;
+
+		// These are the node local and world matrices. Updated with
+		// transform_graph_transform.
 		glm::mat4 local_matrix;
 		glm::mat4 world_matrix;
 
 		// Used to post-multiply local matrices; before local->world multiply
 		glm::mat4 bind_pose_matrix;
 
-		glm::vec3 position;
-		glm::quat orientation;
-		glm::vec3 pivot_point;
+		// model-space bone matrix. This is multiplied with bone parent nodes, but
+		// does not multiply past the local TransformNode.
+		glm::mat4 model_bone_matrix;
 
 		gemini::string name;
 
 		// associated entity
 		uint16_t entity_index;
 		uint16_t transform_index;
-	};
 
+		// visit function for graph nodes; changes based on behavior of
+		// this node.
+		void(*transform_function)(TransformNode* node, glm::mat4* world_matrices);
+	}; // TransformNode
 
 	TransformNode* transform_graph_create_node(gemini::Allocator& allocator, const char* node_name);
 	TransformNode* transform_graph_create_hierarchy(gemini::Allocator& allocator, const FixedArray<gemini::Joint>& skeleton, const Array<gemini::ModelAttachment*>& attachments, const char* node_name);

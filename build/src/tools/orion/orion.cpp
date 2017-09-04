@@ -1852,6 +1852,7 @@ Options:
 			{
 				render_scene_animation_play(render_scene, component_id, "idle");
 			}
+
 			entity_render_state.model_matrix[entity_index] = transform;
 			transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
 		}
@@ -1863,13 +1864,18 @@ Options:
 
 	void test_load_model(const char* model_path)
 	{
-		glm::mat4 ident;
+		glm::mat4 transform = glm::toMat4(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0)));
 		AssetHandle skeleton_mesh = mesh_load(model_path);
-		animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, 0, ident);
 
 		Mesh* mesh = mesh_from_handle(skeleton_mesh);
 		if (mesh)
 		{
+			TransformNode* transform_node = transform_graph_create_hierarchy(render_allocator, mesh->skeleton, mesh->attachments, "test");
+			transform_node->entity_index = 0;
+			transform_graph_set_parent(transform_node, transform_graph);
+			animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, transform_node->transform_index, transform);
+			animation_link_transform_and_component(transform_node, render_scene_get_animated_component(render_scene, animated_mesh));
+
 			HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
 			for (; iter != mesh->sequence_index_by_name.end(); ++iter)
 			{
@@ -1955,8 +1961,28 @@ Options:
 			animation::update(kernel::parameters().simulation_delta_seconds);
 		}
 
-		glm::mat4 matrices[1];
-		render_scene_update(render_scene, matrices);
+
+		{
+			// Copy frame state for each entity into their respective transform nodes.
+			//transform_graph_copy_frame_state(transform_graph, &frame_state);
+
+			// Update transform nodes with current animation poses
+			animation_update_transform_nodes();
+
+			// get the latest world matrices from the transform graph
+			glm::mat4 world_matrices[256];
+			transform_graph_transform(transform_graph, world_matrices);
+
+			// copy transforms from nodes to animated components
+			animation_update_components();
+
+			// update world matrices for scene rendering
+			render_scene_update(render_scene, world_matrices);
+
+
+			//glm::mat4 matrices[1];
+			//render_scene_update(render_scene, matrices);
+		}
 
 		// See if we need to poke the animated mesh.
 		if (animated_mesh != 0)

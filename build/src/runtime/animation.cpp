@@ -734,7 +734,8 @@ namespace gemini
 			// which actually breaks the rest of our matrix evaluation because
 			// we assume the AnimatedMeshComponent's model_matrix has to be
 			// post-multiplied with each bone transform.
-			component->bone_transforms[index] = child->world_matrix;
+			//component->bone_transforms[index] = child->world_matrix;
+			component->bone_transforms[index] = child->model_bone_matrix;
 		}
 	}
 

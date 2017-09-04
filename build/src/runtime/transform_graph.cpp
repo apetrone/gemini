@@ -34,6 +34,11 @@ namespace gemini
 {
 	static uint16_t transform_index = USHRT_MAX;
 
+	// local declares
+	void transform_graph_transform_basic(TransformNode* node, glm::mat4* world_matrices);
+	void transform_graph_transform_animated(TransformNode* node, glm::mat4* world_matrices);
+	void transform_node_to_local_matrix(TransformNode* node);
+
 	TransformNode::TransformNode(gemini::Allocator& allocator)
 		: children(allocator)
 		, bones(allocator)
@@ -48,6 +53,7 @@ namespace gemini
 		TransformNode* node = MEMORY2_NEW(allocator, TransformNode)(allocator);
 		node->name = string_create(allocator, node_name);
 		node->transform_index = transform_index++;
+		node->transform_function = transform_graph_transform_basic;
 		return node;
 	} // transform_graph_create_node
 
@@ -59,13 +65,13 @@ namespace gemini
 		animated_node->name = string_create(allocator, node_name);
 		animated_node->transform_index = transform_index++;
 		animated_node->bones.resize(total_joints);
+		animated_node->transform_function = transform_graph_transform_basic;
 
 		for (size_t index = 0; index < total_joints; ++index)
 		{
 			const Joint& joint = skeleton[index];
-			TransformNode* child = MEMORY2_NEW(allocator, TransformNode)(allocator);
-			child->name = string_create(allocator, joint.name());
-			child->transform_index = transform_index++;
+			TransformNode* child = transform_graph_create_node(allocator, joint.name());
+			child->transform_function = transform_graph_transform_animated;
 
 			TransformNode* parent = animated_node;
 			if (joint.parent_index != -1)
@@ -88,8 +94,9 @@ namespace gemini
 			ModelAttachment* attachment = attachments[index];
 			TransformNode* parent_node = animated_node->bones[attachment->bone_index];
 
-			TransformNode* attachment_node = MEMORY2_NEW(allocator, TransformNode)(allocator);
-			attachment_node->name = string_create(allocator, attachment->name.c_str());
+			TransformNode* attachment_node = transform_graph_create_node(allocator, attachment->name.c_str());
+			attachment_node->transform_function = transform_graph_transform_basic;
+
 			attachment_node->position = attachment->local_translation_offset;
 			attachment_node->orientation = attachment->local_orientation_offset;
 			transform_graph_set_parent(attachment_node, parent_node);
@@ -141,13 +148,9 @@ namespace gemini
 		}
 	} // transform_graph_copy_frame_state
 
-	void transform_graph_transform(TransformNode* node, glm::mat4* world_matrices)
+	void transform_graph_transform_basic(TransformNode* node, glm::mat4* world_matrices)
 	{
-		glm::mat4 rotation = glm::toMat4(node->orientation);
-		glm::mat4 translation = glm::translate(glm::mat4(1.0f), node->position);
-		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -node->pivot_point);
-		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), node->pivot_point);
-		node->local_matrix = node->bind_pose_matrix * translation * from_pivot * rotation * to_pivot;
+		transform_node_to_local_matrix(node);
 
 		TransformNode* parent = node->parent;
 		if (parent)
@@ -163,6 +166,39 @@ namespace gemini
 		{
 			world_matrices[node->transform_index] = node->world_matrix;
 		}
+	} // transform_graph_transform_basic
+
+	void transform_graph_transform_animated(TransformNode* node, glm::mat4* world_matrices)
+	{
+		transform_node_to_local_matrix(node);
+		node->local_matrix = node->bind_pose_matrix * node->local_matrix;
+
+		TransformNode* parent = node->parent;
+		if (parent)
+		{
+			node->world_matrix = parent->world_matrix * node->local_matrix;
+			node->model_bone_matrix = parent->model_bone_matrix * node->local_matrix;
+		}
+		else
+		{
+			node->world_matrix = node->local_matrix;
+			node->model_bone_matrix = node->local_matrix;
+		}
+	} // transform_graph_transform_animated
+
+	void transform_node_to_local_matrix(TransformNode* node)
+	{
+		glm::mat4 rotation = glm::toMat4(node->orientation);
+		glm::mat4 translation = glm::translate(glm::mat4(1.0f), node->position);
+		glm::mat4 to_pivot = glm::translate(glm::mat4(1.0f), -node->pivot_point);
+		glm::mat4 from_pivot = glm::translate(glm::mat4(1.0f), node->pivot_point);
+		node->local_matrix = translation * from_pivot * rotation * to_pivot;
+	} // transform_node_to_local_matrix
+
+	void transform_graph_transform(TransformNode* node, glm::mat4* world_matrices)
+	{
+		// Serves as a visitor for the transform function within each node.
+		node->transform_function(node, world_matrices);
 
 		for (size_t index = 0; index < node->children.size(); ++index)
 		{

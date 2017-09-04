@@ -93,8 +93,6 @@ namespace gemini
 			animated_instance_get_pose(instance, *current_pose);
 		}
 
-
-
 		for (size_t index = 0; index < mesh->skeleton.size(); ++index)
 		{
 			// blend the poses
@@ -746,7 +744,6 @@ namespace gemini
 				// Are you sure it was uploaded?
 				assert(render_scene_state->render_mesh_by_handle.has_key(instance->mesh_handle));
 
-				instance->model_matrix = glm::mat4(1.0f);
 				serializer->constant("model_matrix", &instance->model_matrix, sizeof(glm::mat4));
 				serializer->constant("normal_matrix", &instance->normal_matrix, sizeof(glm::mat3));
 				serializer->constant("node_transforms[0]", instance->bone_transforms, sizeof(glm::mat4) * MAX_BONES);
@@ -766,7 +763,7 @@ namespace gemini
 				++scene->stat_animated_meshes_drawn;
 
 				// Enable this to debug bone transforms
-#if 0
+#if 1
 				if (mesh->skeleton.size() > 0)
 				{
 					glm::vec3 position; // render position
@@ -778,7 +775,7 @@ namespace gemini
 					for (size_t bone_index = 0; bone_index < mesh->skeleton.size(); ++bone_index)
 					{
 						size_t transform_index = bone_index;
-						const glm::mat4 world_pose = model_poses[transform_index];
+						const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
 						debugdraw::axes(world_pose, 0.15f, 0.0f);
 					}
 
@@ -794,10 +791,10 @@ namespace gemini
 						}
 						else
 						{
-							last_origin = glm::vec3(model_poses[0] * glm::vec4(position, 1.0f));
+							last_origin = glm::vec3(instance->model_matrix * glm::vec4(position, 1.0f));
 						}
 
-						const glm::mat4 world_pose = model_poses[transform_index];
+						const glm::mat4 world_pose = instance->model_matrix * model_poses[transform_index];
 						glm::vec3 origin = glm::vec3(glm::column(world_pose, 3));
 
 						debugdraw::line(last_origin, origin, Color::from_rgba(255, 128, 0, 255));
