@@ -1573,6 +1573,7 @@ Options:
 
 
 		render_scene = render_scene_create(render_allocator, device);
+		transform_graph = transform_graph_create_node(render_allocator, "root");
 
 		animation::startup(asset_allocator);
 
@@ -2250,6 +2251,7 @@ Options:
 		notify_server_destroy(&notify_server);
 
 		// must be shut down before the animations; as they're referenced.
+		transform_graph_destroy_node(render_allocator, transform_graph);
 		render_scene_destroy(render_scene, device);
 		render_scene_shutdown();
 

@@ -37,9 +37,12 @@
 
 #include <runtime/configloader.h>
 #include <runtime/mesh.h>
+#include <runtime/assets.h>
+
+#include <runtime/transform_graph.h>
 
 #include <renderer/debug_draw.h>
-
+#include <renderer/scene_renderer.h>
 
 #include <vector>
 
@@ -53,16 +56,20 @@ namespace gemini
 	{
 		typedef Freelist<Sequence*> SequenceFreelist;
 		typedef Freelist<AnimatedInstance*> AnimatedInstanceFreelist;
+		typedef Array<AnimationController> AnimationControllerArray;
+
 		struct AnimationState
 		{
 			Allocator* allocator;
 			SequenceFreelist sequences;
 			AnimatedInstanceFreelist instances;
+			AnimationControllerArray controllers;
 
 			AnimationState(Allocator& in_allocator)
 				: allocator(&in_allocator)
 				, sequences(in_allocator)
 				, instances(in_allocator)
+				, controllers(in_allocator)
 			{
 			}
 		};
@@ -529,6 +536,8 @@ namespace gemini
 			_sequences_by_name = MEMORY2_NEW(allocator, SequenceHash)(allocator);
 
 			_animation_state = MEMORY2_NEW(allocator, AnimationState)(allocator);
+
+
 		}
 
 		void shutdown()
@@ -646,4 +655,115 @@ namespace gemini
 		} // animation_instance_get_pose
 
 	} // namespace animation
+} // namespace gemini
+
+
+namespace gemini
+{
+	void animation_controller_transfer(AnimationController* controller)
+	{
+		// AnimatedMeshComponent -> TransformNode
+
+		// grab current pose from component; transfer to target.
+		Mesh* mesh = mesh_from_handle(controller->component->mesh_handle);
+		if (!mesh)
+		{
+			LOGW("Unable to get mesh to AnimationControlled component %p\n", controller->component);
+			return;
+		}
+
+		// TODO: If there was root animation on this controller; it could
+		// apply it to the animated_node or one of its children.
+
+		animation::Pose pose;
+		// get aggregate pose from component
+		{
+			AnimatedMeshComponent* component = controller->component;
+
+			float blend_alpha = 0.0f;
+			animation::Pose poses[MAX_ANIMATED_MESH_LAYERS];
+
+			for (size_t layer_index = 0; layer_index < MAX_ANIMATED_MESH_LAYERS; ++layer_index)
+			{
+				animation::Pose* current_pose = &poses[layer_index];
+
+				animation::AnimatedInstance* instance = component->sequence_instances[layer_index];
+				assert(instance);
+
+				animated_instance_get_pose(instance, *current_pose);
+			}
+
+			TransformNode* animated_node = controller->target;
+			for (size_t index = 0; index < mesh->skeleton.size(); ++index)
+			{
+				// blend the poses
+				//pose.rot[index] = gemini::interpolate(poses[0].rot[index], poses[1].rot[index], blend_alpha);
+				//pose.pos[index] = gemini::interpolate(poses[0].pos[index], poses[1].pos[index], blend_alpha);
+
+				pose.rot[index] = poses[0].rot[index];
+				pose.pos[index] = poses[0].pos[index];
+
+				const Joint* joint = &mesh->skeleton[index];
+
+				TransformNode* child = animated_node->bones[index];
+				child->position = pose.pos[index];
+				child->orientation = pose.rot[index];
+				child->bind_pose_matrix = mesh->bind_poses[index];
+			}
+		}
+	}
+
+	void animation_controller_extract(AnimationController* controller)
+	{
+		// TransformNode -> AnimatedMeshComponent
+		TransformNode* animated_node = controller->target;
+		AnimatedMeshComponent* component = controller->component;
+
+		Mesh* mesh = mesh_from_handle(controller->component->mesh_handle);
+		if (!mesh)
+		{
+			LOGW("Unable to get mesh to AnimationControlled component %p\n", controller->component);
+			return;
+		}
+
+		const size_t total_children = animated_node->bones.size();
+		for (size_t index = 0; index < total_children; ++index)
+		{
+			TransformNode* child = animated_node->bones[index];
+			// These are WORLD TRANSFORMS
+			// which actually breaks the rest of our matrix evaluation because
+			// we assume the AnimatedMeshComponent's model_matrix has to be
+			// post-multiplied with each bone transform.
+			component->bone_transforms[index] = child->world_matrix;
+		}
+	}
+
+	void animation_link_transform_and_component(TransformNode* node, AnimatedMeshComponent* component)
+	{
+		AnimationController controller;
+		controller.target = node;
+		controller.component = component;
+		animation::_animation_state->controllers.push_back(controller);
+	} // animation_link_transform_and_component
+
+
+	void animation_update_transform_nodes()
+	{
+		// transfer animation from active sequences to their transform nodes
+		for (AnimationController& controller : animation::_animation_state->controllers)
+		{
+			animation_controller_transfer(&controller);
+		}
+	} // animation_update_transform_nodes
+
+	void animation_update_components()
+	{
+
+		// extract world transforms from bone nodes
+		// and copy them to the AnimatedMeshComponent for rendering
+		for (AnimationController& controller : animation::_animation_state->controllers)
+		{
+			animation_controller_extract(&controller);
+		}
+	} // animation_update_components
 } // namespace gemini

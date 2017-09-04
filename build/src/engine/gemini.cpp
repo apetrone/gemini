@@ -34,22 +34,22 @@
 #include <core/mathlib.h>
 #include <core/profiler.h>
 
-#include <runtime/assets.h>
-#include <runtime/audio_mixer.h>
-#include <runtime/filesystem.h>
-#include <runtime/runtime.h>
-#include <runtime/standaloneresourcecache.h>
-
 #include <renderer/renderer.h>
 #include <renderer/constantbuffer.h>
 #include <renderer/debug_draw.h>
 #include <renderer/scene_renderer.h>
 
+#include <runtime/animation.h>
+#include <runtime/assets.h>
+#include <runtime/audio_mixer.h>
 #include <runtime/debugvar.h>
 #include <runtime/debug_event.h>
-#include <runtime/keyframechannel.h>
+#include <runtime/filesystem.h>
 #include <runtime/mesh.h>
 #include <runtime/mesh_library.h>
+#include <runtime/keyframechannel.h>
+#include <runtime/runtime.h>
+#include <runtime/standaloneresourcecache.h>
 
 // SDK
 #include <sdk/audio_api.h>
@@ -65,7 +65,6 @@
 #include "input.h"
 
 #include "audio.h"
-#include "animation.h"
 #include "physics/physics.h"
 #include "hotloading.h"
 #include "navigation.h"
@@ -98,98 +97,6 @@ using namespace gemini; // for renderer
 // this is required at the moment because our render method needs it!
 gui::Compositor* _compositor = 0;
 
-
-
-struct AnimationController
-{
-	// Target is the AnimatedEntity transform node.
-	// It is assumed that target contains child nodes
-	// that will be populated directly from an animation.
-	TransformNode* target;
-
-	AnimatedMeshComponent* component;
-};
-
-
-std::vector<AnimationController> animation_controllers;
-
-void animation_controller_transfer(AnimationController* controller)
-{
-	// AnimatedMeshComponent -> TransformNode
-
-	// grab current pose from component; transfer to target.
-	Mesh* mesh = mesh_from_handle(controller->component->mesh_handle);
-	if (!mesh)
-	{
-		LOGW("Unable to get mesh to AnimationControlled component %p\n", controller->component);
-		return;
-	}
-
-	// TODO: If there was root animation on this controller; it could
-	// apply it to the animated_node or one of its children.
-
-	animation::Pose pose;
-	// get aggregate pose from component
-	{
-		AnimatedMeshComponent* component = controller->component;
-
-		float blend_alpha = 0.0f;
-		animation::Pose poses[MAX_ANIMATED_MESH_LAYERS];
-
-		for (size_t layer_index = 0; layer_index < MAX_ANIMATED_MESH_LAYERS; ++layer_index)
-		{
-			animation::Pose* current_pose = &poses[layer_index];
-
-			animation::AnimatedInstance* instance = component->sequence_instances[layer_index];
-			assert(instance);
-
-			animated_instance_get_pose(instance, *current_pose);
-		}
-
-		TransformNode* animated_node = controller->target;
-		for (size_t index = 0; index < mesh->skeleton.size(); ++index)
-		{
-			// blend the poses
-			//pose.rot[index] = gemini::interpolate(poses[0].rot[index], poses[1].rot[index], blend_alpha);
-			//pose.pos[index] = gemini::interpolate(poses[0].pos[index], poses[1].pos[index], blend_alpha);
-
-			pose.rot[index] = poses[0].rot[index];
-			pose.pos[index] = poses[0].pos[index];
-
-			const Joint* joint = &mesh->skeleton[index];
-
-			TransformNode* child = animated_node->bones[index];
-			child->position = pose.pos[index];
-			child->orientation = pose.rot[index];
-			child->bind_pose_matrix = mesh->bind_poses[index];
-		}
-	}
-}
-
-void animation_controller_extract(AnimationController* controller)
-{
-	// TransformNode -> AnimatedMeshComponent
-	TransformNode* animated_node = controller->target;
-	AnimatedMeshComponent* component = controller->component;
-
-	Mesh* mesh = mesh_from_handle(controller->component->mesh_handle);
-	if (!mesh)
-	{
-		LOGW("Unable to get mesh to AnimationControlled component %p\n", controller->component);
-		return;
-	}
-
-	const size_t total_children = animated_node->bones.size();
-	for (size_t index = 0; index < total_children; ++index)
-	{
-		TransformNode* child = animated_node->bones[index];
-		// These are WORLD TRANSFORMS
-		// which actually breaks the rest of our matrix evaluation because
-		// we assume the AnimatedMeshComponent's model_matrix has to be
-		// post-multiplied with each bone transform.
-		component->bone_transforms[index] = child->world_matrix;
-	}
-}
 
 namespace gemini
 {
@@ -684,10 +591,7 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 			transform_graph_set_parent(transform_node, transform_graph);
 			component_id = render_scene_add_animated_mesh(render_scene, mesh_handle, transform_node->transform_index, glm::mat4(1.0f));
 
-			AnimationController controller;
-			controller.target = transform_node;
-			controller.component = render_scene_get_animated_component(render_scene, component_id);
-			animation_controllers.push_back(controller);
+			animation_link_transform_and_component(transform_node, render_scene_get_animated_component(render_scene, component_id));
 		}
 
 		gemini::ModelInstanceData data(engine_allocator);
@@ -1518,7 +1422,7 @@ Options:
 
 			// Uncomment this to debug the camera.
 			//glm::mat4 tx = glm::translate(glm::mat4(1.0f), player_offset);
-			//debugdraw::axes(glm::inverse(tx) * view.modelview, 1.0f, 0.0f);
+			//debugdraw::axes(glm::inverse(tx) * view.modelview, 1.0f, 0.0f);transform_graph_copy_frame_state
 			//debugdraw::camera(
 			//	cam_origin,
 			//	interpolated_camera_state.view,
@@ -1528,25 +1432,17 @@ Options:
 			// Copy frame state for each entity into their respective transform nodes.
 			transform_graph_copy_frame_state(transform_graph, &frame_state);
 
-			// transfer animation from active sequences to their transform nodes
-			for (AnimationController& controller : animation_controllers)
-			{
-				animation_controller_transfer(&controller);
-			}
+			// Update transform nodes with current animation poses
+			animation_update_transform_nodes();
 
-
-			glm::mat4 world_matrices[256];
-
-
+			// get the latest world matrices from the transform graph
+			glm::mat4 world_matrices[MAX_ENTITIES];
 			transform_graph_transform(transform_graph, world_matrices);
 
-			// extract world transforms from bone nodes
-			// and copy them to the AnimatedMeshComponent for rendering
-			for (AnimationController& controller : animation_controllers)
-			{
-				animation_controller_extract(&controller);
-			}
+			// copy transforms from nodes to animated components
+			animation_update_components();
 
+			// update world matrices for scene rendering
 			render_scene_update(render_scene, world_matrices);
 
 			if (debug_camera)

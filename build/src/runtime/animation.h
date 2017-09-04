@@ -167,3 +167,27 @@ namespace gemini
 		//void animation_interpolate_pose(Pose& out, Pose& last_pose, Pose& curr_pose, float t);
 	}
 } // namespace gemini
+
+namespace gemini
+{
+	struct TransformNode;
+	struct AnimatedMeshComponent;
+
+	struct AnimationController
+	{
+		// Target is the AnimatedEntity transform node.
+		// It is assumed that target contains child nodes
+		// that will be populated directly from an animation.
+		TransformNode* target;
+
+		AnimatedMeshComponent* component;
+	};
+
+	void animation_controller_transfer(AnimationController* controller);
+	void animation_controller_extract(AnimationController* controller);
+
+	void animation_link_transform_and_component(TransformNode* node, AnimatedMeshComponent* component);
+
+	void animation_update_transform_nodes();
+	void animation_update_components();
+} // namespace gemini
