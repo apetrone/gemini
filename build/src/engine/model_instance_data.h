@@ -49,12 +49,6 @@ namespace gemini
 
 		TransformNode* transform_node;
 
-		// parent-local bone transforms
-		glm::mat4* local_bone_transforms;
-
-		// model bone transforms
-		glm::mat4* model_bone_transforms;
-
 		uint32_t component_index;
 
 		//glm::mat4* inverse_bind_transforms;
@@ -83,7 +77,6 @@ namespace gemini
 		//virtual void set_local_transform(const glm::mat4& _transform);
 		virtual const Hitbox* get_hitboxes() const;
 		virtual void set_animation_enabled(int32_t index, bool enabled);
-		virtual int32_t get_animation_index(const char* name);
 		virtual float get_animation_duration(int32_t index) const;
 		//virtual uint32_t get_total_bones(int32_t /*index*/) const;
 		//virtual int32_t find_bone_named(const char* bone);
