@@ -1422,7 +1422,7 @@ Options:
 
 			// Uncomment this to debug the camera.
 			//glm::mat4 tx = glm::translate(glm::mat4(1.0f), player_offset);
-			//debugdraw::axes(glm::inverse(tx) * view.modelview, 1.0f, 0.0f);transform_graph_copy_frame_state
+			//debugdraw::axes(glm::inverse(tx) * view.modelview, 1.0f, 0.0f);
 			//debugdraw::camera(
 			//	cam_origin,
 			//	interpolated_camera_state.view,
