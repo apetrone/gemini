@@ -181,8 +181,6 @@ public:
 		{
 			if (data[index-1] == element)
 			{
-				value_pointer item = &data[index-1];
-
 				--total_elements;
 
 				// shift elements
