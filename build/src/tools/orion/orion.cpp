@@ -1864,7 +1864,7 @@ Options:
 
 	void test_load_model(const char* model_path)
 	{
-		glm::mat4 transform = glm::toMat4(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0)));
+		glm::mat4 ident;
 		AssetHandle skeleton_mesh = mesh_load(model_path);
 
 		Mesh* mesh = mesh_from_handle(skeleton_mesh);
@@ -1873,7 +1873,7 @@ Options:
 			TransformNode* transform_node = transform_graph_create_hierarchy(render_allocator, mesh->skeleton, mesh->attachments, "test");
 			transform_node->entity_index = 0;
 			transform_graph_set_parent(transform_node, transform_graph);
-			animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, transform_node->transform_index, transform);
+			animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, transform_node->transform_index, ident);
 			animation_link_transform_and_component(transform_node, render_scene_get_animated_component(render_scene, animated_mesh));
 
 			HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
@@ -1979,9 +1979,9 @@ Options:
 			// update world matrices for scene rendering
 			render_scene_update(render_scene, world_matrices);
 
-
-			//glm::mat4 matrices[1];
-			//render_scene_update(render_scene, matrices);
+			glm::mat4 matrices[1];
+			matrices[0] = glm::toMat4(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0)));
+			render_scene_update(render_scene, matrices);
 		}
 
 		// See if we need to poke the animated mesh.
