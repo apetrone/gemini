@@ -29,8 +29,6 @@
 #include <core/str.h>
 #include <core/typedefs.h>
 
-#include <renderer/scene_renderer.h>
-
 
 namespace gemini
 {

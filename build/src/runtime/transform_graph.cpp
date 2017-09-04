@@ -26,9 +26,8 @@
 
 #include <core/logging.h>
 
-#include <engine/transform_graph.h>
-
 #include <runtime/mesh.h>
+#include <runtime/transform_graph.h>
 
 
 namespace gemini

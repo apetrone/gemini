@@ -33,6 +33,7 @@
 #include <runtime/standaloneresourcecache.h>
 
 #include <runtime/mesh.h>
+#include <runtime/transform_graph.h>
 
 #include <platform/input.h>
 #include <platform/kernel.h>
@@ -628,6 +629,7 @@ private:
 //	GLsync fence;
 
 	RenderScene* render_scene;
+	TransformNode* transform_graph;
 
 	gui::Compositor* compositor;
 	gui::Label* log_window;
@@ -1952,7 +1954,8 @@ Options:
 			animation::update(kernel::parameters().simulation_delta_seconds);
 		}
 
-		render_scene_update(render_scene, &entity_render_state);
+		glm::mat4 matrices[1];
+		render_scene_update(render_scene, matrices);
 
 		// See if we need to poke the animated mesh.
 		if (animated_mesh != 0)

@@ -70,7 +70,7 @@
 #include "hotloading.h"
 #include "navigation.h"
 
-#include <engine/transform_graph.h>
+#include <runtime/transform_graph.h>
 #include <engine/model_instance_data.h>
 
 // for MAX_BONES

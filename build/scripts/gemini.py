@@ -756,6 +756,9 @@ def get_libruntime(arguments, target_platform, libcore):
 		"src/runtime/texture_library.cpp",
 		"src/runtime/texture_library.h",
 
+		"src/runtime/transform_graph.h",
+		"src/runtime/transform_graph.cpp",
+
 		"src/ui/**.c*",
 		"src/ui/**.h",
 
@@ -1296,9 +1299,6 @@ def products(arguments, **kwargs):
 		"src/engine/game/entity_allocator.h",
 		# "src/engine/game/particlesystem.h",
 		# "src/engine/game/particlesystem.cpp",
-
-		"src/engine/transform_graph.h",
-		"src/engine/transform_graph.cpp",
 
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_image.h"),
 		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_vorbis.c")
