@@ -624,26 +624,19 @@ public:
 
 				// index the bone parent
 				TransformNode* bone_parent = parent_node->bones[attachment->bone_index];
-				TransformNode* attachment_node = nullptr;
 
 				// try to find the named attachment in the hierarchy
 				for (size_t child_index = 0; child_index < bone_parent->children.size(); ++child_index)
 				{
 					if (bone_parent->children[child_index]->name == attachment_name)
 					{
-						attachment_node = bone_parent->children[child_index];
-						break;
+						TransformNode* child = instance->get_transform_node();
+						transform_graph_set_parent(child, bone_parent->children[child_index]);
+						return;
 					}
 				}
 
-				if (!attachment_node)
-				{
-					LOGW("Unable to find attachment bone named %s\n", attachment_name);
-					return;
-				}
-
-				TransformNode* child = instance->get_transform_node();
-				transform_graph_set_parent(child, attachment_node);
+				LOGW("Unable to find attachment bone named %s\n", attachment_name);
 			}
 			else
 			{
@@ -784,7 +777,6 @@ void extract_entities(EntityRenderState* ers, IEngineEntity** entities)
 		IEngineEntity* entity = entities[index];
 		if (entity)
 		{
-			entity->get_parent_matrix(ers->parent_matrix[index]);
 			entity->get_world_transform(ers->position[index], ers->orientation[index]);
 			entity->get_render_position(ers->position[index]);
 			entity->get_pivot_point(ers->pivot_point[index]);
@@ -797,7 +789,6 @@ void copy_state(EntityRenderState* out, EntityRenderState* in)
 {
 	for (size_t index = 0; index < MAX_ENTITIES; ++index)
 	{
-		out->parent_matrix[index] = in->parent_matrix[index];
 		out->orientation[index] = in->orientation[index];
 		out->position[index] = in->position[index];
 		out->pivot_point[index] = in->pivot_point[index];

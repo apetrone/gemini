@@ -50,7 +50,7 @@ namespace gemini
 		node->name = string_create(allocator, node_name);
 		node->transform_index = transform_index++;
 		return node;
-	}
+	} // transform_graph_create_node
 
 	TransformNode* transform_graph_create_hierarchy(gemini::Allocator& allocator, const FixedArray<gemini::Joint>& skeleton, const Array<gemini::ModelAttachment*>& attachments, const char* node_name)
 	{
@@ -97,7 +97,7 @@ namespace gemini
 		}
 
 		return animated_node;
-	}
+	} // transform_graph_create_hierarchy
 
 	void transform_graph_destroy_node(gemini::Allocator& allocator, TransformNode* node)
 	{
@@ -108,7 +108,7 @@ namespace gemini
 
 		string_destroy(allocator, node->name);
 		MEMORY2_DELETE(allocator, node);
-	}
+	} // transform_graph_destroy_node
 
 	void transform_graph_set_parent(TransformNode* child, TransformNode* parent)
 	{
@@ -124,7 +124,7 @@ namespace gemini
 
 		parent->children.push_back(child);
 		child->parent = parent;
-	}
+	} // transform_graph_set_parent
 
 	void transform_graph_copy_frame_state(TransformNode* node, TransformFrameState* state)
 	{
@@ -140,7 +140,7 @@ namespace gemini
 		{
 			transform_graph_copy_frame_state(node->children[index], state);
 		}
-	}
+	} // transform_graph_copy_frame_state
 
 	void transform_graph_transform(TransformNode* node, glm::mat4* world_matrices)
 	{
@@ -162,7 +162,6 @@ namespace gemini
 
 		if (node->transform_index != USHRT_MAX)
 		{
-			assert(256 > node->transform_index);
 			world_matrices[node->transform_index] = node->world_matrix;
 		}
 
@@ -170,5 +169,5 @@ namespace gemini
 		{
 			transform_graph_transform(node->children[index], world_matrices);
 		}
-	}
+	} // transform_graph_transform
 } // namespace gemini

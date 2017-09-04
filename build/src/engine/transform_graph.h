@@ -81,8 +81,5 @@ namespace gemini
 	// Populate local matrices for entity-backed transform nodes.
 	void transform_graph_copy_frame_state(TransformNode* node, TransformFrameState* state);
 
-	// start with the root node
-	// transform local matrices to world matrices
-	//void transform_graph_transform_root(TransformNode* root, glm::mat4* world_matrices, const glm::mat4* local_matrices, size_t total_matrices);
 	void transform_graph_transform(TransformNode* node, glm::mat4* world_matrices);
 } // namespace gemini

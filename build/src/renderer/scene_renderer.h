@@ -49,7 +49,6 @@ namespace gemini
 	struct StaticMeshComponent
 	{
 		AssetHandle mesh_handle;
-		//uint16_t entity_index;
 		uint16_t transform_index;
 
 		// populated in extract phase
@@ -60,7 +59,6 @@ namespace gemini
 	struct AnimatedMeshComponent
 	{
 		AssetHandle mesh_handle;
-		//uint16_t entity_index;
 		uint16_t transform_index;
 
 		// populated in extract phase

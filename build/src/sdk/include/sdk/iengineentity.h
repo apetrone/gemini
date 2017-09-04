@@ -53,11 +53,7 @@ namespace gemini
 		virtual uint32_t get_render_flags() const = 0;
 
 		// world position and orientation for this entity
-
-		virtual void get_parent_matrix(glm::mat4& matrix) const = 0;
 		virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) const = 0;
-
-
 		virtual void get_render_position(glm::vec3& position) const = 0;
 		virtual void get_pivot_point(glm::vec3& pivot) const = 0;
 
