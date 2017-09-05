@@ -488,6 +488,7 @@ public:
 	{
 		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
 		render_scene_animation_play(render_scene, instance->get_component_index(), animation_name, 0);
+		render_scene_animation_play(render_scene, instance->get_component_index(), "look_right", 1);
 	}
 
 	virtual bool is_animation_finished(IModelInstanceData* model)
@@ -495,12 +496,6 @@ public:
 		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
 
 		return render_scene_animation_finished(render_scene, instance->get_component_index(), 0);
-	}
-
-	virtual void get_current_pose(IModelInstanceData* model, animation::Pose& pose)
-	{
-		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
-		render_scene_animation_get_pose(render_scene, instance->get_component_index(), pose);
 	}
 
 	virtual void attach_to_entity(IModelInstanceData* model, IModelInstanceData* parent_model, const char* attachment_name)

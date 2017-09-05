@@ -697,11 +697,11 @@ namespace gemini
 			for (size_t index = 0; index < mesh->skeleton.size(); ++index)
 			{
 				// blend the poses
-				//pose.rot[index] = gemini::interpolate(poses[0].rot[index], poses[1].rot[index], blend_alpha);
-				//pose.pos[index] = gemini::interpolate(poses[0].pos[index], poses[1].pos[index], blend_alpha);
+				pose.rot[index] = gemini::interpolate(poses[0].rot[index], poses[1].rot[index], blend_alpha);
+				pose.pos[index] = gemini::interpolate(poses[0].pos[index], poses[1].pos[index], blend_alpha);
 
-				pose.rot[index] = poses[0].rot[index];
-				pose.pos[index] = poses[0].pos[index];
+				//pose.rot[index] = poses[0].rot[index];
+				//pose.pos[index] = poses[0].pos[index];
 
 				const Joint* joint = &mesh->skeleton[index];
 

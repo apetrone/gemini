@@ -78,33 +78,6 @@ namespace gemini
 	} // _render_scene_total_sequences_from_component
 
 
-	void _render_scene_get_aggregate_pose(Mesh* mesh, AnimatedMeshComponent* component, animation::Pose& pose)
-	{
-		float blend_alpha = 0.0f;
-		animation::Pose poses[MAX_ANIMATED_MESH_LAYERS];
-
-		for (size_t layer_index = 0; layer_index < MAX_ANIMATED_MESH_LAYERS; ++layer_index)
-		{
-			animation::Pose* current_pose = &poses[layer_index];
-
-			animation::AnimatedInstance* instance = component->sequence_instances[layer_index];
-			assert(instance);
-
-			animated_instance_get_pose(instance, *current_pose);
-		}
-
-		for (size_t index = 0; index < mesh->skeleton.size(); ++index)
-		{
-			// blend the poses
-			//pose.rot[index] = gemini::interpolate(poses[0].rot[index], poses[1].rot[index], blend_alpha);
-			//pose.pos[index] = gemini::interpolate(poses[0].pos[index], poses[1].pos[index], blend_alpha);
-
-			pose.rot[index] = poses[0].rot[index];
-			pose.pos[index] = poses[0].pos[index];
-		}
-	} // _render_scene_get_aggregate_pose
-
-
 	RenderSceneState* render_scene_state = nullptr;
 
 	void render_scene_startup(render2::Device* device, Allocator& allocator)
@@ -395,42 +368,6 @@ namespace gemini
 			instance->local_time_seconds = sequence->frame_delay_seconds * frame;
 		}
 	} // render_scene_animation_set_frame
-
-	void render_scene_animation_get_pose(RenderScene* scene, uint32_t component_id, animation::Pose& pose)
-	{
-		// If you hit this, an invalid component id was passed in
-		assert(component_id > 0);
-		component_id--;
-
-		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
-		assert(component);
-
-		Mesh* mesh = mesh_from_handle(component->mesh_handle);
-		if (!mesh)
-		{
-			return;
-		}
-
-		_render_scene_get_aggregate_pose(mesh, component, pose);
-	} // render_scene_animation_get_pose
-
-	void render_scene_animation_get_bone_transform(RenderScene* scene, uint32_t component_id, uint32_t bone_index, glm::mat4& model_matrix)
-	{
-		// If you hit this, an invalid component id was passed in
-		assert(component_id > 0);
-		component_id--;
-
-		AnimatedMeshComponent* component = scene->animated_meshes[component_id];
-		assert(component);
-
-		//Mesh* mesh = mesh_from_handle(component->mesh_handle);
-		//if (!mesh)
-		//{
-		//	return;
-		//}
-
-		model_matrix = component->bone_transforms[bone_index];
-	} // render_scene_animation_get_bone_transform
 
 	uint32_t render_scene_animation_current_frame(RenderScene* scene, uint32_t component_id, uint32_t layer)
 	{

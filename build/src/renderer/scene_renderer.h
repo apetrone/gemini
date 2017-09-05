@@ -151,11 +151,6 @@ namespace gemini
 	// no-op if there's no playing animation
 	void render_scene_animation_set_frame(RenderScene* scene, uint32_t component_id, uint32_t frame, uint32_t layer);
 
-	// Fetch the current animation pose for component_id
-	void render_scene_animation_get_pose(RenderScene* scene, uint32_t component_id, animation::Pose& pose);
-
-	void render_scene_animation_get_bone_transform(RenderScene* scene, uint32_t component_id, uint32_t bone_index, glm::mat4& model_matrix);
-
 	RenderScene* render_scene_create(Allocator& allocator, render2::Device* device);
 	void render_scene_destroy(RenderScene* scene, render2::Device* device);
 	void render_scene_draw(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::RenderTarget* render_target = nullptr);
@@ -168,7 +163,6 @@ namespace gemini
 	void render_sky(RenderScene* scene, render2::Device* device, const glm::mat4& view, const glm::mat4& projection, render2::Pass& pass);
 
 	void render_scene_update(RenderScene* scene, const glm::mat4* world_matrices);
-
 
 
 	AnimatedMeshComponent* render_scene_get_animated_component(RenderScene* scene, uint32_t component_id);
