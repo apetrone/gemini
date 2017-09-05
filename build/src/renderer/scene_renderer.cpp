@@ -759,7 +759,7 @@ namespace gemini
 				++scene->stat_animated_meshes_drawn;
 
 				// Enable this to debug bone transforms
-#if 1
+#if 0
 				if (mesh->skeleton.size() > 0)
 				{
 					glm::vec3 position; // render position
