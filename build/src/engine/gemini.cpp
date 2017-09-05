@@ -582,14 +582,14 @@ int32_t EngineInterface::create_instance_data(uint16_t entity_index, const char*
 			transform_node = transform_graph_create_node(engine_allocator, model_path);
 			transform_node->entity_index = entity_index;
 			transform_graph_set_parent(transform_node, transform_graph);
-			component_id = render_scene_add_static_mesh(render_scene, mesh_handle, transform_node->transform_index, glm::mat4(1.0f));
+			component_id = render_scene_add_static_mesh(render_scene, mesh_handle, transform_node->transform_index);
 		}
 		else
 		{
 			transform_node = transform_graph_create_hierarchy(engine_allocator, mesh->skeleton, mesh->attachments, model_path);
 			transform_node->entity_index = entity_index;
 			transform_graph_set_parent(transform_node, transform_graph);
-			component_id = render_scene_add_animated_mesh(render_scene, mesh_handle, transform_node->transform_index, glm::mat4(1.0f));
+			component_id = render_scene_add_animated_mesh(render_scene, mesh_handle, transform_node->transform_index);
 
 			animation_link_transform_and_component(transform_node, render_scene_get_animated_component(render_scene, component_id));
 		}

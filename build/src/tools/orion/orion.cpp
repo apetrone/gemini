@@ -1817,7 +1817,9 @@ Options:
 
 		//test_load_model("models/cube_rig2/cube_rig2");
 		//test_load_model("models/spiderbot/spiderbot");
-		test_load_model("models/test_model/test_model");
+		//test_load_model("models/test_model/test_model");
+
+		test_load_model("models/test_attachment/test_attachment");
 
 #if 0
 		AssetHandle test_mesh = mesh_load("models/vault");
@@ -1864,30 +1866,44 @@ Options:
 
 	void test_load_model(const char* model_path)
 	{
-		glm::mat4 ident;
 		AssetHandle skeleton_mesh = mesh_load(model_path);
 
 		Mesh* mesh = mesh_from_handle(skeleton_mesh);
 		if (mesh)
 		{
-			TransformNode* transform_node = transform_graph_create_hierarchy(render_allocator, mesh->skeleton, mesh->attachments, "test");
-			transform_node->entity_index = 0;
-			transform_graph_set_parent(transform_node, transform_graph);
-			animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, transform_node->transform_index, ident);
-			animation_link_transform_and_component(transform_node, render_scene_get_animated_component(render_scene, animated_mesh));
-
-			HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
-			for (; iter != mesh->sequence_index_by_name.end(); ++iter)
+			if (!mesh->skeleton.empty())
 			{
-				LOGV("Found animation: %s\n", iter.key()());
-				mesh_animations.push_back(iter.key());
+				// load an animated mesh
+				TransformNode* transform_node = transform_graph_create_hierarchy(render_allocator, mesh->skeleton, mesh->attachments, "test");
+				transform_node->entity_index = 0;
+				transform_node->orientation = glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				transform_graph_set_parent(transform_node, transform_graph);
+				animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, transform_node->transform_index);
+				animation_link_transform_and_component(transform_node, render_scene_get_animated_component(render_scene, animated_mesh));
+
+				HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
+				for (; iter != mesh->sequence_index_by_name.end(); ++iter)
+				{
+					LOGV("Found animation: %s\n", iter.key()());
+					mesh_animations.push_back(iter.key());
+				}
+
+				if (!mesh_animations.empty())
+				{
+					// Start playing the first animation if there are animations.
+					mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0](), 0);
+					update_timeline_frames();
+				}
 			}
-
-			if (!mesh_animations.empty())
+			else
 			{
-				// Start playing the first animation if there are animations.
-				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0](), 0);
-				update_timeline_frames();
+				enable_animation = false;
+
+				// load a static mesh
+				TransformNode* transform_node = transform_graph_create_node(render_allocator, "test");
+				transform_node->entity_index = 0;
+				transform_graph_set_parent(transform_node, transform_graph);
+				animated_mesh = render_scene_add_static_mesh(render_scene, skeleton_mesh, transform_node->transform_index);
 			}
 		}
 	}
@@ -1979,9 +1995,7 @@ Options:
 			// update world matrices for scene rendering
 			render_scene_update(render_scene, world_matrices);
 
-			glm::mat4 matrices[1];
-			matrices[0] = glm::toMat4(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0)));
-			render_scene_update(render_scene, matrices);
+			render_scene_update(render_scene, world_matrices);
 		}
 
 		// See if we need to poke the animated mesh.

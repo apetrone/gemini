@@ -231,7 +231,7 @@ namespace gemini
 	} // render_scene_track_mesh
 
 
-	uint32_t render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t transform_index, const glm::mat4& model_transform)
+	uint32_t render_scene_add_animated_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t transform_index)
 	{
 		Mesh* mesh = mesh_from_handle(mesh_handle);
 		if (!mesh)
@@ -244,8 +244,6 @@ namespace gemini
 		component->sequence_instances = nullptr;
 		component->transform_index = transform_index;
 		component->mesh_handle = mesh_handle;
-		component->model_matrix = model_transform;
-		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
 		component->bone_transforms = (glm::mat4*)MEMORY2_ALLOC(*scene->allocator, sizeof(glm::mat4) * MAX_BONES);
 
 		void* memory = MEMORY2_ALLOC(*scene->allocator, sizeof(animation::AnimatedInstance*) * MAX_ANIMATED_MESH_LAYERS);
@@ -272,7 +270,7 @@ namespace gemini
 		return scene->animated_meshes.size();
 	} // render_scene_add_animated_mesh
 
-	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t transform_index, const glm::mat4& model_transform)
+	uint32_t render_scene_add_static_mesh(RenderScene* scene, AssetHandle mesh_handle, uint16_t transform_index)
 	{
 		Mesh* mesh = mesh_from_handle(mesh_handle);
 		if (!mesh)
@@ -287,8 +285,6 @@ namespace gemini
 		scene->static_meshes.set(component_handle, component);
 		component->transform_index = transform_index;
 		component->mesh_handle = mesh_handle;
-		component->model_matrix = model_transform;
-		component->normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_transform)));
 
 		render_scene_track_mesh(scene, mesh_handle);
 
