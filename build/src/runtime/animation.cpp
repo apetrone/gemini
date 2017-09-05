@@ -680,7 +680,7 @@ namespace gemini
 		{
 			AnimatedMeshComponent* component = controller->component;
 
-			float blend_alpha = 0.0f;
+			float blend_alpha = 0.5f;
 			animation::Pose poses[MAX_ANIMATED_MESH_LAYERS];
 
 			for (size_t layer_index = 0; layer_index < MAX_ANIMATED_MESH_LAYERS; ++layer_index)
@@ -693,15 +693,22 @@ namespace gemini
 				animated_instance_get_pose(instance, *current_pose);
 			}
 
+			uint64_t bone_mask = 0;
+
 			TransformNode* animated_node = controller->target;
 			for (size_t index = 0; index < mesh->skeleton.size(); ++index)
 			{
 				// blend the poses
-				pose.rot[index] = gemini::interpolate(poses[0].rot[index], poses[1].rot[index], blend_alpha);
-				pose.pos[index] = gemini::interpolate(poses[0].pos[index], poses[1].pos[index], blend_alpha);
-
-				//pose.rot[index] = poses[0].rot[index];
-				//pose.pos[index] = poses[0].pos[index];
+				if (bone_mask & index)
+				{
+					pose.rot[index] = gemini::interpolate(poses[0].rot[index], poses[1].rot[index], blend_alpha);
+					pose.pos[index] = gemini::interpolate(poses[0].pos[index], poses[1].pos[index], blend_alpha);
+				}
+				else
+				{
+					pose.rot[index] = poses[0].rot[index];
+					pose.pos[index] = poses[0].pos[index];
+				}
 
 				const Joint* joint = &mesh->skeleton[index];
 

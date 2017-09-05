@@ -488,7 +488,7 @@ public:
 	{
 		gemini::ModelInstanceData* instance = reinterpret_cast<gemini::ModelInstanceData*>(model);
 		render_scene_animation_play(render_scene, instance->get_component_index(), animation_name, 0);
-		render_scene_animation_play(render_scene, instance->get_component_index(), "look_right", 1);
+		//render_scene_animation_play(render_scene, instance->get_component_index(), "look_right", 1);
 	}
 
 	virtual bool is_animation_finished(IModelInstanceData* model)
