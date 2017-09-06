@@ -99,7 +99,8 @@ namespace gemini
 	// initialize handlers
 
 	platform::Result runtime_startup(const char* application_data_path,
-		std::function<void(const char*)> custom_path_setup,
+		platform::PathString content_path,
+		std::function<platform::PathString(const char*)> get_application_directory,
 		uint32_t runtime_flags)
 	{
 		detail::_state->allocator = memory_allocator_default(MEMORY_ZONE_RUNTIME);
@@ -109,7 +110,10 @@ namespace gemini
 #if defined(GEMINI_RUNTIME_DEBUG)
 		LOGV("root_path: %s\n", root_path());
 #endif
-		platform::PathString content_path = platform::fs_content_directory();
+		if (content_path.is_empty())
+		{
+			content_path = platform::fs_content_directory();
+		}
 
 #if defined(GEMINI_RUNTIME_DEBUG)
 		LOGV("content_path: %s\n", content_path());
@@ -123,21 +127,23 @@ namespace gemini
 			return platform::Result::failure("Unable to create filesystem instance");
 		}
 
-		if (custom_path_setup)
+		// default path setup
+		filesystem->root_directory(root_path);
+		filesystem->content_directory(content_path);
+		filesystem->virtual_add_root(root_path());
+		filesystem->virtual_add_root(content_path());
+
+		// See if the user application directory must be overridden.
+		platform::PathString user_application_path;
+		if (get_application_directory)
 		{
-			custom_path_setup(application_data_path);
+			user_application_path = get_application_directory(application_data_path);
 		}
 		else
 		{
-			// default path setup
-			platform::PathString application_path = platform::get_user_application_directory(application_data_path);
-			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
-			filesystem->root_directory(root_path);
-			filesystem->content_directory(content_path);
-			filesystem->user_application_directory(application_path);
-			filesystem->virtual_add_root(root_path());
-			filesystem->virtual_add_root(content_path());
+			user_application_path = platform::get_user_application_directory(application_data_path);;
 		}
+		filesystem->user_application_directory(user_application_path);
 
 #if defined(PLATFORM_FILESYSTEM_SUPPORT)
 		if (runtime_flags & RF_SAVE_LOGS_TO_DISK)

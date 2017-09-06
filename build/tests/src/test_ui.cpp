@@ -747,33 +747,11 @@ Options:
 			return kernel::CoreFailed;
 		}
 
-
-		std::function<void(const char*)> custom_path_setup = [&](const char* application_data_path)
-		{
-			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
-			platform::PathString root_path = platform::get_program_directory();
-
-			// the root path is the current binary path
-			filesystem->root_directory(root_path);
-
-			// the content directory is where we'll find our assets
-			filesystem->content_directory(content_path);
-
-			// load engine settings (from content path)
-			//load_config(config);
-
-			// the application path can be specified in the config (per-game basis)
-			//const platform::PathString application_path = platform::get_user_application_directory(config.application_directory.c_str());
-			filesystem->user_application_directory(application_data_path);
-		};
-
-
-
 		PROFILE_BEGIN("test_ui");
 		// sample for three seconds and then close.
 		countdown = 3.0f;
 
-		gemini::runtime_startup("arcfusion.net/gemini/test_ui", custom_path_setup);
+		gemini::runtime_startup("arcfusion.net/gemini/test_ui", content_path);
 
 		platform::window::startup(platform::window::RenderingBackend_Default);
 

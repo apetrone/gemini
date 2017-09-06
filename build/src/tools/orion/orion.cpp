@@ -1356,29 +1356,7 @@ Options:
 			return kernel::CoreFailed;
 		}
 
-
-		std::function<void(const char*)> custom_path_setup = [&](const char* application_data_path)
-		{
-			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
-			platform::PathString root_path = platform::get_program_directory();
-
-			// the root path is the current binary path
-			filesystem->root_directory(root_path);
-
-			// the content directory is where we'll find our assets
-			filesystem->content_directory(content_path);
-
-			filesystem->virtual_add_root(content_path());
-
-			// load engine settings (from content path)
-			//load_config(config);
-
-			// the application path can be specified in the config (per-game basis)
-			const platform::PathString application_path = platform::get_user_application_directory(application_data_path);
-			filesystem->user_application_directory(application_path);
-		};
-
-		gemini::runtime_startup("arcfusion.net/orion", custom_path_setup);
+		gemini::runtime_startup("arcfusion.net/orion", content_path);
 
 		default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 

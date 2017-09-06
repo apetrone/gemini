@@ -84,13 +84,12 @@ namespace gemini
 	};
 
 	// runtime startup sequence
-	// Optionally pass a lambda to setup the filesystem paths
-	// This is called after the filesystem instance is created, but before
-	// any other operations. It allows the caller to setup the filesystem
-	// paths in a custom fashion.
+	// Optionally pass a lambda to return the user_application_directory.
+	// Called after the filesystem instance is created.
 	platform::Result runtime_startup(
 		const char* application_data_path,
-		std::function<void(const char*)> custom_path_setup = nullptr,
+		platform::PathString content_path = platform::PathString(),
+		std::function<platform::PathString(const char*)> get_application_directory = nullptr,
 		uint32_t startup_flags = 0
 	);
 	void runtime_shutdown();

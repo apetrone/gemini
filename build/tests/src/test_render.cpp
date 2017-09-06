@@ -332,36 +332,13 @@ Options:
 			return kernel::CoreFailed;
 		}
 
-
-
-		std::function<void(const char*)> custom_path_setup = [&](const char* application_data_path)
-		{
-			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
-			platform::PathString root_path = platform::get_program_directory();
-
-			// the root path is the current binary path
-			filesystem->root_directory(root_path);
-
-			// the content directory is where we'll find our assets
-			filesystem->content_directory(content_path);
-
-			// load engine settings (from content path)
-			//load_config(config);
-
-			// the application path can be specified in the config (per-game basis)
-			//const platform::PathString application_path = platform::get_user_application_directory(config.application_directory.c_str());
-			filesystem->user_application_directory(application_data_path);
-		};
-
-		gemini::runtime_startup("arcfusion.net/gemini/test_render", custom_path_setup);
+		gemini::runtime_startup("arcfusion.net/gemini/test_render", content_path);
 //		platform::PathString temp_path = platform::get_user_temp_directory(); // adding this line breaks Android. Yes, you read that correctly.
 //		LOGV("temp_path: %s\n", temp_path());
 
 		unittest::UnitTest::execute();
 
 		platform::window::startup(platform::window::RenderingBackend_Default);
-
-
 
 		size_t total_displays = platform::window::screen_count();
 		LOGV("-> total screens: %lu\n", total_displays);
