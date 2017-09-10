@@ -30,6 +30,56 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include <core/str.h>
+
+template <class T>
+gemini::string unit_test_type_to_string(const T& value)
+{
+	return string_create("Unsupported type");
+}
+
+template <>
+gemini::string unit_test_type_to_string(const gemini::string& value)
+{
+	return value;
+}
+
+template <>
+gemini::string unit_test_type_to_string(const int32_t& value)
+{
+	return gemini::string_create(core::str::format("%i", value));
+}
+
+template <>
+gemini::string unit_test_type_to_string(const uint32_t& value)
+{
+	return gemini::string_create(core::str::format("%u", value));
+}
+
+template <>
+gemini::string unit_test_type_to_string(const float& value)
+{
+	return gemini::string_create(core::str::format("%2.2f", value));
+}
+
+template <>
+gemini::string unit_test_type_to_string(const unsigned long& value)
+{
+	return gemini::string_create(core::str::format("%ull", value));
+}
+
+template <>
+gemini::string unit_test_type_to_string(const unsigned char& value)
+{
+	return gemini::string_create(core::str::format("%u", value));
+}
+
+template <>
+gemini::string unit_test_type_to_string(const uint64_t& value)
+{
+	return gemini::string_create(core::str::format("%ull", value));
+}
+
 #define UNITTEST(name)\
 	void _unittest_##name##_execute();\
 	static unittest::UnitTest _unittest_##name(#name, _unittest_##name##_execute);\
@@ -49,7 +99,7 @@
 #define TEST_ASSERT_EQUALS(param1, param2)\
 	if (!(param1 == param2))\
 	{\
-		LOGE("FAILED: " #param1 " does not equal " #param2 " (line = %i)\n", __LINE__);\
+		LOGE("FAILED: " #param1 " '%s' does not equal " #param2 " (line = %i)\n", unit_test_type_to_string(param1).c_str(), __LINE__);\
 		unittest::UnitTest::increment_failures();\
 	}
 

@@ -28,11 +28,9 @@
 #include <runtime/configloader.h>
 #include <runtime/runtime.h>
 
-
 #include <core/logging.h>
 #include <core/str.h>
 #include <core/config.h>
-#include <core/argumentparser.h>
 
 #include <platform/platform.h>
 #include <platform/window.h>
@@ -118,6 +116,8 @@ namespace gemini
 #if defined(GEMINI_RUNTIME_DEBUG)
 		LOGV("content_path: %s\n", content_path());
 #endif
+
+		assert(core::filesystem::instance() == nullptr);
 
 		// create file system instance
 		core::filesystem::IFileSystem* filesystem = MEMORY2_NEW(detail::_state->allocator, core::filesystem::FileSystemInterface);
@@ -207,17 +207,26 @@ namespace gemini
 		MEMORY2_DELETE(detail::_state->allocator, filesystem);
 	} // shutdown
 
-	void runtime_load_arguments(std::vector<std::string>& arguments, ::core::argparse::ArgumentParser& parser)
+	void runtime_load_arguments(gemini::Allocator& allocator, Array<gemini::string>& arguments)
 	{
 		const platform::MainParameters& mainparams = platform::get_mainparameters();
 #if defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE)
-		arguments = parser.split_tokens(mainparams.argc, mainparams.argv);
+		string_tokenize_commandline(allocator, arguments, mainparams.argc, mainparams.argv);
 #elif defined(PLATFORM_WINDOWS)
-		arguments = parser.split_tokens(mainparams.commandline);
+		string_tokenize_commandline(allocator, arguments, mainparams.commandline);
 #else
-	#error Not implemented on this platform!
+		#error Not implemented on this platform!
 #endif
 	} // runtime_load_arguments
+
+	void runtime_destroy_arguments(gemini::Allocator& allocator, Array<gemini::string>& arguments)
+	{
+		for (size_t index = 0; index < arguments.size(); ++index)
+		{
+			string_destroy(allocator, arguments[index]);
+		}
+		arguments.clear();
+	} // runtime_destroy_arguments
 
 	short runtime_standard_port_for_service(const char * service)
 	{

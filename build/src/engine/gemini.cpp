@@ -47,7 +47,6 @@
 #include <runtime/filesystem.h>
 #include <runtime/mesh.h>
 #include <runtime/mesh_library.h>
-#include <runtime/keyframechannel.h>
 #include <runtime/runtime.h>
 #include <runtime/standaloneresourcecache.h>
 
@@ -999,38 +998,43 @@ public:
 
 	virtual kernel::Error startup()
 	{
-		// parse command line values
-		std::vector<std::string> arguments;
-		core::argparse::ArgumentParser parser;
+		gemini::string path;
+		int32_t enable_telemetry = 0;
 
-		runtime_load_arguments(arguments, parser);
+		gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+		ArgumentParser parser;
+		argparse_create(allocator, &parser);
 
-		core::argparse::VariableMap vm;
-		const char* docstring = R"(
-Usage:
-	--game=<game_path>
+		argparse_arg(&parser, "The game path to load content from", "--game", nullptr, &path);
+		argparse_int(&parser, "Enable telemetry data", "--telemetry", "-t", &enable_telemetry, ArgumentParser::Optional);
 
-Options:
-	-h, --help  Show this help screen
-	--version  Display the version number
-	--game=<game_path>  The game path to load content from
-	-t, --telemetry Enable telemetry data
-	)";
-
-		if (parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
+		Array<gemini::string> arguments(allocator);
+		runtime_load_arguments(allocator, arguments);
+		if (argparse_parse(&parser, arguments) != 0)
 		{
-			std::string path = vm["--game"];
-			game_path = platform::make_absolute_path(path.c_str());
+			argparse_destroy(allocator, &parser);
+			runtime_destroy_arguments(allocator, arguments);
+			return kernel::CoreFailed;
+		}
 
-			if (vm.find("-t") != vm.end() || vm.find("--telemetry") != vm.end())
-			{
-				enable_telemetry = 1;
-			}
+
+		// runtime setup
+		PathString root_path = platform::get_program_directory();
+
+		// if no game is specified on the command line, construct the content path
+		// from the current root directory
+		StackString<MAX_PATH_SIZE> content_path;
+		if (path.empty())
+		{
+			content_path = platform::fs_content_directory();
 		}
 		else
 		{
-			return kernel::CoreFailed;
+			content_path = runtime_platform_asset_root(path.c_str());
 		}
+
+		argparse_destroy(allocator, &parser);
+		runtime_destroy_arguments(allocator, arguments);
 
 		kernel::Parameters& params = kernel::parameters();
 
@@ -1041,21 +1045,6 @@ Options:
 #else
 		kernel::parameters().device_flags |= kernel::DeviceDesktop;
 #endif
-
-		// runtime setup
-		PathString root_path = platform::get_program_directory();
-
-		// if no game is specified on the command line, construct the content path
-		// from the current root directory
-		StackString<MAX_PATH_SIZE> content_path;
-		if (game_path.is_empty())
-		{
-			content_path = platform::fs_content_directory();
-		}
-		else
-		{
-			content_path = runtime_platform_asset_root(game_path);
-		}
 
 		// setup filesystem paths
 		Settings config;

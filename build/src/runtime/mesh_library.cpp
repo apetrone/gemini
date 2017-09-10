@@ -420,7 +420,7 @@ namespace gemini
 		ModelConfigBlock* block = reinterpret_cast<ModelConfigBlock*>(user_data);
 
 		Array<gemini::string> pieces(*context->allocator);
-		string_split_lines(*context->allocator, pieces, line, ":");
+		string_split(*context->allocator, pieces, line, ":");
 		if (pieces.size() < 2)
 		{
 			LOGV("Error parsing line %i; expecting key=value\n", context->current_line);
@@ -458,7 +458,7 @@ namespace gemini
 				return;
 			}
 			Array<gemini::string> params(*context->allocator);
-			string_split_lines(*context->allocator, params, value);
+			string_tokenize(*context->allocator, params, value);
 
 			const size_t params_size = params.size();
 			if (params_size < 2)

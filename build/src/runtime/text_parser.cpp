@@ -119,7 +119,7 @@ namespace gemini
 
 		// Split string into pieces at the equals sign
 		Array<gemini::string> pieces(*context->allocator);
-		string_split_lines(*context->allocator, pieces, line, "=");
+		string_split(*context->allocator, pieces, line, "=");
 
 		if (pieces.size() < 2)
 		{

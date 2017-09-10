@@ -69,38 +69,44 @@ int asset_compiler_main()
 		return AssetCompilerError_Generic;
 	}
 
+	int32_t show_version = 0;
+	gemini::string target_platform;
+	gemini::string source_asset_path;
+	gemini::string destination_asset_path;
+
+	gemini::Allocator allocator = gemini::memory_allocator_default(MEMORY_ZONE_DEFAULT);
+	Array<gemini::string> arguments(allocator);
+
 	// parse command line values
-	std::vector<std::string> arguments;
-	core::argparse::ArgumentParser parser;
+	ArgumentParser parser;
+	argparse_create(allocator, &parser);
 
-	runtime_load_arguments(arguments, parser);
+	argparse_arg(&parser, "Set the source asset path", "--source", "-s", &source_asset_path);
+	argparse_arg(&parser, "Set the destination asset path", "--destination", "-d", &destination_asset_path);
+	argparse_int(&parser, "Display the version number", "--version", "-v", &show_version, ArgumentParser::Optional);
+	argparse_arg(&parser, "Set the target platform [windows, linux, raspberrypi]", "--platform", "-p", &target_platform, ArgumentParser::Optional);
 
-	core::argparse::VariableMap vm;
-	const char* docstring = R"(
-Usage:
-	[--platform <platform>] <source_asset_path> <destination_asset_path>
+	runtime_load_arguments(allocator, arguments);
 
-
-Options:
-	-h, --help				Show this help screen
-	--version				Display the version number
-	--platform <platform>	Target platform: [windows, linux, raspberrypi]
-	)";
-
-	if (!parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
+	if (argparse_parse(&parser, arguments) != 0)
 	{
+		argparse_destroy(allocator, &parser);
+		runtime_destroy_arguments(allocator, arguments);
+		core_shutdown();
 		return AssetCompilerError_Generic;
 	}
-
-	std::string source_asset_path = vm["source_asset_path"];
-	std::string destination_asset_path = vm["destination_asset_path"];
-	std::string target_platform = vm["--platform"];
 
 	AssetCompilerSettings settings;
 	settings.source = source_asset_path.c_str();
 	settings.destination = destination_asset_path.c_str();
 	settings.target_platform = target_platform.c_str();
+
+	argparse_destroy(allocator, &parser);
+	runtime_destroy_arguments(allocator, arguments);
+
+
 	asset_compiler_convert(&settings);
+
 
 	core_shutdown();
 	return AssetCompilerError_None;

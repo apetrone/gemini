@@ -80,32 +80,88 @@ private:
 	int& _index;
 }; // TestClassNoDefaultConstructor
 
+
 // ---------------------------------------------------------------------
 // ArgumentParser
 // ---------------------------------------------------------------------
 UNITTEST(ArgumentParser)
 {
-	const char* docstring = R"(
-Usage:
-	--test=<path>
+	gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+	ArgumentParser parser;
+	argparse_create(allocator, &parser);
 
-Options:
-	-h, --help  Show this help screen
-	--version  Display the version number
-	)";
+	gemini::string path;
+	argparse_arg(&parser, "Just a test path", "--test", nullptr, &path);
 
-	std::vector<std::string> arguments;
+	int32_t show_version = 0;
+	argparse_int(&parser, "Display the version number", "--version", "-v", &show_version, ArgumentParser::Optional);
 
-	arguments.push_back("--test=target_path");
+	int argc = 1;
+	char* argv[] = { "--test=target_path" };
 
-	argparse::ArgumentParser parser;
-	argparse::VariableMap vm;
-	parser.parse(docstring, arguments, vm, "1.0.0-alpha");
+	Array<gemini::string> tokens(allocator);
+	string_tokenize_commandline(allocator, tokens, argc, argv);
 
-	std::string path = vm["--test"];
+	int32_t parse_result = argparse_parse(&parser, tokens);
+	TEST_ASSERT_EQUALS(0, parse_result);
+	if (parse_result == 0)
+	{
+		TEST_ASSERT_EQUALS(path, "target_path");
+		if (!path.empty())
+		{
+			LOGV("path specified: '%s'\n", path.c_str());
+		}
 
-	TEST_ASSERT(path == "target_path", single_argument);
+		if (show_version)
+		{
+			LOGV("show version\n");
+		}
+	}
 
+	argparse_destroy(allocator, &parser);
+
+	// these must be manually destroyed
+	for (size_t index = 0; index < tokens.size(); ++index)
+	{
+		string_destroy(allocator, tokens[index]);
+	}
+
+	{
+		gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+		ArgumentParser parser;
+		argparse_create(allocator, &parser);
+
+		gemini::string assets_path;
+		argparse_arg(&parser, "The root content folder", "--assets", nullptr, &assets_path);
+
+		int32_t enable_telemetry = 0;
+		argparse_int(&parser, "Enable telemetry during session", "--telemetry", "-t", &enable_telemetry, ArgumentParser::Optional);
+
+		int argc = 2;
+		char* argv[] = { "test.exe", "-t",  "--assets", "c:/test/blah" };
+		Array<gemini::string> tokens(allocator);
+		string_tokenize_commandline(allocator, tokens, argc, argv);
+		if (argparse_parse(&parser, tokens) == 0)
+		{
+			if (!assets_path.empty())
+			{
+				LOGV("assets were specified: %s\n", assets_path.c_str());
+			}
+
+			if (enable_telemetry)
+			{
+				LOGV("telemetry specified\n");
+			}
+		}
+
+		argparse_destroy(allocator, &parser);
+
+		// these must be manually destroyed
+		for (size_t index = 0; index < tokens.size(); ++index)
+		{
+			string_destroy(allocator, tokens[index]);
+		}
+	}
 }
 
 // ---------------------------------------------------------------------
@@ -1036,6 +1092,56 @@ UNITTEST(string)
 	string_destroy(allocator, blah);
 	string_destroy(allocator, extended);
 
+
+	// test split lines
+	{
+		Array<gemini::string> tokens(allocator);
+		gemini::string line = string_create("--source foo --destination bar if=only");
+		string_split(allocator, tokens, line, " =");
+
+		// Ensure that the string split function is working correctly.
+		TEST_ASSERT_TRUE(tokens.size() == 6);
+
+		// Make sure the tokens around the delimiter exist in totality.
+		TEST_ASSERT_EQUALS(tokens[4], string_create("if"));
+		TEST_ASSERT_EQUALS(tokens[5], string_create("only"));
+
+		for (size_t index = 0; index < tokens.size(); ++index)
+		{
+			//LOGV("%i -> '%s'\n", index, tokens[index].c_str());
+			string_destroy(allocator, tokens[index]);
+		}
+
+		gemini::string test2 = string_create("attachment: value");
+		tokens.clear();
+
+		string_split(allocator, tokens, test2, ":");
+
+		TEST_ASSERT_TRUE(tokens.size() == 2);
+
+		TEST_ASSERT_EQUALS(tokens[0], string_create("attachment"));
+		TEST_ASSERT_EQUALS(tokens[1], string_create("value"));
+
+		for (size_t index = 0; index < tokens.size(); ++index)
+		{
+			//LOGV("%i -> '%s'\n", index, tokens[index].c_str());
+			string_destroy(allocator, tokens[index]);
+		}
+	}
+
+	// // test tokenize
+	// {
+	// 	Array<gemini::string> tokens(allocator);
+	// 	gemini::string line = string_create("attachment: weapon \"hand.R\" \"1.2 3.2 4.1\" \"0.25 0.5 0.75 1\"");
+
+	// 	string_tokenize(allocator, tokens, line);
+
+	// 	for (size_t index = 0; index < tokens.size(); ++index)
+	// 	{
+	// 		//LOGV("%i -> %s\n", index, tokens[index].c_str());
+	// 		string_destroy(allocator, tokens[index]);
+	// 	}
+	// }
 
 #if 0
 	// Test initialization from static const char* and

@@ -1328,35 +1328,28 @@ public:
 
 	virtual kernel::Error startup()
 	{
-		// parse command line values
-		std::vector<std::string> arguments;
-		core::argparse::ArgumentParser parser;
-		core::StackString<MAX_PATH_SIZE> content_path;
-
-		runtime_load_arguments(arguments, parser);
-
-		core::argparse::VariableMap vm;
-		const char* docstring = R"(
-Usage:
-	--assets=<content_path>
-
-Options:
-	-h, --help  Show this help screen
-	--version  Display the version number
-	--assets=<content_path>  The path to load content from
-	)";
-
-		if (parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
 		{
-			std::string path = vm["--assets"];
-			content_path = platform::make_absolute_path(path.c_str());
-		}
-		else
-		{
-			return kernel::CoreFailed;
-		}
+			gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+			ArgumentParser parser;
+			argparse_create(allocator, &parser);
 
-		gemini::runtime_startup("arcfusion.net/orion", content_path);
+			gemini::string asset_path;
+			argparse_arg(&parser, "The path to load content from", "--assets", nullptr, &asset_path);
+
+			Array<gemini::string> arguments(allocator);
+			runtime_load_arguments(allocator, arguments);
+			if (argparse_parse(&parser, arguments) != 0)
+			{
+				argparse_destroy(allocator, &parser);
+				runtime_destroy_arguments(allocator, arguments);
+				return kernel::CoreFailed;
+			}
+
+			gemini::runtime_startup("arcfusion.net/orion", platform::make_absolute_path(asset_path.c_str()));
+
+			argparse_destroy(allocator, &parser);
+			runtime_destroy_arguments(allocator, arguments);
+		}
 
 		default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 

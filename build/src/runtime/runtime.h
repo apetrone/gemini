@@ -40,13 +40,6 @@ namespace platform
 	struct Result;
 }
 
-namespace core
-{
-	namespace argparse
-	{
-		class ArgumentParser;
-	}
-}
 
 namespace gemini
 {
@@ -94,8 +87,8 @@ namespace gemini
 	);
 	void runtime_shutdown();
 
-
-	void runtime_load_arguments(std::vector<std::string>& arguments, ::core::argparse::ArgumentParser& parser);
+	void runtime_load_arguments(gemini::Allocator& allocator, Array<gemini::string>& arguments);
+	void runtime_destroy_arguments(gemini::Allocator& allocator, Array<gemini::string>& arguments);
 
 	int32_t runtime_decompose_url(const char* url, char* filename, char* hostname, char* service_type, uint16_t* port);
 

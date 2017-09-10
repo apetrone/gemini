@@ -27,7 +27,6 @@
 #include <vector>
 
 #include <core/mathlib.h>
-#include "keyframechannel.h"
 
 namespace gemini
 {

@@ -734,9 +734,6 @@ def get_libruntime(arguments, target_platform, libcore):
 		"src/runtime/hotloading.cpp",
 		"src/runtime/hotloading.h",
 
-		"src/runtime/keyframechannel.cpp",
-		"src/runtime/keyframechannel.h",
-
 		"src/runtime/material.cpp",
 		"src/runtime/material.h",
 		"src/runtime/material_library.cpp",

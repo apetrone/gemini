@@ -46,7 +46,6 @@
 #include "menuscreen.h"
 #include "win_loss_screen.h"
 
-#include "keyframechannel.h"
 #include "debugdraw.h"
 #include "util.h"
 #include "particlesystem.h"

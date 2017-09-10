@@ -228,9 +228,17 @@ namespace gemini
 	char* string_allocate(gemini::Allocator& allocator, size_t length);
 	string string_create(gemini::Allocator& allocator, const char* data);
 	string string_create(const char* data);
+	string string_create(gemini::Allocator& allocator, const string& data);
 	void string_destroy(gemini::Allocator& allocator, string& string);
 	string string_concat(gemini::Allocator& allocator, const string& first, const string& second);
 	string string_substr(gemini::Allocator& allocator, const char* source, uint32_t start, uint32_t length);
 
-	void string_split_lines(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, const char* delimiters = "\t ");
+	// split a string at certain delimiters into pieces
+	void string_split(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, const char* delimiters = "\t ");
+
+	// tokenize a string into pieces
+	void string_tokenize(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line);
+
+	void string_tokenize_commandline(gemini::Allocator& allocator, Array<gemini::string>& tokens, int argc, char** argv);
+	void string_tokenize_commandline(gemini::Allocator& allocator, Array<gemini::string>& tokens, const char* commandline);
 } // namespace gemini

@@ -467,6 +467,15 @@ namespace gemini
 		return value;
 	} // string_create
 
+	string string_create(gemini::Allocator& allocator, const string& other)
+	{
+		string value;
+		value.string_data = string_allocate(allocator, other.string_data_size);
+		value.string_data_size = other.string_data_size;
+		core::str::copy(const_cast<char*>(value.string_data), other.string_data, other.string_data_size);
+		return value;
+	} // string_create
+
 	void string_destroy(gemini::Allocator& allocator, string& string)
 	{
 		MEMORY2_DEALLOC(allocator, const_cast<char*>(string.string_data));
@@ -498,7 +507,7 @@ namespace gemini
 		return substring;
 	} // string_substr
 
-	void string_split_lines(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, const char* delimiters)
+	void string_split(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, const char* delimiters)
 	{
 		// current is the character cursor we're currently using.
 		// last_character is the last character that is alpha numeric.
@@ -554,7 +563,7 @@ namespace gemini
 			if (!reading_string && current_in_delimiters)
 			{
 				ptrdiff_t length = (last_character + 1 - prev);
-				if (isalnum(*prev) && length > 0)
+				if (!isspace(*prev) && length > 0)
 				{
 					gemini::string token = string_substr(allocator, prev, 0, static_cast<uint32_t>(length));
 					prev = current + 1;
@@ -562,18 +571,11 @@ namespace gemini
 				}
 			}
 
-			++current;
-
 			if (!reading_string && *current == '\"')
 			{
 				// start reading a string
 				reading_string = 1;
 				++current;
-
-				if (prev_in_delimiters)
-				{
-					prev = current;
-				}
 			}
 			else if (reading_string && *current == '\"')
 			{
@@ -591,14 +593,128 @@ namespace gemini
 				}
 			}
 
-			if (!isalnum(*prev))
+			if (prev_in_delimiters)
 			{
 				prev = current;
 			}
-			if (isalnum(*current))
+
+			if (isspace(*prev))
+			{
+				prev = current;
+			}
+			if (!isspace(*current))
 			{
 				last_character = current;
 			}
+
+			++current;
 		}
-	} // string_split_lines
+	} // string_split
+
+
+	void string_tokenize(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line)
+	{
+		const char* iter = &line[0];
+		const char* outer = iter;
+		uint32_t token_flags = 0;
+		enum {
+			TOKEN_NONE		= 0,
+			TOKEN_GENERIC	= 1,
+			TOKEN_STRING	= 2
+		};
+		// 1: reading a token
+		// 2: reading double-quoted string
+
+		uint32_t current_token_index = 0;
+
+		for (;;)
+		{
+			if (*iter)
+			{
+				// If not reading a token and not reading a string...
+				if ((token_flags == TOKEN_NONE) && *iter == '\"')
+				{
+					// Started reading double-quotes as a token.
+					token_flags = TOKEN_STRING;
+					++iter;
+					outer = iter;
+					continue;
+				}
+				else if ((token_flags == TOKEN_STRING) && *iter == '\"')
+				{
+					// Already reading a double-quoted string,
+					// this will be the terminating double-quote.
+					token_flags = TOKEN_NONE;
+					gemini::string token = string_substr(
+						allocator,
+						outer,
+						0,
+						iter - outer
+					);
+					pieces.push_back(token);
+					++iter;
+					outer = iter;
+					++current_token_index;
+					continue;
+				}
+				else if ((token_flags == TOKEN_GENERIC) && *iter == ' ')
+				{
+					gemini::string token = string_substr(
+						allocator,
+						outer,
+						0,
+						iter - outer
+					);
+					pieces.push_back(token);
+					++iter;
+					outer = iter;
+					token_flags = TOKEN_NONE;
+					++current_token_index;
+					continue;
+				}
+				else if (*iter != ' ' && (token_flags == TOKEN_NONE))
+				{
+					// started reading a token
+					token_flags |= 1;
+					outer = iter;
+				}
+			}
+			else
+			{
+				if (token_flags != TOKEN_NONE)
+				{
+					// still reading a token
+					gemini::string token = string_substr(
+						allocator,
+						outer,
+						0,
+						iter - outer
+					);
+					pieces.push_back(token);
+					++current_token_index;
+				}
+				break;
+			}
+
+			++iter;
+		}
+	}
+
+	void string_tokenize_commandline(gemini::Allocator& allocator, Array<gemini::string>& tokens, int argc, char** argv)
+	{
+		for (int index = 0; index < argc; ++index)
+		{
+			Array<gemini::string> pieces(allocator);
+			string_split(allocator, pieces, string_create(argv[index]), " =");
+			for (size_t piece = 0; piece < pieces.size(); ++piece)
+			{
+				tokens.push_back(pieces[piece]);
+			}
+		}
+	} // string_tokenize_commandline
+
+	void string_tokenize_commandline(gemini::Allocator& allocator, Array<gemini::string>& tokens, const char* commandline)
+	{
+		string_split(allocator, tokens, string_create(commandline), " =");
+	} // string_tokenize_commandline
 } // namespace gemini

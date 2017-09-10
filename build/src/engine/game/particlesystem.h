@@ -24,7 +24,6 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "keyframechannel.h"
 #include "assets/asset_emitter.h"
 
 #include <core/mem.h>
