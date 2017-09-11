@@ -1148,7 +1148,8 @@ public:
 
 		if (config.enable_asset_reloading)
 		{
-			hotloading::startup(renderer_allocator);
+			NotifyMessageDelegate message_delegate;
+			hotloading::startup(renderer_allocator, message_delegate);
 		}
 
 		if (enable_telemetry)
