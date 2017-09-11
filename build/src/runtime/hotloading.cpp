@@ -35,6 +35,8 @@
 #include <threadsafequeue.h>
 #include <core/typedefs.h>
 
+#include <runtime/runtime.h>
+
 #include "civetweb.h"
 #include "CivetServer.h"
 
@@ -186,12 +188,22 @@ namespace gemini
 	// not sure what else to call this...
 	namespace hotloading
 	{
+		struct HotloadingState
+		{
+			NotificationClient notify_client;
+		};
+
+		HotloadingState* _hotloading_state = nullptr;
+
 		namespace _internal
 		{
 			CivetServer* server = nullptr;
 			ThreadSafeQueue<String> reload_queue;
 			gemini::Allocator* allocator = nullptr;
+
 		}
+
+
 
 
 		class JsonConfigHandler : public CivetHandler
@@ -329,37 +341,63 @@ namespace gemini
 		}
 
 
-
-
-		void startup(gemini::Allocator& allocator)
+		void on_asset_reload(uint32_t channel, void* data, uint32_t data_size)
 		{
-			struct mg_callbacks cb;
-			memset(&cb, 0, sizeof(mg_callbacks));
-			cb.log_message = log_message;
+			LOGV("on_asset_reload: channel = %i, data: %x, data_size = %i\n",
+				channel,
+				data,
+				data_size
+			);
 
-			const char* options[] = {
-				"listening_ports", "1983",
-				"request_timeout_ms", "10",
-				0
-			};
+			LOGV("char data: %s\n", (const char*)data);
+		}
+
+		void startup(gemini::Allocator& allocator, NotifyMessageDelegate message_delegate)
+		{
+			//struct mg_callbacks cb;
+			//memset(&cb, 0, sizeof(mg_callbacks));
+			//cb.log_message = log_message;
+
+			//const char* options[] = {
+			//	"listening_ports", "1983",
+			//	"request_timeout_ms", "10",
+			//	0
+			//};
 
 			_internal::allocator = &allocator;
-			_internal::server = MEMORY2_NEW(allocator, CivetServer) (options, &cb);
-			_internal::server->addHandler("/json", new JsonConfigHandler());
-			_internal::server->addHandler("/reload", new AssetHotloadHandler(_internal::reload_queue));
+			//_internal::server = MEMORY2_NEW(allocator, CivetServer) (options, &cb);
+			//_internal::server->addHandler("/json", new JsonConfigHandler());
+			//_internal::server->addHandler("/reload", new AssetHotloadHandler(_internal::reload_queue));
+
+			assert(_hotloading_state == nullptr);
+			_hotloading_state = MEMORY2_NEW(allocator, HotloadingState);
+
+			notify_client_create(&_hotloading_state->notify_client);
+
+			//_hotloading_state->channel_delegate.bind<on_asset_reload>();
+			notify_client_subscribe(&_hotloading_state->notify_client, 1, message_delegate);
+			notify_client_subscribe(&_hotloading_state->notify_client, 2, message_delegate);
+			notify_client_subscribe(&_hotloading_state->notify_client, 3, message_delegate);
+			notify_client_subscribe(&_hotloading_state->notify_client, 4, message_delegate);
+			notify_client_subscribe(&_hotloading_state->notify_client, 5, message_delegate);
 		}
 
 		void shutdown()
 		{
-			MEMORY2_DELETE(*_internal::allocator, _internal::server);
+			notify_client_destroy(&_hotloading_state->notify_client);
+			MEMORY2_DELETE(*_internal::allocator, _hotloading_state);
+
+			//MEMORY2_DELETE(*_internal::allocator, _internal::server);
 		}
 
 		void tick()
 		{
-			if (_internal::server)
-			{
-				process_reload_queue();
-			}
+			//if (_internal::server)
+			//{
+			//	process_reload_queue();
+			//}
+
+			notify_client_tick(&_hotloading_state->notify_client);
 		}
 	} // namespace hotloading
 } // namespace gemini

@@ -137,6 +137,7 @@ private:
 		}
 
 		HashType hash = get_hash(key);
+		assert(hash > 0);
 		int32_t bucket_index;
 		int32_t index = find_bucket(hash, bucket_index);
 		Bucket* bucket = 0;

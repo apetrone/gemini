@@ -965,6 +965,7 @@ namespace gemini
 		content_path.append("builds");
 		content_path.append(PATH_SEPARATOR_STRING);
 		content_path.append(PLATFORM_NAME);
+		content_path.normalize(PATH_SEPARATOR);
 		return content_path;
 	} // runtime_platform_asset_root
 } // namespace gemini

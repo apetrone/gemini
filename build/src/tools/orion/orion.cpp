@@ -681,9 +681,7 @@ private:
 
 	imocap::MocapDevice* mocap_device;
 
-	gemini::MonitorHandle monitor_zero;
-	gemini::MonitorHandle monitor_one;
-	gemini::MonitorHandle monitor_materials;
+	gemini::MonitorHandle monitor_handles[5];
 
 	gemini::Allocator asset_allocator;
 	MonitorDelegate monitor_delegate;
@@ -741,6 +739,8 @@ public:
 		asset_processor = nullptr;
 
 		timeline = nullptr;
+
+		memset(monitor_handles, 0, sizeof(MonitorHandle) * 5);
 	}
 
 	virtual ~EditorKernel()
@@ -855,21 +855,33 @@ public:
 		path.recompute_size();
 		assert(data_size == path.size());
 
-		path = path.basename();
-		path = path.remove_extension();
 		if (channel == 1)
 		{
+			path = path.basename();
+			path = path.remove_extension();
 			LOGV("reloading SHADER asset: %s\n", path());
 			shader_load(path(), true);
 		}
 		else if (channel == 2)
 		{
+			path = path.remove_extension();
 			LOGV("reloading TEXTURE asset: %s\n", path());
 		}
 		else if (channel == 3)
 		{
+			path = path.remove_extension();
 			LOGV("reload material: %s\n", path());
 			material_load(path(), true);
+		}
+		else if (channel == 4)
+		{
+			path = path.remove_extension();
+			LOGV("reload model: %s\n", path());
+		}
+		else if (channel == 5)
+		{
+			path = path.basename();
+			LOGV("reload config: %s\n", path());
 		}
 	}
 
@@ -880,7 +892,19 @@ public:
 			ModifiedAssetData mod;
 			mod.quiet_time_left = ASSET_CHANGE_NOTIFICATION_QUIET_SECONDS;
 			mod.monitor_handle = monitor_handle;
-			(*queued_asset_changes)[path] = mod;
+
+			// make this path a relative path to the project root.
+			if (environment.project)
+			{
+#if 0
+				PathString project_root = environment.project->get_root_path().c_str();
+				project_root.normalize(PATH_SEPARATOR);
+				PathString asset_root = gemini::runtime_platform_asset_root(project_root);
+				PathString relative_path;
+				core::filesystem::relative_path_from_absolute(relative_path, path(), asset_root);
+#endif
+				(*queued_asset_changes)[path] = mod;
+			}
 		}
 	}
 
@@ -1074,6 +1098,48 @@ public:
 		project_path.append("project.conf");
 
 		environment.project = Project::open_project(project_path());
+
+		if (monitor_handles[0] != 0)
+		{
+			// release the old directory monitors before re-adding.
+			for (size_t index = 0; index < 5; ++index)
+			{
+				directory_monitor_remove(monitor_handles[index]);
+			}
+		}
+
+		// hook up the asset monitor delegate to this new project directory.
+		platform::PathString watch_path = asset_root;
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("shaders");
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("150");
+		watch_path.normalize(PATH_SEPARATOR);
+		monitor_handles[0] = directory_monitor_add(watch_path(), monitor_delegate);
+
+		watch_path = asset_root;
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("textures");
+		watch_path.normalize(PATH_SEPARATOR);
+		monitor_handles[1] = directory_monitor_add(watch_path(), monitor_delegate);
+
+		watch_path = asset_root;
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("materials");
+		watch_path.normalize(PATH_SEPARATOR);
+		monitor_handles[2] = directory_monitor_add(watch_path(), monitor_delegate);
+
+		watch_path = asset_root;
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("models");
+		watch_path.normalize(PATH_SEPARATOR);
+		monitor_handles[3] = directory_monitor_add(watch_path(), monitor_delegate);
+
+		watch_path = asset_root;
+		watch_path.append(PATH_SEPARATOR_STRING);
+		watch_path.append("conf");
+		watch_path.normalize(PATH_SEPARATOR);
+		monitor_handles[4] = directory_monitor_add(watch_path(), monitor_delegate);
 	} // open_project_at_root
 
 	void on_file_save_project()
@@ -1421,6 +1487,14 @@ public:
 
 		queued_asset_changes = MEMORY2_NEW(asset_allocator, PathDelayHashSet)(asset_allocator);
 
+		int32_t startup_result = net_startup();
+		assert(startup_result == 0);
+
+		// Determine how to handle hotloading for the assets used by orion.
+		// We mainly want to catch assets for a specific project and forward
+		// those notifications to the engine.
+		monitor_delegate.bind<EditorKernel, &EditorKernel::on_file_updated>(this);
+#if 0
 		monitor_delegate.bind<EditorKernel, &EditorKernel::on_file_updated>(this);
 
 		platform::PathString watch_path = core::filesystem::instance()->content_directory();
@@ -1435,18 +1509,19 @@ public:
 		watch_path.append(PATH_SEPARATOR_STRING);
 		watch_path.append("textures");
 		monitor_one = directory_monitor_add(watch_path(), monitor_delegate);
-
+		on
 		watch_path = core::filesystem::instance()->content_directory();
 		watch_path.append(PATH_SEPARATOR_STRING);
 		watch_path.append("materials");
 		monitor_materials = directory_monitor_add(watch_path(), monitor_delegate);
-
+#endif
 		// initialize the renderer
 		{
 			render_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
 
-
-			hotloading::startup(render_allocator);
+			NotifyMessageDelegate on_message_notify;
+			on_message_notify.bind<EditorKernel, &EditorKernel::on_asset_reload>(this);
+			hotloading::startup(render_allocator, on_message_notify);
 
 			debugdraw_allocator = memory_allocator_default(MEMORY_ZONE_DEBUGDRAW);
 
@@ -1742,8 +1817,6 @@ public:
 
 
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
-		int32_t startup_result = net_startup();
-		assert(startup_result == 0);
 
 		telemetry_viewer_create(&tel_viewer, 120, "0.0.0.0", TELEMETRY_VIEWER_PORT);
 
@@ -1765,13 +1838,13 @@ public:
 		mocap_device = imocap::device_create();
 
 		notify_server_create(&notify_server);
-		notify_client_create(&notify_client);
+		//notify_client_create(&notify_client);
 
-		NotifyMessageDelegate channel_delegate;
-		channel_delegate.bind<EditorKernel, &EditorKernel::on_asset_reload>(this);
-		notify_client_subscribe(&notify_client, 1, channel_delegate);
-		notify_client_subscribe(&notify_client, 2, channel_delegate);
-		notify_client_subscribe(&notify_client, 3, channel_delegate);
+		//NotifyMessageDelegate channel_delegate;
+		//channel_delegate.bind<EditorKernel, &EditorKernel::on_asset_reload>(this);
+		//notify_client_subscribe(&notify_client, 1, channel_delegate);
+		//notify_client_subscribe(&notify_client, 2, channel_delegate);
+		//notify_client_subscribe(&notify_client, 3, channel_delegate);
 
 
 		lines = new glm::vec3[TOTAL_LINES];
@@ -1823,7 +1896,7 @@ public:
 			}
 			else
 			{
-				render_scene_animation_play(render_scene, component_id, "idle");
+				render_scene_animation_play(render_scene, component_id, "idle");re
 			}
 
 			entity_render_state.model_matrix[entity_index] = transform;
@@ -1884,13 +1957,15 @@ public:
 		uint32_t handle_to_channel[] = {
 			1,
 			2,
-			3
+			3,
+			4,
+			5
 		};
 		PathDelayHashSet::Iterator it = hashset.begin();
 		for (; it != hashset.end(); ++it)
 		{
 			ModifiedAssetData& data = it.value();
-			assert(data.monitor_handle > 0 && data.monitor_handle < 4);
+			assert(data.monitor_handle > 0 && data.monitor_handle < 6);
 
 			data.quiet_time_left -= tick_seconds;
 			if (data.quiet_time_left <= 0.0f)
@@ -1930,10 +2005,10 @@ public:
 		//	return;
 		//}
 
-		hotloading::tick();
 		directory_monitor_update();
 		notify_server_tick(&notify_server);
-		notify_client_tick(&notify_client);
+		hotloading::tick();
+		//notify_client_tick(&notify_client);
 		tick_queued_asset_changes(*queued_asset_changes, kernel::parameters().framedelta_seconds);
 
 		if (enable_animation)
@@ -2258,7 +2333,7 @@ public:
 
 		directory_monitor_shutdown();
 
-		notify_client_destroy(&notify_client);
+		//notify_client_destroy(&notify_client);
 		notify_server_destroy(&notify_server);
 
 		// must be shut down before the animations; as they're referenced.

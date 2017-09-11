@@ -25,12 +25,13 @@
 #pragma once
 
 #include <core/mem.h>
+#include <runtime/runtime.h>
 
 namespace gemini
 {
 	namespace hotloading
 	{
-		void startup(gemini::Allocator& allocator);
+		void startup(gemini::Allocator& allocator, NotifyMessageDelegate message_delegate);
 		void tick();
 		void shutdown();
 	} // namespace hotloading

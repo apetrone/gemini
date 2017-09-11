@@ -1143,13 +1143,13 @@ public:
 		gemini::physics::startup();
 		animation::startup(animation_allocator);
 
+		int32_t startup_result = net_startup();
+		assert(startup_result == 0);
+
 		if (config.enable_asset_reloading)
 		{
 			hotloading::startup(renderer_allocator);
 		}
-
-		int32_t net_result = net_startup();
-		assert(net_result == 0);
 
 		if (enable_telemetry)
 		{
