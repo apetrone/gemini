@@ -108,7 +108,9 @@ namespace core
 			if (basepath)
 			{
 				size_t content_length = content_path.size();
-				core::str::copy(&relative_path[0], (absolute_path+content_length+1), core::str::len(absolute_path) - content_length+1);
+				size_t string_length = core::str::len(absolute_path) - content_length + 1;
+				core::str::copy(&relative_path[0], (absolute_path+content_length+1), string_length);
+				relative_path.recompute_size();
 				relative_path.normalize(PATH_SEPARATOR);
 			}
 		}
