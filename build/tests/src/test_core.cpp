@@ -644,6 +644,13 @@ UNITTEST(HashSet)
 	// test removal
 	test.remove(42);
 	TEST_ASSERT_FALSE(test.has_key(42));
+
+
+	HashSet<size_t, size_t> large_caliber(default_allocator);
+	for (size_t index = 0; index < 100; ++index)
+	{
+		large_caliber.insert(std::pair<size_t, size_t>((100 - index), index * 2));
+	}
 }
 
 
@@ -1381,6 +1388,42 @@ UNITTEST(util)
 
 	value = util::random_range(0.0f, 1.0f);
 	TEST_ASSERT(0.0f <= value && value <= 1.0f, random_range4);
+}
+
+
+UNITTEST(allocator_stress)
+{
+
+	gemini::Allocator test_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
+	void* allocs[1024] = { 0 };
+
+	for (size_t index = 0; index < 1024; ++index)
+	{
+		size_t alloc_size = index;
+		if (index > 0)
+		{
+			void* mem = MEMORY2_ALLOC(test_allocator, alloc_size);
+
+			assert(memory_is_aligned(mem, 8));
+			allocs[index] = mem;
+
+			memset(mem, 255, alloc_size);
+		}
+		else
+		{
+			allocs[index] = nullptr;
+		}
+	}
+
+	for (size_t index = 0; index < 1024; ++index)
+	{
+		if (index > 0)
+		{
+			MEMORY2_DEALLOC(test_allocator, allocs[index]);
+		}
+	}
+
 }
 
 
