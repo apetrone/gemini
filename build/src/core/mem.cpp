@@ -230,6 +230,7 @@ namespace gemini
 
 		// request the memory from the OS
 		void* memory = memory_aligned_malloc(allocation_size, alignment);
+		assert(memory_is_aligned(memory, alignment));
 
 		ZoneStats* stats = memory_zone_tracking_stats();
 		ZoneStats& target_stat = stats[zone];
@@ -257,7 +258,7 @@ namespace gemini
 		}
 
 		// populate debug header.
-		memory = block + sizeof(MemoryDebugHeader) + alignment_offset;
+		memory = block + sizeof(MemoryDebugHeader);
 
 		MemoryZoneHeader* zone_header = reinterpret_cast<MemoryZoneHeader*>(memory);
 		zone_header->zone = zone;
@@ -267,15 +268,15 @@ namespace gemini
 		memory_zone_track(zone, allocation_size);
 
 		// populate zone header
-		memory = block + sizeof(MemoryDebugHeader) + alignment_offset + sizeof(MemoryZoneHeader);
+		memory = block + sizeof(MemoryDebugHeader) + sizeof(MemoryZoneHeader);
 
-		//LOGV("[+] '%s' %x size=%lu, align=%lu, line=%i, alloc_num=%zu, file='%s'\n",
-		//	zone ? zone->name() : "",
-		//	(header + 1),
+		//LOGV("[+] '%i' %x requested_size=%lu, align=%lu, line=%i, alloc_num=%zu, file='%s'\n",
+		//	zone,
+		//	memory,
 		//	requested_size,
 		//	alignment,
 		//	line,
-		//	header->allocation_index,
+		//	debug->allocation_index,
 		//	filename);
 
 		return memory;
@@ -295,7 +296,7 @@ namespace gemini
 		memory_zone_untrack(zone_header->zone, zone_header->allocation_size);
 
 		memory = reinterpret_cast<unsigned char*>(zone_header);
-		memory -= zone_header->alignment_offset;
+		//memory -= zone_header->alignment_offset;
 
 		memory -= sizeof(MemoryDebugHeader);
 		MemoryDebugHeader* debug = reinterpret_cast<MemoryDebugHeader*>(memory);
@@ -319,13 +320,13 @@ namespace gemini
 			target_stat.tail = next;
 		}
 
-		//LOGV("[-] '%s' %x size=%lu, align=%lu, line=%i, alloc_num=%zu\n",
-		//	zone ? zone->name() : "",
+		//LOGV("[-] '%i' %x requested_size=%lu, align=%lu, line=%i, alloc_num=%zu\n",
+		//	zone_header->zone,
 		//	pointer,
-		//	header->allocation_size,
-		//	header->alignment,
-		//	header->line,
-		//	header->allocation_index);
+		//	zone_header->requested_size,
+		//	debug->alignment,
+		//	debug->line,
+		//	debug->allocation_index);
 
 		memory_aligned_free(memory);
 	} // memory_deallocate

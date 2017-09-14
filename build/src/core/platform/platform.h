@@ -304,7 +304,6 @@ namespace platform
 	// temporary storage; can be wiped by the OS
 	PathString get_user_temp_directory();
 
-
 	// this accepts a path entered by the user (possibly on the commandline)
 	// and returns an expanded absolute path for use.
 	// This should expand environment variables.
