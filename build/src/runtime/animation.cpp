@@ -292,7 +292,7 @@ namespace gemini
 		//
 		// animation system stuff
 		//
-		typedef HashSet<std::string, Sequence*> SequenceHash;
+		typedef HashSet<core::StackString<64>, Sequence*> SequenceHash;
 		SequenceHash* _sequences_by_name;
 		gemini::Allocator* _allocator = nullptr;
 
