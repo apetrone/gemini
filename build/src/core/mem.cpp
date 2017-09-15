@@ -270,14 +270,14 @@ namespace gemini
 		// populate zone header
 		memory = block + sizeof(MemoryDebugHeader) + sizeof(MemoryZoneHeader);
 
-		LOGV("[+] '%i' %x requested_size=%lu, align=%lu, line=%i, alloc_num=%zu, file='%s'\n",
-			zone,
-			memory,
-			requested_size,
-			alignment,
-			line,
-			debug->allocation_index,
-			filename);
+		//LOGV("[+] '%i' %x requested_size=%lu, align=%lu, line=%i, alloc_num=%zu, file='%s'\n",
+		//	zone,
+		//	memory,
+		//	requested_size,
+		//	alignment,
+		//	line,
+		//	debug->allocation_index,
+		//	filename);
 
 		return memory;
 	} // memory_allocate
@@ -320,13 +320,13 @@ namespace gemini
 			target_stat.tail = next;
 		}
 
-		LOGV("[-] '%i' %x requested_size=%lu, align=%lu, line=%i, alloc_num=%zu\n",
-			zone_header->zone,
-			pointer,
-			zone_header->requested_size,
-			debug->alignment,
-			debug->line,
-			debug->allocation_index);
+		//LOGV("[-] '%i' %x requested_size=%lu, align=%lu, line=%i, alloc_num=%zu\n",
+		//	zone_header->zone,
+		//	pointer,
+		//	zone_header->requested_size,
+		//	debug->alignment,
+		//	debug->line,
+		//	debug->allocation_index);
 
 		memory_aligned_free(memory);
 	} // memory_deallocate

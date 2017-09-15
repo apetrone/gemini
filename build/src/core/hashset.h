@@ -133,7 +133,7 @@ private:
 		if ((used_items/(float)table_size) > MAX_LOAD_FACTOR)
 		{
 			// if we hit this point; we need to resize the table
-			repopulate(table_size*growth_factor);
+			repopulate(table_size * growth_factor);
 		}
 
 		HashType hash = get_hash(key);
@@ -192,7 +192,7 @@ private:
 			if (pointer[index].hash != 0)
 			{
 				(&pointer[index].key)->~K();
-				//(&pointer[index].value)->~T();
+				(&pointer[index].value)->~T();
 			}
 		}
 		MEMORY2_DEALLOC(allocator, pointer);
