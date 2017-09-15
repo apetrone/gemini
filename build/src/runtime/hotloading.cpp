@@ -37,8 +37,10 @@
 
 #include <runtime/runtime.h>
 
+#if defined(USE_WEBSERVER)
 #include "civetweb.h"
 #include "CivetServer.h"
+#endif
 
 using namespace core;
 
@@ -197,13 +199,15 @@ namespace gemini
 
 		namespace _internal
 		{
+#if defined(USE_WEBSERVER)
 			CivetServer* server = nullptr;
+#endif
 			ThreadSafeQueue<String> reload_queue;
 			gemini::Allocator* allocator = nullptr;
 
 		}
 
-
+#if defined(USE_WEBSERVER)
 
 
 		class JsonConfigHandler : public CivetHandler
@@ -294,7 +298,7 @@ namespace gemini
 			return 0;
 		}
 
-
+#endif
 
 		void process_reload_queue()
 		{

@@ -1014,7 +1014,8 @@ def arguments(parser):
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi; implies EGL + OpenGLES", default=False)
 	parser.add_argument("--with-opengl", dest="opengl", action="store_true", help="Build with support for full OpenGL; mutually exclusive with OpenGL ES", default=True)
 
-	parser.add_argument("--with-civet", dest="with_civet", action="store_true", help="Build with CivetServer", default=True)
+	# 9-14-17 [apetrone]: Disabling civet server because I don't have an immediate need for it.
+	parser.add_argument("--with-civet", dest="with_civet", action="store_true", help="Build with CivetServer", default=False)
 	parser.add_argument("--no-civet", dest="with_civet", action="store_false", help="Build without CivetServer")
 
 	parser.add_argument("--with-x11", dest="with_x11", action="store_true", help="Build with X11 support", default=False)
