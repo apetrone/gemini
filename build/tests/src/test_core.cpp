@@ -645,11 +645,13 @@ UNITTEST(HashSet)
 	test.remove(42);
 	TEST_ASSERT_FALSE(test.has_key(42));
 
-
-	HashSet<size_t, size_t> large_caliber(default_allocator);
+	//typedef std::string string_type;
+	typedef StackString<32> string_type;
+	HashSet<string_type, size_t> large_caliber(default_allocator);
 	for (size_t index = 0; index < 100; ++index)
 	{
-		large_caliber.insert(std::pair<size_t, size_t>((100 - index), index * 2));
+		string_type key = core::str::format("key: %i", index);
+		large_caliber.insert(std::pair<string_type, size_t>(key, index * 2));
 	}
 }
 
@@ -1393,7 +1395,6 @@ UNITTEST(util)
 
 UNITTEST(allocator_stress)
 {
-
 	gemini::Allocator test_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 
 	void* allocs[1024] = { 0 };
@@ -1423,7 +1424,6 @@ UNITTEST(allocator_stress)
 			MEMORY2_DEALLOC(test_allocator, allocs[index]);
 		}
 	}
-
 }
 
 
