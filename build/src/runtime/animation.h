@@ -181,12 +181,18 @@ namespace gemini
 		TransformNode* target;
 
 		AnimatedMeshComponent* component;
+
+		bool operator==(const AnimationController& other) const
+		{
+			return (target == other.target) && (component == other.component);
+		}
 	};
 
 	void animation_controller_transfer(AnimationController* controller);
 	void animation_controller_extract(AnimationController* controller);
 
 	void animation_link_transform_and_component(TransformNode* node, AnimatedMeshComponent* component);
+	void animation_unlink_transform_and_component(TransformNode* node, AnimatedMeshComponent* component);
 
 	void animation_update_transform_nodes();
 	void animation_update_components();

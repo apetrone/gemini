@@ -693,6 +693,7 @@ private:
 	Array<core::StackString<32>> mesh_animations;
 	uint32_t current_mesh_animation;
 	uint32_t animated_mesh;
+	uint32_t second_mesh;
 	uint32_t enable_animation;
 	uint32_t mesh_animation_index;
 
@@ -724,6 +725,7 @@ public:
 		, mesh_animations(default_allocator)
 		, current_mesh_animation(0)
 		, animated_mesh(0)
+		, second_mesh(0)
 		, enable_animation(1)
 		, mesh_animation_index(0)
 	{
@@ -816,6 +818,8 @@ public:
 				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation](), 0);
 				render_scene_animation_play(render_scene, animated_mesh, "look_right", 1);
 
+				render_scene_animation_play(render_scene, second_mesh, "idle", 0);
+
 				update_timeline_frames();
 			}
 			else if (event.key == BUTTON_SPACE)
@@ -841,7 +845,7 @@ public:
 	void update_timeline_frames()
 	{
 		// update the timeline with the new animation
-		if (timeline)
+		if (timeline && animated_mesh != 0)
 		{
 			uint32_t total_frames = render_scene_animation_total_frames(render_scene, animated_mesh, 0);
 			timeline->set_frame(0);
@@ -1861,7 +1865,25 @@ public:
 
 		//test_load_model("models/cube_rig2/cube_rig2");
 		//test_load_model("models/spiderbot/spiderbot");
-		test_load_model("models/test_model/test_model");
+
+		//test_load_model("models/test_model/test_model");
+
+		//test_load_model("models/test_character/test_character");
+		TransformNode* node0 = nullptr;
+		TransformNode* node1 = nullptr;
+
+		node0 = test_load_model("enemy", "models/test_enemy/test_enemy", 0, &animated_mesh);
+		node1 = test_load_model("test_model", "models/test_model/test_model", 21, &second_mesh);
+
+
+		render_scene_animation_play(render_scene, animated_mesh, "idle", 0);
+
+
+		if (node1)
+		{
+			node1->position = glm::vec3(2.0f, 0.0f, 0.0f);
+			render_scene_animation_play(render_scene, second_mesh, "idle", 0);
+		}
 
 		//test_load_model("models/test_attachment/test_attachment");
 
@@ -1908,9 +1930,13 @@ public:
 		return kernel::NoError;
 	}
 
-	void test_load_model(const char* model_path)
+	TransformNode* test_load_model(const char* name, const char* model_path, uint32_t entity_index, uint32_t* component_handle)
 	{
 		AssetHandle skeleton_mesh = mesh_load(model_path);
+
+		uint32_t model_component_handle;
+
+		TransformNode* transform_node = nullptr;
 
 		Mesh* mesh = mesh_from_handle(skeleton_mesh);
 		if (mesh)
@@ -1918,25 +1944,28 @@ public:
 			if (!mesh->skeleton.empty())
 			{
 				// load an animated mesh
-				TransformNode* transform_node = transform_graph_create_hierarchy(render_allocator, mesh->skeleton, mesh->attachments, "test");
-				transform_node->entity_index = 0;
-				transform_node->orientation = glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				transform_node = transform_graph_create_hierarchy(render_allocator, mesh->skeleton, mesh->attachments, name);
+				transform_node->entity_index = entity_index;
+				//transform_node->orientation = glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				transform_graph_set_parent(transform_node, transform_graph);
-				animated_mesh = render_scene_add_animated_mesh(render_scene, skeleton_mesh, transform_node->transform_index);
-				animation_link_transform_and_component(transform_node, render_scene_get_animated_component(render_scene, animated_mesh));
+				model_component_handle = render_scene_add_animated_mesh(render_scene, skeleton_mesh, transform_node->transform_index);
+				animation_link_transform_and_component(transform_node, render_scene_get_animated_component(render_scene, model_component_handle));
 
-				HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
-				for (; iter != mesh->sequence_index_by_name.end(); ++iter)
+				if (entity_index == 0)
 				{
-					LOGV("Found animation: %s\n", iter.key()());
-					mesh_animations.push_back(iter.key());
-				}
+					HashSet<core::StackString<32>, uint32_t>::Iterator iter = mesh->sequence_index_by_name.begin();
+					for (; iter != mesh->sequence_index_by_name.end(); ++iter)
+					{
+						LOGV("Found animation: %s\n", iter.key()());
+						mesh_animations.push_back(iter.key());
+					}
 
-				if (!mesh_animations.empty())
-				{
-					// Start playing the first animation if there are animations.
-					mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[0](), 0);
-					update_timeline_frames();
+					if (!mesh_animations.empty())
+					{
+						// Start playing the first animation if there are animations.
+						mesh_animation_index = render_scene_animation_play(render_scene, model_component_handle, mesh_animations[0](), 0);
+						update_timeline_frames();
+					}
 				}
 			}
 			else
@@ -1944,12 +1973,15 @@ public:
 				enable_animation = false;
 
 				// load a static mesh
-				TransformNode* transform_node = transform_graph_create_node(render_allocator, "test");
-				transform_node->entity_index = 0;
+				transform_node = transform_graph_create_node(render_allocator, "test");
+				transform_node->entity_index = entity_index;
 				transform_graph_set_parent(transform_node, transform_graph);
-				animated_mesh = render_scene_add_static_mesh(render_scene, skeleton_mesh, transform_node->transform_index);
+				model_component_handle = render_scene_add_static_mesh(render_scene, skeleton_mesh, transform_node->transform_index);
 			}
 		}
+
+		*component_handle = model_component_handle;
+		return transform_node;
 	}
 
 	void tick_queued_asset_changes(PathDelayHashSet& hashset, float tick_seconds)
@@ -2028,6 +2060,9 @@ public:
 			// Copy frame state for each entity into their respective transform nodes.
 			//transform_graph_copy_frame_state(transform_graph, &frame_state);
 
+			//transform_graph_print(transform_graph);
+
+
 			// Update transform nodes with current animation poses
 			animation_update_transform_nodes();
 
@@ -2039,8 +2074,6 @@ public:
 			animation_update_components();
 
 			// update world matrices for scene rendering
-			render_scene_update(render_scene, world_matrices);
-
 			render_scene_update(render_scene, world_matrices);
 		}
 
@@ -2054,14 +2087,25 @@ public:
 					mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation](), 0);
 				}
 			}
-			if (render_scene_animation_finished(render_scene, animated_mesh, 1))
+
+			if (second_mesh != 0)
 			{
-				if (enable_animation)
+				if (render_scene_animation_finished(render_scene, second_mesh, 0))
 				{
-					render_scene_animation_play(render_scene, animated_mesh, "look_right", 1);
+					render_scene_animation_play(render_scene, second_mesh, "idle", 0);
 				}
 			}
+
+			//if (render_scene_animation_finished(render_scene, animated_mesh, 1))
+			//{
+			//	if (enable_animation)
+			//	{
+			//		render_scene_animation_play(render_scene, animated_mesh, "look_right", 1);
+			//	}
+			//}
 		}
+
+
 
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;

@@ -680,7 +680,7 @@ namespace gemini
 		{
 			AnimatedMeshComponent* component = controller->component;
 
-			float blend_alpha = 0.5f;
+			float blend_alpha = 0.0f;
 			animation::Pose poses[MAX_ANIMATED_MESH_LAYERS];
 
 			for (size_t layer_index = 0; layer_index < MAX_ANIMATED_MESH_LAYERS; ++layer_index)
@@ -710,8 +710,6 @@ namespace gemini
 					pose.pos[index] = poses[0].pos[index];
 				}
 
-				const Joint* joint = &mesh->skeleton[index];
-
 				TransformNode* child = animated_node->bones[index];
 				child->position = pose.pos[index];
 				child->orientation = pose.rot[index];
@@ -726,17 +724,12 @@ namespace gemini
 		TransformNode* animated_node = controller->target;
 		AnimatedMeshComponent* component = controller->component;
 
-		Mesh* mesh = mesh_from_handle(controller->component->mesh_handle);
-		if (!mesh)
-		{
-			LOGW("Unable to get mesh to AnimationControlled component %p\n", controller->component);
-			return;
-		}
-
 		const size_t total_children = animated_node->bones.size();
+		//LOGV("[%s] -> children: %i [%x]\n", animated_node->name.c_str(), total_children, component);
 		for (size_t index = 0; index < total_children; ++index)
 		{
 			TransformNode* child = animated_node->bones[index];
+
 			// These are WORLD TRANSFORMS
 			// which actually breaks the rest of our matrix evaluation because
 			// we assume the AnimatedMeshComponent's model_matrix has to be
@@ -755,6 +748,21 @@ namespace gemini
 	} // animation_link_transform_and_component
 
 
+	void animation_unlink_transform_and_component(TransformNode* node, AnimatedMeshComponent* component)
+	{
+		// yay O(n) speed...
+		animation::AnimationControllerArray::iterator it = animation::_animation_state->controllers.begin();
+		for (; it != animation::_animation_state->controllers.end(); ++it)
+		{
+			AnimationController& controller = (*it);
+			if (controller.component == component)
+			{
+				animation::_animation_state->controllers.erase(controller);
+				break;
+			}
+		}
+	}
+
 	void animation_update_transform_nodes()
 	{
 		// transfer animation from active sequences to their transform nodes
@@ -766,7 +774,6 @@ namespace gemini
 
 	void animation_update_components()
 	{
-
 		// extract world transforms from bone nodes
 		// and copy them to the AnimatedMeshComponent for rendering
 		for (AnimationController& controller : animation::_animation_state->controllers)

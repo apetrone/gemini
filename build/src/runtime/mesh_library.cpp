@@ -228,6 +228,7 @@ namespace gemini
 
 					const Json::Value& bind_pose = skeleton_entry["bind_pose"];
 					assert(!bind_pose.isNull());
+
 					state.mesh->bind_poses[bone_index] = json_to_mat4(bind_pose);
 
 					const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
@@ -587,9 +588,6 @@ namespace gemini
 		{
 			Json::ValueIterator it = animation_list.begin();
 
-			uint32_t total_sequences = animation_list.size();
-			mesh->sequences.allocate(total_sequences);
-
 			uint32_t animation_index = 0;
 			for (; it != animation_list.end(); ++it, ++animation_index)
 			{
@@ -600,11 +598,9 @@ namespace gemini
 				animation_sequence_uri.append(PATH_SEPARATOR_STRING);
 				animation_sequence_uri.append(name.c_str());
 				animation::Sequence* sequence = animation::load_sequence_from_file(*load_state->allocator, animation_sequence_uri(), mesh);
-				mesh->sequences[animation_index] = sequence->index;
-
 				platform::PathString basename = animation_sequence_uri.basename();
 				assert(basename.size() < 32);
-				mesh->sequence_index_by_name[basename()] = animation_index;
+				mesh->sequence_index_by_name[basename()] = sequence->index;
 			}
 		}
 

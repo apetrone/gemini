@@ -46,6 +46,7 @@ namespace gemini
 		, entity_index(USHRT_MAX)
 		, transform_index(USHRT_MAX)
 	{
+		transform_index = 0;
 	}
 
 	TransformNode* transform_graph_create_node(gemini::Allocator& allocator, const char* node_name)
@@ -128,7 +129,11 @@ namespace gemini
 			child->parent->children.erase(child);
 		}
 
-		parent->children.push_back(child);
+		if (parent)
+		{
+			parent->children.push_back(child);
+		}
+
 		child->parent = parent;
 	} // transform_graph_set_parent
 
@@ -205,4 +210,19 @@ namespace gemini
 			transform_graph_transform(node->children[index], world_matrices);
 		}
 	} // transform_graph_transform
+
+	void transform_graph_print(TransformNode* root, uint32_t indent)
+	{
+		for (size_t spaces = 0; spaces < indent; ++spaces)
+		{
+			LOGV("\t");
+		}
+
+		LOGV("[tr_index=%i] %s\n", root->transform_index, root->name.c_str());
+
+		for (size_t index = 0; index < root->children.size(); ++index)
+		{
+			transform_graph_print(root->children[index], indent + 1);
+		}
+	} // transform_graph_print
 } // namespace gemini

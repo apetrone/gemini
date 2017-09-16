@@ -91,4 +91,6 @@ namespace gemini
 	void transform_graph_copy_frame_state(TransformNode* node, TransformFrameState* state);
 
 	void transform_graph_transform(TransformNode* node, glm::mat4* world_matrices);
+
+	void transform_graph_print(TransformNode* root, uint32_t indent = 0);
 } // namespace gemini

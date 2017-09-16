@@ -38,6 +38,7 @@ namespace gemini
 		: mesh(nullptr)
 		, component_index(0)
 		, allocator(allocator)
+		, transform_node(nullptr)
 	{
 
 	}

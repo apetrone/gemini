@@ -109,9 +109,6 @@ namespace gemini
 		// geometry definitions for this mesh
 		FixedArray<GeometryDefinition> geometry;
 
-		// list of animation sequences associated with this mesh
-		FixedArray<animation::SequenceId> sequences;
-
 		// name to sequences array mapping
 		HashSet<core::StackString<32>, uint32_t> sequence_index_by_name;
 

@@ -450,4 +450,5 @@ void Entity::set_model(const char* path)
 void Entity::remove_model()
 {
 	engine::instance()->models()->destroy_instance_data(model_index);
+	model_index = -1;
 }

@@ -65,19 +65,6 @@ namespace gemini
 		Array<RenderMeshInfo*> render_meshes;
 	}; // RenderSceneState
 
-
-	size_t _render_scene_total_sequences_from_component(AnimatedMeshComponent* component)
-	{
-		size_t total_sequences = 0;
-		Mesh* mesh = mesh_from_handle(component->mesh_handle);
-		if (mesh)
-		{
-			total_sequences = mesh->sequences.size();
-		}
-		return total_sequences;
-	} // _render_scene_total_sequences_from_component
-
-
 	RenderSceneState* render_scene_state = nullptr;
 
 	void render_scene_startup(render2::Device* device, Allocator& allocator)
@@ -225,7 +212,6 @@ namespace gemini
 
 		// iterate over all sequences and create sequence instances
 		// for this AnimationMeshComponent.
-		const size_t total_sequences = mesh->sequences.size();
 		for (size_t layer_index = 0; layer_index < MAX_ANIMATED_MESH_LAYERS; ++layer_index)
 		{
 			animation::AnimatedInstance* instance = animation::create_sequence_instance(*scene->allocator);
@@ -289,7 +275,9 @@ namespace gemini
 
 		// grab the instance for this layer
 		animation::AnimatedInstance* instance = component->sequence_instances[layer];
-		instance->initialize(animation::get_sequence_by_index(sequence_index));
+
+		animation::Sequence* sequence_instance = animation::get_sequence_by_index(sequence_index);
+		instance->initialize(sequence_instance);
 		instance->flags = animation::AnimatedInstance::Flags::Playing;
 		instance->local_time_seconds = 0.0f;
 		//LOGV("playing animation: %s\n", animation_name);

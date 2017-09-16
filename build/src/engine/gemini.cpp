@@ -608,7 +608,7 @@ void EngineInterface::destroy_instance_data(int32_t index)
 	if (it != id_to_instance.end())
 	{
 		gemini::ModelInstanceData& data = it->second;
-
+		TransformNode* transform_node = data.get_transform_node();
 		AssetHandle mesh_handle = data.get_mesh_handle();
 		Mesh* mesh = mesh_from_handle(mesh_handle);
 
@@ -619,8 +619,16 @@ void EngineInterface::destroy_instance_data(int32_t index)
 		}
 		else
 		{
+			animation_unlink_transform_and_component(transform_node, render_scene_get_animated_component(render_scene, data.get_component_index()));
 			render_scene_remove_animated_mesh(render_scene, component_id);
 		}
+
+		//if (transform_node)
+		//{
+		//	LOGV("destroy: [%x] %s, parent=%x\n", transform_node, transform_node->name.c_str(), transform_node->parent);
+		//	transform_graph_set_parent(transform_node, nullptr);
+		//	transform_graph_destroy_node(engine_allocator, transform_node);
+		//}
 
 		id_to_instance.erase(it);
 	}
