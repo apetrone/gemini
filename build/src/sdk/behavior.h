@@ -32,6 +32,9 @@
 
 #include <vector>
 
+// Enable this to use navmesh waypoints
+//#define USE_NAVMESH_WAYPOINTS 1
+
 // ---------------------------------------------------------------------
 // Behavior Trees experimentation
 // ---------------------------------------------------------------------
@@ -60,9 +63,11 @@ namespace behavior
 	struct BehaviorContext
 	{
 		size_t depth;
+		float delta_seconds;
 
 		BehaviorContext()
 			: depth(0)
+			, delta_seconds(0.0f)
 		{
 		}
 

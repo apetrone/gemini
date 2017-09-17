@@ -416,7 +416,7 @@ void QuaternionFollowCamera::collision_pivot_offset()
 			//test_pivot_point = ratio * corrected_position;
 
 			//debugdraw::sphere(world_position + test_pivot_point, gemini::Color(1.0f, 0.0f, 0.0f), DEBUG_SPHERE_RADIUS, 0.5f);
-			debugdraw::line(world_position, world_position + test_pivot_point, gemini::Color(1.0f, 0.0f, 0.0f), 0.5f);
+			//debugdraw::line(world_position, world_position + test_pivot_point, gemini::Color(1.0f, 0.0f, 0.0f), 0.5f);
 		}
 		else
 		{
@@ -424,7 +424,7 @@ void QuaternionFollowCamera::collision_pivot_offset()
 			const float corrected_length = offset_length;
 			test_pivot_point = corrected_length * offset_direction;
 			//debugdraw::sphere(world_position + (offset_direction * offset_length), gemini::Color(0.0f, 1.0f, 0.0f), DEBUG_SPHERE_RADIUS, 0.5f);
-			debugdraw::line(world_position, world_position + (offset_direction * offset_length), gemini::Color(0.0f, 1.0f, 0.0f), 0.5f);
+			//debugdraw::line(world_position, world_position + (offset_direction * offset_length), gemini::Color(0.0f, 1.0f, 0.0f), 0.5f);
 		}
 
 		test_len = glm::length(test_pivot_point);
