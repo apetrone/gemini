@@ -101,7 +101,8 @@ namespace gui
 		bool cursor_move_absolute(ScreenInt x, ScreenInt y);
 		bool cursor_button(CursorButton::Type button, bool is_down);
 		void cursor_scroll(int32_t direction);
-		void key_event(uint32_t unicode, bool is_down, uint32_t character, uint16_t modifiers);
+		void key_event(bool is_down, uint32_t key, uint16_t modifiers);
+		void text_event(uint32_t unicode);
 
 		void resize(ScreenInt width, ScreenInt height);
 		void resize(const Size&) {}

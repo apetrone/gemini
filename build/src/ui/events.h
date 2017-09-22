@@ -103,6 +103,10 @@ namespace gui
 		Event_KeyButtonPressed,
 		Event_KeyButtonReleased,
 
+		// Sent when unicode text is interpreted by the platform layer.
+		// Corresponds to an Event_KeyButtonPressed.
+		Event_Text,
+
 		Event_Click
 	};
 
@@ -130,6 +134,9 @@ namespace gui
 		// keyboard modifiers
 		uint32_t modifiers;
 
+		uint32_t key;
+		uint32_t unicode;
+
 		CursorButton::Type cursor_button;
 
 		// > 0 towards screen
@@ -148,6 +155,8 @@ namespace gui
 			, sender(nullptr)
 			, target(nullptr)
 			, modifiers(0)
+			, key(0)
+			, unicode(0)
 			, cursor_button(CursorButton::None)
 			, wheel(0)
 			, compositor(_compositor)

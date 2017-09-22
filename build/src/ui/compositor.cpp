@@ -611,7 +611,7 @@ namespace gui
 		}
 	} // cursor_scroll
 
-	void Compositor::key_event(uint32_t /*unicode*/, bool is_down, uint32_t /*character*/, uint16_t modifiers)
+	void Compositor::key_event(bool is_down, uint32_t key, uint16_t modifiers)
 	{
 		key_modifiers = modifiers;
 
@@ -623,6 +623,8 @@ namespace gui
 		args.modifiers = key_modifiers;
 		args.sender = this;
 		args.target = args.focus;
+		args.key = key;
+		args.unicode = 0;
 
 		// key events are directed to the panel in focus
 		Panel* panel = args.focus;
@@ -631,6 +633,27 @@ namespace gui
 			dispatch_recursive(panel, args);
 		}
 	} // key_event
+
+	void Compositor::text_event(uint32_t unicode)
+	{
+		EventArgs args(this, Event_Text);
+		args.focus = get_focus();
+		args.hot = get_hot();
+		args.capture = get_capture();
+		args.cursor = last_cursor;
+		args.modifiers = key_modifiers;
+		args.sender = this;
+		args.target = args.focus;
+		args.key = 0;
+		args.unicode = unicode;
+
+		// key events are directed to the panel in focus
+		Panel* panel = args.focus;
+		if (panel)
+		{
+			dispatch_recursive(panel, args);
+		}
+	} // text_event
 
 	void Compositor::resize(ScreenInt new_width, ScreenInt new_height)
 	{

@@ -320,11 +320,22 @@ public:
 
 	NumberPanel(gui::Panel* parent)
 		: gui::Label(parent)
+		, cursor_index(0)
+		, is_captured(0)
+		, value(nullptr)
+		, step(0.01f)
 	{
 	}
 
 	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
 	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
+	virtual void handle_event(gui::EventArgs& args) override;
+
+	float* value;
+	float step;
+	gui::Point down_position;
+	uint8_t is_captured;
+	uint32_t cursor_index;
 };
 
 void NumberPanel::update(gui::Compositor* compositor, float delta_seconds)
@@ -338,31 +349,104 @@ void NumberPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, g
 
 	gui::Painter painter(this, render_commands);
 
-	painter.add_line(
-		geometry[0],
-		geometry[1],
-		outline_color
-	);
+	//painter.add_line(
+	//	geometry[0],
+	//	geometry[1],
+	//	outline_color
+	//);
 
-	painter.add_line(
-		geometry[1],
-		geometry[2],
-		outline_color
-	);
+	//painter.add_line(
+	//	geometry[1],
+	//	geometry[2],
+	//	outline_color
+	//);
 
-	painter.add_line(
-		geometry[2],
-		geometry[3],
-		outline_color
-	);
+	//painter.add_line(
+	//	geometry[2],
+	//	geometry[3],
+	//	outline_color
+	//);
 
-	painter.add_line(
-		geometry[3],
-		geometry[0],
-		outline_color
-	);
+	//painter.add_line(
+	//	geometry[3],
+	//	geometry[0],
+	//	outline_color
+	//);
 
 	gui::Label::render(compositor, renderer, render_commands);
+
+	gui::Rect bounds;
+	renderer->font_measure_string(font_handle, text.c_str(), cursor_index, bounds);
+
+	// draw a cursor
+	//const float margin = 2.0f;
+	//float horizontal = bounds.size.width + margin;
+	//painter.add_line(
+	//	gui::Point(horizontal, 0.0f),
+	//	gui::Point(horizontal, size.height),
+	//	gemini::Color(1.0f, 0.0f, 0.0f),
+	//	2
+	//);
+}
+
+void NumberPanel::handle_event(gui::EventArgs& args)
+{
+	if (args.focus == this)
+	{
+	}
+
+	if (args.type == gui::Event_Text)
+	{
+		//std::string::iterator it = text.begin() + cursor_index;
+		//text.insert(it, (char)args.unicode);
+		//++cursor_index;
+	}
+
+	if (args.type == gui::Event_CursorButtonPressed)
+	{
+		is_captured = 1;
+		down_position = args.local;
+		args.handled = 1;
+	}
+	else if (args.type == gui::Event_CursorButtonReleased)
+	{
+		is_captured = 0;
+		args.handled = 1;
+	}
+
+	if (args.type == gui::Event_CursorMove)
+	{
+		if (is_captured)
+		{
+			gui::Point delta = args.local - down_position;
+			if (value)
+			{
+				*value += delta.x * step;
+				set_text(core::str::format("%2.4f", *value));
+				args.handled = 1;
+			}
+		}
+	}
+
+	if (args.type == gui::Event_CursorButtonReleased)
+	{
+		if (args.cursor_button == gui::CursorButton::Right)
+		{
+			if (cursor_index < text.length())
+			{
+				cursor_index += 1;
+				args.handled = 1;
+			}
+		}
+		else if (args.cursor_button == gui::CursorButton::Left)
+		{
+			if (cursor_index > 0)
+			{
+				cursor_index -= 1;
+				args.handled = 1;
+			}
+		}
+	}
 }
 
 class ParameterVec3Widget : public gui::Panel
@@ -380,6 +464,8 @@ public:
 		set_background_color(gemini::Color(0.5f, 0.5f, 0.5f));
 
 		gui::HorizontalLayout* layout = new gui::HorizontalLayout();
+
+
 
 		labels[0] = new gui::Label(this);
 		labels[0]->set_background_color(gemini::Color(1.0f, 0.0f, 0.0f));
@@ -419,10 +505,23 @@ public:
 
 
 		set_layout(layout);
+		parameter_changed();
 	}
 
 	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
 	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
+
+	void parameter_changed()
+	{
+		glm::vec3* vector3 = reinterpret_cast<glm::vec3*>(target->value);
+		panels[0]->value = &vector3->x;
+		panels[1]->value = &vector3->y;
+		panels[2]->value = &vector3->z;
+
+		panels[0]->set_text(core::str::format("%2.4f", *panels[0]->value));
+		panels[1]->set_text(core::str::format("%2.4f", *panels[1]->value));
+		panels[2]->set_text(core::str::format("%2.4f", *panels[2]->value));
+	}
 };
 
 void ParameterVec3Widget::update(gui::Compositor* compositor, float delta_seconds)
@@ -831,6 +930,7 @@ private:
 	uint32_t current_mesh_animation;
 	uint32_t animated_mesh;
 	uint32_t second_mesh;
+	uint32_t attachment_mesh;
 	uint32_t enable_animation;
 	uint32_t mesh_animation_index;
 
@@ -898,6 +998,18 @@ public:
 		{
 			set_active(false);
 		}
+
+		if (compositor && compositor->get_focus())
+		{
+			if (event.is_text)
+			{
+				compositor->text_event(event.unicode);
+			}
+			else
+			{
+				compositor->key_event(event.is_down, event.key, 0);
+			}
+		}
 		//else
 		//{
 		//	LOGV("key is_down: '%s', name: '%s', modifiers: %zu\n", event.is_down ? "Yes" : "No", gemini::key_name(event.key), event.modifiers);
@@ -958,7 +1070,7 @@ public:
 				mesh_animation_index = render_scene_animation_play(render_scene, animated_mesh, mesh_animations[current_mesh_animation](), 0);
 				render_scene_animation_play(render_scene, animated_mesh, "look_right", 1);
 
-				render_scene_animation_play(render_scene, second_mesh, "idle", 0);
+				//render_scene_animation_play(render_scene, second_mesh, "idle", 0);
 
 				update_timeline_frames();
 			}
@@ -2029,12 +2141,30 @@ public:
 		//test_load_model("models/test_character/test_character");
 		TransformNode* node0 = nullptr;
 		TransformNode* node1 = nullptr;
+		TransformNode* attachment = nullptr;
 
-		node0 = test_load_model("enemy", "models/test_enemy/test_enemy", 0, &animated_mesh);
-		node1 = test_load_model("test_model", "models/test_model/test_model", 21, &second_mesh);
+		node0 = test_load_model("test_model", "models/test_model/test_model", 0, &animated_mesh);
+		//node1 = test_load_model("enemy", "models/test_enemy/test_enemy", 1, &second_mesh);
 
+		attachment = test_load_model("attachment", "models/test_attachment/test_attachment", 30, &attachment_mesh);
+
+		TransformNode* attachment_point = transform_graph_find_child(node0, "weapon");
+		assert(attachment_point);
+		//AnimatedMeshComponent* component = render_scene_get_animated_component(render_scene, second_mesh);
+
+		//Mesh* mesh = mesh_from_handle(component->mesh_handle);
+		//ModelAttachment* modelattachment = mesh->attachments_by_name["weapon"];
+		//modelattachment->
+
+		test_parameter.value = &attachment_point->position;
+
+		//test_parameter.value = &node1->position;
+		vec3_widget->parameter_changed();
 
 		render_scene_animation_play(render_scene, animated_mesh, "idle", 0);
+
+
+		transform_graph_set_parent(attachment, attachment_point);
 
 
 		if (node1)
