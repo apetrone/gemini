@@ -199,7 +199,7 @@ namespace gui
 	void Label::create_cache_entry(size_t& index, size_t& last_start, Point& origin_offset)
 	{
 		Renderer* renderer = get_compositor()->get_renderer();
-		if ((index - last_start) > 1)
+		if ((index - last_start) > 0)
 		{
 			font_cache_entry cs;
 			cs.start = last_start;
