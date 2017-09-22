@@ -61,7 +61,19 @@ namespace gemini
 	}
 }
 
+enum class DamageType
+{
+	Melee,
+	Firearm
+};
 
+struct HitInfo
+{
+	DamageType type;
+	Entity* user;
+	glm::vec3 force;
+	glm::vec3 local_position;
+};
 
 typedef core::StackString<128> EntityName;
 
@@ -148,7 +160,7 @@ public:
 	virtual void use(Entity* user, const glm::vec3& in_vector);
 
 	// This entity was 'hit' by means of a weapon
-	virtual void hit(Entity* user, const glm::vec3& force, const glm::vec3& local_position);
+	virtual void hit(HitInfo& info);
 
 	virtual bool is_player() const { return false; }
 	virtual bool is_door() const { return false; }
