@@ -45,18 +45,20 @@ namespace gui
 
 	void TimelineScrubber::render(gui::Compositor* /*compositor*/, gui::Renderer* /*renderer*/, gui::render::CommandList& render_commands)
 	{
+		Painter painter(this, render_commands);
+
 		// TODO: we should get this from the style
 		gemini::Color scrubber_highlight = gemini::Color::from_rgba(255, 128, 0, 96);
 		gemini::Color scrubber_outline = gemini::Color::from_rgba(255, 128, 0, 192);
 
 		// draw the main highlight fill
-		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, scrubber_highlight);
+		painter.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, scrubber_highlight);
 
 		// draw the outline
-		render_commands.add_line(geometry[0], geometry[1], scrubber_outline);
-		render_commands.add_line(geometry[1], geometry[2], scrubber_outline);
-		render_commands.add_line(geometry[2], geometry[3], scrubber_outline);
-		render_commands.add_line(geometry[3], geometry[0], scrubber_outline);
+		painter.add_line(geometry[0], geometry[1], scrubber_outline);
+		painter.add_line(geometry[1], geometry[2], scrubber_outline);
+		painter.add_line(geometry[2], geometry[3], scrubber_outline);
+		painter.add_line(geometry[3], geometry[0], scrubber_outline);
 	}
 
 	bool TimelineScrubber::point_in_capture_rect(const Point& local) const
@@ -136,14 +138,16 @@ namespace gui
 
 	void Timeline::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
 	{
+		Painter painter(this, render_commands);
+
 		// TODO: should get this from the style
 		const gemini::Color frame_color = gemini::Color::from_rgba(96, 96, 96, 255);
 
 		// draw the background
-		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, gemini::Color::from_rgba(64, 64, 64, 255));
+		painter.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, gemini::Color::from_rgba(64, 64, 64, 255));
 
 		// add a top rule line to separate this panel
-		render_commands.add_line(geometry[0], geometry[3], gemini::Color::from_rgba(0, 0, 0, 255), 1.0f);
+		painter.add_line(geometry[0], geometry[3], gemini::Color::from_rgba(0, 0, 0, 255), 1.0f);
 
 		// center the individual frames
 		Rect block;
@@ -157,12 +161,14 @@ namespace gui
 				break;
 			}
 
-			Point points[4];
-			points[0] = transform_point(local_transform, block.origin);
-			points[1] = transform_point(local_transform, Point(block.origin.x, block.origin.y + block.size.height));
-			points[2] = transform_point(local_transform, Point(block.origin.x + block.size.width, block.origin.y + block.size.height));
-			points[3] = transform_point(local_transform, Point(block.origin.x + block.size.width, block.origin.y));
-			render_commands.add_rectangle(points[0], points[1], points[2], points[3], gui::render::WhiteTexture, frame_color);
+			painter.add_rectangle(
+				block.origin,
+				Point(block.origin.x, block.origin.y + block.size.height),
+				Point(block.origin.x + block.size.width, block.origin.y + block.size.height),
+				Point(block.origin.x + block.size.width, block.origin.y),
+				gui::render::WhiteTexture,
+				frame_color
+			);
 
 			block.origin.x += frame_width_pixels;
 		}

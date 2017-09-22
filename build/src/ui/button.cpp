@@ -133,7 +133,9 @@ namespace gui
 
 	void Button::render(Compositor* compositor, Renderer* /*renderer*/, gui::render::CommandList& render_commands)
 	{
-		render_commands.add_rectangle(
+		Painter painter(this, render_commands);
+
+		painter.add_rectangle(
 			geometry[0],
 			geometry[1],
 			geometry[2],
@@ -144,11 +146,11 @@ namespace gui
 
 		gui::Rect draw_bounds;
 		draw_bounds.size = size;
-		draw_bounds.origin = transform_point(local_transform, text_origin);
+		draw_bounds.origin = text_origin;
 
 		if (!text.empty())
 		{
-			render_commands.add_font(font_handle, this->text.c_str(), text.size(), draw_bounds, foreground_color);
+			painter.add_font(font_handle, this->text.c_str(), text.size(), draw_bounds, foreground_color);
 		}
 	}
 

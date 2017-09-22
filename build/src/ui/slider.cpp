@@ -135,7 +135,8 @@ namespace gui
 
 	void Slider::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
 	{
-		render_commands.add_rectangle(
+		Painter painter(this, render_commands);
+		painter.add_rectangle(
 			geometry[0],
 			geometry[1],
 			geometry[2],
@@ -145,7 +146,7 @@ namespace gui
 
 		Point left_edge = get_left_edge();
 		Point right_edge = get_right_edge();
-		render_commands.add_line(left_edge, right_edge, foreground_color);
+		painter.add_line(left_edge, right_edge, foreground_color);
 
 		Panel::render_children(compositor, renderer, render_commands);
 	}

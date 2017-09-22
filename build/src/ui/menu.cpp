@@ -205,6 +205,8 @@ namespace gui
 
 	void Menu::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
 	{
+		Painter painter(this, render_commands);
+
 		 // draw the background of the menu
 
 		if (item_type != MenuItem_DropDown)
@@ -228,24 +230,17 @@ namespace gui
 			data[2] = Point(size.width, size.height);
 			data[3] = Point(size.width, 0);
 
-			render_commands.add_rectangle(
-				transform_point(get_transform(0), data[0]),
-				transform_point(get_transform(0), data[1]),
-				transform_point(get_transform(0), data[2]),
-				transform_point(get_transform(0), data[3]),
-				-1,
-				background_color
-			);
+			painter.add_rectangle(data[0], data[1], data[2], data[3], -1, background_color);
 
 			if (item_type == MenuItem_Item)
 			{
 				gui::Rect draw_bounds;
 				draw_bounds.size = size;
-				draw_bounds.origin = transform_point(local_transform, text_origin);
+				draw_bounds.origin = text_origin;
 
 				if (!text.empty())
 				{
-					render_commands.add_font(font_handle, text.c_str(), text.size(), draw_bounds, foreground_color);
+					painter.add_font(font_handle, text.c_str(), text.size(), draw_bounds, foreground_color);
 				}
 			}
 		}

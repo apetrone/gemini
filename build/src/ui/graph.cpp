@@ -36,6 +36,8 @@ namespace gui
 
 	void Graph::draw_float(Renderer* renderer, float value, const Point& pt, const gemini::Color& color, gui::render::CommandList& render_commands)
 	{
+		Painter painter(this, render_commands);
+
 		char string_value[16] = {0};
 		sprintf(string_value, "%2.2f", value);
 		Rect draw_bounds;
@@ -45,7 +47,7 @@ namespace gui
 		renderer->font_measure_string(font_handle, string_value, string_length, string_bounds);
 
 		draw_bounds.origin = pt + glm::vec2(ScreenInt(0), glm::max(font_height, string_bounds.height()));
-		render_commands.add_font(font_handle, string_value, string_length, draw_bounds, color);
+		painter.add_font(font_handle, string_value, string_length, draw_bounds, color);
 	}
 
 	Graph::Graph(Panel* parent) : Panel(parent)
@@ -178,7 +180,7 @@ namespace gui
 		}
 
 
-		values[ (channel_index*total_samples) + current_sample[channel_index] ] = value;
+		values[ (channel_index * total_samples) + current_sample[channel_index] ] = value;
 		++current_sample[channel_index];
 
 		if (current_sample[channel_index] >= total_samples)
@@ -219,7 +221,7 @@ namespace gui
 	void Graph::update(Compositor* compositor, float delta_seconds)
 	{
 		float dx = (float)size.width / (float)total_samples;
-		float y = origin.y;
+		float y = 0.0f;
 		float height = size.height;
 		float vertical_scale = range_max - range_min;
 		float yoffset = (range_min / vertical_scale) * height;
@@ -229,28 +231,28 @@ namespace gui
 		{
 			// recompute the baseline geometry
 			baseline_start = Point(
-				origin.x,
+				0.0f,
 				baseline_y + y + height
 			);
 			baseline_end = Point(
-				origin.x + size.width,
+				size.width,
 				baseline_y + y + height
 			);
 
 			// compute baseline text origin
-			baseline_text_origin = Point(origin.x + GRAPH_LEFT_TEXT_MARGIN,
+			baseline_text_origin = Point(GRAPH_LEFT_TEXT_MARGIN,
 				baseline_y + y + height - (font_height / 2.0f));
 		}
 
 		// cache range text origins
-		range_text_origin[0] = Point(origin.x + GRAPH_LEFT_TEXT_MARGIN, origin.y);
-		range_text_origin[1] = Point(origin.x + GRAPH_LEFT_TEXT_MARGIN, y + height - font_height);
+		range_text_origin[0] = Point(GRAPH_LEFT_TEXT_MARGIN, 0.0f);
+		range_text_origin[1] = Point(GRAPH_LEFT_TEXT_MARGIN, y + height - font_height);
 
 		// compute all lines
 		for (unsigned int current_channel = 0; current_channel < total_channels; ++current_channel)
 		{
 			// draw the most current information on the right
-			float cx = origin.x;
+			float cx = 0.0f;
 
 			// left to right graph: (sample_delta=1, dx = -dx, cx = right)
 			// right to left: (sample_delta=-1, cx=left)
@@ -315,7 +317,8 @@ namespace gui
 
 	void Graph::render(Compositor* /*compositor*/, Renderer* renderer, gui::render::CommandList& render_commands)
 	{
-		render_commands.add_rectangle(
+		Painter painter(this, render_commands);
+		painter.add_rectangle(
 			geometry[0],
 			geometry[1],
 			geometry[2],
@@ -333,14 +336,14 @@ namespace gui
 		if (show_baseline)
 		{
 			// draw the horizontal baseline
-			render_commands.add_line(baseline_start, baseline_end, baseline_color);
+			painter.add_line(baseline_start, baseline_end, baseline_color);
 
 			// draw the baseline text
 			draw_float(renderer, baseline_value, baseline_text_origin, foreground_color, render_commands);
 		}
 
 		// draw graph data
-		render_commands.add_lines(total_samples * total_channels, vertices, vertex_colors);
+		painter.add_lines(total_samples * total_channels, vertices, vertex_colors);
 
 		// draw range text
 		draw_float(renderer, range_max, range_text_origin[0] + gui::Point(0.0f, 2.0f), foreground_color, render_commands);

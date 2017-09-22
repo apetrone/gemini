@@ -196,6 +196,8 @@ namespace gui
 
 	void DebugWaveformPanel::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
 	{
+		Painter painter(this, render_commands);
+
 		Panel::render(compositor, renderer, render_commands);
 		const gemini::Color read_color(1.0f, 0.0f, 0.0f);
 		const gemini::Color write_color(0.0f, 1.0f, 0.0f);
@@ -204,18 +206,14 @@ namespace gui
 			gui::Point pt[2];
 			pt[0] = gui::Point(read_marker * size.get_width(), 0.0f);
 			pt[1] = gui::Point(read_marker * size.get_width(), size.height);
-			pt[0] = gui::transform_point(get_transform(0), pt[0]);
-			pt[1] = gui::transform_point(get_transform(0), pt[1]);
-			render_commands.add_line(pt[0], pt[1], read_color, 2.0f);
+			painter.add_line(pt[0], pt[1], read_color, 2.0f);
 		}
 
 		{
 			gui::Point pt[2];
 			pt[0] = gui::Point(write_marker * size.get_width(), 0.0f);
 			pt[1] = gui::Point(write_marker * size.get_width(), size.height);
-			pt[0] = gui::transform_point(get_transform(0), pt[0]);
-			pt[1] = gui::transform_point(get_transform(0), pt[1]);
-			render_commands.add_line(pt[0], pt[1], write_color, 2.0f);
+			painter.add_line(pt[0], pt[1], write_color, 2.0f);
 		}
 	}
 

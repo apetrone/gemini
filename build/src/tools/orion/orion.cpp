@@ -116,12 +116,14 @@ namespace gui
 
 		virtual void render(gui::Compositor* /*compositor*/, gui::Renderer* /*renderer*/, gui::render::CommandList& render_commands) override
 		{
+			gui::Painter painter(this, render_commands);
+
 			if (on_render_content.is_valid())
 			{
 				on_render_content(target);
 			}
 
-			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], handle, gemini::Color::from_rgba(255, 255, 255, 255));
+			painter.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], handle, gemini::Color::from_rgba(255, 255, 255, 255));
 		}
 
 		// invoked when the handler should render its content to the render
@@ -298,13 +300,15 @@ void SpringPanel::update(gui::Compositor* compositor, float delta_seconds)
 
 void SpringPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
 {
+	gui::Painter painter(this, render_commands);
+
 	gui::Panel::render(compositor, renderer, render_commands);
 
-	render_commands.add_rectangle(
-		gui::transform_point(get_transform(0), box.position + tube[0]),
-		gui::transform_point(get_transform(0), box.position + tube[1]),
-		gui::transform_point(get_transform(0), box.position + tube[2]),
-		gui::transform_point(get_transform(0), box.position + tube[3]),
+	painter.add_rectangle(
+		box.position + tube[0],
+		box.position + tube[1],
+		box.position + tube[2],
+		box.position + tube[3],
 		gui::render::WhiteTexture,
 		gemini::Color(1.0f, 0.5f, 0.0)
 	);
@@ -332,25 +336,27 @@ void NumberPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, g
 {
 	gemini::Color outline_color(1.0f, 0.0f, 0.0f);
 
-	render_commands.add_line(
+	gui::Painter painter(this, render_commands);
+
+	painter.add_line(
 		geometry[0],
 		geometry[1],
 		outline_color
 	);
 
-	render_commands.add_line(
+	painter.add_line(
 		geometry[1],
 		geometry[2],
 		outline_color
 	);
 
-	render_commands.add_line(
+	painter.add_line(
 		geometry[2],
 		geometry[3],
 		outline_color
 	);
 
-	render_commands.add_line(
+	painter.add_line(
 		geometry[3],
 		geometry[0],
 		outline_color
@@ -531,6 +537,8 @@ void TelemetryPanel::update(gui::Compositor* compositor, float delta_seconds)
 
 void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
 {
+	gui::Painter painter(this, render_commands);
+
 	render_geometry(render_commands, background_color);
 	render_capture_rect(render_commands);
 	render_background(render_commands);
@@ -581,11 +589,11 @@ void TelemetryPanel::render(gui::Compositor* compositor, gui::Renderer* renderer
 			current_color = current;
 		}
 
-		render_commands.add_rectangle(
-			gui::transform_point(tx, origin + tube[0]),
-			gui::transform_point(tx, origin + tube[1]),
-			gui::transform_point(tx, origin + tube[2]),
-			gui::transform_point(tx, origin + tube[3]),
+		painter.add_rectangle(
+			origin + tube[0],
+			origin + tube[1],
+			origin + tube[2],
+			origin + tube[3],
 			gui::render::WhiteTexture,
 			current_color
 		);

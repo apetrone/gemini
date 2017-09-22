@@ -79,23 +79,30 @@ namespace gui
 			void add_drawcall();
 
 			// primitive functions
-			void primitive_reserve(size_t count);
+			Command& primitive_reserve(size_t count);
 			void primitive_quad(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color);
-
-			void add_line(const Point& start, const Point& end, const gemini::Color& color, float thickness = 1.0f);
-			void add_lines(size_t line_count, const Point* vertices, const gemini::Color* colors, float thickness = 1.0f);
-
-			// these points should be in counter-clockwise order
-			void add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color);
-			void add_font(const FontHandle& font, const char* utf8, size_t string_length, const Rect& bounds, const gemini::Color& color);
 		};
 	}
 
 
+	struct Painter
+	{
+		// The painter mimics that which you would see in other frameworks.
+		// This accepts panel local coordinates to render shapes.
 
+		Painter(class Panel* target_panel, render::CommandList& command_list);
 
+		render::CommandList& commands;
+		class Panel* panel;
 
+		void add_line(const Point& start, const Point& end, const gemini::Color& color, float thickness = 1.0f);
+		void add_lines(size_t line_count, const Point* vertices, const gemini::Color* colors, float thickness = 1.0f);
 
+		// these points should be in counter-clockwise order
+		void add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color);
+		void add_font(const FontHandle& font, const char* utf8, size_t string_length, const Rect& bounds, const gemini::Color& color);
+
+	};
 
 	class Renderer
 	{

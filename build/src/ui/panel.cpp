@@ -237,7 +237,8 @@ namespace gui
 
 	void Panel::render_geometry(gui::render::CommandList& render_commands, const gemini::Color& color)
 	{
-		render_commands.add_rectangle(
+		Painter painter(this, render_commands);
+		painter.add_rectangle(
 			geometry[0],
 			geometry[1],
 			geometry[2],
@@ -248,6 +249,8 @@ namespace gui
 
 	void Panel::render_capture_rect(gui::render::CommandList& render_commands)
 	{
+		Painter painter(this, render_commands);
+
 		const uint32_t capture_flags = (Flag_CursorEnabled | Flag_CanMove);
 		if ((flags & (capture_flags)) == capture_flags)
 		{
@@ -257,12 +260,7 @@ namespace gui
 			rects[2] = Point(capture_rect.size.width, capture_rect.size.height);
 			rects[3] = Point(capture_rect.size.width, 0);
 
-			rects[0] = transform_point(local_transform, rects[0]);
-			rects[1] = transform_point(local_transform, rects[1]);
-			rects[2] = transform_point(local_transform, rects[2]);
-			rects[3] = transform_point(local_transform, rects[3]);
-
-			render_commands.add_rectangle(
+			painter.add_rectangle(
 				rects[0],
 				rects[1],
 				rects[2],
@@ -274,15 +272,16 @@ namespace gui
 
 	void Panel::render_background(gui::render::CommandList& render_commands)
 	{
-		if (this->background.is_valid())
+		Painter painter(this, render_commands);
+		if (background.is_valid())
 		{
 			//			renderer->draw_textured_bounds(frame, this->background);
-			render_commands.add_rectangle(
+			painter.add_rectangle(
 				geometry[0],
 				geometry[1],
 				geometry[2],
 				geometry[3],
-				this->background,
+				background,
 				gemini::Color::from_rgba(255, 255, 255, 255)
 			);
 		}
@@ -570,11 +569,6 @@ namespace gui
 			geometry[1] = Point(0, size.height);
 			geometry[2] = Point(size.width, size.height);
 			geometry[3] = Point(size.width, 0);
-
-			geometry[0] = transform_point(local_transform, geometry[0]);
-			geometry[1] = transform_point(local_transform, geometry[1]);
-			geometry[2] = transform_point(local_transform, geometry[2]);
-			geometry[3] = transform_point(local_transform, geometry[3]);
 
 			capture_rect.set(0, 0, size.width, 16);
 		}

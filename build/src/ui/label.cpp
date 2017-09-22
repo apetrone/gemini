@@ -59,7 +59,9 @@ namespace gui
 						Renderer* renderer,
 						gui::render::CommandList& render_commands)
 	{
-		render_commands.add_rectangle(
+		Painter painter(this, render_commands);
+
+		painter.add_rectangle(
 			geometry[0],
 			geometry[1],
 			geometry[2],
@@ -92,9 +94,9 @@ namespace gui
 			if ((current_rect.origin.y+item.height) > (lower_bound + item.height))
 				break;
 
-			current_rect.origin = transform_point(get_transform(0), current_rect.origin);
+			current_rect.origin = current_rect.origin;
 
-			render_commands.add_font(font_handle, &text[item.start], item.length, current_rect, foreground_color);
+			painter.add_font(font_handle, &text[item.start], item.length, current_rect, foreground_color);
 		}
 
 		//const bool content_larger_than_bounds = content_bounds.height() > size.height;

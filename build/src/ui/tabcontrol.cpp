@@ -269,8 +269,10 @@ namespace gui
 
 	void TabControl::render(Compositor* compositor, Renderer* renderer, render::CommandList& render_commands)
 	{
+		Painter painter(this, render_commands);
+
 		// draw the tab background
-		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], -1, gemini::Color::from_rgba(128, 0, 0, 255));
+		painter.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], -1, gemini::Color::from_rgba(128, 0, 0, 255));
 
 		render_children(compositor, renderer, render_commands);
 
