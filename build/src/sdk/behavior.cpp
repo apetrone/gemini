@@ -58,7 +58,6 @@ namespace behavior
 	void Behavior::deactivate(Entity* /*entity*/, behavior::BehaviorContext* context)
 	{
 		context->log(core::str::format("[%s] deactivate\n", name()));
-		status = Behavior_Invalid;
 	}
 
 	bool Behavior::is_active() const
@@ -74,7 +73,6 @@ namespace behavior
 			activate();
 		}
 
-
 		BehaviorStatus return_status = update(entity, context);
 		context->log(core::str::format("[%s] updated, result is: '%s'\n", name(), behavior::name_from_status(return_status)));
 
@@ -83,6 +81,7 @@ namespace behavior
 		{
 			context->log(core::str::format("[%s] status is '%s', deactivating\n", name(), behavior::name_from_status(status)));
 			deactivate(entity, context);
+			status = Behavior_Invalid;
 		}
 
 		return return_status;
@@ -94,5 +93,4 @@ namespace behavior
 		context->populate(this);
 		context->pop(this);
 	}
-
 } // namespace behavior
