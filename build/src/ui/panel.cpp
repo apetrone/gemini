@@ -251,7 +251,6 @@ namespace gui
 		const uint32_t capture_flags = (Flag_CursorEnabled | Flag_CanMove);
 		if ((flags & (capture_flags)) == capture_flags)
 		{
-
 			Point rects[4];
 			rects[0] = Point(0, 0);
 			rects[1] = Point(0, capture_rect.size.height);

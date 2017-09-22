@@ -71,7 +71,10 @@
 #include <sdk/utils.h>
 
 
+#include "editable_mesh.h"
+
 #include "project.h"
+#include "parameter.h"
 
 using namespace platform;
 using namespace renderer;
@@ -306,6 +309,127 @@ void SpringPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, g
 		gemini::Color(1.0f, 0.5f, 0.0)
 	);
 }
+
+class NumberPanel : public gui::Label
+{
+public:
+
+	NumberPanel(gui::Panel* parent)
+		: gui::Label(parent)
+	{
+	}
+
+	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
+};
+
+void NumberPanel::update(gui::Compositor* compositor, float delta_seconds)
+{
+	gui::Label::update(compositor, delta_seconds);
+}
+
+void NumberPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
+{
+	gemini::Color outline_color(1.0f, 0.0f, 0.0f);
+
+	render_commands.add_line(
+		geometry[0],
+		geometry[1],
+		outline_color
+	);
+
+	render_commands.add_line(
+		geometry[1],
+		geometry[2],
+		outline_color
+	);
+
+	render_commands.add_line(
+		geometry[2],
+		geometry[3],
+		outline_color
+	);
+
+	render_commands.add_line(
+		geometry[3],
+		geometry[0],
+		outline_color
+	);
+
+	gui::Label::render(compositor, renderer, render_commands);
+}
+
+class ParameterVec3Widget : public gui::Panel
+{
+public:
+	Parameter* target;
+
+	gui::Label* labels[3];
+	NumberPanel* panels[3];
+
+	ParameterVec3Widget(gui::Panel* parent, Parameter* parameter)
+		: gui::Panel(parent)
+		, target(parameter)
+	{
+		set_background_color(gemini::Color(0.5f, 0.5f, 0.5f));
+
+		gui::HorizontalLayout* layout = new gui::HorizontalLayout();
+
+		labels[0] = new gui::Label(this);
+		labels[0]->set_background_color(gemini::Color(1.0f, 0.0f, 0.0f));
+		labels[0]->set_foreground_color(gemini::Color(0.0f, 0.0f, 0.0f));
+		labels[0]->set_font("debug", 24);
+		labels[0]->set_text("X:");
+		layout->add_panel(labels[0]);
+		panels[0] = new NumberPanel(this);
+		panels[0]->set_font("debug", 16);
+		panels[0]->set_text("0.0000");
+		panels[0]->set_foreground_color(gemini::Color(0.0f, 0.0f, 0.0f));
+		layout->add_panel(panels[0]);
+
+		labels[1] = new gui::Label(this);
+		labels[1]->set_background_color(gemini::Color(0.0f, 1.0f, 0.0f));
+		labels[1]->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
+		labels[1]->set_font("debug", 16);
+		labels[1]->set_text("Y:");
+		layout->add_panel(labels[1]);
+		panels[1] = new NumberPanel(this);
+		panels[1]->set_font("debug", 16);
+		panels[1]->set_text("0.0000");
+		panels[1]->set_foreground_color(gemini::Color(0.0f, 0.0f, 0.0f));
+		layout->add_panel(panels[1]);
+
+		labels[2] = new gui::Label(this);
+		labels[2]->set_background_color(gemini::Color(0.0f, 0.0f, 1.0f));
+		labels[2]->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
+		labels[2]->set_font("debug", 16);
+		labels[2]->set_text("Z:");
+		layout->add_panel(labels[2]);
+		panels[2] = new NumberPanel(this);
+		panels[2]->set_font("debug", 16);
+		panels[2]->set_text("0.0000");
+		panels[2]->set_foreground_color(gemini::Color(0.0f, 0.0f, 0.0f));
+		layout->add_panel(panels[2]);
+
+
+		set_layout(layout);
+	}
+
+	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
+};
+
+void ParameterVec3Widget::update(gui::Compositor* compositor, float delta_seconds)
+{
+	gui::Panel::update(compositor, delta_seconds);
+}
+
+void ParameterVec3Widget::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
+{
+	gui::Panel::render(compositor, renderer, render_commands);
+}
+
+
 
 
 #if TEST_TELEMETRY_SYSTEM
@@ -637,6 +761,9 @@ private:
 	gui::Panel* main_panel;
 	SpringPanel* spring_panel;
 	gui::Timeline* timeline;
+	ParameterVec3Widget* vec3_widget;
+	Parameter test_parameter;
+	glm::vec3 test_vec3;
 #if TEST_TELEMETRY_SYSTEM
 	TelemetryPanel* telemetry_panel;
 #endif
@@ -657,6 +784,8 @@ private:
 	float value;
 
 	core::logging::Handler log_handler;
+
+	EditableMesh single_mesh;
 
 	Camera camera;
 
@@ -720,6 +849,7 @@ public:
 		, app_in_focus(true)
 		, mocap_device(nullptr)
 		, lines(nullptr)
+		, status(nullptr)
 		, current_line_index(0)
 		, mocap_frames(sensor_allocator, 0)
 		, mesh_animations(default_allocator)
@@ -728,6 +858,8 @@ public:
 		, second_mesh(0)
 		, enable_animation(1)
 		, mesh_animation_index(0)
+		, single_mesh(default_allocator)
+		, test_parameter("Test Value", &test_vec3)
 	{
 		yaw = 0.0f;
 		pitch = 0.0f;
@@ -1144,6 +1276,16 @@ public:
 		watch_path.append("conf");
 		watch_path.normalize(PATH_SEPARATOR);
 		monitor_handles[4] = directory_monitor_add(watch_path(), monitor_delegate);
+
+
+		// EXPERIMENTAL ZONE
+		{
+			// load a single mesh for testing
+			gemini::AssetHandle mesh_handle = mesh_load("models/test_model/test_model");
+			gemini::Mesh* mesh_instance = mesh_from_handle(mesh_handle);
+			single_mesh.load_from(default_allocator, mesh_instance);
+		}
+
 	} // open_project_at_root
 
 	void on_file_save_project()
@@ -1713,13 +1855,13 @@ public:
 			}
 #endif
 
-			status = new gui::Label(compositor);
-			status->set_origin(10, 100);
-			status->set_size(150, 75);
-			status->set_font(dev_font, dev_font_size);
-			status->set_text("");
-			status->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
-			status->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.0f));
+			//status = new gui::Label(compositor);
+			//status->set_origin(10, 100);
+			//status->set_size(150, 75);
+			//status->set_font(dev_font, dev_font_size);
+			//status->set_text("");
+			//status->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
+			//status->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.0f));
 
 #if 1
 			asset_processor = new AssetProcessingPanel(compositor);
@@ -1789,7 +1931,15 @@ public:
 			timeline->set_maximum_size(gui::Size(0, 60));
 
 			center_layout->add_panel(timeline);
+
+			vec3_widget = new ParameterVec3Widget(main_panel, &test_parameter);
+			vec3_widget->set_maximum_size(gui::Size(1024, 200));
+
+			horizontal_layout->add_panel(vec3_widget);
 #endif
+
+
+
 
 #if 0
 			// TODO: This needs more work as it can still get swamped and
@@ -1808,7 +1958,7 @@ public:
 			log_handler.open = log_window_logger_open;
 			log_handler.close = log_window_logger_close;
 			log_handler.message = log_window_logger_message;
-			log_handler.userdata = (void*)log_window;
+			log_handler.userdata = (void*)log_windlabow;
 			core::logging::instance()->add_handler(&log_handler);
 
 			LOGV("log initialized.\n");
@@ -2110,13 +2260,16 @@ public:
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
 
-		if (runtime_rapid())
+		if (status)
 		{
-			status->set_text("PLUGIN LOADED");
-		}
-		else
-		{
-			status->set_text("PLUGIN NOT LOADED");
+			if (runtime_rapid())
+			{
+				status->set_text("PLUGIN LOADED");
+			}
+			else
+			{
+				status->set_text("PLUGIN NOT LOADED");
+			}
 		}
 
 		value += 0.01f * multiplifer;
@@ -2368,6 +2521,8 @@ public:
 
 	virtual void shutdown()
 	{
+		single_mesh.purge(default_allocator);
+
 		delete [] lines;
 		lines = nullptr;
 
