@@ -93,4 +93,7 @@ namespace gemini
 	void transform_graph_transform(TransformNode* node, glm::mat4* world_matrices);
 
 	void transform_graph_print(TransformNode* root, uint32_t indent = 0);
+
+	TransformNode* transform_graph_find_child(TransformNode* root, const char* name);
+
 } // namespace gemini

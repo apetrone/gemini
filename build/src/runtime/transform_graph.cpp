@@ -225,4 +225,23 @@ namespace gemini
 			transform_graph_print(root->children[index], indent + 1);
 		}
 	} // transform_graph_print
+
+	TransformNode* transform_graph_find_child(TransformNode* root, const char* name)
+	{
+		if (root->name == name)
+		{
+			return root;
+		}
+
+		for (size_t index = 0; index < root->children.size(); ++index)
+		{
+			TransformNode* result = transform_graph_find_child(root->children[index], name);
+			if (result)
+			{
+				return result;
+			}
+		}
+
+		return nullptr;
+	} // transform_graph_find_child
 } // namespace gemini
