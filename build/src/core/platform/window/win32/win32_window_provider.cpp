@@ -331,7 +331,8 @@ namespace platform
 					event.is_down = (last_key == 0) ? true : false;
 					event.modifiers = 0;
 					event.window = window;
-					event.unicode = 0;
+					event.unicode = vkey;
+					event.is_text = 0;
 					kernel::event_dispatch(event);
 					return 0;
 				}
@@ -377,6 +378,8 @@ namespace platform
 				if (window)
 				{
 					const int32_t prev_mouse[2] = { last_mousex, last_mousey };
+
+
 
 					switch (message)
 					{
@@ -515,6 +518,20 @@ namespace platform
 							return DefWindowProc(hwnd, message, wparam, lparam);
 						}
 					}
+
+					case WM_CHAR:
+					{
+						kernel::KeyboardEvent event;
+						event.key = 0;
+						event.is_down = true;
+						event.modifiers = 0;
+						event.window = window;
+						event.is_text = 1;
+						event.unicode = wparam;
+						kernel::event_dispatch(event);
+						return 0;
+					}
+
 					case WM_SYSKEYUP:
 					case WM_KEYDOWN:
 					case WM_KEYUP:
@@ -523,11 +540,7 @@ namespace platform
 						break;
 					}
 
-					case WM_CHAR:
-						// TODO: We need to handle individual unicode chars here.
-						break;
-
-						// handle system events
+					// handle system events
 					case WM_SETFOCUS:
 					case WM_KILLFOCUS:
 					{

@@ -137,6 +137,7 @@ namespace kernel
 		int unicode;
 		int key;
 		uint16_t modifiers;
+		uint16_t is_text;
 		bool is_down;
 	}; // KeyboardEvent
 
