@@ -317,12 +317,11 @@ void SpringPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, g
 class NumberPanel : public gui::Label
 {
 public:
-
 	NumberPanel(gui::Panel* parent)
 		: gui::Label(parent)
 		, cursor_index(0)
 		, is_captured(0)
-		, value(nullptr)
+		, value(0.0f)
 		, step(0.01f)
 	{
 	}
@@ -331,11 +330,13 @@ public:
 	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
 	virtual void handle_event(gui::EventArgs& args) override;
 
-	float* value;
+	float value;
 	float step;
 	gui::Point down_position;
 	uint8_t is_captured;
 	uint32_t cursor_index;
+
+	Delegate<void(float)> value_changed;
 };
 
 void NumberPanel::update(gui::Compositor* compositor, float delta_seconds)
@@ -391,15 +392,28 @@ void NumberPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, g
 
 void NumberPanel::handle_event(gui::EventArgs& args)
 {
-	if (args.focus == this)
-	{
-	}
-
 	if (args.type == gui::Event_Text)
 	{
-		//std::string::iterator it = text.begin() + cursor_index;
-		//text.insert(it, (char)args.unicode);
-		//++cursor_index;
+		//if (args.unicode == 8)
+		//{
+		//	if (cursor_index > 0)
+		//	{
+		//		std::string::iterator it = text.begin() + (cursor_index - 1);
+		//		text.erase(it);
+		//		--cursor_index;
+		//	}
+		//}
+		//else
+		//{
+		//	std::string::iterator it = text.begin() + cursor_index;
+		//	text.resize(cursor_index);
+		//	text.insert(it, (char)args.unicode);
+		//	++cursor_index;
+		//}
+		//cache_is_dirty = 1;
+	}
+	else if (args.type == gui::Event_KeyButtonReleased)
+	{
 	}
 
 	if (args.type == gui::Event_CursorButtonPressed)
@@ -407,6 +421,7 @@ void NumberPanel::handle_event(gui::EventArgs& args)
 		is_captured = 1;
 		down_position = args.local;
 		args.handled = 1;
+		args.compositor->set_focus(this);
 	}
 	else if (args.type == gui::Event_CursorButtonReleased)
 	{
@@ -419,12 +434,13 @@ void NumberPanel::handle_event(gui::EventArgs& args)
 		if (is_captured)
 		{
 			gui::Point delta = args.local - down_position;
-			if (value)
+			value += delta.x * step;
+			set_text(core::str::format("%2.4f", value));
+			if (value_changed.is_valid())
 			{
-				*value += delta.x * step;
-				set_text(core::str::format("%2.4f", *value));
-				args.handled = 1;
+				value_changed(value);
 			}
+			args.handled = 1;
 		}
 	}
 
@@ -457,6 +473,12 @@ public:
 	gui::Label* labels[3];
 	NumberPanel* panels[3];
 
+	void update_target_parameter(float)
+	{
+		glm::vec3* value = reinterpret_cast<glm::vec3*>(target->value);
+		*value = glm::vec3(panels[0]->value, panels[1]->value, panels[2]->value);
+	}
+
 	ParameterVec3Widget(gui::Panel* parent, Parameter* parameter)
 		: gui::Panel(parent)
 		, target(parameter)
@@ -464,9 +486,6 @@ public:
 		set_background_color(gemini::Color(0.5f, 0.5f, 0.5f));
 
 		gui::HorizontalLayout* layout = new gui::HorizontalLayout();
-
-
-
 		labels[0] = new gui::Label(this);
 		labels[0]->set_background_color(gemini::Color(1.0f, 0.0f, 0.0f));
 		labels[0]->set_foreground_color(gemini::Color(0.0f, 0.0f, 0.0f));
@@ -475,9 +494,10 @@ public:
 		layout->add_panel(labels[0]);
 		panels[0] = new NumberPanel(this);
 		panels[0]->set_font("debug", 16);
-		panels[0]->set_text("0.0000");
+		panels[0]->set_text("0");
 		panels[0]->set_foreground_color(gemini::Color(0.0f, 0.0f, 0.0f));
 		layout->add_panel(panels[0]);
+		panels[0]->value_changed = MAKE_MEMBER_DELEGATE(void(float), ParameterVec3Widget, &ParameterVec3Widget::update_target_parameter, this);
 
 		labels[1] = new gui::Label(this);
 		labels[1]->set_background_color(gemini::Color(0.0f, 1.0f, 0.0f));
@@ -487,9 +507,10 @@ public:
 		layout->add_panel(labels[1]);
 		panels[1] = new NumberPanel(this);
 		panels[1]->set_font("debug", 16);
-		panels[1]->set_text("0.0000");
+		panels[1]->set_text("0");
 		panels[1]->set_foreground_color(gemini::Color(0.0f, 0.0f, 0.0f));
 		layout->add_panel(panels[1]);
+		panels[1]->value_changed = MAKE_MEMBER_DELEGATE(void(float), ParameterVec3Widget, &ParameterVec3Widget::update_target_parameter, this);
 
 		labels[2] = new gui::Label(this);
 		labels[2]->set_background_color(gemini::Color(0.0f, 0.0f, 1.0f));
@@ -499,40 +520,117 @@ public:
 		layout->add_panel(labels[2]);
 		panels[2] = new NumberPanel(this);
 		panels[2]->set_font("debug", 16);
-		panels[2]->set_text("0.0000");
+		panels[2]->set_text("0");
 		panels[2]->set_foreground_color(gemini::Color(0.0f, 0.0f, 0.0f));
 		layout->add_panel(panels[2]);
-
+		panels[2]->value_changed = MAKE_MEMBER_DELEGATE(void(float), ParameterVec3Widget, &ParameterVec3Widget::update_target_parameter, this);
 
 		set_layout(layout);
-		parameter_changed();
 	}
-
-	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
-	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
 
 	void parameter_changed()
 	{
 		glm::vec3* vector3 = reinterpret_cast<glm::vec3*>(target->value);
-		panels[0]->value = &vector3->x;
-		panels[1]->value = &vector3->y;
-		panels[2]->value = &vector3->z;
+		panels[0]->value = vector3->x;
+		panels[1]->value = vector3->y;
+		panels[2]->value = vector3->z;
 
-		panels[0]->set_text(core::str::format("%2.4f", *panels[0]->value));
-		panels[1]->set_text(core::str::format("%2.4f", *panels[1]->value));
-		panels[2]->set_text(core::str::format("%2.4f", *panels[2]->value));
+		panels[0]->set_text(core::str::format("%2.4f", panels[0]->value));
+		panels[1]->set_text(core::str::format("%2.4f", panels[1]->value));
+		panels[2]->set_text(core::str::format("%2.4f", panels[2]->value));
 	}
 };
 
-void ParameterVec3Widget::update(gui::Compositor* compositor, float delta_seconds)
-{
-	gui::Panel::update(compositor, delta_seconds);
-}
 
-void ParameterVec3Widget::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
+
+class ParameterQuatWidget : public gui::Panel
 {
-	gui::Panel::render(compositor, renderer, render_commands);
-}
+public:
+	Parameter* target;
+
+	gui::Label* labels[3];
+	NumberPanel* panels[3];
+
+	void update_target_parameter(float)
+	{
+		// convert euler angles to quat
+		glm::quat* value = reinterpret_cast<glm::quat*>(target->value);
+
+		glm::vec3 euler_angles(
+			mathlib::degrees_to_radians(panels[0]->value),
+			mathlib::degrees_to_radians(panels[1]->value),
+			mathlib::degrees_to_radians(panels[2]->value)
+		);
+		*value = glm::quat(euler_angles);
+		LOGV("q: %2.2f, %2.2f, %2.2f, %2.2f\n", value->x, value->y, value->z, value->w);
+	}
+
+	ParameterQuatWidget(gui::Panel* parent, Parameter* parameter)
+		: gui::Panel(parent)
+		, target(parameter)
+	{
+		set_background_color(gemini::Color(0.5f, 0.5f, 0.5f));
+
+		gui::HorizontalLayout* layout = new gui::HorizontalLayout();
+		labels[0] = new gui::Label(this);
+		labels[0]->set_background_color(gemini::Color(1.0f, 0.0f, 0.0f));
+		labels[0]->set_foreground_color(gemini::Color(0.0f, 0.0f, 0.0f));
+		labels[0]->set_font("debug", 24);
+		labels[0]->set_text("X:");
+		layout->add_panel(labels[0]);
+		panels[0] = new NumberPanel(this);
+		panels[0]->set_font("debug", 16);
+		panels[0]->set_text("0");
+		panels[0]->set_foreground_color(gemini::Color(0.0f, 0.0f, 0.0f));
+		layout->add_panel(panels[0]);
+		panels[0]->value_changed = MAKE_MEMBER_DELEGATE(void(float), ParameterQuatWidget, &ParameterQuatWidget::update_target_parameter, this);
+
+		labels[1] = new gui::Label(this);
+		labels[1]->set_background_color(gemini::Color(0.0f, 1.0f, 0.0f));
+		labels[1]->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
+		labels[1]->set_font("debug", 16);
+		labels[1]->set_text("Y:");
+		layout->add_panel(labels[1]);
+		panels[1] = new NumberPanel(this);
+		panels[1]->set_font("debug", 16);
+		panels[1]->set_text("0");
+		panels[1]->set_foreground_color(gemini::Color(0.0f, 0.0f, 0.0f));
+		layout->add_panel(panels[1]);
+		panels[1]->value_changed = MAKE_MEMBER_DELEGATE(void(float), ParameterQuatWidget, &ParameterQuatWidget::update_target_parameter, this);
+
+		labels[2] = new gui::Label(this);
+		labels[2]->set_background_color(gemini::Color(0.0f, 0.0f, 1.0f));
+		labels[2]->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
+		labels[2]->set_font("debug", 16);
+		labels[2]->set_text("Z:");
+		layout->add_panel(labels[2]);
+		panels[2] = new NumberPanel(this);
+		panels[2]->set_font("debug", 16);
+		panels[2]->set_text("0");
+		panels[2]->set_foreground_color(gemini::Color(0.0f, 0.0f, 0.0f));
+		layout->add_panel(panels[2]);
+		panels[2]->value_changed = MAKE_MEMBER_DELEGATE(void(float), ParameterQuatWidget, &ParameterQuatWidget::update_target_parameter, this);
+
+		set_layout(layout);
+	}
+
+	void parameter_changed()
+	{
+		glm::quat* quaternion = reinterpret_cast<glm::quat*>(target->value);
+
+		*quaternion = glm::normalize(*quaternion);
+		glm::vec3 euler_angles = glm::eulerAngles(*quaternion);
+
+		panels[0]->value = mathlib::radians_to_degrees(euler_angles.x);
+		panels[1]->value = mathlib::radians_to_degrees(euler_angles.y);
+		panels[2]->value = mathlib::radians_to_degrees(euler_angles.z);
+
+		panels[0]->set_text(core::str::format("%2.4f", panels[0]->value));
+		panels[1]->set_text(core::str::format("%2.4f", panels[1]->value));
+		panels[2]->set_text(core::str::format("%2.4f", panels[2]->value));
+	}
+};
+
 
 
 
@@ -869,8 +967,10 @@ private:
 	SpringPanel* spring_panel;
 	gui::Timeline* timeline;
 	ParameterVec3Widget* vec3_widget;
+	ParameterQuatWidget* quat_widget;
 	Parameter test_parameter;
-	glm::vec3 test_vec3;
+	Parameter rotation_parameter;
+
 #if TEST_TELEMETRY_SYSTEM
 	TelemetryPanel* telemetry_panel;
 #endif
@@ -967,7 +1067,8 @@ public:
 		, enable_animation(1)
 		, mesh_animation_index(0)
 		, single_mesh(default_allocator)
-		, test_parameter("Test Value", &test_vec3)
+		, test_parameter("Test Value", (glm::vec3*)nullptr)
+		, rotation_parameter("Rotation", (glm::quat*)nullptr)
 	{
 		yaw = 0.0f;
 		pitch = 0.0f;
@@ -2050,12 +2151,22 @@ public:
 			timeline->set_frame(0);
 			timeline->set_maximum_size(gui::Size(0, 60));
 
+
+
+
+
+
 			center_layout->add_panel(timeline);
 
 			vec3_widget = new ParameterVec3Widget(main_panel, &test_parameter);
-			vec3_widget->set_maximum_size(gui::Size(1024, 200));
+			vec3_widget->set_maximum_size(gui::Size(512, 200));
 
 			horizontal_layout->add_panel(vec3_widget);
+
+
+			quat_widget = new ParameterQuatWidget(main_panel, &rotation_parameter);
+			quat_widget->set_maximum_size(gui::Size(512, 200));
+			center_layout->add_panel(quat_widget);
 #endif
 
 
@@ -2157,9 +2268,11 @@ public:
 		//modelattachment->
 
 		test_parameter.value = &attachment_point->position;
-
-		//test_parameter.value = &node1->position;
 		vec3_widget->parameter_changed();
+
+		rotation_parameter.value = &attachment_point->orientation;
+		quat_widget->parameter_changed();
+
 
 		render_scene_animation_play(render_scene, animated_mesh, "idle", 0);
 
