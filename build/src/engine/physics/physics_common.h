@@ -66,9 +66,11 @@ namespace gemini
 			{
 			}
 
-			virtual bool needsCollision(btBroadphaseProxy* /*proxy*/) const
+			virtual bool needsCollision(btBroadphaseProxy* proxy) const
 			{
-				return true;
+				bool collides = (proxy->m_collisionFilterGroup & m_collisionFilterMask) != 0;
+				collides = collides && (m_collisionFilterGroup & proxy->m_collisionFilterMask);
+				return collides;
 			}
 
 			virtual btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult, bool normalInWorldSpace)
@@ -84,12 +86,11 @@ namespace gemini
 				bool has_static = rayResult.m_collisionObject->getCollisionFlags() & STATIC_OBJECT;
 				bool has_ghost = rayResult.m_collisionObject->getCollisionFlags() & GHOST_OBJECT;
 
-				if (ignore_ghosts && !rayResult.m_collisionObject->hasContactResponse() && has_ghost)
+				if (!rayResult.m_collisionObject->hasContactResponse())
 				{
 //					LOGV("ignoring ghost\n");
 					return btScalar(1.0);
 				}
-
 
 				if (ignore_static && has_static && !has_ghost)
 				{
@@ -122,11 +123,11 @@ namespace gemini
 					return btScalar(1.0);
 				}
 
-//				if (!convexResult.m_hitCollisionObject->hasContactResponse())
-//				{
-//					LOGV("ignoring object with no response\n");
-//					return btScalar(1.0);
-//				}
+				if (!convexResult.m_hitCollisionObject->hasContactResponse())
+				{
+					//LOGV("ignoring object with no response\n");
+					return btScalar(1.0);
+				}
 
 				btVector3 hitNormalWorld;
 				if (normalInWorldSpace)

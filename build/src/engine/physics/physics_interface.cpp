@@ -60,6 +60,26 @@ namespace gemini
 {
 	namespace physics
 	{
+		short physics_to_bullet_filter_mask(int collision_mask)
+		{
+			short collision_filter_mask = 0;
+
+			if (collision_mask & physics::DefaultFilter)
+				collision_filter_mask |= btBroadphaseProxy::DefaultFilter;
+			if (collision_mask & physics::StaticFilter)
+				collision_filter_mask |= btBroadphaseProxy::StaticFilter;
+			if (collision_mask & physics::KinematicFilter)
+				collision_filter_mask |= btBroadphaseProxy::KinematicFilter;
+			if (collision_mask & physics::DebrisFilter)
+				collision_filter_mask |= btBroadphaseProxy::DebrisFilter;
+			if (collision_mask & physics::SensorTrigger)
+				collision_filter_mask |= btBroadphaseProxy::SensorTrigger;
+			if (collision_mask & physics::CharacterFilter)
+				collision_filter_mask |= btBroadphaseProxy::CharacterFilter;
+
+			return collision_filter_mask;
+		}
+
 		PhysicsInterface::PhysicsInterface(gemini::Allocator& _allocator)
 			: allocator(_allocator)
 		{
@@ -285,7 +305,7 @@ namespace gemini
 //			collision_object->set_collision_ghost(ghost);
 			collision_object->set_collision_shape(bullet_shape->get_shape());
 
-			short collision_filter_mask = btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::SensorTrigger;
+			short collision_filter_mask = btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::SensorTrigger | btBroadphaseProxy::CharacterFilter;
 
 			// NOTE: you must set the collision shape before adding it to the world
 			ghost->setCollisionShape(bullet_shape->get_shape());
@@ -299,7 +319,7 @@ namespace gemini
 			return collision_object;
 		}
 
-		physics::ICollisionObject* PhysicsInterface::create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& /*orientation*/)
+		physics::ICollisionObject* PhysicsInterface::create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& /*orientation*/, uint16_t collision_mask)
 		{
 			BulletCollisionObject* collision_object = MEMORY2_NEW(allocator, BulletCollisionObject);
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
@@ -310,7 +330,7 @@ namespace gemini
 			assert(bullet_shape != 0);
 			collision_object->set_collision_shape(bullet_shape->get_shape());
 
-			int flags = ghost->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE;
+			int flags = ghost->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE | btCollisionObject::CF_KINEMATIC_OBJECT;
 			ghost->setCollisionShape(bullet_shape->get_shape());
 			ghost->setCollisionFlags(flags);
 
@@ -321,6 +341,7 @@ namespace gemini
 
 			// for now, triggers can only interact with character objects.
 			// There was a fix in September of 2013 which fixed sensors and characters, see: https://code.google.com/p/bullet/issues/detail?id=719
+			assert(collision_mask == physics::SensorTrigger);
 			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger, btBroadphaseProxy::CharacterFilter);
 
 			return collision_object;
@@ -348,19 +369,7 @@ namespace gemini
 			tr.setOrigin(btVector3(position.x, position.y, position.z));
 			ghost->setWorldTransform(tr);
 
-			short collision_filter_mask = 0;
-			if (collision_mask & physics::DefaultFilter)
-				collision_filter_mask |= btBroadphaseProxy::DefaultFilter;
-			if (collision_mask & physics::StaticFilter)
-				collision_filter_mask |= btBroadphaseProxy::StaticFilter;
-			if (collision_mask & physics::KinematicFilter)
-				collision_filter_mask |= btBroadphaseProxy::KinematicFilter;
-			if (collision_mask & physics::DebrisFilter)
-				collision_filter_mask |= btBroadphaseProxy::DebrisFilter;
-			if (collision_mask & physics::SensorTrigger)
-				collision_filter_mask |= btBroadphaseProxy::SensorTrigger;
-			if (collision_mask & physics::CharacterFilter)
-				collision_filter_mask |= btBroadphaseProxy::CharacterFilter;
+			short collision_filter_mask = physics_to_bullet_filter_mask(collision_mask);
 
 			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::KinematicFilter | btBroadphaseProxy::SensorTrigger, collision_filter_mask);
 
@@ -443,14 +452,10 @@ namespace gemini
 			bullet::step(step_interval_seconds);
 		}
 
-		RaycastInfo PhysicsInterface::raycast(const glm::vec3& start,
-											  const glm::vec3& direction,
-											  float max_distance,
-											  ICollisionObject* ignored_object0,
-											  ICollisionObject* ignored_object1)
+		RaycastInfo PhysicsInterface::raycast(const RaycastQuery& query)
 		{
-			glm::vec3 destination = start + (direction * max_distance);
-			btVector3 ray_start(start.x, start.y, start.z);
+			glm::vec3 destination = query.start + (query.direction * query.max_distance);
+			btVector3 ray_start(query.start.x, query.start.y, query.start.z);
 			btVector3 ray_end(destination.x, destination.y, destination.z);
 
 			//// Ignored object must be valid!
@@ -460,19 +465,21 @@ namespace gemini
 			btCollisionObject* obj0 = nullptr;
 			btCollisionObject* obj1 = nullptr;
 
-			if (ignored_object0)
+			if (query.ignored_object0)
 			{
-				BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object0);
+				BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(query.ignored_object0);
 				obj0 = bullet_object->get_collision_object();
 			}
 
-			if (ignored_object1)
+			if (query.ignored_object1)
 			{
-				BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object1);
+				BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(query.ignored_object1);
 				obj1 = bullet_object->get_collision_object();
 			}
 
 			ClosestNotMeRayResultCallback callback(ray_start, ray_end, false, false, obj0, obj1);
+
+			callback.m_collisionFilterMask = physics_to_bullet_filter_mask(query.collision_flags);
 
 			// rayTest accepts a line segment from start to end
 			bullet::get_world()->rayTest(ray_start, ray_end, callback);
@@ -572,5 +579,30 @@ namespace gemini
 			hull_shape->updatePoints((const btScalar*)vertices, total_vertices, sizeof(glm::vec3));
 			return true;
 		} // update_shape_geometry
+
+
+		uint32_t PhysicsInterface::count_overlapping_objects(ICollisionObject* object)
+		{
+			BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(object);
+			assert(bullet_object);
+
+			btGhostObject* ghost = reinterpret_cast<btGhostObject*>(bullet_object->get_collision_object());
+			return ghost->getNumOverlappingObjects();
+		} // count_overlapping_objects
+
+
+		ICollisionObject* PhysicsInterface::overlapping_object(ICollisionObject* object, uint32_t index)
+		{
+			BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(object);
+			assert(bullet_object);
+
+			btGhostObject* ghost = reinterpret_cast<btGhostObject*>(bullet_object->get_collision_object());
+
+			btCollisionObject* overlapping = ghost->getOverlappingObject(index);
+
+			BulletCollisionObject* other = reinterpret_cast<BulletCollisionObject*>(overlapping->getUserPointer());
+			return other;
+		} // overlapping_object
+
 	} // namespace physics
 } // namespace gemini

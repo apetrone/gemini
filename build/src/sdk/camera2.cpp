@@ -259,7 +259,12 @@ glm::vec3 QuaternionFollowCamera::perform_raycast(const glm::vec3& start, const 
 #else
 
 	glm::vec3 point;
-	gemini::physics::RaycastInfo result = gemini::physics::instance()->raycast(start, direction, max_distance, collision_object);
+	gemini::physics::RaycastQuery query;
+	query.start = start;
+	query.direction = direction;
+	query.max_distance = max_distance;
+	query.ignored_object0 = collision_object;
+	gemini::physics::RaycastInfo result = gemini::physics::instance()->raycast(query);
 	if (result.object)
 	{
 		if (hit_object)

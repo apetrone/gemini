@@ -75,6 +75,24 @@ namespace gemini
 			AllFilter		= -1
 		};
 
+		struct RaycastQuery
+		{
+			glm::vec3 start;
+			glm::vec3 direction;
+			float max_distance;
+			uint32_t collision_flags;
+			ICollisionObject* ignored_object0 = nullptr;
+			ICollisionObject* ignored_object1 = nullptr;
+
+			RaycastQuery()
+				: max_distance(128.0f)
+				, collision_flags(DefaultFilter | StaticFilter | KinematicFilter | DebrisFilter | SensorTrigger | CharacterFilter)
+				, ignored_object0(nullptr)
+				, ignored_object1(nullptr)
+			{
+			}
+		};
+
 		struct SweepTestResult
 		{
 			glm::vec3 hit_normal_world;
@@ -102,7 +120,7 @@ namespace gemini
 			virtual physics::ICollisionObject* create_physics_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, ObjectProperties& properties) = 0;
 			virtual physics::ICollisionObject* create_physics_model(int32_t model_index, ObjectProperties& properties) = 0;
 			virtual physics::ICollisionObject* create_character_object(ICollisionShape* shape) = 0;
-			virtual physics::ICollisionObject* create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation) = 0;
+			virtual physics::ICollisionObject* create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, uint16_t collision_mask = SensorTrigger) = 0;
 			virtual physics::ICollisionObject* create_kinematic_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, uint16_t collision_mask = SensorTrigger) = 0;
 
 			// Shapes
@@ -118,13 +136,7 @@ namespace gemini
 
 			virtual void step_simulation(float step_interval_seconds) = 0;
 
-			virtual RaycastInfo raycast(
-				const glm::vec3& start,
-				const glm::vec3& direction,
-				float max_distance,
-				ICollisionObject* ignored_object0 = nullptr,
-				ICollisionObject* ignored_object1 = nullptr
-			) = 0;
+			virtual RaycastInfo raycast(const RaycastQuery& query) = 0;
 
 			virtual SweepTestResult sweep(
 				ICollisionObject* source_object,
@@ -136,6 +148,9 @@ namespace gemini
 			) = 0;
 
 			virtual bool update_shape_geometry(ICollisionShape* shape, const glm::vec3* vertices, size_t total_vertices) = 0;
+
+			virtual uint32_t count_overlapping_objects(ICollisionObject* object) = 0;
+			virtual ICollisionObject* overlapping_object(ICollisionObject* object, uint32_t index) = 0;
 		};
 
 

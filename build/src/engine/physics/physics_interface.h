@@ -50,7 +50,7 @@ namespace gemini
 			virtual physics::ICollisionObject* create_physics_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, ObjectProperties& properties);
 			virtual physics::ICollisionObject* create_physics_model(int32_t model_index, ObjectProperties& properties);
 			virtual physics::ICollisionObject* create_character_object(ICollisionShape* shape);
-			virtual physics::ICollisionObject* create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation);
+			virtual physics::ICollisionObject* create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, uint16_t collision_mask = SensorTrigger);
 			virtual physics::ICollisionObject* create_kinematic_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, uint16_t collision_mask = SensorTrigger);
 
 			virtual physics::ICollisionShape* create_capsule(float radius_meters, float height_meters);
@@ -63,14 +63,13 @@ namespace gemini
 
 			virtual void step_simulation(float step_interval_seconds);
 
-			virtual RaycastInfo raycast(const glm::vec3& start,
-										const glm::vec3& direction,
-										float max_distance,
-										ICollisionObject* ignored_object0 = nullptr,
-										ICollisionObject* ignored_object1 = nullptr);
+			virtual RaycastInfo raycast(const RaycastQuery& query);
 			virtual SweepTestResult sweep(ICollisionObject* source_object, ICollisionShape* shape, const glm::vec3& start, const glm::vec3& end, float angle_threshold, const glm::vec3& angle);
 
 			virtual bool update_shape_geometry(ICollisionShape* shape, const glm::vec3* vertices, size_t total_vertices);
+
+			virtual uint32_t count_overlapping_objects(ICollisionObject* object) override;
+			virtual ICollisionObject* overlapping_object(ICollisionObject* object, uint32_t index) override;
 		};
 
 	} // namespace physics
