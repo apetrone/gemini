@@ -35,7 +35,7 @@
 template <class T>
 gemini::string unit_test_type_to_string(const T& value)
 {
-	return string_create("Unsupported type");
+	return gemini::string_create("Unsupported type");
 }
 
 template <>
@@ -60,12 +60,6 @@ template <>
 gemini::string unit_test_type_to_string(const float& value)
 {
 	return gemini::string_create(core::str::format("%2.2f", value));
-}
-
-template <>
-gemini::string unit_test_type_to_string(const unsigned long& value)
-{
-	return gemini::string_create(core::str::format("%ull", value));
 }
 
 template <>
