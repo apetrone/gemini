@@ -303,10 +303,11 @@ public:
 
 	virtual void navmesh_generate_from_model(const char* path)
 	{
-		assert(0); // TODO: 01-19-17: fix this (meshes)
-		//assets::Mesh* mesh = assets::meshes()->load_from_path(path);
-		//assets::Geometry* geom = mesh->geometry[0];
-		//navigation::create_from_geometry(geom->vertices, geom->indices, geom->mins, geom->maxs);
+		//AssetHandle mesh_handle = mesh_load(path);
+		//Mesh* mesh = mesh_from_handle(mesh_handle);
+		//assert(mesh);
+		//GeometryDefinition* geom = &mesh->geometry[0];
+		//navigation::create_from_geometry(mesh->vertices, geom->total_vertices, mesh->indices, geom->total_indices, mesh->aabb_mins, mesh->aabb_maxs);
 	}
 
 	virtual void navmesh_find_straight_path(NavMeshPath* path, glm::vec3* positions, uint32_t* total_positions)
@@ -1190,7 +1191,7 @@ public:
 
 		open_gamelibrary();
 
-		//navigation::startup();
+		navigation::startup();
 
 		// for debugging
 		if (game_interface)
@@ -1493,7 +1494,7 @@ public:
 
 	virtual void shutdown()
 	{
-		//navigation::shutdown();
+		navigation::shutdown();
 
 		// shutdown gui
 		if (compositor)

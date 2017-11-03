@@ -287,20 +287,21 @@ namespace gemini
 				//	//hitbox.rotation = glm::toMat3(glm::angleAxis(glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 				//	hitbox = hb;
 				//}
-
-				if (!bbox_mins.isNull() && !bbox_maxs.isNull())
-				{
-					state.mesh->aabb_mins = glm::vec3(bbox_mins[0].asFloat(), bbox_mins[1].asFloat(), bbox_mins[2].asFloat());
-					state.mesh->aabb_maxs = glm::vec3(bbox_maxs[0].asFloat(), bbox_maxs[1].asFloat(), bbox_maxs[2].asFloat());
-				}
-
-				// physics related settings
-				const Json::Value& center_mass_offset = node["mass_center_offset"];
-				if (!center_mass_offset.isNull())
-				{
-					state.mesh->mass_center_offset = glm::vec3(center_mass_offset[0].asFloat(), center_mass_offset[1].asFloat(), center_mass_offset[2].asFloat());
-				}
 			}
+
+			if (!bbox_mins.isNull() && !bbox_maxs.isNull())
+			{
+				state.mesh->aabb_mins = glm::vec3(bbox_mins[0].asFloat(), bbox_mins[1].asFloat(), bbox_mins[2].asFloat());
+				state.mesh->aabb_maxs = glm::vec3(bbox_maxs[0].asFloat(), bbox_maxs[1].asFloat(), bbox_maxs[2].asFloat());
+			}
+
+			// physics related settings
+			const Json::Value& center_mass_offset = node["mass_center_offset"];
+			if (!center_mass_offset.isNull())
+			{
+				state.mesh->mass_center_offset = glm::vec3(center_mass_offset[0].asFloat(), center_mass_offset[1].asFloat(), center_mass_offset[2].asFloat());
+			}
+
 			++state.current_geometry;
 		}
 		else

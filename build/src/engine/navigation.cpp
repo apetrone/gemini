@@ -204,18 +204,17 @@ namespace gemini
 
 		static NavigationDebugDraw debug_draw;
 
-		void create_from_geometry(const FixedArray<glm::vec3>& vertices, const FixedArray<::renderer::IndexType>& indices, const glm::vec3& mins, const glm::vec3& maxs)
+		void create_from_geometry(const glm::vec3* vertices, size_t total_vertices, const gemini::index_t* indices, size_t total_indices, const glm::vec3& mins, const glm::vec3& maxs)
 		{
 			float agent_height = 2.0f;
-			float agent_radius = 0.6f;
+			float agent_radius = 0.4f;
 			float agent_max_climb = 0.9f;
 			float max_edge_length = 12.0f;
 
 			float bounds_min[3] = {mins[0], mins[1], mins[2]};
 			float bounds_max[3] = {maxs[0], maxs[1], maxs[2]};
 
-			const int total_vertices = vertices.size();
-			const int total_triangles = indices.size() / 3;
+			const int total_triangles = total_indices / 3;
 
 			// first, setup our allocators
 			rcAllocSetCustom(navigation_allocate, navigation_deallocate);
@@ -227,18 +226,19 @@ namespace gemini
 			rcConfig config;
 			memset(&config, 0, sizeof(rcConfig));
 
-			config.cs = 0.3f; // cell size
-			config.ch = 0.2f; // cell height
+
+			config.cs = agent_radius / 3.0f; // cell size
+			config.ch = agent_radius / 2.0f; // cell height
 			config.walkableSlopeAngle = 45.0f;
 			config.walkableHeight = static_cast<int>(ceilf(agent_height / config.ch));
 			config.walkableClimb = static_cast<int>(floorf(agent_max_climb / config.ch));
 			config.walkableRadius = static_cast<int>(ceilf(agent_radius / config.cs));
 			config.maxEdgeLen = static_cast<int>(max_edge_length / config.cs);
-			config.maxSimplificationError = 1.3f;
+			config.maxSimplificationError = 0.3f;
 			config.minRegionArea = static_cast<int>(rcSqr(8));
 			config.mergeRegionArea = static_cast<int>(rcSqr(20));
 			config.maxVertsPerPoly = 6;
-			config.detailSampleDist = 6.0 * config.cs;
+			config.detailSampleDist = 2.0 * config.cs;
 			config.detailSampleMaxError = config.ch * 1.0f;
 
 			// set the area where the navigation will be built
@@ -268,7 +268,6 @@ namespace gemini
 			{
 				LOGE("unable to allocate triangle areas\n");
 			}
-
 
 			memset(triangle_areas, 0, total_triangles*sizeof(unsigned char));
 			rcMarkWalkableTriangles(&context, config.walkableSlopeAngle, (const float*)&vertices[0], total_vertices, (const int*)&indices[0], total_triangles, triangle_areas);
@@ -349,11 +348,11 @@ namespace gemini
 				LOGE("Unable to build poly mesh\n");
 			}
 
-			//			for (int index = 0; index < poly_mesh->maxpolys; ++index)
-			//			{
-			//				LOGV("flags: %i\n", poly_mesh->flags[index]);
-			//			}
-			//			assert(poly_mesh->nverts > 0);
+			for (int index = 0; index < poly_mesh->maxpolys; ++index)
+			{
+				LOGV("flags: %i\n", poly_mesh->flags[index]);
+			}
+			assert(poly_mesh->nverts > 0);
 
 
 			// create detail mesh which allows access to approximate height on each polygon
@@ -391,7 +390,6 @@ namespace gemini
 			}
 
 
-
 			// TODO: optionally, create detour data from the recast poly mesh
 			dtNavMeshCreateParams params;
 			memset(&params, 0, sizeof(dtNavMeshCreateParams));
@@ -422,6 +420,7 @@ namespace gemini
 			if (!dtCreateNavMeshData(&params, &nav_data, &nav_data_size))
 			{
 				LOGV("unable to create detour navigation mesh!\n");
+				return;
 			}
 
 			nav_mesh = dtAllocNavMesh();
