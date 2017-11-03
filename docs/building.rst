@@ -91,8 +91,6 @@ These optional variables should be specified when building for the RaspberryPi.
 
 On Windows, unfortunately, the DirectX SDK must be installed. As of this writing, SDL2 requires it.
 
-
-
 ----------------------------
 Building for Desktop
 ----------------------------
@@ -117,6 +115,11 @@ iOS
 		python tools/pegasus/build.py build/scripts/gemini.py generate -p iphone
 
 Android
+
+1. Install Android Studio.
+
+https://developer.android.com/ndk/index.html
+
 	.. code-block:: bash
 
 		python tools/pegasus/build.py build/scripts/gemini.py generate -p android
