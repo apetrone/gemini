@@ -223,6 +223,7 @@ namespace gemini
 	void string_destroy(gemini::Allocator& allocator, string& string);
 	string string_concat(gemini::Allocator& allocator, const string& first, const string& second);
 	string string_substr(gemini::Allocator& allocator, const char* source, uint32_t start, uint32_t length);
+	string string_slice(gemini::Allocator& allocator, const char* source, uint32_t start, uint32_t end);
 
 	// split a string at certain delimiters into pieces
 	void string_split(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, const char* delimiters = "\t ");

@@ -370,4 +370,275 @@ namespace gemini
 
 		return active_downloads;
 	} // http_active_download_count
+
+
+	int32_t rtsp_describe(http_connection* connection, http_request* request, const char* ip_address, const char* user_agent)
+	{
+		//char service[32] 		= { 0 };
+		//char filename[256] 		= { 0 };
+		//char hostname[1024] 	= { 0 };
+		//char host[1024] 		= { 0 };
+		char get_request[1024] 	= { 0 };
+
+		// ipv4
+		//char ip_address[16] 	= { 0 };
+		uint16_t port 			= 554;
+
+		//// try to get a state for a new request...
+		//http_download_state* state = find_unused_state();
+		//if (!state)
+		//{
+		//	return nullptr;
+		//}
+
+		//state->bytes_read = 0;
+		//state->bytes_sent = 0;
+		//state->header_length = 0;
+		//state->content_bytes_read = 0;
+
+		// decompose the entered URL into hostname, port, service type, and filename.
+		//runtime_decompose_url(url, filename, hostname, service, &port);
+
+		// convert hostname to an ipv4 address.
+		//net_ipv4_by_hostname(hostname, "http", ip_address);
+
+		// create a socket
+		connection->socket = net_socket_open(net_socket_type::TCP);
+		if (!connection->socket)
+		{
+			LOGW("Unable to create a socket.\n");
+			return -1;
+		}
+
+		net_address target_address;
+		net_address_set(&target_address, ip_address, port);
+
+		if (net_socket_connect(connection->socket, &target_address) < 0)
+		{
+			LOGW("Failed to connect to server '%s:%i'\n",
+				ip_address, port);
+			return -1;
+		}
+
+		//state->flags |= HTTP_FLAG_ACTIVE;
+
+		// "DESCRIBE rtsp://192.168.0.157/media.mp4 RTSP/1.0"
+
+		// send a GET request to the server...
+		//core::str::sprintf(get_request,
+		//	1024,
+		//	"GET %s HTTP/1.1\r\nUser-Agent: %s\r\nAccept: */*\r\nHost: %s\r\nConnection: close\r\n\r\n",
+		//	filename,
+		//	user_agent,
+		//	hostname
+		//);
+
+		//core::str::sprintf(get_request,
+		//	1024,
+		//	"OPTIONS * RTSP/1.0\n"
+		//	"CSeq: 1\n",
+		//	ip_address
+		//);
+
+		core::str::sprintf(get_request,
+			1024,
+			"DESCRIBE rtsp://%s/11 RTSP/1.0\n"
+			"CSeq: 1\n",
+			"Authorization: Digest username=\"admin\",\n"
+			"	realm=\"Hipcam RealServer/V1.0\",\n"
+			"	nonce=\"2707c2645ddc4319fd538249f3dbcd1e\",\n"
+			"	uri=\"/11\",\n"
+			"	response=\"525252\"\n\n",
+			ip_address
+		);
+
+/*
+   In order to access media presentations from RTSP servers that require
+   authentication, the client MUST additionally be able to do the
+   following:
+	 * recognize the 401 status code;
+	 * parse and include the WWW-Authenticate header;
+	 * implement Basic Authentication and Digest Authentication.
+*/
+	// https://tools.ietf.org/html/rfc2617
+
+		int32_t bytes_sent = net_socket_send(connection->socket, get_request, core::str::len(get_request));
+		if (bytes_sent < 0)
+		{
+			LOGW("Error sending data to server.\n");
+			//state->flags &= ~HTTP_FLAG_ACTIVE;
+			net_socket_close(connection->socket);
+			connection->socket = 0;
+			return -1;
+		}
+
+		connection->bytes_sent = bytes_sent;
+
+		// now reading headers...
+		//memset(state->header_data, 0, HTTP_HEADER_MAX_SIZE);
+		//state->flags |= HTTP_FLAG_READ_HEADERS;
+
+		// make directories
+		//PathString file_path = temp_path;
+		//path::normalize(&file_path[0]);
+		//path::make_directories(file_path());
+
+		// make temp file
+		//state->handle = fs_open(file_path(), FileMode::FileMode_Write);
+
+		gemini::Allocator allocator = gemini::memory_allocator_default(MEMORY_ZONE_DEFAULT);
+		{
+			fd_set read_set;
+			fd_set except_set;
+
+			FD_ZERO(&read_set);
+			FD_ZERO(&except_set);
+
+			timeval select_timeout;
+			select_timeout.tv_sec = 1;
+
+			int last_socket = -1;
+
+
+			last_socket = connection->socket + 1;
+			FD_SET(connection->socket, &read_set);
+
+
+			const size_t HTTP_BUFFER_SIZE = 32768;
+			char buffer[HTTP_BUFFER_SIZE] = { 0 };
+
+			int32_t socks_ready = select(last_socket, &read_set, 0, 0, &select_timeout);
+			if (socks_ready > 0)
+			{
+				if (FD_ISSET(connection->socket, &read_set))
+				{
+					// This socket can be read from...
+					memset(buffer, 0, HTTP_BUFFER_SIZE);
+
+					// reading file content...
+					int32_t bytes_read = net_socket_recv(connection->socket, buffer, HTTP_BUFFER_SIZE);
+
+					//fs_write(state->handle, buffer, 1, bytes_read);
+					connection->bytes_read += bytes_read;
+					LOGV("read %i bytes.\n", bytes_read);
+					LOGV("data:\n%s\n", buffer);
+					//gemini::string response = gemini::string_create(buffer);
+					//Array<gemini::string> headers(allocator);
+					//rtsp_parse_response(headers, response);
+				}
+			}
+		}
+
+
+		net_socket_close(connection->socket);
+
+
+		return -1;
+	} // rtsp_describe
+
+	void rtsp_parse_response(gemini::Allocator& allocator, http_request* request, HeaderHashSet& headers, Array<gemini::string>& lines)
+	{
+		// Parse the response from an RTSP request.
+
+		// 'RTSP/1.0 401 Unauthorized'
+
+		// the first line of the response is always a response code
+		int items_read = sscanf(lines[0].c_str(),
+			"RTSP/%d.%d %d %s",
+			&request->protocol_major,
+			&request->protocol_minor,
+			&request->status,
+			&request->message);
+
+		assert(items_read == 4);
+
+		for (size_t index = 1; index < lines.size(); ++index)
+		{
+			gemini::string& line = lines[index];
+			LOGV("process line: '%s' ----\n", line.c_str());
+			Array<gemini::string> pieces(allocator);
+			string_split(allocator, pieces, line, ":");
+
+			assert(pieces.size() == 2);
+
+			gemini::string& key = pieces[0];
+			LOGV("key is '%s'\n", key.c_str());
+			gemini::string& value = pieces[1];
+
+
+
+			Array<gemini::string> csv(allocator);
+			string_split(allocator, csv, value, ",");
+			if (csv.size() > 0)
+			{
+				uint32_t advance = 0;
+				if (key == "WWW - Authenticate")
+				{
+					// read and extract the auth type from the parameter list.
+					char auth_type[16] = { 0 };
+					int result = sscanf(csv[0].c_str(), "%s", &auth_type);
+					LOGV("res: %i\n", result);
+					advance = core::str::len(auth_type) + 1; // also skip past the space
+
+					gemini::string prev = csv[0];
+					csv[0] = string_substr(allocator, &csv[0][0], advance, csv[0].length() - advance);
+
+					string_destroy(allocator, prev);
+
+					// Only 'Digest' is supported.
+					assert(core::str::case_insensitive_compare("Digest", auth_type, 0) == 0);
+
+					// extract the once
+					for (size_t csi = 0; csi < csv.size(); ++csi)
+					{
+						//LOGV("csi -> '%s'\n", csv[csi].c_str());
+						Array<gemini::string> kv(allocator);
+						string_split(allocator, kv, csv[csi], "=");
+
+						if (kv[0] == "nonce")
+						{
+							// strip double-quotes and store as the nonce value.
+							request->nonce_value = string_slice(allocator, &kv[1][0], 1, kv[1].length() - 1);
+						}
+
+						for (size_t ki = 0; ki < kv.size(); ++ki)
+						{
+							//LOGV("-> '%s'\n", kv[ki].c_str());
+							string_destroy(allocator, kv[ki]);
+						}
+					}
+				}
+				else if (key == "CSeq")
+				{
+					request->client_sequence_id = string_create(allocator, value);
+				}
+
+				for (size_t csi = 0; csi < csv.size(); ++csi)
+				{
+					//LOGV("csi -> '%s'\n", csv[csi].c_str());
+					string_destroy(allocator, csv[csi]);
+				}
+			}
+
+			//for (size_t line_index = 0; line_index < pieces.size(); ++line_index)
+			//{
+			//	//LOGV("p: '%s'\n", pieces[line_index].c_str());
+
+			//	Array<gemini::string> csv(allocator);
+			//	string_split(allocator, csv, value, ",");
+
+			//	for (size_t csi = 0; csi < csv.size(); ++csi)
+			//	{
+			//		LOGV("csi -> '%s'\n", csv[csi].c_str());
+			//		string_destroy(allocator, csv[csi]);
+			//	}
+
+			//	string_destroy(allocator, pieces[line_index]);
+			//}
+
+			string_destroy(allocator, key);
+			string_destroy(allocator, value);
+		}
+	} // rtsp_parse_response
+
 } // namespace gemini

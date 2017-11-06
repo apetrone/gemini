@@ -457,6 +457,19 @@ namespace gemini
 		return substring;
 	} // string_substr
 
+	string string_slice(gemini::Allocator& allocator, const char* source, uint32_t start, uint32_t end)
+	{
+		const size_t length = end - start;
+		string substring;
+		char* string_data = string_allocate(allocator, length);
+		core::str::copy(string_data, &source[start], length);
+		string_data[length] = '\0';
+		string_data[length] = '\0';
+		substring.string_data_size = length;
+		substring.string_data = string_data;
+		return substring;
+	} // string_slice
+
 	void string_split(gemini::Allocator& allocator, Array<gemini::string>& pieces, const string& line, const char* delimiters)
 	{
 		// current is the character cursor we're currently using.
@@ -525,7 +538,11 @@ namespace gemini
 			{
 				// start reading a string
 				reading_string = 1;
-				++current;
+
+				if (current_in_delimiters)
+				{
+					++current;
+				}
 			}
 			else if (reading_string && *current == '\"')
 			{

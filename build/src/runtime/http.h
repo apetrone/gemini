@@ -25,7 +25,11 @@
 #pragma once
 
 #include <core/typedefs.h>
+#include <core/hashset.h>
+#include <core/str.h>
+
 #include <platform/network.h>
+
 
 namespace gemini
 {
@@ -45,12 +49,17 @@ namespace gemini
 		HTTP_FLAG_ERROR = 8
 	};
 
+	// this should be renamed to RESPONSE and we should have another
+	// that is the ACTUAL request.
 	struct http_request
 	{
 		int32_t status;
 		char message[32];
 		int32_t protocol_major;
 		int32_t protocol_minor;
+
+		gemini::string nonce_value;
+		gemini::string client_sequence_id;
 	};
 
 	struct http_download_state
@@ -84,8 +93,23 @@ namespace gemini
 
 	http_download_state* http_request_file(const char* url, const char* temp_path, const char* user_agent);
 	int32_t http_process_headers(http_download_state* state, const char* lines, size_t header_length, http_request* request);
-
 	uint32_t http_active_download_count();
 
 
+	struct http_connection
+	{
+		platform::net_socket socket;
+		void* userdata;
+
+		// total bytes read from remote
+		uint32_t bytes_read;
+
+		// total bytes sent to remote
+		uint32_t bytes_sent;
+	};
+
+	int32_t rtsp_describe(http_connection* connection, http_request* request, const char* ip_address, const char* user_agent);
+
+	typedef HashSet<gemini::string, gemini::string> HeaderHashSet;
+	void rtsp_parse_response(gemini::Allocator& allocator, http_request* request, HeaderHashSet& headers, Array<gemini::string>& lines);
 } // namespace gemini
