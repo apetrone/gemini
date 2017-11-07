@@ -108,7 +108,7 @@ namespace gemini
 		uint32_t bytes_sent;
 	};
 
-	int32_t rtsp_describe(http_connection* connection, http_request* request, const char* ip_address, const char* user_agent);
+	int32_t rtsp_describe(http_connection* connection, const char* ip_address, const char* user_agent);
 
 	typedef HashSet<gemini::string, gemini::string> HeaderHashSet;
 	void rtsp_parse_response(gemini::Allocator& allocator, http_request* request, HeaderHashSet& headers, Array<gemini::string>& lines);

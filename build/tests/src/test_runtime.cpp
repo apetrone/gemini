@@ -317,9 +317,9 @@ UNITTEST(rtsp)
 
 
 
-
-	//gemini::rtsp_describe(&connection, &request, "192.168.0.157", "test");
-
+#if 1
+	gemini::rtsp_describe(&connection, "192.168.0.157", "test");
+#else
 	gemini::Allocator allocator = gemini::memory_allocator_default(MEMORY_ZONE_DEFAULT);
 
 	gemini::string response = gemini::string_create(
@@ -370,7 +370,7 @@ WWW - Authenticate : Digest realm = \"Hipcam RealServer/V1.0\", nonce = \"35c91a
 
 	string_destroy(allocator, request.nonce_value);
 	string_destroy(allocator, request.client_sequence_id);
-
+#endif
 	gemini::http_shutdown();
 	platform::net_shutdown();
 }
@@ -540,8 +540,7 @@ int main(int, char**)
 	using namespace gemini;
 
 	//unittest::UnitTest::execute();
-	//UNITTEST_EXECUTE(rtsp);
-	UNITTEST_EXECUTE(md5hash);
+	UNITTEST_EXECUTE(rtsp);
 	gemini::runtime_shutdown();
 	gemini::core_shutdown();
 	return 0;

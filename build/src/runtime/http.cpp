@@ -30,6 +30,7 @@
 #include <core/str.h>
 #include <core/config.h>
 
+#include <runtime/hash.h>
 #include <runtime/runtime.h>
 
 using namespace platform;
@@ -372,7 +373,7 @@ namespace gemini
 	} // http_active_download_count
 
 
-	int32_t rtsp_describe(http_connection* connection, http_request* request, const char* ip_address, const char* user_agent)
+	int32_t rtsp_describe(http_connection* connection, const char* ip_address, const char* user_agent)
 	{
 		//char service[32] 		= { 0 };
 		//char filename[256] 		= { 0 };
@@ -444,11 +445,6 @@ namespace gemini
 			1024,
 			"DESCRIBE rtsp://%s/11 RTSP/1.0\n"
 			"CSeq: 1\n",
-			"Authorization: Digest username=\"admin\",\n"
-			"	realm=\"Hipcam RealServer/V1.0\",\n"
-			"	nonce=\"2707c2645ddc4319fd538249f3dbcd1e\",\n"
-			"	uri=\"/11\",\n"
-			"	response=\"525252\"\n\n",
 			ip_address
 		);
 
@@ -487,6 +483,7 @@ namespace gemini
 		//state->handle = fs_open(file_path(), FileMode::FileMode_Write);
 
 		gemini::Allocator allocator = gemini::memory_allocator_default(MEMORY_ZONE_DEFAULT);
+		while (true)
 		{
 			fd_set read_set;
 			fd_set except_set;
@@ -525,6 +522,59 @@ namespace gemini
 					//gemini::string response = gemini::string_create(buffer);
 					//Array<gemini::string> headers(allocator);
 					//rtsp_parse_response(headers, response);
+
+					gemini::Allocator allocator = gemini::memory_allocator_default(MEMORY_ZONE_DEFAULT);
+					http_request request;
+					HeaderHashSet headers(allocator);
+					Array<gemini::string> lines(allocator);
+					string_split(allocator, lines, gemini::string_create(buffer), "\n");
+
+					rtsp_parse_response(allocator, &request, headers, lines);
+
+					if (request.status == 401)
+					{
+						// https://en.wikipedia.org/wiki/Digest_access_authentication#Example_with_explanation
+						LOGV("nonce = '%s'\n", request.nonce_value.c_str());
+						LOGV("CSeq = '%s'\n", request.client_sequence_id.c_str());
+
+						// A1 = username:realm:password
+						// A2 = <Method> ":" <digest-uri-value>
+
+						//request - digest = "md5(md5(A1):nonce-value:md5(A2))"
+
+						gemini::string a1 = gemini::string_create("admin:Hipcam RealServer/V1.0:password");
+						Hash128 a1_hash = md5_digest(a1.c_str(), a1.length());
+
+						gemini::string a2 = gemini::string_create(allocator, core::str::format("DESCRIBE rtsp://%s/11", ip_address));
+						Hash128 a2_hash = md5_digest(a2.c_str(), a2.length());
+
+						gemini::string request_digest = gemini::string_create(allocator, core::str::format("%x%x%x%x:%s:%x%x%x%x",
+							a1_hash.a, a1_hash.b, a1_hash.c, a1_hash.d,
+							request.nonce_value.c_str(),
+							a2_hash.a, a2_hash.b, a2_hash.c, a2_hash.d));
+
+						Hash128 digest_hash = md5_digest(request_digest.c_str(), request_digest.length());
+
+						gemini::string_destroy(allocator, a2);
+						gemini::string_destroy(allocator, request_digest);
+
+						const char* response = core::str::format("DESCRIBE rtsp://%s/11 RTSP/1.0\nCSeq: 1\nAuthorization: Digest username=\"admin\",\n      realm=\"Hipcam RealServer/V1.0\",\n      nonce=\"%s\",\n      response=\"%x%x%x%x\"\n\n",
+							ip_address,
+							request.nonce_value.c_str(),
+							digest_hash.a, digest_hash.b, digest_hash.c, digest_hash.d);
+
+
+						LOGV("sending:\n%s\n", response);
+						net_socket_send(connection->socket, response, core::str::len(response));
+
+						for (size_t index = 0; index < lines.size(); ++index)
+						{
+							string_destroy(allocator, lines[index]);
+						}
+
+						string_destroy(allocator, request.nonce_value);
+						string_destroy(allocator, request.client_sequence_id);
+					}
 				}
 			}
 		}
@@ -555,14 +605,14 @@ namespace gemini
 		for (size_t index = 1; index < lines.size(); ++index)
 		{
 			gemini::string& line = lines[index];
-			LOGV("process line: '%s' ----\n", line.c_str());
+			//LOGV("process line: '%s' ----\n", line.c_str());
 			Array<gemini::string> pieces(allocator);
 			string_split(allocator, pieces, line, ":");
 
 			assert(pieces.size() == 2);
 
 			gemini::string& key = pieces[0];
-			LOGV("key is '%s'\n", key.c_str());
+			//LOGV("key is '%s'\n", key.c_str());
 			gemini::string& value = pieces[1];
 
 
@@ -572,12 +622,12 @@ namespace gemini
 			if (csv.size() > 0)
 			{
 				uint32_t advance = 0;
-				if (key == "WWW - Authenticate")
+				if (key == "WWW-Authenticate")
 				{
 					// read and extract the auth type from the parameter list.
 					char auth_type[16] = { 0 };
 					int result = sscanf(csv[0].c_str(), "%s", &auth_type);
-					LOGV("res: %i\n", result);
+					//LOGV("res: %i\n", result);
 					advance = core::str::len(auth_type) + 1; // also skip past the space
 
 					gemini::string prev = csv[0];
