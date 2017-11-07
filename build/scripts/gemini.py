@@ -731,6 +731,9 @@ def get_libruntime(arguments, target_platform, libcore):
 		"src/runtime/debugvar.cpp",
 		"src/runtime/debugvar.h",
 
+		"src/runtime/hash.cpp",
+		"src/runtime/hash.h",
+
 		"src/runtime/hotloading.cpp",
 		"src/runtime/hotloading.h",
 
