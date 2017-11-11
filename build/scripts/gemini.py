@@ -1203,6 +1203,8 @@ def products(arguments, **kwargs):
 			os.path.join(GAME_ROOT_PATH, "src/animated.h"),
 			os.path.join(GAME_ROOT_PATH, "src/charactercontroller.cpp"),
 			os.path.join(GAME_ROOT_PATH, "src/charactercontroller.h"),
+			os.path.join(GAME_ROOT_PATH, "src/enemy.cpp"),
+			os.path.join(GAME_ROOT_PATH, "src/enemy.h"),
 			os.path.join(GAME_ROOT_PATH, "src/game_ui.cpp"),
 			os.path.join(GAME_ROOT_PATH, "src/game_ui.h"),
 			os.path.join(GAME_ROOT_PATH, "src/gameinterface.cpp"),
