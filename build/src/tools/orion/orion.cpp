@@ -89,6 +89,7 @@ using namespace gemini;
 #define TEST_TELEMETRY_SYSTEM 0
 #define TEST_TELEMETRY_HOST 0
 #define DRAW_IMOCAP 0
+#define ENABLE_VEC_QUAT_WIDGETS 0
 
 #define DRAW_LINES 0
 const size_t TOTAL_LINES = 256;
@@ -2158,6 +2159,7 @@ public:
 
 			center_layout->add_panel(timeline);
 
+#if ENABLE_VEC_QUAT_WIDGETS
 			vec3_widget = new ParameterVec3Widget(main_panel, &test_parameter);
 			vec3_widget->set_maximum_size(gui::Size(512, 200));
 
@@ -2167,6 +2169,8 @@ public:
 			quat_widget = new ParameterQuatWidget(main_panel, &rotation_parameter);
 			quat_widget->set_maximum_size(gui::Size(512, 200));
 			center_layout->add_panel(quat_widget);
+#endif
+
 #endif
 
 
@@ -2267,12 +2271,14 @@ public:
 		//ModelAttachment* modelattachment = mesh->attachments_by_name["weapon"];
 		//modelattachment->
 
+
+#if ENABLE_VEC_QUAT_WIDGETS
 		test_parameter.value = &attachment_point->position;
 		vec3_widget->parameter_changed();
 
 		rotation_parameter.value = &attachment_point->orientation;
 		quat_widget->parameter_changed();
-
+#endif
 
 		render_scene_animation_play(render_scene, animated_mesh, "idle", 0);
 
