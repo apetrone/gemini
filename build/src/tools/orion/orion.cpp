@@ -1350,7 +1350,14 @@ public:
 			}
 			else if (event.subtype == kernel::MouseWheelMoved)
 			{
-				compositor->cursor_scroll(event.wheel_direction);
+				bool handled = false; // compositor->cursor_scroll(event.wheel_direction);
+				if (!handled)
+				{
+					glm::vec3 offset = camera.get_target_offset();
+					offset.z += event.wheel_direction * -0.5f;
+					offset.z = glm::clamp(offset.z, 0.25f, 10.0f);
+					camera.set_target_offset(glm::vec3(offset.x, offset.y, offset.z));
+				}
 			}
 		}
 	}
@@ -1840,11 +1847,15 @@ public:
 			//camera.set_pitch(12.45f);
 
 			// test for rendering cube_rig2
-			camera.set_position(glm::vec3(-1.51, 3.67f, 1.21f));
+			//camera.set_position(glm::vec3(-1.51, 3.67f, 1.21f));
 			camera.set_yaw(52.35f);
 			camera.set_pitch(48.90f);
 
-			camera.set_type(Camera::FIRST_PERSON);
+			//camera.set_type(Camera::FIRST_PERSON);
+
+			camera.set_type(Camera::THIRD_PERSON);
+			camera.set_target_offset(glm::vec3(0.0f, 1.0f, 5.0f));
+
 			camera.update_view();
 		}
 
