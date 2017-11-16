@@ -379,6 +379,7 @@ struct Camera
 	void set_view(const glm::vec3& view_direction) { view = view_direction; }
 	void set_type(const CameraType cameratype) { type = cameratype; }
 	void set_target_offset(const glm::vec3& in_target_offset) { target_offset = in_target_offset; }
+	const glm::vec3 get_target_offset() const { return target_offset; }
 
 	const glm::mat4& get_modelview() const { return modelview; }
 	const glm::mat4& get_projection() const { return projection; }

@@ -1480,37 +1480,44 @@ public:
 		watch_path.append(PATH_SEPARATOR_STRING);
 		watch_path.append("150");
 		watch_path.normalize(PATH_SEPARATOR);
+		platform::make_directory(watch_path());
 		monitor_handles[0] = directory_monitor_add(watch_path(), monitor_delegate);
 
 		watch_path = asset_root;
 		watch_path.append(PATH_SEPARATOR_STRING);
 		watch_path.append("textures");
 		watch_path.normalize(PATH_SEPARATOR);
+		platform::make_directory(watch_path());
 		monitor_handles[1] = directory_monitor_add(watch_path(), monitor_delegate);
 
 		watch_path = asset_root;
 		watch_path.append(PATH_SEPARATOR_STRING);
 		watch_path.append("materials");
 		watch_path.normalize(PATH_SEPARATOR);
+		platform::make_directory(watch_path());
 		monitor_handles[2] = directory_monitor_add(watch_path(), monitor_delegate);
 
 		watch_path = asset_root;
 		watch_path.append(PATH_SEPARATOR_STRING);
 		watch_path.append("models");
 		watch_path.normalize(PATH_SEPARATOR);
+		platform::make_directory(watch_path());
 		monitor_handles[3] = directory_monitor_add(watch_path(), monitor_delegate);
 
 		watch_path = asset_root;
 		watch_path.append(PATH_SEPARATOR_STRING);
 		watch_path.append("conf");
 		watch_path.normalize(PATH_SEPARATOR);
+		platform::make_directory(watch_path());
 		monitor_handles[4] = directory_monitor_add(watch_path(), monitor_delegate);
 
 
 		// EXPERIMENTAL ZONE
 		{
 			// load a single mesh for testing
-			gemini::AssetHandle mesh_handle = mesh_load("models/test_model/test_model");
+			//const char* test_model = "models/test_model/test_model";
+			const char* test_model = "models/graphtest";
+			gemini::AssetHandle mesh_handle = mesh_load(test_model);
 			gemini::Mesh* mesh_instance = mesh_from_handle(mesh_handle);
 			single_mesh.load_from(default_allocator, mesh_instance);
 		}
@@ -1682,6 +1689,17 @@ public:
 		LOGV("stopped playback.\n");
 	}
 
+	void on_view_reset(void)
+	{
+		camera.set_yaw(52.35f);
+		camera.set_pitch(48.90f);
+		camera.set_position(glm::vec3(0.0f, 0.0f, 0.0f));
+		//camera.set_type(Camera::FIRST_PERSON);
+		camera.set_type(Camera::THIRD_PERSON);
+		camera.set_target_offset(glm::vec3(0.0f, 1.0f, 5.0f));
+		camera.update_view();
+	}
+
 
 	void on_window_toggle_asset_processor(void)
 	{
@@ -1692,7 +1710,7 @@ public:
 
 	void load_preferences(const PathString& preferences_file)
 	{
-		environment.last_project = string_create(default_allocator, "x:/games/vrpowergrid");
+		environment.last_project = string_create(default_allocator, "x:/games/hydrogen");
 		environment.open_last_project_on_start = 1;
 	}
 
@@ -1834,6 +1852,7 @@ public:
 
 			// set perspective on camera
 			camera.perspective(60.0f, (int)params.frame.width, (int)params.frame.height, 0.01f, 1024.0f);
+			camera.set_position(glm::vec3(0.0f, 0.0f, 0.0f));
 			//camera.set_position(glm::vec3(0.0f, 5.0f, 10.0f));
 
 			// test for rendering mocap suit
@@ -2130,6 +2149,10 @@ public:
 				record->add_item("Stop Playback", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_playback_stop, this));
 				menubar->add_menu(record);
 
+				gui::Menu* viewmenu = new gui::Menu("View", menubar);
+				viewmenu->add_item("Reset Camera", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_view_reset, this));
+				menubar->add_menu(viewmenu);
+
 				gui::Menu* windowmenu = new gui::Menu("Window", menubar);
 				windowmenu->add_item("Show Asset Processor", MAKE_MEMBER_DELEGATE(void(), EditorKernel, &EditorKernel::on_window_toggle_asset_processor, this));
 				menubar->add_menu(windowmenu);
@@ -2267,15 +2290,20 @@ public:
 		//test_load_model("models/test_character/test_character");
 		TransformNode* node0 = nullptr;
 		TransformNode* node1 = nullptr;
+		TransformNode* static_mesh = nullptr;
 		TransformNode* attachment = nullptr;
 
-		node0 = test_load_model("test_model", "models/test_model/test_model", 0, &animated_mesh);
+
+		//node0 = test_load_model("test_model", "models/test_model/test_model", 0, &animated_mesh);
 		//node1 = test_load_model("enemy", "models/test_enemy/test_enemy", 1, &second_mesh);
+		static_mesh = test_load_model("test_model", "models/graphtest", 1, &second_mesh);
 
-		attachment = test_load_model("attachment", "models/test_attachment/test_attachment", 30, &attachment_mesh);
+		//attachment = test_load_model("attachment", "models/test_attachment/test_attachment", 30, &attachment_mesh);
 
-		TransformNode* attachment_point = transform_graph_find_child(node0, "weapon");
-		assert(attachment_point);
+		TransformNode* attachment_point = nullptr;
+		//attachment_point = transform_graph_find_child(node0, "weapon");
+		//assert(attachment_point);
+
 		//AnimatedMeshComponent* component = render_scene_get_animated_component(render_scene, second_mesh);
 
 		//Mesh* mesh = mesh_from_handle(component->mesh_handle);
@@ -2291,10 +2319,15 @@ public:
 		quat_widget->parameter_changed();
 #endif
 
-		render_scene_animation_play(render_scene, animated_mesh, "idle", 0);
+		if (animated_mesh)
+		{
+			render_scene_animation_play(render_scene, animated_mesh, "idle", 0);
+		}
 
-
-		transform_graph_set_parent(attachment, attachment_point);
+		if (attachment && attachment_point)
+		{
+			transform_graph_set_parent(attachment, attachment_point);
+		}
 
 
 		if (node1)
@@ -2312,6 +2345,7 @@ public:
 		animated_mesh = mesh_load("models/cube_rig/cube_rig");
 		//animated_mesh = mesh_load("models/chest_rig/chest_rig");
 		//animated_mesh = mesh_load("models/isocarbon_rig/isocarbon_rig");
+
 
 		glm::mat4 transform(1.0f);
 
@@ -2343,7 +2377,6 @@ public:
 			transform = glm::translate(transform, glm::vec3(-3.0f, 0.0f, 0.0f));
 		}
 #endif
-
 
 		return kernel::NoError;
 	}
@@ -2461,7 +2494,7 @@ public:
 		//notify_client_tick(&notify_client);
 		tick_queued_asset_changes(*queued_asset_changes, kernel::parameters().framedelta_seconds);
 
-		if (enable_animation)
+		if (enable_animation && animated_mesh != 0)
 		{
 			// TODO: update the timeline
 			uint32_t current_frame = render_scene_animation_current_frame(render_scene, animated_mesh, 0);
