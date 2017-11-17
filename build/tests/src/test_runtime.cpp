@@ -38,6 +38,7 @@
 #include <runtime/jobqueue.h>
 #include <runtime/geometry.h>
 #include <runtime/http.h>
+#include <runtime/graph.h>
 
 #include <assert.h>
 

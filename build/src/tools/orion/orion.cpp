@@ -52,7 +52,7 @@
 
 #include <ui/button.h>
 #include <ui/compositor.h>
-#include <ui/graph.h>
+#include <ui/plot.h>
 #include <ui/label.h>
 #include <ui/layout.h>
 #include <ui/menu.h>

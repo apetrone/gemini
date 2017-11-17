@@ -47,7 +47,7 @@
 
 #include <ui/ui.h>
 #include <ui/compositor.h>
-#include <ui/graph.h>
+#include <ui/plot.h>
 #include <ui/button.h>
 #include <ui/slider.h>
 #include <ui/label.h>
