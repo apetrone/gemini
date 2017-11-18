@@ -341,13 +341,14 @@ namespace platform
 			{
 				if (*path == PATH_SEPARATOR)
 				{
-					strncpy(directory,
-						normalized_path,
-						static_cast<size_t>((path + 1) - normalized_path));
-					platform::Result result = platform::make_directory(directory);
-					if (result.failed())
+					core::str::copy(directory, normalized_path, static_cast<size_t>((path + 1) - normalized_path));
+					if (!platform::fs_directory_exists(directory))
 					{
-						return result;
+						platform::Result result = platform::make_directory(directory);
+						if (result.failed())
+						{
+							return result;
+						}
 					}
 				}
 

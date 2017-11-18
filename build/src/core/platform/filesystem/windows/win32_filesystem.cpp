@@ -84,7 +84,11 @@ namespace platform
 				// One or more intermediate directories do not exist.
 				result = Result::failure("CreateDirectory: PATH_NOT_FOUND");
 			}
-			else
+			else if (error_code == ERROR_ACCESS_DENIED)
+			{
+				result = Result::failure("CreateDirectory: ACCESS_DENIED");
+			}
+			else if (error_code != ERROR_ALREADY_EXISTS)
 			{
 				result = Result::failure("CreateDirectory failed!");
 			}

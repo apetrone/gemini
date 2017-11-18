@@ -157,7 +157,7 @@ namespace core
 			user_application_path = application_directory;
 			if (!directory_exists(user_application_path(), false))
 			{
-				platform::Result result = platform::make_directory(user_application_path());
+				platform::Result result = platform::path::make_directories(user_application_path());
 				if (result.failed())
 				{
 					LOGW("Failed to create user application directory: \"%s\"\n", user_application_path());
