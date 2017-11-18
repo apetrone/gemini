@@ -143,7 +143,7 @@ namespace gemini
 					argument = core::str::format("-%s", current->short_name);
 				}
 
-				const uint32_t column_length = core::str::len(argument);
+				const uint32_t column_length = static_cast<uint32_t>(core::str::len(argument));
 				if (column_length > widest_column)
 				{
 					widest_column = column_length;
@@ -152,7 +152,7 @@ namespace gemini
 			else
 			{
 				const char* argument = core::str::format("--%s, -%s", current->long_name, current->short_name);
-				uint32_t column_length = core::str::len(argument) + 2;
+				uint32_t column_length = static_cast<uint32_t>(core::str::len(argument)) + 2;
 				if (column_length > widest_column)
 				{
 					widest_column = column_length;
@@ -179,7 +179,7 @@ namespace gemini
 			{
 				argument = core::str::format("--%s, -%s", current->long_name, current->short_name);
 			}
-			uint32_t space_left = widest_column - core::str::len(argument);
+			uint32_t space_left = widest_column - static_cast<uint32_t>(core::str::len(argument));
 
 			const char* prefix = "";
 			const char* postfix = "";
@@ -236,11 +236,11 @@ namespace gemini
 
 		for (size_t index = 0; index < tokens.size(); ++index)
 		{
-			const gemini::string& line = tokens[index];
-			//LOGV("%i arg = %s\n", index, line.c_str());
+			const gemini::string& token_string = tokens[index];
+			//LOGV("%i arg = %s\n", index, token_string.c_str());
 
 			Array<gemini::string> pieces(*context->allocator);
-			string_split(string_allocator, pieces, line, "=");
+			string_split(string_allocator, pieces, token_string, "=");
 
 			for (size_t token_index = 0; token_index < pieces.size(); ++token_index)
 			{
@@ -300,9 +300,9 @@ namespace gemini
 						else if (last_argument->string_value)
 						{
 							// If token is quoted, remove the quotes here:
-							if (token[0] == '\"' && token[token.length() - 1] == '\"')
+							if (token[0] == '\"' && token[static_cast<int32_t>(token.length()) - 1] == '\"')
 							{
-								*last_argument->string_value = string_substr(*context->allocator, token.c_str(), 1, token.length() - 2);
+								*last_argument->string_value = string_substr(*context->allocator, token.c_str(), 1, static_cast<uint32_t>(token.length()) - 2);
 							}
 							else
 							{

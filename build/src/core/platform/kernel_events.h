@@ -134,7 +134,7 @@ namespace kernel
 
 	struct KeyboardEvent : public Event<Keyboard>
 	{
-		int unicode;
+		uint32_t unicode;
 		int key;
 		uint16_t modifiers;
 		uint16_t is_text;

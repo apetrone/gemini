@@ -66,7 +66,7 @@ namespace gemini
 
 	uint64_t atom_increment64(volatile uint64_t* destination, uint64_t value)
 	{
-		return InterlockedAdd64((volatile LONG64*)destination, value);
+		return static_cast<uint64_t>(InterlockedAdd64(reinterpret_cast<volatile LONG64*>(destination), static_cast<LONG64>(value)));
 	}
 #elif defined(PLATFORM_LINUX) && (defined(__clang__) || defined(__GNUC__))
 	bool atom_compare_and_swap32(volatile uint32_t* destination, uint32_t new_value, uint32_t comparand)

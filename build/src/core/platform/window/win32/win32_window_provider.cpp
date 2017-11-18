@@ -331,7 +331,7 @@ namespace platform
 					event.is_down = (last_key == 0) ? true : false;
 					event.modifiers = 0;
 					event.window = window;
-					event.unicode = vkey;
+					event.unicode = static_cast<uint32_t>(vkey);
 					event.is_text = 0;
 					kernel::event_dispatch(event);
 					return 0;
@@ -527,7 +527,7 @@ namespace platform
 						event.modifiers = 0;
 						event.window = window;
 						event.is_text = 1;
-						event.unicode = wparam;
+						event.unicode = static_cast<uint32_t>(wparam);
 						kernel::event_dispatch(event);
 						return 0;
 					}
