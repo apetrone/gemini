@@ -322,7 +322,7 @@ namespace platform
 		} // normalize
 
 
-		void make_directories(const char* normalized_path)
+		platform::Result make_directories(const char* normalized_path)
 		{
 			const char* path = normalized_path;
 			char directory[MAX_PATH_SIZE];
@@ -330,12 +330,13 @@ namespace platform
 			// don't accept paths that are too short
 			if (strlen(normalized_path) < 2)
 			{
-				return;
+				return Result::failure("Path is too short");
 			}
 
 			memset(directory, 0, MAX_PATH_SIZE);
 
-			// loop through and call mkdir on each separate directory progressively
+			// loop through and call mkdir on each separate directory
+			// leading up to the final directory.
 			while(*path)
 			{
 				if (*path == PATH_SEPARATOR)
@@ -343,11 +344,17 @@ namespace platform
 					strncpy(directory,
 						normalized_path,
 						static_cast<size_t>((path + 1) - normalized_path));
-					platform::make_directory(directory);
+					platform::Result result = platform::make_directory(directory);
+					if (result.failed())
+					{
+						return result;
+					}
 				}
 
 				++path;
 			}
+
+			return platform::make_directory(normalized_path);
 		} // make_directories
 	} // namespace path
 } // namespace platform

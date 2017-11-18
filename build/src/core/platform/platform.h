@@ -203,7 +203,7 @@ namespace platform
 		void normalize(char* path);
 
 		// make all non-existent directories along a normalized_path
-		void make_directories(const char* normalized_path);
+		Result make_directories(const char* normalized_path);
 	} // namespace path
 
 	struct DynamicLibrary
