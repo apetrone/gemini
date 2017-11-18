@@ -78,6 +78,7 @@
 
 #include <gui/spring_panel.h>
 #include <gui/telemetry_panel.h>
+#include <gui/render_panel.h>
 
 using namespace platform;
 using namespace renderer;
@@ -96,59 +97,6 @@ using namespace gemini;
 
 #define DRAW_LINES 0
 const size_t TOTAL_LINES = 256;
-
-namespace gui
-{
-	// This uses a render target to present data
-	class RenderableSurface : public gui::Panel
-	{
-	public:
-		RenderableSurface(Panel* parent)
-			: Panel(parent)
-			, render_device(nullptr)
-			, target(nullptr)
-			, handle(render::WhiteTexture)
-		{
-			flags |= Flag_CursorEnabled;
-			set_name("RenderableSurface");
-		}
-
-		void set_device(render2::Device* device) { render_device = device; }
-		void set_render_target(render2::RenderTarget* render_target) { target = render_target; }
-		render2::RenderTarget* get_render_target() const { return target; }
-		void set_texture_handle(int ref) { handle = ref; }
-
-		virtual void render(gui::Compositor* /*compositor*/, gui::Renderer* /*renderer*/, gui::render::CommandList& render_commands) override
-		{
-			gui::Painter painter(this, render_commands);
-
-			if (on_render_content.is_valid())
-			{
-				on_render_content(target);
-			}
-
-			painter.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], handle, gemini::Color::from_rgba(255, 255, 255, 255));
-		}
-
-		// invoked when the handler should render its content to the render
-		// target.
-		gemini::Delegate<void (render2::RenderTarget*)> on_render_content;
-
-		virtual void set_size(const Size& new_size)
-		{
-			// resize the render target
-			LOGV("resize render target %i %i\n", new_size.width, new_size.height);
-			gui::Panel::set_size(new_size);
-			//https://blog.nelhage.com/2016/12/how-i-test/
-			render_device->resize_render_target(target, new_size.width, new_size.height);
-		}
-
-	private:
-		render2::Device* render_device;
-		render2::RenderTarget* target;
-		int handle;
-	}; // RenderableSurface
-} // namespace gui
 
 struct MyVertex
 {
