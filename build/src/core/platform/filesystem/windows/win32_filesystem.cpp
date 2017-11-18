@@ -73,13 +73,21 @@ namespace platform
 	Result make_directory(const char* path)
 	{
 		Result result;
-		int status_code = 0;
+		BOOL create_result = CreateDirectoryA(path, nullptr);
 
-		status_code = _mkdir(path);
-		if (status_code == -1)
+		if (create_result == 0)
 		{
-			// TODO: print out the errno
-			result = Result::failure("_mkdir failed!");
+			DWORD error_code = GetLastError();
+			if (error_code == ERROR_PATH_NOT_FOUND)
+			{
+				// This function only creates the last directory in the path.
+				// One or more intermediate directories do not exist.
+				result = Result::failure("CreateDirectory: PATH_NOT_FOUND");
+			}
+			else
+			{
+				result = Result::failure("CreateDirectory failed!");
+			}
 		}
 
 		return result;
