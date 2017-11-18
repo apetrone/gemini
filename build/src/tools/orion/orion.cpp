@@ -930,6 +930,11 @@ struct EditorEnvironment
 	}
 };
 
+
+
+
+
+
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -1043,6 +1048,9 @@ private:
 	PathDelayHashSet* queued_asset_changes;
 
 	EntityRenderState entity_render_state;
+
+
+
 
 public:
 	EditorKernel()

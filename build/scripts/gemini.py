@@ -731,6 +731,9 @@ def get_libruntime(arguments, target_platform, libcore):
 		"src/runtime/debugvar.cpp",
 		"src/runtime/debugvar.h",
 
+		"src/runtime/graph.cpp",
+		"src/runtime/graph.h",
+
 		"src/runtime/hotloading.cpp",
 		"src/runtime/hotloading.h",
 
@@ -1196,46 +1199,57 @@ def products(arguments, **kwargs):
 
 		# No need to whitelist; just glob everything for the game.
 		game.sources += [
-			"src/include/sdk/*.h",
-			os.path.join(GAME_ROOT_PATH, "src/ai_behaviors.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/ai_behaviors.h"),
-			os.path.join(GAME_ROOT_PATH, "src/animated.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/animated.h"),
-			os.path.join(GAME_ROOT_PATH, "src/charactercontroller.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/charactercontroller.h"),
-			os.path.join(GAME_ROOT_PATH, "src/enemy.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/enemy.h"),
-			os.path.join(GAME_ROOT_PATH, "src/game_ui.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/game_ui.h"),
-			os.path.join(GAME_ROOT_PATH, "src/gameinterface.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/gameinterface.h"),
-			os.path.join(GAME_ROOT_PATH, "src/gamma_rays.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/gamma_rays.h"),
-			os.path.join(GAME_ROOT_PATH, "src/npc.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/npc.h"),
-			os.path.join(GAME_ROOT_PATH, "src/player.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/player.h"),
-			# os.path.join(GAME_ROOT_PATH, "src/project_helium.cpp"),
-			# os.path.join(GAME_ROOT_PATH, "src/project_helium.h"),
-			# os.path.join(GAME_ROOT_PATH, "src/project_hydrogen.cpp"),
-			# os.path.join(GAME_ROOT_PATH, "src/project_hydrogen.h"),
-			os.path.join(GAME_ROOT_PATH, "src/renderable.h"),
-			# os.path.join(GAME_ROOT_PATH, "src/rotationsnap.cpp"),
-			# os.path.join(GAME_ROOT_PATH, "src/rotationsnap.h"),
-			# os.path.join(GAME_ROOT_PATH, "src/simplegame.cpp"),
-			# os.path.join(GAME_ROOT_PATH, "src/simplegame.h"),
-			os.path.join(GAME_ROOT_PATH, "src/staticmesh.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/staticmesh.h"),
-			os.path.join(GAME_ROOT_PATH, "src/test.cpp"),
-			# os.path.join(GAME_ROOT_PATH, "src/testgame.cpp"),
-			# os.path.join(GAME_ROOT_PATH, "src/testgame.h"),
-			os.path.join(GAME_ROOT_PATH, "src/trigger.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/trigger.h"),
-			os.path.join(GAME_ROOT_PATH, "src/weapon.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/weapon.h"),
-			os.path.join(GAME_ROOT_PATH, "src/world.cpp"),
-			os.path.join(GAME_ROOT_PATH, "src/world.h")
+			"src/include/sdk/*.h"
 		]
+
+		if False:
+			game.sources.extend([
+				os.path.join(GAME_ROOT_PATH, "src/ai_behaviors.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/ai_behaviors.h"),
+				os.path.join(GAME_ROOT_PATH, "src/animated.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/animated.h"),
+				os.path.join(GAME_ROOT_PATH, "src/charactercontroller.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/charactercontroller.h"),
+				os.path.join(GAME_ROOT_PATH, "src/enemy.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/enemy.h"),
+				os.path.join(GAME_ROOT_PATH, "src/game_ui.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/game_ui.h"),
+				os.path.join(GAME_ROOT_PATH, "src/gameinterface.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/gameinterface.h"),
+				os.path.join(GAME_ROOT_PATH, "src/gamma_rays.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/gamma_rays.h"),
+				os.path.join(GAME_ROOT_PATH, "src/npc.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/npc.h"),
+				os.path.join(GAME_ROOT_PATH, "src/player.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/player.h"),
+				# os.path.join(GAME_ROOT_PATH, "src/project_helium.cpp"),
+				# os.path.join(GAME_ROOT_PATH, "src/project_helium.h"),
+				# os.path.join(GAME_ROOT_PATH, "src/project_hydrogen.cpp"),
+				# os.path.join(GAME_ROOT_PATH, "src/project_hydrogen.h"),
+				os.path.join(GAME_ROOT_PATH, "src/renderable.h"),
+				# os.path.join(GAME_ROOT_PATH, "src/rotationsnap.cpp"),
+				# os.path.join(GAME_ROOT_PATH, "src/rotationsnap.h"),
+				# os.path.join(GAME_ROOT_PATH, "src/simplegame.cpp"),
+				# os.path.join(GAME_ROOT_PATH, "src/simplegame.h"),
+				os.path.join(GAME_ROOT_PATH, "src/staticmesh.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/staticmesh.h"),
+				os.path.join(GAME_ROOT_PATH, "src/test.cpp"),
+				# os.path.join(GAME_ROOT_PATH, "src/testgame.cpp"),
+				# os.path.join(GAME_ROOT_PATH, "src/testgame.h"),
+				os.path.join(GAME_ROOT_PATH, "src/trigger.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/trigger.h"),
+				os.path.join(GAME_ROOT_PATH, "src/weapon.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/weapon.h"),
+				os.path.join(GAME_ROOT_PATH, "src/world.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/world.h")
+			])
+		else:
+			game.sources.extend([
+				os.path.join(GAME_ROOT_PATH, "src/game_engine_glue.cpp"),
+
+				os.path.join(GAME_ROOT_PATH, "src/project_hydrogen.cpp"),
+				os.path.join(GAME_ROOT_PATH, "src/project_hydrogen.h")
+			])
 
 		gemini.dependencies += [ game ]
 

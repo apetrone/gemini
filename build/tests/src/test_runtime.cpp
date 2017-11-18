@@ -433,6 +433,45 @@ UNITTEST(base64_encoding)
 } // base64_encoding
 
 
+
+
+
+
+
+
+
+UNITTEST(graph_test)
+{
+	gemini::Allocator allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+	GraphContainer graph(allocator);
+
+
+	GraphNode* n0 = graph_create_node(&graph);
+	n0->name = "1";
+
+	GraphNode* n1 = graph_create_node(&graph);
+	n1->name = "2";
+
+	GraphNode* n2 = graph_create_node(&graph);
+	n2->name = "3";
+
+	GraphNode* n3 = graph_create_node(&graph);
+	n3->name = "4";
+
+	graph_add_edge(&graph, GraphEdge(0, 1));
+	graph_add_edge(&graph, GraphEdge(1, 2));
+	graph_add_edge(&graph, GraphEdge(2, 3));
+	graph_add_edge(&graph, GraphEdge(3, 0));
+
+
+	graph_next_node(&graph, n0);
+
+	LOGV("adjacent: %s\n", graph_node_is_adjacent(&graph, 2, 0) ? "Yes" : "No");
+
+
+	graph_purge(&graph);
+}
+
 int main(int, char**)
 {
 	gemini::core_startup();
@@ -440,7 +479,8 @@ int main(int, char**)
 
 	using namespace gemini;
 
-	unittest::UnitTest::execute();
+	UNITTEST_EXECUTE(graph_test);
+	//unittest::UnitTest::execute();
 	gemini::runtime_shutdown();
 	gemini::core_shutdown();
 	return 0;
