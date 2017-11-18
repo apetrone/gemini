@@ -72,14 +72,25 @@ namespace platform
 	typedef DWORD(*xinput_getstate_fn)(DWORD, XINPUT_STATE*);
 	typedef DWORD(*xinput_setstate_fn)(DWORD, XINPUT_VIBRATION*);
 
-	xinput_getstate_fn xinput_getstate			= nullptr;
-	xinput_setstate_fn xinput_setstate			= nullptr;
-	platform::DynamicLibrary* xinput_library	= nullptr;
+	typedef void(*win32_update_joysticks_fn)(float delta_milliseconds);
+
+
+	// declaration so we can update the function pointer.
+	void xinput_update_joysticks(float delta_milliseconds);
+
+	// if xinput is not found, we need to populate the functions with a noop interface.
+	void win32_update_joysticks_noop(float)
+	{
+	}
+
+	xinput_getstate_fn xinput_getstate					= nullptr;
+	xinput_setstate_fn xinput_setstate					= nullptr;
+	platform::DynamicLibrary* xinput_library			= nullptr;
+	win32_update_joysticks_fn win32_update_joysticks	= win32_update_joysticks_noop;
 
 	// The interval at which we check disconnected controllers to see if
 	// someone has plugged one in.
 	const float GEMINI_WIN32_CONTROLLER_POLL_INTERVAL_SECONDS = MillisecondsPerSecond * 3.0f;
-
 	float _next_controller_check = 0.0f;
 
 
@@ -92,35 +103,45 @@ namespace platform
 
 		const size_t library_name_count = sizeof(library_names) / sizeof(const char*);
 
-		size_t library_index = 0;
-		for (;;)
+		for (size_t library_index = 0; library_index < library_name_count; ++library_index)
 		{
+			assert(xinput_library == nullptr);
 			xinput_library = platform::dylib_open(library_names[library_index]);
 			if (xinput_library)
 			{
 				LOGV("Located XInput DLL: '%s'\n", library_names[library_index]);
-				break;
-			}
 
-			// reached end of list
-			if (library_index == library_name_count)
-			{
+				// link up functions we need
+				xinput_getstate = static_cast<xinput_getstate_fn>(platform::dylib_find(xinput_library, "XInputGetState"));
+				xinput_setstate = static_cast<xinput_setstate_fn>(platform::dylib_find(xinput_library, "XInputSetState"));
+
+				if (xinput_getstate == nullptr)
+				{
+					LOGW("Could not find symbol \"xinput_getstate\"!\n");
+					platform::dylib_close(xinput_library);
+					xinput_library = nullptr;
+					continue;
+				}
+				if (xinput_setstate == nullptr)
+				{
+					LOGW("Could not find symbol \"xinput_setstate\"!\n");
+					platform::dylib_close(xinput_library);
+					xinput_library = nullptr;
+					continue;
+				}
+
+				win32_update_joysticks = xinput_update_joysticks;
 				break;
 			}
 		}
-
-		// Xinput dll couldn't be found!
-		assert(xinput_library != nullptr);
 
 		if (!xinput_library)
 		{
+			// Xinput DLL couldn't be found.
 			LOGE("Failed to locate XInput library DLL. Unable to use controllers.\n");
+			win32_update_joysticks = win32_update_joysticks_noop;
 			return;
 		}
-
-		// link up functions we need
-		xinput_getstate = static_cast<xinput_getstate_fn>(platform::dylib_find(xinput_library, "XInputGetState"));
-		xinput_setstate = static_cast<xinput_setstate_fn>(platform::dylib_find(xinput_library, "XInputSetState"));
 
 		for (uint8_t index = 0; index < GEMINI_WIN32_MAX_JOYSTICKS; ++index)
 		{
@@ -203,7 +224,7 @@ namespace platform
 		xinput_joystick_update_axis(joystick, right_value, 1, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
 	}
 
-	void joystick_update(float delta_milliseconds)
+	void xinput_update_joysticks(float delta_milliseconds)
 	{
 		_next_controller_check -= delta_milliseconds;
 		const bool check_controllers = (_next_controller_check < FLT_EPSILON);
@@ -285,7 +306,12 @@ namespace platform
 		{
 			_next_controller_check = GEMINI_WIN32_CONTROLLER_POLL_INTERVAL_SECONDS;
 		}
+	}
 
+
+	void joystick_update(float delta_milliseconds)
+	{
+		win32_update_joysticks(delta_milliseconds);
 	} // joystick_update
 
 	uint32_t joystick_max_count()
