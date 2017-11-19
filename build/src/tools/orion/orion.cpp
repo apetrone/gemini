@@ -304,8 +304,6 @@ private:
 	uint32_t enable_animation;
 	uint32_t mesh_animation_index;
 
-	glm::vec3* lines;
-	size_t current_line_index;
 
 	NotificationServer notify_server;
 	NotificationClient notify_client;
@@ -329,9 +327,7 @@ public:
 		, is_playing_frames(false)
 		, app_in_focus(true)
 		, mocap_device(nullptr)
-		, lines(nullptr)
 		, status(nullptr)
-		, current_line_index(0)
 		, mocap_frames(sensor_allocator, 0)
 		, mesh_animations(default_allocator)
 		, current_mesh_animation(0)
@@ -1544,8 +1540,6 @@ public:
 		//notify_client_subscribe(&notify_client, 3, channel_delegate);
 
 
-		lines = new glm::vec3[TOTAL_LINES];
-
 		last_time = platform::microseconds();
 
 		// At this point the editor is ready to go.
@@ -2099,9 +2093,6 @@ public:
 	virtual void shutdown()
 	{
 		single_mesh.purge(default_allocator);
-
-		delete [] lines;
-		lines = nullptr;
 
 		imocap::device_destroy(mocap_device);
 		mocap_device = nullptr;
