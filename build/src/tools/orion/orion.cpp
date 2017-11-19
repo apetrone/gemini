@@ -93,6 +93,7 @@ using namespace gemini;
 #define TEST_SPRING_SYSTEM 0
 #define TEST_TELEMETRY_SYSTEM 0
 #define TEST_TELEMETRY_HOST 0
+#define TEST_TELEMETRY_VIEWER 0
 #define DRAW_IMOCAP 0
 #define ENABLE_VEC_QUAT_WIDGETS 0
 
@@ -1386,7 +1387,7 @@ public:
 			//status->set_foreground_color(gemini::Color(1.0f, 1.0f, 1.0f));
 			//status->set_background_color(gemini::Color(0.0f, 0.0f, 0.0f, 0.0f));
 
-#if 1
+#if 0
 			asset_processor = new AssetProcessingPanel(compositor);
 			asset_processor->set_origin(0.0f, 25.0f);
 			asset_processor->set_size(400, 100);
@@ -1450,7 +1451,7 @@ public:
 			center_layout->add_panel(surface);
 #endif
 
-#if ENABLE_UI
+#if ENABLE_UI && 0
 			timeline = new gui::Timeline(main_panel);
 			timeline->set_frame_range(0, 30);
 			timeline->on_scrubber_changed.bind<EditorKernel, &EditorKernel::timeline_scrubber_changed>(this);
@@ -1512,7 +1513,9 @@ public:
 
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 
+#if TEST_TELEMETRY_VIEWER
 		telemetry_viewer_create(&tel_viewer, 120, "0.0.0.0", TELEMETRY_VIEWER_PORT);
+#endif
 
 #if TEST_TELEMETRY_SYSTEM
 		telemetry_panel = new TelemetryPanel(compositor, &tel_viewer);
@@ -1751,7 +1754,9 @@ public:
 
 		kernel::parameters().step_alpha = glm::clamp(static_cast<float>(accumulator / kernel::parameters().step_interval_seconds), 0.0f, 1.0f);
 
+#if TEST_TELEMETRY_VIEWER
 		telemetry_viewer_tick(&tel_viewer, kernel::parameters().framedelta_seconds);
+#endif
 
 		// while i debug network stuff; don't do this...
 		//if (!app_in_focus)
@@ -2128,7 +2133,10 @@ public:
 #if TEST_TELEMETRY_HOST
 		telemetry_host_shutdown();
 #endif
+
+#if TEST_TELEMETRY_VIEWER
 		telemetry_viewer_destroy(&tel_viewer);
+#endif
 
 		animation::shutdown();
 
