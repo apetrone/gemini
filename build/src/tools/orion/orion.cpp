@@ -178,22 +178,7 @@ size_t total_bytes = sizeof(MyVertex) * 4;
 
 
 
-
-struct EditorEnvironment
-{
-	Project* project;
-
-	uint32_t open_last_project_on_start;
-	gemini::string last_project;
-
-	EditorEnvironment()
-		: project(nullptr)
-		, open_last_project_on_start(0)
-	{
-
-	}
-};
-
+#include "editorcontext.h"
 
 
 
@@ -223,7 +208,7 @@ private:
 
 	MyVertex vertex_data[4];
 
-	EditorEnvironment environment;
+	EditorContext environment;
 
 //	GLsync fence;
 
