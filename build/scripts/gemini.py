@@ -966,8 +966,23 @@ def get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs):
 	])
 
 	orion.sources += [
+		"src/tools/orion/gui/render_panel.cpp",
+		"src/tools/orion/gui/render_panel.h",
+
+		"src/tools/orion/gui/spring_panel.cpp",
+		"src/tools/orion/gui/spring_panel.h",
+
+		"src/tools/orion/gui/telemetry_panel.cpp",
+		"src/tools/orion/gui/telemetry_panel.h",
+
+		"src/tools/orion/gui/test_panels.cpp",
+		"src/tools/orion/gui/test_panels.h",
+
 		"src/tools/orion/editable_mesh.cpp",
 		"src/tools/orion/editable_mesh.h",
+
+		"src/tools/orion/editorcontext.cpp",
+		"src/tools/orion/editorcontext.h",
 
 		"src/tools/orion/parameter.cpp",
 		"src/tools/orion/parameter.h",

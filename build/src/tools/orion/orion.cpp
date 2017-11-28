@@ -75,6 +75,7 @@
 
 #include "project.h"
 #include "parameter.h"
+#include "editorcontext.h"
 
 #include <gui/spring_panel.h>
 #include <gui/telemetry_panel.h>
@@ -100,25 +101,31 @@ using namespace gemini;
 #define DRAW_LINES 0
 const size_t TOTAL_LINES = 256;
 
+//struct OldVertex
+//{
+//	float position[3];
+//	float color[4];
+//
+//	void set_position(float x, float y, float z)
+//	{
+//		position[0] = x;
+//		position[1] = y;
+//		position[2] = z;
+//	}
+//
+//	void set_color(float red, float green, float blue, float alpha)
+//	{
+//		color[0] = red;
+//		color[1] = green;
+//		color[2] = blue;
+//		color[3] = alpha;
+//	}
+//};
+
 struct MyVertex
 {
-	float position[3];
-	float color[4];
-
-	void set_position(float x, float y, float z)
-	{
-		position[0] = x;
-		position[1] = y;
-		position[2] = z;
-	}
-
-	void set_color(float red, float green, float blue, float alpha)
-	{
-		color[0] = red;
-		color[1] = green;
-		color[2] = blue;
-		color[3] = alpha;
-	}
+	glm::vec3 position;
+	gemini::Color color;
 };
 
 
@@ -176,11 +183,73 @@ typedef HashSet<platform::PathString, ModifiedAssetData> PathDelayHashSet;
 size_t total_bytes = sizeof(MyVertex) * 4;
 
 
+uint32_t grid_compute_size(uint32_t grid_size, uint32_t grid_step)
+{
+	return 512;
+}
 
+uint32_t grid_build(MyVertex* vertices, uint32_t grid_size, uint32_t grid_step, const gemini::Color& grid_color, const gemini::Color& outline_color)
+{
+	uint32_t dimensions = grid_size;
+	uint32_t half_dimensions = dimensions / 2.0f;
+	uint32_t start = (grid_size / grid_step);
 
-#include "editorcontext.h"
+	glm::vec3 offset = glm::vec3(0, 0, 0);
+	offset.x = -static_cast<float>(half_dimensions);
+	offset.z = -static_cast<float>(half_dimensions);
 
+	if ((start % 2) == 1)
+	{
+		// start halfway through this cell
+		start = grid_step / 2;
+	}
+	else
+	{
+		start = 0;
+	}
 
+	uint32_t total_lines = 0;
+
+	MyVertex* buffer = vertices;
+
+	for (size_t index = start; index <= dimensions; index += grid_step)
+	{
+		if (index != half_dimensions)
+		{
+			vertices[0].color = grid_color;
+			vertices[1].color = grid_color;
+			vertices[2].color = grid_color;
+			vertices[3].color = grid_color;
+		}
+		else
+		{
+			vertices[0].color = outline_color;
+			vertices[1].color = outline_color;
+			vertices[2].color = outline_color;
+			vertices[3].color = outline_color;
+		}
+
+		// X-Z plane
+		vertices[0].position = offset + glm::vec3(static_cast<float>(index), 0.0f, 0.0f);
+		vertices[1].position = offset + glm::vec3(static_cast<float>(index), 0.0f, static_cast<float>(dimensions));
+		vertices[2].position = offset + glm::vec3(0.0f, 0.0f, static_cast<float>(index));
+		vertices[3].position = offset + glm::vec3(static_cast<float>(dimensions), 0.0f, static_cast<float>(index));
+
+		vertices += 4;
+		total_lines += 4;
+	}
+
+	vertices[0].color = outline_color;
+	vertices[1].color = outline_color;
+	vertices[2].color = outline_color;
+	vertices[3].color = outline_color;
+	vertices[0].position = offset + glm::vec3(static_cast<float>(half_dimensions), 0.0f, 0.0f);
+	vertices[1].position = offset + glm::vec3(static_cast<float>(half_dimensions), 0.0f, static_cast<float>(dimensions));
+	vertices[2].position = offset + glm::vec3(0.0f, 0.0f, static_cast<float>(half_dimensions));
+	vertices[3].position = offset + glm::vec3(static_cast<float>(dimensions), 0.0f, static_cast<float>(half_dimensions));
+
+	return total_lines;
+} // grid_build
 
 
 
@@ -201,12 +270,14 @@ private:
 	glm::mat4 projection_matrix;
 
 	render2::Pipeline* surface_pipeline;
+	render2::Pipeline* line_pipeline;
 	glm::mat4 surface_modelview;
 	glm::mat4 surface_projection;
 
 	glm::mat4 joint_offsets[IMOCAP_TOTAL_SENSORS];
 
-	MyVertex vertex_data[4];
+	MyVertex *vertex_data;
+	uint32_t total_grid_lines;
 
 	EditorContext environment;
 
@@ -1031,9 +1102,32 @@ public:
 		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
 #endif
+
 		render_scene->camera_position_world = camera.get_position();
 		render_scene->camera_view_direction = camera.get_view();
 		render_scene_draw(render_scene, device, camera.get_modelview(), camera.get_projection(), render_target);
+
+#if 1
+		// We need to put the grid in its own scene node.
+		// draw the grid
+		render2::Pass render_pass;
+		render_pass.color(0.0f, 0.0f, 0.0, 0.0f);
+		render_pass.clear_color = false;
+		render_pass.clear_depth = false;
+		render_pass.depth_test = false;
+		render_pass.target = render_target;
+
+		render2::CommandQueue* queue = device->create_queue(render_pass);
+		render2::CommandSerializer* serializer = device->create_serializer(queue);
+
+		serializer->pipeline(line_pipeline);
+
+		serializer->vertex_buffer(vertex_buffer);
+		serializer->draw(0, total_grid_lines);
+		device->queue_buffers(queue, 1);
+		device->destroy_serializer(serializer);
+#endif
+
 
 		debugdraw::render(camera.get_modelview(), camera.get_projection(), render_target->width, render_target->height, render_target);
 	}
@@ -1222,9 +1316,18 @@ public:
 				surface_pipeline->constants().set("projection_matrix", &surface_projection);
 			}
 
-			vertex_buffer = device->create_vertex_buffer(total_bytes);
-
-
+			{
+				render2::PipelineDescriptor desc;
+				desc.shader = shader_load("vertexcolor");
+				render2::VertexDescriptor& vertex_format = desc.vertex_description;
+				vertex_format.add("in_position", render2::VD_FLOAT, 3);
+				vertex_format.add("in_color", render2::VD_FLOAT, 4);
+				desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
+				desc.primitive_type = PrimitiveType::Lines;
+				line_pipeline = device->create_pipeline(desc);
+				line_pipeline->constants().set("modelview_matrix", &modelview_matrix);
+				line_pipeline->constants().set("projection_matrix", &projection_matrix);
+			}
 			// Buffer Lock and Buffer Unlock are perhaps future features.
 			// This does not work as of yet.
 #if 0
@@ -1245,7 +1348,9 @@ public:
 			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
 
 			device->buffer_unlock(vertex_buffer);
-#else
+#elif 0
+			vertex_buffer = device->create_vertex_buffer(total_bytes);
+
 			MyVertex* vertex = vertex_data;
 			vertex[0].set_position(0, window_frame.height, 0);
 			vertex[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
@@ -1260,6 +1365,25 @@ public:
 			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
 
 			device->buffer_upload(vertex_buffer, vertex, total_bytes);
+#else
+			vertex_data = nullptr;
+
+
+			const uint32_t GRID_SIZE = 32;
+			const uint32_t GRID_STEP = 1;
+			uint32_t total_vertices = grid_compute_size(GRID_SIZE, GRID_STEP);
+
+			const size_t total_grid_bytes = sizeof(MyVertex) * total_vertices;
+			vertex_data = reinterpret_cast<MyVertex*>(MEMORY2_ALLOC(default_allocator, total_grid_bytes));
+
+			total_grid_lines = grid_build(vertex_data, GRID_SIZE, GRID_STEP, gemini::Color(0.5f, 0.5f, 0.5f), gemini::Color(0.0f, 0.0f, 0.0f));
+
+			vertex_buffer = device->create_vertex_buffer(total_grid_bytes);
+			device->buffer_upload(vertex_buffer, vertex_data, total_vertices * sizeof(MyVertex));
+
+
+			MEMORY2_DEALLOC(default_allocator, vertex_data);
+			vertex_data = nullptr;
 #endif
 		}
 
@@ -2147,6 +2271,7 @@ public:
 
 		device->destroy_pipeline(pipeline);
 		device->destroy_pipeline(surface_pipeline);
+		device->destroy_pipeline(line_pipeline);
 
 		destroy_device(render_allocator, device);
 

@@ -891,7 +891,11 @@ public:
 	{
 		if (event.is_down)
 		{
-			if (event.key == gemini::BUTTON_P)
+			if (event.key == gemini::BUTTON_ESCAPE)
+			{
+				kernel::instance()->set_active(false);
+			}
+			else if (event.key == gemini::BUTTON_P)
 			{
 				draw_physics_debug = !draw_physics_debug;
 				LOGV("draw_physics_debug = %s\n", draw_physics_debug?"ON":"OFF");
