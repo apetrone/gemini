@@ -214,19 +214,20 @@ uint32_t grid_build(MyVertex* vertices, uint32_t grid_size, uint32_t grid_step, 
 
 	for (size_t index = start; index <= dimensions; index += grid_step)
 	{
-		if (index != half_dimensions)
-		{
-			vertices[0].color = grid_color;
-			vertices[1].color = grid_color;
-			vertices[2].color = grid_color;
-			vertices[3].color = grid_color;
-		}
-		else
+		const bool use_outline_color = (index == half_dimensions || index == 0 || index == dimensions);
+		if (use_outline_color)
 		{
 			vertices[0].color = outline_color;
 			vertices[1].color = outline_color;
 			vertices[2].color = outline_color;
 			vertices[3].color = outline_color;
+		}
+		else
+		{
+			vertices[0].color = grid_color;
+			vertices[1].color = grid_color;
+			vertices[2].color = grid_color;
+			vertices[3].color = grid_color;
 		}
 
 		// X-Z plane
@@ -238,15 +239,6 @@ uint32_t grid_build(MyVertex* vertices, uint32_t grid_size, uint32_t grid_step, 
 		vertices += 4;
 		total_lines += 4;
 	}
-
-	vertices[0].color = outline_color;
-	vertices[1].color = outline_color;
-	vertices[2].color = outline_color;
-	vertices[3].color = outline_color;
-	vertices[0].position = offset + glm::vec3(static_cast<float>(half_dimensions), 0.0f, 0.0f);
-	vertices[1].position = offset + glm::vec3(static_cast<float>(half_dimensions), 0.0f, static_cast<float>(dimensions));
-	vertices[2].position = offset + glm::vec3(0.0f, 0.0f, static_cast<float>(half_dimensions));
-	vertices[3].position = offset + glm::vec3(static_cast<float>(dimensions), 0.0f, static_cast<float>(half_dimensions));
 
 	return total_lines;
 } // grid_build
@@ -1114,7 +1106,7 @@ public:
 		render_pass.color(0.0f, 0.0f, 0.0, 0.0f);
 		render_pass.clear_color = false;
 		render_pass.clear_depth = false;
-		render_pass.depth_test = false;
+		render_pass.depth_test = true;
 		render_pass.target = render_target;
 
 		render2::CommandQueue* queue = device->create_queue(render_pass);
@@ -1803,6 +1795,7 @@ public:
 				// load a static mesh
 				transform_node = transform_graph_create_node(render_allocator, "test");
 				transform_node->entity_index = entity_index;
+				//transform_node->position = glm::vec3(0.0f, 1.0f, 0.0f);
 				transform_graph_set_parent(transform_node, transform_graph);
 				model_component_handle = render_scene_add_static_mesh(render_scene, skeleton_mesh, transform_node->transform_index);
 			}
