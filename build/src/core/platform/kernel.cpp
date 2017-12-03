@@ -30,6 +30,21 @@
 
 namespace kernel
 {
+	IKernel::IKernel()
+		: active(1)
+	{
+	}
+
+	bool IKernel::is_active() const
+	{
+		return active > 0;
+	}
+
+	void IKernel::set_active(bool isactive)
+	{
+		active = isactive;
+	}
+
 	float GameControllerEvent::normalized_value() const
 	{
 		return (axis_value/(float)SHRT_MAX);
@@ -122,9 +137,9 @@ namespace kernel
 		detail::kernel_instance->shutdown();
 	}
 
-	void tick()
-	{
-		detail::kernel_instance->tick();
-	}
+	//void tick()
+	//{
+	//	detail::kernel_instance->tick();
+	//}
 
 } // namespace kernel

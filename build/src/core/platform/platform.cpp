@@ -26,6 +26,7 @@
 #include "kernel.h"
 
 #include <core/logging.h>
+#include <core/mathlib.h>
 #include <core/mem.h>
 #include <core/core.h>
 
@@ -236,8 +237,11 @@ namespace platform
 //		kernel::parameters().titlebar_height = GetSystemMetrics(SM_CYCAPTION);
 #endif
 
+		uint64_t last_frame_microseconds = platform::microseconds();
+
 		// attempt kernel startup, mostly initializing core systems
 		kernel::Error error = kernel::startup();
+
 		if (error != kernel::NoError)
 		{
 			LOGE("Kernel startup failed with kernel code: %i\n", error);
@@ -247,10 +251,52 @@ namespace platform
 		}
 		else
 		{
+			uint64_t current_time = platform::microseconds();
+			LOGV("Kernel startup in %2.2fms\n", (current_time - last_frame_microseconds) * MillisecondsPerMicrosecond);
+			last_frame_microseconds = current_time;
+
+			double accumulator = 0.0;
+
 			// startup succeeded; enter main loop
 			while(kernel::instance() && kernel::instance()->is_active())
 			{
-				kernel::instance()->tick();
+				uint64_t current_time = platform::microseconds();
+				kernel::Parameters& params = kernel::parameters();
+
+				// calculate delta ticks in milliseconds
+				params.framedelta_milliseconds = (current_time - last_frame_microseconds) * MillisecondsPerMicrosecond;
+
+				// cache the value in seconds
+				params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
+
+				params.simulation_delta_seconds = (params.framedelta_milliseconds * params.simulation_time_scale) * SecondsPerMillisecond;
+
+				last_frame_microseconds = current_time;
+
+				//PROFILE_BEGIN("platform_update");
+				platform::update(kernel::parameters().framedelta_milliseconds);
+				//PROFILE_END("platform_update");
+
+				accumulator += params.framedelta_seconds;
+
+				uint8_t performed_fixed_update = 0;
+				while (accumulator > params.step_interval_seconds)
+				{
+					kernel::instance()->fixed_update(params.step_interval_seconds);
+
+					// subtract the interval from the accumulator
+					accumulator -= params.step_interval_seconds;
+
+					// increment tick counter
+					params.current_physics_tick++;
+
+					performed_fixed_update = 1;
+				}
+
+				// calculate the interpolation alpha that can be used with this frame.
+				params.step_alpha = glm::clamp(static_cast<float>(accumulator / params.step_interval_seconds), 0.0f, 1.0f);
+
+				kernel::instance()->tick(performed_fixed_update > 0);
 			}
 		}
 

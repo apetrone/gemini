@@ -707,7 +707,6 @@ class EngineKernel : public kernel::IKernel
 
 private:
 	// kernel stuff
-	bool active;
 	StackString<MAX_PATH_SIZE> game_path;
 	uint32_t enable_telemetry;
 	bool draw_physics_debug;
@@ -717,10 +716,6 @@ private:
 	platform::window::NativeWindow* main_window;
 
 	Array<gemini::GameMessage>* queued_messages;
-
-	// Kernel State variables
-	double accumulator;
-	uint64_t last_time;
 
 	// rendering
 	render2::Device* device;
@@ -747,7 +742,6 @@ private:
 	gemini::Allocator gui_allocator;
 	gemini::Allocator engine_allocator;
 
-	float interpolate_alpha;
 	RenderScene* render_scene;
 	TransformNode* transform_graph;
 	EntityRenderState* entity_render_state;
@@ -848,17 +842,13 @@ private:
 
 public:
 	EngineKernel()
-		: active(true)
-		, draw_physics_debug(false)
+		: draw_physics_debug(false)
 		, draw_navigation_debug(false)
 		, debug_camera(false)
-		, accumulator(0.0f)
-		, last_time(0)
 		, engine_interface(0)
 		, game_interface(0)
 		, engine_allocator(memory_allocator_default(MEMORY_ZONE_DEFAULT))
 		, queued_messages(nullptr)
-		, interpolate_alpha(0.0f)
 		, transform_graph(nullptr)
 	{
 		game_path = "";
@@ -871,9 +861,6 @@ public:
 	virtual ~EngineKernel()
 	{
 	}
-
-	virtual bool is_active() const { return active; }
-	virtual void set_active(bool isactive) { active = isactive; }
 
 	void queue_game_message(const GameMessage& message)
 	{
@@ -1047,9 +1034,6 @@ public:
 
 		kernel::Parameters& params = kernel::parameters();
 
-		// initialize timer
-		last_time = platform::microseconds();
-
 #if defined(PLATFORM_MOBILE)
 #else
 		kernel::parameters().device_flags |= kernel::DeviceDesktop;
@@ -1199,45 +1183,41 @@ public:
 			game_interface->level_load();
 		}
 
-		// TODO: post_application_startup
-
-		uint64_t current_time = platform::microseconds();
-		LOGV("startup in %2.2fms\n", (current_time-last_time) * MillisecondsPerMicrosecond);
-		last_time = current_time;
-
 		return kernel::NoError;
 	} // startup
 
-
-	virtual void tick()
+	virtual void fixed_update(float step_seconds)
 	{
-		uint64_t current_time = platform::microseconds();
 		kernel::Parameters& params = kernel::parameters();
 
-		PROFILE_BEGIN("platform_update");
-		platform::update(kernel::parameters().framedelta_milliseconds);
-		PROFILE_END("platform_update");
+		// iterate over queued messages and play until we hit the time cap
+		for (size_t index = 0; index < queued_messages->size(); ++index)
+		{
+			if ((*queued_messages)[index].timestamp <= params.current_physics_tick)
+			{
+				if (game_interface)
+				{
+					game_interface->handle_game_message((*queued_messages)[index]);
+				}
+			} // execute
+		}
 
+		if (game_interface)
+		{
+			const float game_step_seconds = (params.simulation_time_scale * params.step_interval_seconds);
+			game_interface->fixed_step(params.current_physics_tick, game_step_seconds);
+			engine::instance()->physics()->step_simulation(game_step_seconds);
+		}
+	} // fixed_update
 
-		// calculate delta ticks in milliseconds
-		params.framedelta_milliseconds = (current_time - last_time) * MillisecondsPerMicrosecond;
-
-		// cache the value in seconds
-		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
-
-		params.simulation_delta_seconds = (params.framedelta_milliseconds * params.simulation_time_scale) * SecondsPerMillisecond;
-
-		interpolate_alpha += kernel::parameters().framedelta_seconds;
+	virtual void tick(bool performed_fixed_update)
+	{
+		kernel::Parameters& params = kernel::parameters();
 
 		// record the current frametime milliseconds
 #if defined(DEBUG_FRAMERATE)
 		graph->record_value(params.framedelta_milliseconds, 0);
 #endif
-
-		last_time = current_time;
-
-		// update accumulator
-		accumulator += params.framedelta_seconds;
 
 		// set the baseline for the font
 		int x = 250;
@@ -1252,53 +1232,19 @@ public:
 		//	core::memory::global_allocator().get_zone()->get_active_bytes() / (float)(1024 * 1024)), Color());
 		//y += 12;
 
-		uint32_t reset_queue = 0;
-
 		EngineInterface* ei = reinterpret_cast<EngineInterface*>(engine_interface);
-
-
-		while (accumulator > params.step_interval_seconds)
-		{
-			// iterate over queued messages and play until we hit the time cap
-			for (size_t index = 0; index < queued_messages->size(); ++index)
-			{
-				if ((*queued_messages)[index].timestamp <= params.current_physics_tick)
-				{
-					if (game_interface)
-					{
-						game_interface->handle_game_message((*queued_messages)[index]);
-					}
-				} // execute
-			}
-
-			if (game_interface)
-			{
-				const float game_step_seconds = (params.simulation_time_scale * params.step_interval_seconds);
-				game_interface->fixed_step(params.current_physics_tick, game_step_seconds);
-				engine::instance()->physics()->step_simulation(game_step_seconds);
-			}
-
-
-			// subtract the interval from the accumulator
-			accumulator -= params.step_interval_seconds;
-
-			// increment tick counter
-			params.current_physics_tick++;
-
-			reset_queue = 1;
-		}
 
 		if (game_interface)
 		{
 			game_interface->tick(params.current_physics_tick, params.simulation_delta_seconds);
 
-			if (reset_queue)
+			if (performed_fixed_update)
 			{
 				debugdraw::update(params.step_interval_seconds);
 			}
 		}
 
-		if (reset_queue)
+		if (performed_fixed_update)
 		{
 			static float the_time = 0.0f;
 			render_scene->light_position_world.x = cosf(the_time);
@@ -1309,7 +1255,6 @@ public:
 			copy_state(&entity_render_state[0], &entity_render_state[1]);
 
 			extract_entities(&entity_render_state[1], entity_manager.get_entity_list());
-			interpolate_alpha = 0.0f;
 
 			camera_state[0] = camera_state[1];
 			game_interface->extract_camera(&camera_state[1], nullptr);
@@ -1327,12 +1272,6 @@ public:
 				game_interface->render_frame(0.0f);
 				game_interface->reset_events();
 			}
-		}
-
-		params.step_alpha = accumulator / params.step_interval_seconds;
-		if (params.step_alpha >= 1.0f)
-		{
-			params.step_alpha -= 1.0f;
 		}
 
 		animation::update(kernel::parameters().simulation_delta_seconds);
@@ -1360,8 +1299,7 @@ public:
 
 		if (game_interface)
 		{
-			float alpha = glm::clamp(static_cast<float>(accumulator / kernel::parameters().step_interval_seconds), 0.0f, 1.0f);
-
+			float alpha = kernel::parameters().step_alpha;
 			/*game_interface->render_frame(alpha);*/
 
 			// render the main view

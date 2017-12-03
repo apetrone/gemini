@@ -1278,7 +1278,7 @@ def products(arguments, **kwargs):
 			"src/include/sdk/*.h"
 		]
 
-		if False:
+		if True:
 			game.sources.extend([
 				os.path.join(GAME_ROOT_PATH, "src/ai_behaviors.cpp"),
 				os.path.join(GAME_ROOT_PATH, "src/ai_behaviors.h"),

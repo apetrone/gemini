@@ -106,15 +106,18 @@ namespace kernel
 	class IKernel
 	{
 	public:
+		IKernel();
 		virtual ~IKernel();
 
-		virtual bool is_active() const = 0;
-		virtual void set_active(bool isactive) = 0;
+		uint8_t active;
+
+		bool is_active() const;
+		void set_active(bool isactive);
 
 		// called first thing during setup; useful for initializing libraries
 		virtual Error startup() = 0;
 
-		virtual void tick() = 0;
+		virtual void tick(bool performed_fixed_update) = 0;
 
 		// called right before control returns to the main entry point
 		virtual void shutdown() = 0;
@@ -123,6 +126,8 @@ namespace kernel
 		virtual void event(MouseEvent& event) = 0;
 		virtual void event(SystemEvent& event) = 0;
 		virtual void event(GameControllerEvent& event) = 0;
+
+		virtual void fixed_update(float step_seconds) = 0;
 	};
 
 	// call this on application startup

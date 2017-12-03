@@ -261,6 +261,9 @@ namespace gemini
 
 		// returns whether or not the button was just released
 		bool was_released() const;
+
+		// returns true if this was held down for <seconds>
+		bool held_for(float seconds) const;
 	}; // ButtonState
 
 	// This is modeled after SDL2's enums, which are in turn, modeled after the
