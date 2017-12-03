@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <gui/render_panel.h>
+#include <ui/render_panel.h>
 #include <ui/compositor.h>
 #include <renderer/renderer.h>
 

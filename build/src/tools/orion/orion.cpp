@@ -58,6 +58,7 @@
 #include <ui/menu.h>
 #include <ui/timeline.h>
 #include <ui/ui.h>
+#include <ui/render_panel.h>
 
 #include <rapid/rapid.h>
 
@@ -79,7 +80,6 @@
 
 #include <gui/spring_panel.h>
 #include <gui/telemetry_panel.h>
-#include <gui/render_panel.h>
 #include <gui/test_panels.h>
 
 using namespace platform;
@@ -245,10 +245,7 @@ uint32_t grid_build(MyVertex* vertices, uint32_t grid_size, uint32_t grid_step, 
 
 
 
-class EditorKernel : public kernel::IKernel,
-public kernel::IEventListener<kernel::KeyboardEvent>,
-public kernel::IEventListener<kernel::MouseEvent>,
-public kernel::IEventListener<kernel::SystemEvent>
+class EditorKernel : public kernel::IKernel
 {
 private:
 	bool active;
@@ -510,6 +507,10 @@ public:
 				LOGV("set timescale to %2.2f\n", kernel::parameters().simulation_time_scale);
 			}
 		}
+	}
+
+	virtual void event(kernel::GameControllerEvent& event)
+	{
 	}
 
 	void update_timeline_frames()

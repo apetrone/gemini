@@ -46,10 +46,7 @@ using namespace gemini;
 using namespace platform;
 using namespace renderer;
 
-class TestWindow : public kernel::IKernel,
-public kernel::IEventListener<kernel::KeyboardEvent>,
-public kernel::IEventListener<kernel::MouseEvent>,
-public kernel::IEventListener<kernel::SystemEvent>
+class TestWindow : public kernel::IKernel
 {
 private:
 	bool active;
@@ -153,6 +150,10 @@ public:
 		{
 			LOGV("mouse event: %i\n", event.subtype);
 		}
+	}
+
+	virtual void event(kernel::GameControllerEvent& event)
+	{
 	}
 
 	virtual kernel::Error startup()

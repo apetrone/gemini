@@ -702,11 +702,7 @@ void copy_state(EntityRenderState* out, EntityRenderState* in)
 	}
 }
 
-class EngineKernel : public kernel::IKernel,
-public kernel::IEventListener<kernel::KeyboardEvent>,
-public kernel::IEventListener<kernel::MouseEvent>,
-public kernel::IEventListener<kernel::SystemEvent>,
-public kernel::IEventListener<kernel::GameControllerEvent>
+class EngineKernel : public kernel::IKernel
 {
 
 private:

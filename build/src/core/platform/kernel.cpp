@@ -39,13 +39,13 @@ namespace kernel
 	{
 		struct EventHooks
 		{
-			void* events[ kernel::EventTypeCount ];
+			IKernel* events[ kernel::EventTypeCount ];
 			EventHooks();
 		};
 
 		EventHooks::EventHooks()
 		{
-			memset(events, 0, sizeof(void*) * kernel::EventTypeCount );
+			memset(events, 0, sizeof(IKernel*) * kernel::EventTypeCount);
 		}
 
 		EventHooks event_hooks;
@@ -71,12 +71,12 @@ namespace kernel
 
 
 
-	void assign_listener_for_eventtype( kernel::EventType event_type, void * listener )
+	void assign_listener_for_eventtype( kernel::EventType event_type, IKernel* listener )
 	{
 		detail::event_hooks.events[ event_type ] = listener;
 	} // assign_listener_for_eventtype
 
-	void * find_listener_for_eventtype( kernel::EventType event_type )
+	IKernel* find_listener_for_eventtype( kernel::EventType event_type )
 	{
 		return detail::event_hooks.events[ event_type ];
 	} // find_listener_for_eventtype

@@ -277,6 +277,11 @@ namespace platform
 		kernel::set_instance(instance);
 		instance->set_active(true);
 
+		// register event handlers
+		kernel::assign_listener_for_eventtype(kernel::Keyboard, instance);
+		kernel::assign_listener_for_eventtype(kernel::Mouse, instance);
+		kernel::assign_listener_for_eventtype(kernel::System, instance);
+		kernel::assign_listener_for_eventtype(kernel::GameController, instance);
 
 #if defined(PLATFORM_APPLE)
 		return_code = backend_run_application(_mainparameters.argc, (const char**)_mainparameters.argv);

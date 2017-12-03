@@ -77,10 +77,7 @@ UNITTEST(Color)
 // ---------------------------------------------------------------------
 // TestRender
 // ---------------------------------------------------------------------
-class TestRender : public kernel::IKernel,
-	public kernel::IEventListener<kernel::KeyboardEvent>,
-	public kernel::IEventListener<kernel::MouseEvent>,
-	public kernel::IEventListener<kernel::SystemEvent>
+class TestRender : public kernel::IKernel
 {
 	struct ConstantData
 	{
@@ -181,6 +178,11 @@ public:
 				break;
 		}
 	}
+
+	virtual void event(kernel::GameControllerEvent& event)
+	{
+	}
+
 public:
 
 	static void render_stage1(TestRenderState& state)

@@ -36,6 +36,8 @@ namespace platform
 
 namespace kernel
 {
+	class IKernel;
+
 	//
 	// Event Types
 	// These are all the event types recognized and translated by the kernel.
@@ -195,27 +197,18 @@ namespace kernel
 		float normalized_value() const;
 	}; // GameControllerEvent
 
-	void assign_listener_for_eventtype(kernel::EventType type, void* listener);
-	void* find_listener_for_eventtype(kernel::EventType type);
-
-	//
-	// event support classes
-	//
-
-	template <class Type>
-	class IEventListener
-	{
-	public:
-		IEventListener()
-		{
-			EventType event_type = Type::event_type;
-			kernel::assign_listener_for_eventtype( event_type, this );
-		}
-
-		virtual ~IEventListener() {}
-
-		// called to handle an event of Type
-		virtual void event( Type & event ) = 0;
-	}; // IKernelEventListener
-
+	void assign_listener_for_eventtype(kernel::EventType type, IKernel* listener);
+	IKernel* find_listener_for_eventtype(kernel::EventType type);
 } // namespace kernel
+
+
+namespace gemini
+{
+	//struct EventAggregator
+	//{
+	//	void(*key_event)(kernel::KeyboardEvent&, void*);
+	//	void(*mouse_event)(kernel::MouseEvent&, void*);
+	//	void(*system_event)(kernel::SystemEvent&, void*);
+	//	void* userdata;
+	//}; // EventAggregator
+} // namespace gemini

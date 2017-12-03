@@ -226,10 +226,7 @@ namespace gui
 // ---------------------------------------------------------------------
 // TestUi
 // ---------------------------------------------------------------------
-class TestUi : public kernel::IKernel,
-	public kernel::IEventListener<kernel::KeyboardEvent>,
-	public kernel::IEventListener<kernel::MouseEvent>,
-	public kernel::IEventListener<kernel::SystemEvent>
+class TestUi : public kernel::IKernel
 {
 	bool active;
 	platform::window::NativeWindow* native_window;
@@ -325,6 +322,10 @@ public:
 		default:
 			break;
 		}
+	}
+
+	virtual void event(kernel::GameControllerEvent& event)
+	{
 	}
 
 public:

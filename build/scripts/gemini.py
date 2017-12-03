@@ -330,6 +330,9 @@ def get_tools(arguments, libruntime, librenderer, libcore, libsdk, **kwargs):
 	asset_compiler = get_asset_compiler(arguments, [libruntime, librenderer, libfreetype, libcore], **kwargs)
 	tools.append(asset_compiler)
 
+	protoviz = get_protoviz(arguments, [libsdk, libruntime, librenderer, libfreetype, libcore], **kwargs)
+	tools.append(protoviz)
+
 	return tools
 
 
@@ -966,9 +969,6 @@ def get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs):
 	])
 
 	orion.sources += [
-		"src/tools/orion/gui/render_panel.cpp",
-		"src/tools/orion/gui/render_panel.h",
-
 		"src/tools/orion/gui/spring_panel.cpp",
 		"src/tools/orion/gui/spring_panel.h",
 
@@ -1031,6 +1031,67 @@ def get_asset_compiler(arguments, links, **kwargs):
 	]
 
 	return asset_compiler
+
+def get_protoviz(arguments, links, **kwargs):
+	protoviz = Product(name="protoviz", output=ProductType.Application)
+	protoviz.project_root = COMMON_PROJECT_ROOT
+	protoviz.product_root = COMMON_PRODUCT_ROOT
+	protoviz.root = "../"
+
+	target_platform = kwargs.get("target_platform", None)
+
+	setup_driver(arguments, protoviz, target_platform)
+	setup_common_tool(protoviz)
+
+	protoviz.dependencies.extend(links)
+
+	protoviz.sources += [
+		# "src/tools/protoviz/gui/render_panel.cpp",
+		# "src/tools/protoviz/gui/render_panel.h",
+
+		# "src/tools/protoviz/gui/spring_panel.cpp",
+		# "src/tools/protoviz/gui/spring_panel.h",
+
+		# "src/tools/protoviz/gui/telemetry_panel.cpp",
+		# "src/tools/protoviz/gui/telemetry_panel.h",
+
+		# "src/tools/protoviz/gui/test_panels.cpp",
+		# "src/tools/protoviz/gui/test_panels.h",
+
+		# "src/tools/protoviz/editable_mesh.cpp",
+		# "src/tools/protoviz/editable_mesh.h",
+
+		# "src/tools/protoviz/editorcontext.cpp",
+		# "src/tools/protoviz/editorcontext.h",
+
+		# "src/tools/protoviz/parameter.cpp",
+		# "src/tools/protoviz/parameter.h",
+
+		# "src/tools/protoviz/project.cpp",
+		# "src/tools/protoviz/project.h",
+
+		"src/tools/protoviz/protoviz.cpp"
+	]
+
+	# macosx = protoviz.layout(platform="macosx")
+	# macosx.links += [
+	# 	"Cocoa.framework",
+	# 	"OpenGL.framework"
+	# ]
+
+	# # TODO: This path is relative to the *project*
+	# macosx.driver.infoplist_file = "../src/tools/protoviz/resources/osx/Info.plist"
+	# macosx.resources = [
+	# 	"src/tools/protoviz/resources/osx/en.lproj/*.xib",
+	# 	"src/tools/protoviz/resources/osx/en.lproj/*.strings"
+	# ]
+
+	linux = protoviz.layout(platform="linux")
+	linux.links += [
+		"GL"
+	]
+
+	return protoviz
 
 
 def arguments(parser):
@@ -1416,6 +1477,7 @@ def products(arguments, **kwargs):
 	gemini.dependencies.append(libsdk)
 
 	rnd = get_rnd(arguments, [libruntime, librenderer, libfreetype, libcore], **kwargs)
+
 	tests = []
 	if arguments.with_tests:
 		tests = get_unit_tests(arguments,

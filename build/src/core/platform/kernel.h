@@ -118,6 +118,11 @@ namespace kernel
 
 		// called right before control returns to the main entry point
 		virtual void shutdown() = 0;
+
+		virtual void event(KeyboardEvent& event) = 0;
+		virtual void event(MouseEvent& event) = 0;
+		virtual void event(SystemEvent& event) = 0;
+		virtual void event(GameControllerEvent& event) = 0;
 	};
 
 	// call this on application startup
@@ -138,11 +143,16 @@ namespace kernel
 	template <class Type>
 	void event_dispatch( Type & event )
 	{
+#if 0
 		EventType event_type = Type::event_type;
 		IEventListener<Type>* event_listener = (IEventListener<Type>*)find_listener_for_eventtype(event_type);
 		if (event_listener)
 		{
 			event_listener->event(event);
 		}
+#else
+		IKernel* kernel = find_listener_for_eventtype(Type::event_type);
+		kernel->event(event);
+#endif
 	} // event_dispatch
 } // namespace kernel
