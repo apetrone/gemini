@@ -548,10 +548,11 @@ public:
 			compositor = new gui::Compositor(window_frame.width, window_frame.height, resource_cache, gui_renderer);
 			compositor->set_name("compositor");
 
+			const float MENU_BAR_SIZE = 0;
 			main_panel = new gui::Panel(compositor);
 			main_panel->set_name("main_panel");
-			main_panel->set_origin(0, 24);
-			main_panel->set_size(window_frame.width, window_frame.height - 24);
+			main_panel->set_origin(0, MENU_BAR_SIZE);
+			main_panel->set_size(window_frame.width, window_frame.height - MENU_BAR_SIZE);
 
 
 			gui::HorizontalLayout* horizontal_layout = new gui::HorizontalLayout();
