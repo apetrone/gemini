@@ -228,7 +228,6 @@ namespace gui
 // ---------------------------------------------------------------------
 class TestUi : public kernel::IKernel
 {
-	bool active;
 	platform::window::NativeWindow* native_window;
 	gui::Compositor* compositor;
 	gui::Graph* graph;
@@ -334,12 +333,8 @@ public:
 	{
 		renderer = nullptr;
 		native_window = nullptr;
-		active = true;
 		graph = nullptr;
 	}
-
-	virtual bool is_active() const { return active; }
-	virtual void set_active(bool isactive) { active = isactive; }
 
 	void slider_value_changed(float new_value)
 	{
@@ -875,7 +870,11 @@ public:
 		}
 	}
 
-	virtual void tick()
+	virtual void fixed_update(float step_seconds)
+	{
+	}
+
+	virtual void tick(bool performed_fixed_update)
 	{
 		PROFILE_BEGIN("tick");
 
@@ -888,8 +887,6 @@ public:
 		//	LOGV("shutting down application..\n");
 		//	kernel::instance()->set_active(false);
 		//}
-
-		platform::update(kernel::parameters().framedelta_milliseconds);
 
 		if (graph)
 		{

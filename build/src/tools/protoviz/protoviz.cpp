@@ -75,7 +75,6 @@ using namespace gemini;
 class ProtoVizKernel : public kernel::IKernel
 {
 private:
-	bool active;
 	platform::window::NativeWindow* main_window;
 
 	render2::Device* device;

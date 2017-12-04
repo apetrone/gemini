@@ -248,7 +248,6 @@ uint32_t grid_build(MyVertex* vertices, uint32_t grid_size, uint32_t grid_step, 
 class EditorKernel : public kernel::IKernel
 {
 private:
-	bool active;
 	platform::window::NativeWindow* main_window;
 
 	render2::Device* device;
@@ -361,8 +360,7 @@ private:
 
 public:
 	EditorKernel()
-		: active(true)
-		, compositor(nullptr)
+		: compositor(nullptr)
 		, gui_renderer(nullptr)
 		, resource_cache(nullptr)
 		, render_target(nullptr)
@@ -403,9 +401,6 @@ public:
 	virtual ~EditorKernel()
 	{
 	}
-
-	virtual bool is_active() const { return active; }
-	virtual void set_active(bool isactive) { active = isactive; }
 
 	virtual void event(kernel::KeyboardEvent& event)
 	{
@@ -1836,20 +1831,13 @@ public:
 		}
 	} // tick_queued_asset_changes
 
-	virtual void tick()
+	virtual void fixed_update(float step_seconds)
+	{
+	}
+
+	virtual void tick(bool performed_fixed_update)
 	{
 		uint64_t current_time = platform::microseconds();
-		platform::update(kernel::parameters().framedelta_milliseconds);
-
-		static float accumulator = 0.0f;
-
-		accumulator += kernel::parameters().framedelta_seconds;
-		while (accumulator >= kernel::parameters().step_interval_seconds)
-		{
-			accumulator -= kernel::parameters().step_interval_seconds;
-		}
-
-		kernel::parameters().step_alpha = glm::clamp(static_cast<float>(accumulator / kernel::parameters().step_interval_seconds), 0.0f, 1.0f);
 
 #if TEST_TELEMETRY_VIEWER
 		telemetry_viewer_tick(&tel_viewer, kernel::parameters().framedelta_seconds);

@@ -479,8 +479,7 @@ int main(int, char**)
 
 	using namespace gemini;
 
-	UNITTEST_EXECUTE(graph_test);
-	//unittest::UnitTest::execute();
+	unittest::UnitTest::execute();
 	gemini::runtime_shutdown();
 	gemini::core_shutdown();
 	return 0;

@@ -49,7 +49,6 @@ using namespace renderer;
 class TestWindow : public kernel::IKernel
 {
 private:
-	bool active;
 	platform::window::NativeWindow* main_window;
 
 	render2::Device* device;
@@ -97,15 +96,11 @@ private:
 	};
 
 public:
-	TestWindow() :
-		active(true)
+	TestWindow()
 	{
 	}
 
 	virtual ~TestWindow() {}
-
-	virtual bool is_active() const { return active; }
-	virtual void set_active(bool isactive) { active = isactive; }
 
 	virtual void event(kernel::SystemEvent& event)
 	{
@@ -327,7 +322,12 @@ public:
 	}
 
 
-	virtual void tick()
+	virtual void fixed_update(float step_seconds)
+	{
+	}
+
+
+	virtual void tick(bool performed_fixed_update)
 	{
 		platform::window::dispatch_events();
 

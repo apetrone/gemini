@@ -299,11 +299,7 @@ public:
 		: render_callbacks(render_allocator, 0)
 	{
 		state.native_window = nullptr;
-		active = true;
 	}
-
-	virtual bool is_active() const { return active; }
-	virtual void set_active(bool isactive) { active = isactive; }
 
 	virtual kernel::Error startup()
 	{
@@ -653,12 +649,14 @@ public:
 		}
 	}
 
-	virtual void tick()
+	virtual void fixed_update(float step_seconds)
+	{
+	}
+
+	virtual void tick(bool performed_fixed_update)
 	{
 		update();
 		countdown -= kernel::parameters().framedelta_seconds;
-
-		platform::update(kernel::parameters().framedelta_milliseconds);
 
 		RenderTest* render_test = &render_callbacks[test_state];
 		render_test->render_callback(state);
@@ -822,7 +820,6 @@ private:
 	gemini::Allocator render_allocator;
 	Array<RenderTest> render_callbacks;
 	TestRenderState state;
-	bool active;
 };
 
 PLATFORM_MAIN
