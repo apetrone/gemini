@@ -154,8 +154,7 @@ private:
 
 public:
 	ProtoVizKernel()
-		: active(true)
-		, compositor(nullptr)
+		: compositor(nullptr)
 		, gui_renderer(nullptr)
 		, resource_cache(nullptr)
 		, render_target(nullptr)
@@ -165,9 +164,6 @@ public:
 	virtual ~ProtoVizKernel()
 	{
 	}
-
-	virtual bool is_active() const { return active; }
-	virtual void set_active(bool isactive) { active = isactive; }
 
 	virtual void event(kernel::KeyboardEvent& event)
 	{
@@ -593,26 +589,14 @@ public:
 		return kernel::NoError;
 	}
 
-	virtual void tick()
+	virtual void fixed_update(float step_seconds)
+	{
+
+	}
+
+	virtual void tick(bool performed_fixed_update)
 	{
 		uint64_t current_time = platform::microseconds();
-		platform::update(kernel::parameters().framedelta_milliseconds);
-
-		static float accumulator = 0.0f;
-
-		accumulator += kernel::parameters().framedelta_seconds;
-
-
-		const size_t max_iterations_before_tick = 10;
-
-		size_t total_iterations = 0;
-		while (accumulator >= kernel::parameters().step_interval_seconds && (total_iterations < max_iterations_before_tick))
-		{
-			accumulator -= kernel::parameters().step_interval_seconds;
-			++total_iterations;
-		}
-
-		kernel::parameters().step_alpha = glm::clamp(static_cast<float>(accumulator / kernel::parameters().step_interval_seconds), 0.0f, 1.0f);
 
 
 		// while i debug network stuff; don't do this...

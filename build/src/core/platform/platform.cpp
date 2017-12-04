@@ -280,7 +280,13 @@ namespace platform
 				accumulator += params.framedelta_seconds;
 
 				uint8_t performed_fixed_update = 0;
-				while (accumulator > params.step_interval_seconds)
+
+				// If the frame time is so fast we don't have enough accuracy
+				// to accumulate time, break after the iteration limit.
+				const uint32_t MAX_ITERATIONS_BEFORE_TICK = 8;
+
+				uint32_t iteration_count = 0;
+				while (accumulator > params.step_interval_seconds && (iteration_count < MAX_ITERATIONS_BEFORE_TICK))
 				{
 					kernel::instance()->fixed_update(params.step_interval_seconds);
 
@@ -291,6 +297,8 @@ namespace platform
 					params.current_physics_tick++;
 
 					performed_fixed_update = 1;
+
+					++iteration_count;
 				}
 
 				// calculate the interpolation alpha that can be used with this frame.
