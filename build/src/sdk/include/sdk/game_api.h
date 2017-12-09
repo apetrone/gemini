@@ -102,10 +102,10 @@ namespace gemini
 		};
 
 		uint32_t type;
-
 		uint32_t button;
 		int32_t params[4];
-		glm::quat orientation;
+
+		// timestamp in logic ticks when this event was recorded.
 		uint64_t timestamp;
 
 		GameMessage()
@@ -210,7 +210,7 @@ namespace gemini
 		virtual void render_frame(float alpha) = 0;
 
 		// event handling
-		virtual void handle_game_message(GameMessage& message) = 0;
+		virtual void handle_game_message(const GameMessage& message) = 0;
 
 		virtual void reset_events() = 0;
 

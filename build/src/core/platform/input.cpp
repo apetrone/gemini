@@ -99,11 +99,6 @@ namespace gemini
 		return (state == (Button_Impulse|Button_Released));
 	}
 
-	bool ButtonState::held_for(float seconds) const
-	{
-		return false;
-	}
-
 	const char* mouse_button_name(unsigned int value)
 	{
 		static const char* names[] = {

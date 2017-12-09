@@ -72,6 +72,11 @@ using namespace platform;
 using namespace renderer;
 using namespace gemini;
 
+
+
+
+
+
 class ProtoVizKernel : public kernel::IKernel
 {
 private:
@@ -370,6 +375,7 @@ public:
 
 	virtual void event(kernel::GameControllerEvent& event)
 	{
+
 	}
 
 	void on_view_reset(void)

@@ -702,6 +702,195 @@ void copy_state(EntityRenderState* out, EntityRenderState* in)
 	}
 }
 
+// input handler returns 1 if message was not handled and should propagate to the next
+// returns 0 if message was handled.
+//typedef int32_t(*input_handler)(const gemini::GameMessage&);
+
+typedef Delegate<int32_t(const gemini::GameMessage&)> input_handler;
+
+
+struct InputEventRelay
+{
+	Array<gemini::GameMessage> messages;
+	Array<input_handler> handlers;
+
+	InputEventRelay(gemini::Allocator& allocator)
+		: messages(allocator)
+		, handlers(allocator)
+	{
+	}
+
+	void queue(const gemini::GameMessage& message);
+	void queue(const kernel::SystemEvent& event, uint64_t current_tick);
+	void queue(const kernel::KeyboardEvent& event, uint64_t current_tick);
+	void queue(const kernel::MouseEvent& event, uint64_t current_tick);
+	void queue(const kernel::TouchEvent& event, uint64_t current_tick);
+	void queue(const kernel::GameControllerEvent& event, uint64_t current_tick);
+
+	void dispatch(uint64_t current_tick);
+
+	void add_handler(input_handler handler);
+
+	void reset();
+};
+
+
+
+
+
+void InputEventRelay::queue(const gemini::GameMessage& message)
+{
+	messages.push_back(message);
+}
+
+void InputEventRelay::queue(const kernel::SystemEvent& event, uint64_t current_tick)
+{
+	GameMessage out;
+	out.timestamp = current_tick;
+	out.type = GameMessage::SystemEvent;
+	if (event.subtype == kernel::WindowGainFocus)
+	{
+		out.params[0] = 1;
+	}
+	else if (event.subtype == kernel::WindowLostFocus)
+	{
+		out.params[1] = 1;
+	}
+	else
+	{
+		LOGW("Missing system event type!\n");
+	}
+	messages.push_back(out);
+}
+
+void InputEventRelay::queue(const kernel::KeyboardEvent& event, uint64_t current_tick)
+{
+	GameMessage out;
+	out.timestamp = current_tick;
+	out.type = GameMessage::KeyboardEvent;
+	out.button = event.key;
+	out.params[0] = event.is_down;
+	out.params[1] = event.modifiers;
+	messages.push_back(out);
+}
+
+void InputEventRelay::queue(const kernel::MouseEvent& event, uint64_t current_tick)
+{
+	GameMessage out;
+	out.timestamp = current_tick;
+	switch (event.subtype)
+	{
+	case kernel::MouseButton:
+		out.type = GameMessage::MouseEvent;
+		out.button = event.button;
+		out.params[0] = event.is_down;
+		break;
+
+	case kernel::MouseMoved:
+		out.type = GameMessage::MouseMove;
+		out.params[0] = event.mx;
+		out.params[1] = event.my;
+		break;
+
+	case kernel::MouseDelta:
+		out.type = GameMessage::MouseDelta;
+		out.params[0] = event.dx;
+		out.params[1] = event.dy;
+		break;
+
+	case kernel::MouseWheelMoved:
+		out.type = GameMessage::MouseWheel;
+		out.button = event.wheel_direction;
+		out.params[0] = event.mx;
+		out.params[1] = event.my;
+		out.params[2] = event.dx;
+		out.params[3] = event.dy;
+		break;
+
+	default:
+		assert(0);
+		break;
+	}
+	messages.push_back(out);
+}
+
+void InputEventRelay::queue(const kernel::TouchEvent& event, uint64_t current_tick)
+{
+	// TODO@APP: Implement touch events!
+	assert(false);
+}
+
+void InputEventRelay::queue(const kernel::GameControllerEvent& event, uint64_t current_tick)
+{
+	GameMessage out;
+	out.timestamp = current_tick;
+	out.params[0] = event.gamepad_id;
+
+	switch (event.subtype)
+	{
+	case kernel::JoystickConnected:
+		out.type = GameMessage::GamePadConnected;
+		break;
+
+	case kernel::JoystickDisconnected:
+		out.type = GameMessage::GamePadDisconnected;
+		break;
+
+	case kernel::JoystickButton:
+		out.type = GameMessage::GamePadButton;
+		out.button = event.button;
+		out.params[1] = event.is_down;
+		break;
+
+	case kernel::JoystickAxisMoved:
+		out.type = GameMessage::GamePadAxis;
+		out.params[1] = event.axis_id;
+		out.params[2] = event.axis_value;
+		break;
+
+	default:
+		// Unhandled gamepad input!
+		assert(0);
+		break;
+	}
+	messages.push_back(out);
+}
+
+
+void InputEventRelay::dispatch(uint64_t current_tick)
+{
+	// iterate over queued messages and play until we hit the time cap
+	for (size_t message_index = 0; message_index < messages.size(); ++message_index)
+	{
+		const gemini::GameMessage& message = messages[message_index];
+		if (message.timestamp <= current_tick)
+		{
+			uint32_t handled_message = 0;
+
+			for (size_t index = 0; index < handlers.size() && handled_message == 0; ++index)
+			{
+				input_handler& handler = handlers[index];
+				if (handler(message) == 0)
+				{
+					// message was handled
+					handled_message = 1;
+				}
+			}
+		}
+	}
+}
+
+void InputEventRelay::add_handler(input_handler handler)
+{
+	handlers.push_back(handler);
+}
+
+void InputEventRelay::reset()
+{
+	messages.resize(0);
+}
+
+
 class EngineKernel : public kernel::IKernel
 {
 
@@ -714,8 +903,6 @@ private:
 	bool debug_camera;
 
 	platform::window::NativeWindow* main_window;
-
-	Array<gemini::GameMessage>* queued_messages;
 
 	// rendering
 	render2::Device* device;
@@ -747,6 +934,9 @@ private:
 	EntityRenderState* entity_render_state;
 
 	CameraState camera_state[2];
+
+
+	InputEventRelay* event_relay;
 
 
 	void open_gamelibrary()
@@ -848,8 +1038,8 @@ public:
 		, engine_interface(0)
 		, game_interface(0)
 		, engine_allocator(memory_allocator_default(MEMORY_ZONE_DEFAULT))
-		, queued_messages(nullptr)
 		, transform_graph(nullptr)
+		, event_relay(nullptr)
 	{
 		game_path = "";
 		enable_telemetry = 0;
@@ -861,14 +1051,6 @@ public:
 	virtual ~EngineKernel()
 	{
 	}
-
-	void queue_game_message(const GameMessage& message)
-	{
-		if (queued_messages)
-		{
-			queued_messages->push_back(message);
-		}
-	} // queue_game_message
 
 	virtual void event(kernel::KeyboardEvent& event)
 	{
@@ -906,12 +1088,12 @@ public:
 			}
 		}
 
-		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
+		event_relay->queue(event, kernel::parameters().current_physics_tick);
 	} // event
 
 	virtual void event(kernel::MouseEvent& event)
 	{
-		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
+		event_relay->queue(event, kernel::parameters().current_physics_tick);
 	} // event
 
 
@@ -943,13 +1125,20 @@ public:
 			set_active(false);
 		}
 
-		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
+		if (event_relay)
+		{
+			event_relay->queue(event, kernel::parameters().current_physics_tick);
+		}
+		else
+		{
+			LOGV("Missed SystemEvent\n");
+		}
 	} // event
 
 
 	virtual void event(kernel::GameControllerEvent& event)
 	{
-		queue_game_message(event_to_gamemessage(event, kernel::parameters().current_physics_tick));
+		event_relay->queue(event, kernel::parameters().current_physics_tick);
 	} // event
 
 
@@ -1051,6 +1240,11 @@ public:
 			return platform::get_user_application_directory(config.application_directory.c_str());
 		};
 
+
+		engine_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+		event_relay = MEMORY2_NEW(engine_allocator, InputEventRelay)(engine_allocator);
+		event_relay->add_handler(MAKE_MEMBER_DELEGATE(int32_t(const gemini::GameMessage&), EngineKernel, &EngineKernel::test_handler, this));
+
 		const uint32_t runtime_flags = RF_CORE | RF_WINDOW_SYSTEM;
 		gemini::runtime_startup(nullptr, content_path, get_custom_application_directory, runtime_flags);
 
@@ -1080,16 +1274,16 @@ public:
 			window_params.frame = screen_frame;
 		}
 
-		// create the window
-		main_window = platform::window::create(window_params);
-		platform::window::focus(main_window);
 
-		engine_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		renderer_allocator = memory_allocator_default(MEMORY_ZONE_RENDERER);
 
 		entity_render_state = static_cast<EntityRenderState*>(MEMORY2_ALLOC(engine_allocator, sizeof(EntityRenderState) * 2));
 		memset(entity_render_state, 0, sizeof(EntityRenderState) * 2);
-		queued_messages = MEMORY2_NEW(engine_allocator, Array<GameMessage>)(engine_allocator);
+
+		// create the window
+		main_window = platform::window::create(window_params);
+		platform::window::focus(main_window);
+
 
 		// initialize rendering subsystems
 		render2::RenderParameters render_params(renderer_allocator);
@@ -1189,19 +1383,8 @@ public:
 	virtual void fixed_update(float step_seconds)
 	{
 		kernel::Parameters& params = kernel::parameters();
-
-		// iterate over queued messages and play until we hit the time cap
-		for (size_t index = 0; index < queued_messages->size(); ++index)
-		{
-			if ((*queued_messages)[index].timestamp <= params.current_physics_tick)
-			{
-				if (game_interface)
-				{
-					game_interface->handle_game_message((*queued_messages)[index]);
-				}
-			} // execute
-		}
-
+		event_relay->dispatch(params.current_physics_tick);
+		event_relay->reset();
 		if (game_interface)
 		{
 			const float game_step_seconds = (params.simulation_time_scale * params.step_interval_seconds);
@@ -1209,6 +1392,17 @@ public:
 			engine::instance()->physics()->step_simulation(game_step_seconds);
 		}
 	} // fixed_update
+
+	int32_t test_handler(const gemini::GameMessage& message)
+	{
+
+		if (game_interface)
+		{
+			game_interface->handle_game_message(message);
+		}
+		LOGV("test handler!\n");
+		return 1;
+	}
 
 	virtual void tick(bool performed_fixed_update)
 	{
@@ -1264,8 +1458,6 @@ public:
 			// 3. Determine if camera is too close to the player
 			// 4. optionally: fade out player when too close
 			//LOGV("Collision Correct the camera position?\n");
-
-			queued_messages->resize(0);
 
 			if (game_interface)
 			{
@@ -1486,8 +1678,8 @@ public:
 		MEMORY2_DEALLOC(engine_allocator, entity_render_state);
 		entity_render_state = nullptr;
 
-		MEMORY2_DELETE(engine_allocator, queued_messages);
-		queued_messages = nullptr;
+		MEMORY2_DELETE(engine_allocator, event_relay);
+		event_relay = nullptr;
 
 		MEMORY2_DELETE(engine_allocator, engine_interface);
 
