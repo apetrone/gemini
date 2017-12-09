@@ -544,11 +544,14 @@ namespace platform
 					case WM_SETFOCUS:
 					case WM_KILLFOCUS:
 					{
-						kernel::SystemEvent sysevent;
-						sysevent.subtype = (message == WM_KILLFOCUS) ? kernel::WindowLostFocus : kernel::WindowGainFocus;
-						sysevent.window = window;
-						kernel::event_dispatch(sysevent);
-						return 0;
+						if (window->get_destroy_behavior() == DestroyWindowBehavior::None)
+						{
+							kernel::SystemEvent sysevent;
+							sysevent.subtype = (message == WM_KILLFOCUS) ? kernel::WindowLostFocus : kernel::WindowGainFocus;
+							sysevent.window = window;
+							kernel::event_dispatch(sysevent);
+							return 0;
+						}
 						break;
 					}
 
