@@ -150,11 +150,6 @@ namespace platform
 
 			// All XInput controllers support haptics.
 			_joysticks[index].state |= GEMINI_JOYSTICK_SUPPORTS_HAPTICS;
-
-			for (size_t button = 0; button < GAMEPAD_BUTTON_COUNT; ++button)
-			{
-				_joysticks[index].last_axes[button] = 0;
-			}
 		}
 	}
 
@@ -178,31 +173,24 @@ namespace platform
 
 	void xinput_joystick_update_button(Win32JoystickData* joystick, const XINPUT_GAMEPAD* gamepad, DWORD xinput_button, uint32_t platform_button)
 	{
-		const uint8_t last_state = (joystick->last_axes[GAMEPAD_JOYSTICK_BUTTON_OFFSET + platform_button]);
+		assert(platform_button < GAMEPAD_BUTTON_COUNT);
+
+		const uint8_t last_state = (joystick->last_axes[platform_button]);
 		const int16_t current_state = (gamepad->wButtons & xinput_button) == xinput_button;
 
 		if (last_state != current_state)
 		{
 			uint8_t value = static_cast<uint8_t>(current_state);
-			joystick->last_axes[GAMEPAD_JOYSTICK_BUTTON_OFFSET + platform_button] = current_state;
+			joystick->last_axes[platform_button] = current_state;
 			kernel::GameControllerEvent gce;
 			gce.gamepad_id = joystick->index;
 			gce.subtype = kernel::JoystickButton;
-			gce.axis_id = GAMEPAD_JOYSTICK_BUTTON_OFFSET + static_cast<int>(platform_button);
+			gce.axis_id = static_cast<int>(platform_button);
+			LOGV("platform_button = %i, axis_id = %i\n", platform_button, gce.axis_id);
+			assert(gce.axis_id < GAMEPAD_BUTTON_COUNT);
 			gce.axis_value = (current_state > 0) ? 255 : 0;
 			kernel::event_dispatch(gce);
 		}
-	}
-
-
-	uint8_t value_transformer_mask(int16_t axis_value)
-	{
-		return static_cast<uint8_t>(axis_value & 0xff);
-	}
-
-	uint8_t value_transformer_invert(int16_t axis_value)
-	{
-		return static_cast<uint8_t>((-axis_value) & 0xff);
 	}
 
 	void xinput_joystick_update_axis(Win32JoystickData* joystick, int16_t axis_value, uint8_t platform_axis_index, int16_t deadzone)
@@ -218,13 +206,42 @@ namespace platform
 			joystick->last_axes[platform_axis_index] = axis_value;
 
 			assert(axis_value <= 32767 || axis_value >= -32768);
-			LOGV("platform_axis_index: %i [%i]\n", platform_axis_index, axis_value);
 
 			kernel::GameControllerEvent gce;
 			gce.gamepad_id = joystick->index;
 			gce.subtype = kernel::JoystickAxisMoved;
-			gce.axis_id = platform_axis_index;
-			gce.axis_value = axis_value;
+
+			uint32_t flip_value = 0;
+
+			// If we need to flip the value, the axis index is incremented.
+			flip_value = (axis_value < 0);
+
+			uint8_t axis_mapping[] = {
+				GAMEPAD_BUTTON_L2,
+				GAMEPAD_BUTTON_R2,
+				GAMEPAD_STICK0_AXIS_RIGHT,
+				GAMEPAD_STICK0_AXIS_UP,
+				GAMEPAD_STICK1_AXIS_RIGHT,
+				GAMEPAD_STICK1_AXIS_UP
+			};
+
+			assert(platform_axis_index < 6);
+
+			gce.axis_id = axis_mapping[platform_axis_index] + flip_value;
+
+			// Interpret this as an unsigned value to normalize it.
+			int16_t new_value = axis_value;
+			if (flip_value)
+			{
+				new_value = -(axis_value + 1);
+			}
+
+			// Normalize the value and then convert it to 8-bit.
+			float normalized_value = (new_value / 32768.0);
+			gce.axis_value = static_cast<uint8_t>(normalized_value * 255.0);
+
+			//LOGV("platform_axis_index: %i -> %i value: %i -> %i | %i [%i]\n", platform_axis_index, gce.axis_id, axis_value, gce.axis_value, new_value, flip_value);
+
 			kernel::event_dispatch(gce);
 		}
 	}
@@ -284,8 +301,8 @@ namespace platform
 						xinput_joystick_update_button(joystick, gamepad, XINPUT_GAMEPAD_START, GAMEPAD_BUTTON_START);
 						xinput_joystick_update_button(joystick, gamepad, XINPUT_GAMEPAD_LEFT_SHOULDER, GAMEPAD_BUTTON_LEFTSHOULDER);
 						xinput_joystick_update_button(joystick, gamepad, XINPUT_GAMEPAD_RIGHT_SHOULDER, GAMEPAD_BUTTON_RIGHTSHOULDER);
-						xinput_joystick_update_button(joystick, gamepad, XINPUT_GAMEPAD_LEFT_THUMB, GAMEPAD_BUTTON_L2);
-						xinput_joystick_update_button(joystick, gamepad, XINPUT_GAMEPAD_RIGHT_THUMB, GAMEPAD_BUTTON_R2);
+						xinput_joystick_update_button(joystick, gamepad, XINPUT_GAMEPAD_LEFT_THUMB, GAMEPAD_BUTTON_L3);
+						xinput_joystick_update_button(joystick, gamepad, XINPUT_GAMEPAD_RIGHT_THUMB, GAMEPAD_BUTTON_R3);
 						xinput_joystick_update_button(joystick, gamepad, XINPUT_GAMEPAD_DPAD_UP, GAMEPAD_BUTTON_DPAD_UP);
 						xinput_joystick_update_button(joystick, gamepad, XINPUT_GAMEPAD_DPAD_DOWN, GAMEPAD_BUTTON_DPAD_DOWN);
 						xinput_joystick_update_button(joystick, gamepad, XINPUT_GAMEPAD_DPAD_LEFT, GAMEPAD_BUTTON_DPAD_LEFT);

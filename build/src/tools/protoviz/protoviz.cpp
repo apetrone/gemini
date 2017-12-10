@@ -78,6 +78,8 @@ const gui::Size BUMPER(100, 30);
 
 const gui::Size BUTTON_SIZE(40, 40);
 
+const gui::Size ANALOG_SIZE(80, 80);
+
 class JoystickAxisPanel : public gui::Panel
 {
 public:
@@ -85,7 +87,7 @@ public:
 	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
 	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
 
-	uint16_t value;
+	uint8_t value;
 };
 
 JoystickAxisPanel::JoystickAxisPanel(gui::Panel* parent)
@@ -110,6 +112,7 @@ void JoystickAxisPanel::render(gui::Compositor* compositor, gui::Renderer* rende
 	else if (value > 0 && value < 255)
 	{
 		float alpha = (value / 255.0);
+		LOGV("value = %i, alpha = %2.2f\n", value, alpha);
 		set_background_color(interpolate(UP_COLOR, FULL_COLOR, alpha));
 	}
 	else if (value == 255)
@@ -119,6 +122,93 @@ void JoystickAxisPanel::render(gui::Compositor* compositor, gui::Renderer* rende
 
 	gui::Panel::render(compositor, renderer, render_commands);
 }
+
+// ----------------------------------------------------------------------------
+
+class JoystickAnalogPanel : public gui::Panel
+{
+public:
+	JoystickAnalogPanel(gui::Panel* parent);
+	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
+
+	uint8_t left;
+	uint8_t right;
+	uint8_t up;
+	uint8_t down;
+};
+
+JoystickAnalogPanel::JoystickAnalogPanel(gui::Panel* parent)
+	: gui::Panel(parent)
+{
+}
+
+void JoystickAnalogPanel::update(gui::Compositor* compositor, float delta_seconds)
+{
+	gui::Panel::update(compositor, delta_seconds);
+}
+
+void JoystickAnalogPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
+{
+	const gemini::Color UP_COLOR(0.1f, 0.1f, 0.1f);
+	const gemini::Color FULL_COLOR(1.0f, 0.0f, 0.0f);
+
+	//if (value == 0)
+	//{
+	//	set_background_color(UP_COLOR);
+	//}
+	//else if (value > 0 && value < 255)
+	//{
+	//	float alpha = (value / 255.0);
+	//	LOGV("value = %i, alpha = %2.2f\n", value, alpha);
+	//	set_background_color(interpolate(UP_COLOR, FULL_COLOR, alpha));
+	//}
+	//else if (value == 255)
+	//{
+	//	set_background_color(FULL_COLOR);
+	//}
+
+	gui::Painter painter(this, render_commands);
+
+	gui::Point left_cursor(
+		0.5 + (0.5 * (static_cast<float>(right / 255.0) - static_cast<float>(left / 255.0))),
+		0.5 + (0.5 * -(static_cast<float>(up / 255.0) - static_cast<float>(down / 255.0))));
+
+	gemini::Color left_colors[] = {
+		gemini::Color(1.0f, 0.0f, 0.0f),
+		gemini::Color(1.0f, 0.0f, 0.0f),
+		gemini::Color(1.0f, 0.0f, 1.0f),
+		gemini::Color(1.0f, 0.0f, 1.0f)
+	};
+
+	gui::Point left_vertices[] = {
+		gui::Point(get_size().width * left_cursor.x, 0),
+		gui::Point(get_size().width * left_cursor.x, get_size().height),
+
+		gui::Point(0, get_size().height * left_cursor.y),
+		gui::Point(get_size().width, get_size().height * left_cursor.y)
+	};
+
+
+
+	//left_cursor.x * get_size().width(), left_cursor.y * get_size().height()
+
+	// vertical
+	//painter.add_line();
+
+	// horizontal
+
+	gui::Panel::render(compositor, renderer, render_commands);
+	painter.add_lines(2, left_vertices, left_colors);
+}
+
+// ----------------------------------------------------------------------------
+
+
+
+
+
+
 
 
 class GamepadPanel : public gui::Panel
@@ -146,6 +236,9 @@ private:
 	JoystickAxisPanel* y_button;
 	JoystickAxisPanel* a_button;
 	JoystickAxisPanel* b_button;
+
+	JoystickAnalogPanel* left_stick;
+	JoystickAnalogPanel* right_stick;
 };
 
 
@@ -187,6 +280,12 @@ GamepadPanel::GamepadPanel(gui::Panel* parent)
 
 	b_button = new JoystickAxisPanel(this);
 	b_button->set_size(BUTTON_SIZE);
+
+	left_stick = new JoystickAnalogPanel(this);
+	left_stick->set_size(ANALOG_SIZE);
+
+	right_stick = new JoystickAnalogPanel(this);
+	right_stick->set_size(ANALOG_SIZE);
 }
 
 void GamepadPanel::update(gui::Compositor* compositor, float delta_seconds)
@@ -212,6 +311,9 @@ void GamepadPanel::update(gui::Compositor* compositor, float delta_seconds)
 	y_button->set_origin(right_offset + gui::Point(0, 0));
 	a_button->set_origin(right_offset + gui::Point(0, 100));
 	b_button->set_origin(right_offset + gui::Point(50, 50));
+
+	left_stick->set_origin(220, 220);
+	right_stick->set_origin(get_size().width - 260, 220);
 
 #if 0
 	// Simple harmonic oscillator
@@ -266,21 +368,31 @@ void GamepadPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, 
 
 void GamepadPanel::set_from_joystick(JoystickInput& joystick)
 {
-	left_trigger->value = joystick.axes[0];
-	right_trigger->value = joystick.axes[1];
+	left_trigger->value		= joystick.get_button(GAMEPAD_BUTTON_L2).value();
+	right_trigger->value	= joystick.get_button(GAMEPAD_BUTTON_R2).value();
 
-	left_bumper->value = joystick.get_button(GAMEPAD_BUTTON_LEFTSHOULDER).value();
-	right_bumper->value = joystick.get_button(GAMEPAD_BUTTON_RIGHTSHOULDER).value();
+	left_bumper->value		= joystick.get_button(GAMEPAD_BUTTON_LEFTSHOULDER).value();
+	right_bumper->value		= joystick.get_button(GAMEPAD_BUTTON_RIGHTSHOULDER).value();
 
-	left_button->value = joystick.get_button(GAMEPAD_BUTTON_DPAD_LEFT).value();
-	up_button->value = joystick.get_button(GAMEPAD_BUTTON_DPAD_UP).value();
-	right_button->value = joystick.get_button(GAMEPAD_BUTTON_DPAD_RIGHT).value();
-	down_button->value = joystick.get_button(GAMEPAD_BUTTON_DPAD_DOWN).value();
+	left_button->value		= joystick.get_button(GAMEPAD_BUTTON_DPAD_LEFT).value();
+	up_button->value		= joystick.get_button(GAMEPAD_BUTTON_DPAD_UP).value();
+	right_button->value		= joystick.get_button(GAMEPAD_BUTTON_DPAD_RIGHT).value();
+	down_button->value		= joystick.get_button(GAMEPAD_BUTTON_DPAD_DOWN).value();
 
-	x_button->value = joystick.get_button(GAMEPAD_BUTTON_X).value();
-	y_button->value = joystick.get_button(GAMEPAD_BUTTON_Y).value();
-	a_button->value = joystick.get_button(GAMEPAD_BUTTON_A).value();
-	b_button->value = joystick.get_button(GAMEPAD_BUTTON_B).value();
+	x_button->value			= joystick.get_button(GAMEPAD_BUTTON_X).value();
+	y_button->value			= joystick.get_button(GAMEPAD_BUTTON_Y).value();
+	a_button->value			= joystick.get_button(GAMEPAD_BUTTON_A).value();
+	b_button->value			= joystick.get_button(GAMEPAD_BUTTON_B).value();
+
+	left_stick->left		= joystick.get_button(GAMEPAD_STICK0_AXIS_LEFT).value();
+	left_stick->right		= joystick.get_button(GAMEPAD_STICK0_AXIS_RIGHT).value();
+	left_stick->up			= joystick.get_button(GAMEPAD_STICK0_AXIS_UP).value();
+	left_stick->down		= joystick.get_button(GAMEPAD_STICK0_AXIS_DOWN).value();
+
+	right_stick->left		= joystick.get_button(GAMEPAD_STICK1_AXIS_LEFT).value();
+	right_stick->right		= joystick.get_button(GAMEPAD_STICK1_AXIS_RIGHT).value();
+	right_stick->up			= joystick.get_button(GAMEPAD_STICK1_AXIS_UP).value();
+	right_stick->down		= joystick.get_button(GAMEPAD_STICK1_AXIS_DOWN).value();
 }
 
 class ProtoVizKernel : public kernel::IKernel
@@ -821,9 +933,7 @@ public:
 	{
 		event_relay->dispatch(kernel::parameters().current_physics_tick);
 
-		if (inputstate.keyboard().get_key(BUTTON_ESCAPE).is_down() ||
-			inputstate.joystick_by_index(0).buttons[gemini::GAMEPAD_BUTTON_B].is_down() ||
-			inputstate.joystick_by_index(1).buttons[gemini::GAMEPAD_BUTTON_B].is_down())
+		if (inputstate.keyboard().get_key(BUTTON_ESCAPE).is_down())
 		{
 			set_active(false);
 		}
