@@ -136,6 +136,7 @@ public:
 	uint8_t right;
 	uint8_t up;
 	uint8_t down;
+	uint8_t thumb_button;
 };
 
 JoystickAnalogPanel::JoystickAnalogPanel(gui::Panel* parent)
@@ -153,20 +154,19 @@ void JoystickAnalogPanel::render(gui::Compositor* compositor, gui::Renderer* ren
 	const gemini::Color UP_COLOR(0.1f, 0.1f, 0.1f);
 	const gemini::Color FULL_COLOR(1.0f, 0.0f, 0.0f);
 
-	//if (value == 0)
-	//{
-	//	set_background_color(UP_COLOR);
-	//}
-	//else if (value > 0 && value < 255)
-	//{
-	//	float alpha = (value / 255.0);
-	//	LOGV("value = %i, alpha = %2.2f\n", value, alpha);
-	//	set_background_color(interpolate(UP_COLOR, FULL_COLOR, alpha));
-	//}
-	//else if (value == 255)
-	//{
-	//	set_background_color(FULL_COLOR);
-	//}
+	if (thumb_button == 0)
+	{
+		set_background_color(UP_COLOR);
+	}
+	else if (thumb_button > 0 && thumb_button < 255)
+	{
+		float alpha = (thumb_button / 255.0);
+		set_background_color(interpolate(UP_COLOR, FULL_COLOR, alpha));
+	}
+	else if (thumb_button == 255)
+	{
+		set_background_color(FULL_COLOR);
+	}
 
 	gui::Painter painter(this, render_commands);
 
@@ -388,11 +388,13 @@ void GamepadPanel::set_from_joystick(JoystickInput& joystick)
 	left_stick->right		= joystick.get_button(GAMEPAD_STICK0_AXIS_RIGHT).value();
 	left_stick->up			= joystick.get_button(GAMEPAD_STICK0_AXIS_UP).value();
 	left_stick->down		= joystick.get_button(GAMEPAD_STICK0_AXIS_DOWN).value();
+	left_stick->thumb_button = joystick.get_button(GAMEPAD_BUTTON_L3).value();
 
 	right_stick->left		= joystick.get_button(GAMEPAD_STICK1_AXIS_LEFT).value();
 	right_stick->right		= joystick.get_button(GAMEPAD_STICK1_AXIS_RIGHT).value();
 	right_stick->up			= joystick.get_button(GAMEPAD_STICK1_AXIS_UP).value();
 	right_stick->down		= joystick.get_button(GAMEPAD_STICK1_AXIS_DOWN).value();
+	right_stick->thumb_button = joystick.get_button(GAMEPAD_BUTTON_R3).value();
 }
 
 class ProtoVizKernel : public kernel::IKernel
