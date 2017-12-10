@@ -35,10 +35,17 @@
 #include <string>
 #include <vector>
 
+namespace gui
+{
+	class Compositor;
+}
+
 namespace platform
 {
 	struct Result;
 }
+
+
 
 
 namespace gemini
@@ -356,4 +363,7 @@ namespace gemini
 	struct RapidInterface* runtime_rapid();
 
 	platform::PathString runtime_platform_asset_root(const platform::PathString& root);
+
+	struct InputMessage;
+	void input_message_to_compositor(gui::Compositor* compositor, const InputMessage& message);
 } // namespace gemini

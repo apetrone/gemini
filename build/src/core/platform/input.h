@@ -50,8 +50,6 @@ const size_t GEMINI_JOYSTICK_MAX_JOYSTICKS = 4;
 const size_t GEMINI_TOUCHES_MAX_COUNT = 10;
 
 
-const size_t GEMINI_JOYSTICK_MAX_AXES = 6;
-
 // Joystick states
 const size_t GEMINI_JOYSTICK_DISCONNECTED = 0; // joystick disconnected / not used
 const size_t GEMINI_JOYSTICK_CONNECTED = 1; // joystick is connected and enabled
@@ -246,9 +244,10 @@ namespace gemini
 	struct ButtonState
 	{
 		uint8_t state;
+		uint8_t axis_value;
 
 		// handle a press or release event
-		void update_state( bool is_down );
+		void update_state(uint8_t value);
 
 		// update this button state for this frame
 		void update();
@@ -261,6 +260,8 @@ namespace gemini
 
 		// returns whether or not the button was just released
 		bool was_released() const;
+
+		uint8_t value() const;
 	}; // ButtonState
 
 	// This is modeled after SDL2's enums, which are in turn, modeled after the
@@ -268,6 +269,20 @@ namespace gemini
 	enum GamepadButton
 	{
 		GAMEPAD_BUTTON_INVALID,
+
+		// left stick axes (split into cardinal directions)
+		GAMEPAD_STICK0_AXIS_UP,
+		GAMEPAD_STICK0_AXIS_LEFT,
+		GAMEPAD_STICK0_AXIS_RIGHT,
+		GAMEPAD_STICK0_AXIS_DOWN,
+
+		// right stick axes (split into cardinal directions)
+		GAMEPAD_STICK1_AXIS_UP,
+		GAMEPAD_STICK1_AXIS_LEFT,
+		GAMEPAD_STICK1_AXIS_RIGHT,
+		GAMEPAD_STICK1_AXIS_DOWN,
+
+		GAMEPAD_JOYSTICK_BUTTON_OFFSET,
 
 		GAMEPAD_BUTTON_A,
 		GAMEPAD_BUTTON_B,

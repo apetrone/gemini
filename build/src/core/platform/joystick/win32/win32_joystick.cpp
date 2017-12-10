@@ -53,8 +53,7 @@ namespace platform
 		uint8_t index;
 		uint8_t state;
 		DWORD last_packet;
-		uint8_t last_button[GAMEPAD_BUTTON_COUNT];
-		int16_t last_axes[GEMINI_JOYSTICK_MAX_AXES];
+		int16_t last_axes[GAMEPAD_BUTTON_COUNT];
 
 		bool is_connected() const
 		{
@@ -151,6 +150,11 @@ namespace platform
 
 			// All XInput controllers support haptics.
 			_joysticks[index].state |= GEMINI_JOYSTICK_SUPPORTS_HAPTICS;
+
+			for (size_t button = 0; button < GAMEPAD_BUTTON_COUNT; ++button)
+			{
+				_joysticks[index].last_axes[button] = 0;
+			}
 		}
 	}
 
@@ -174,22 +178,32 @@ namespace platform
 
 	void xinput_joystick_update_button(Win32JoystickData* joystick, const XINPUT_GAMEPAD* gamepad, DWORD xinput_button, uint32_t platform_button)
 	{
-		const uint8_t last_state = (joystick->last_button[platform_button]);
+		const uint8_t last_state = (joystick->last_axes[GAMEPAD_JOYSTICK_BUTTON_OFFSET + platform_button]);
 		const int16_t current_state = (gamepad->wButtons & xinput_button) == xinput_button;
 
 		if (last_state != current_state)
 		{
-			joystick->last_button[platform_button] = static_cast<uint8_t>(current_state > 0);
+			uint8_t value = static_cast<uint8_t>(current_state);
+			joystick->last_axes[GAMEPAD_JOYSTICK_BUTTON_OFFSET + platform_button] = current_state;
 			kernel::GameControllerEvent gce;
 			gce.gamepad_id = joystick->index;
 			gce.subtype = kernel::JoystickButton;
-			gce.button = static_cast<int>(platform_button);
-			gce.is_down = (current_state > 0);
+			gce.axis_id = GAMEPAD_JOYSTICK_BUTTON_OFFSET + static_cast<int>(platform_button);
+			gce.axis_value = (current_state > 0) ? 255 : 0;
 			kernel::event_dispatch(gce);
 		}
 	}
 
 
+	uint8_t value_transformer_mask(int16_t axis_value)
+	{
+		return static_cast<uint8_t>(axis_value & 0xff);
+	}
+
+	uint8_t value_transformer_invert(int16_t axis_value)
+	{
+		return static_cast<uint8_t>((-axis_value) & 0xff);
+	}
 
 	void xinput_joystick_update_axis(Win32JoystickData* joystick, int16_t axis_value, uint8_t platform_axis_index, int16_t deadzone)
 	{
@@ -204,6 +218,7 @@ namespace platform
 			joystick->last_axes[platform_axis_index] = axis_value;
 
 			assert(axis_value <= 32767 || axis_value >= -32768);
+			LOGV("platform_axis_index: %i [%i]\n", platform_axis_index, axis_value);
 
 			kernel::GameControllerEvent gce;
 			gce.gamepad_id = joystick->index;

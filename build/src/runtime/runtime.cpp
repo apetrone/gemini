@@ -27,6 +27,7 @@
 
 #include <runtime/configloader.h>
 #include <runtime/runtime.h>
+#include <runtime/inputstate.h>
 
 #include <core/logging.h>
 #include <core/str.h>
@@ -40,6 +41,10 @@
 #include "filesystem_interface.h"
 
 #include <rapid/rapid.h>
+
+#include <ui/compositor.h>
+
+#include <platform/kernel_events.h>
 
 
 
@@ -968,4 +973,81 @@ namespace gemini
 		content_path.normalize(PATH_SEPARATOR);
 		return content_path;
 	} // runtime_platform_asset_root
+
+	void input_message_to_compositor_mouse(gui::Compositor* compositor, const InputMessage& message)
+	{
+		if (compositor)
+		{
+			assert(compositor);
+
+			gui::CursorButton::Type input_to_gui[] = {
+				gui::CursorButton::None,
+				gui::CursorButton::Left,
+				gui::CursorButton::Right,
+				gui::CursorButton::Middle,
+				gui::CursorButton::Mouse4,
+				gui::CursorButton::Mouse5
+			};
+
+			switch (message.type)
+			{
+			case InputMessage::MouseMove:
+			{
+				compositor->cursor_move_absolute(static_cast<gui::ScreenInt>(message.params[0]), static_cast<gui::ScreenInt>(message.params[1]));
+				break;
+			}
+			case InputMessage::Mouse:
+				compositor->cursor_button(input_to_gui[message.button], message.params[0]);
+				break;
+
+			case InputMessage::MouseWheel:
+				if (message.params[0] > 0)
+				{
+					fprintf(stdout, "mouse wheel toward screen\n");
+				}
+				else
+				{
+					fprintf(stdout, "mouse wheel away from screen\n");
+				}
+				break;
+			default:
+				fprintf(stdout, "mouse event received!\n");
+				break;
+			}
+		}
+	} // input_message_to_compositor_mouse
+
+	void input_message_to_compositor(gui::Compositor* compositor, const InputMessage& message)
+	{
+		switch (message.type)
+		{
+		case InputMessage::Keyboard:
+			if (compositor)
+			{
+				compositor->key_event(message.params[0], message.button, message.params[1]);
+			}
+			break;
+
+		case InputMessage::Mouse:
+			input_message_to_compositor_mouse(compositor, message);
+			break;
+
+		case InputMessage::MouseMove:
+			input_message_to_compositor_mouse(compositor, message);
+			break;
+
+		case InputMessage::MouseWheel:
+			input_message_to_compositor_mouse(compositor, message);
+			break;
+
+		case InputMessage::GamePadButton:
+			break;
+
+		case InputMessage::GamePadAxis:
+			break;
+
+			assert(0); // TODO@APP: Handle GamePad for UI elements
+			break;
+		}
+	} // input_message_to_compositor
 } // namespace gemini

@@ -31,9 +31,9 @@
 
 namespace gemini
 {
-	void ButtonState::update_state( bool is_down )
+	void ButtonState::update_state(uint8_t value)
 	{
-		if ( is_down )
+		if (value > 0)
 		{
 			// this button was down last update, too
 			if ( state & Button_IsDown )
@@ -54,6 +54,7 @@ namespace gemini
 			// set 'released' and 'impulse' flag
 			state = Button_Impulse | Button_Released;
 		}
+		axis_value = value;
 	} // update_state
 
 	void ButtonState::update()
@@ -97,6 +98,11 @@ namespace gemini
 	bool ButtonState::was_released() const
 	{
 		return (state == (Button_Impulse|Button_Released));
+	}
+
+	uint8_t ButtonState::value() const
+	{
+		return axis_value;
 	}
 
 	const char* mouse_button_name(unsigned int value)
@@ -292,6 +298,8 @@ namespace gemini
 			"GAMEPAD_BUTTON_DPAD_LEFT",
 			"GAMEPAD_BUTTON_DPAD_RIGHT"
 		};
+
+		value -= GAMEPAD_JOYSTICK_BUTTON_OFFSET;
 
 		if (value < GAMEPAD_BUTTON_COUNT)
 		{

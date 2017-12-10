@@ -27,6 +27,7 @@
 #include <runtime/guirenderer.h>
 #include <runtime/hotloading.h>
 #include <runtime/standaloneresourcecache.h>
+#include <runtime/inputstate.h>
 
 #include <runtime/mesh.h>
 #include <runtime/transform_graph.h>
@@ -73,9 +74,214 @@ using namespace renderer;
 using namespace gemini;
 
 
+const gui::Size BUMPER(100, 30);
+
+const gui::Size BUTTON_SIZE(40, 40);
+
+class JoystickAxisPanel : public gui::Panel
+{
+public:
+	JoystickAxisPanel(gui::Panel* parent);
+	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
+
+	uint16_t value;
+};
+
+JoystickAxisPanel::JoystickAxisPanel(gui::Panel* parent)
+	: gui::Panel(parent)
+{
+}
+
+void JoystickAxisPanel::update(gui::Compositor* compositor, float delta_seconds)
+{
+	gui::Panel::update(compositor, delta_seconds);
+}
+
+void JoystickAxisPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
+{
+	const gemini::Color UP_COLOR(0.1f, 0.1f, 0.1f);
+	const gemini::Color FULL_COLOR(1.0f, 0.0f, 0.0f);
+
+	if (value == 0)
+	{
+		set_background_color(UP_COLOR);
+	}
+	else if (value > 0 && value < 255)
+	{
+		float alpha = (value / 255.0);
+		set_background_color(interpolate(UP_COLOR, FULL_COLOR, alpha));
+	}
+	else if (value == 255)
+	{
+		set_background_color(FULL_COLOR);
+	}
+
+	gui::Panel::render(compositor, renderer, render_commands);
+}
 
 
+class GamepadPanel : public gui::Panel
+{
+public:
+	GamepadPanel(gui::Panel* parent);
+	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
 
+	void set_from_joystick(gemini::JoystickInput& joystick);
+
+private:
+	JoystickAxisPanel* left_bumper;
+	JoystickAxisPanel* right_bumper;
+
+	JoystickAxisPanel* left_trigger;
+	JoystickAxisPanel* right_trigger;
+
+	JoystickAxisPanel* left_button;
+	JoystickAxisPanel* right_button;
+	JoystickAxisPanel* up_button;
+	JoystickAxisPanel* down_button;
+
+	JoystickAxisPanel* x_button;
+	JoystickAxisPanel* y_button;
+	JoystickAxisPanel* a_button;
+	JoystickAxisPanel* b_button;
+};
+
+
+GamepadPanel::GamepadPanel(gui::Panel* parent)
+	: gui::Panel(parent)
+{
+	left_bumper = new JoystickAxisPanel(this);
+	left_bumper->set_size(BUMPER);
+
+	right_bumper = new JoystickAxisPanel(this);
+	right_bumper->set_size(BUMPER);
+
+	left_trigger = new JoystickAxisPanel(this);
+	left_trigger->set_size(BUMPER);
+
+	right_trigger = new JoystickAxisPanel(this);
+	right_trigger->set_size(BUMPER);
+
+	left_button = new JoystickAxisPanel(this);
+	left_button->set_size(BUTTON_SIZE);
+
+	right_button = new JoystickAxisPanel(this);
+	right_button->set_size(BUTTON_SIZE);
+
+	up_button = new JoystickAxisPanel(this);
+	up_button->set_size(BUTTON_SIZE);
+
+	down_button = new JoystickAxisPanel(this);
+	down_button->set_size(BUTTON_SIZE);
+
+	x_button = new JoystickAxisPanel(this);
+	x_button->set_size(BUTTON_SIZE);
+
+	y_button = new JoystickAxisPanel(this);
+	y_button->set_size(BUTTON_SIZE);
+
+	a_button = new JoystickAxisPanel(this);
+	a_button->set_size(BUTTON_SIZE);
+
+	b_button = new JoystickAxisPanel(this);
+	b_button->set_size(BUTTON_SIZE);
+}
+
+void GamepadPanel::update(gui::Compositor* compositor, float delta_seconds)
+{
+	gui::Panel::update(compositor, delta_seconds);
+
+	const float top_height = 15;
+
+	left_trigger->set_origin(10, top_height);
+	right_trigger->set_origin(get_size().width - BUMPER.width - 10, top_height);
+
+	left_bumper->set_origin(10, top_height + 10 + 30);
+	right_bumper->set_origin(get_size().width - BUMPER.width - 10, top_height + 10 + 30);
+
+	const gui::Point left_offset(150, 100);
+	left_button->set_origin(left_offset + gui::Point(-50, 50));
+	up_button->set_origin(left_offset + gui::Point(0, 0));
+	down_button->set_origin(left_offset + gui::Point(0, 100));
+	right_button->set_origin(left_offset + gui::Point(50, 50));
+
+	const gui::Point right_offset(get_size().width - 150, 100);
+	x_button->set_origin(right_offset + gui::Point(-50, 50));
+	y_button->set_origin(right_offset + gui::Point(0, 0));
+	a_button->set_origin(right_offset + gui::Point(0, 100));
+	b_button->set_origin(right_offset + gui::Point(50, 50));
+
+#if 0
+	// Simple harmonic oscillator
+	x = box.position.x - target.x;
+	k = 15.f;
+
+	const float mass_kgs = .045f;
+	//float w = sqrt(k / m);
+	//const float frequency = (w / (2 * mathlib::PI));
+	//const float period = 1.0f / frequency;
+	const float T = (mathlib::PI * 2.0) * (sqrt(mass_kgs / k));
+	const float frequency = (1.0f / T);
+	LOGV("freq: %2.2fHz\n", frequency);
+
+
+	box.velocity.x += -k*x * delta_seconds;
+	box.position += box.velocity * delta_seconds;
+#endif
+
+#if 0
+	// Damped harmonic oscillator
+	x = box.position.x - target.x;
+	k = 0.125f;
+	const float mass_kgs = .045f;
+	const float c = 0.19f;
+
+	//const float damping_ratio = (c / (2.0 * sqrt(mass_kgs * k)));
+	//LOGV("damping_ratio is %2.2f\n", damping_ratio);
+
+	//box.velocity += 0.75f * (-(box.position - target) * delta_seconds);
+	box.velocity.x += -k*x - c * box.velocity.x;
+	box.position += box.velocity;
+#endif
+}
+
+
+void GamepadPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
+{
+	//gui::Painter painter(this, render_commands);
+
+	gui::Panel::render(compositor, renderer, render_commands);
+
+	//painter.add_rectangle(
+	//	box.position + tube[0],
+	//	box.position + tube[1],
+	//	box.position + tube[2],
+	//	box.position + tube[3],
+	//	gui::render::WhiteTexture,
+	//	gemini::Color(1.0f, 0.5f, 0.0)
+	//);
+}
+
+void GamepadPanel::set_from_joystick(JoystickInput& joystick)
+{
+	left_trigger->value = joystick.axes[0];
+	right_trigger->value = joystick.axes[1];
+
+	left_bumper->value = joystick.get_button(GAMEPAD_BUTTON_LEFTSHOULDER).value();
+	right_bumper->value = joystick.get_button(GAMEPAD_BUTTON_RIGHTSHOULDER).value();
+
+	left_button->value = joystick.get_button(GAMEPAD_BUTTON_DPAD_LEFT).value();
+	up_button->value = joystick.get_button(GAMEPAD_BUTTON_DPAD_UP).value();
+	right_button->value = joystick.get_button(GAMEPAD_BUTTON_DPAD_RIGHT).value();
+	down_button->value = joystick.get_button(GAMEPAD_BUTTON_DPAD_DOWN).value();
+
+	x_button->value = joystick.get_button(GAMEPAD_BUTTON_X).value();
+	y_button->value = joystick.get_button(GAMEPAD_BUTTON_Y).value();
+	a_button->value = joystick.get_button(GAMEPAD_BUTTON_A).value();
+	b_button->value = joystick.get_button(GAMEPAD_BUTTON_B).value();
+}
 
 class ProtoVizKernel : public kernel::IKernel
 {
@@ -91,10 +297,14 @@ private:
 	gui::Compositor* compositor;
 	GUIRenderer* gui_renderer;
 	gui::Panel* main_panel;
+	GamepadPanel* gamepad_panel;
 
 	::renderer::StandaloneResourceCache* resource_cache;
 	render2::RenderTarget* render_target;
 	render2::Texture* texture;
+
+	InputEventRelay* event_relay;
+	InputState inputstate;
 
 	//gui::Graph* graphs[IMOCAP_TOTAL_SENSORS];
 	//gui::Label* status;
@@ -162,6 +372,7 @@ public:
 		, gui_renderer(nullptr)
 		, resource_cache(nullptr)
 		, render_target(nullptr)
+		, event_relay(nullptr)
 	{
 	}
 
@@ -171,10 +382,7 @@ public:
 
 	virtual void event(kernel::KeyboardEvent& event)
 	{
-		if (event.key == gemini::BUTTON_ESCAPE && event.is_down)
-		{
-			set_active(false);
-		}
+		event_relay->queue(event, kernel::parameters().current_physics_tick);
 #if 0
 		if (compositor && compositor->get_focus())
 		{
@@ -275,7 +483,6 @@ public:
 
 	virtual void event(kernel::SystemEvent& event)
 	{
-#if 0
 		if (event.subtype == kernel::WindowResized)
 		{
 			assert(device);
@@ -289,26 +496,18 @@ public:
 		}
 		else if (event.subtype == kernel::WindowClosed)
 		{
-			LOGV("Window was closed!\n");
 			set_active(false);
 		}
 
-		if (event.window == main_window)
+		if (event_relay)
 		{
-			if (event.subtype == kernel::WindowRestored || event.subtype == kernel::WindowGainFocus)
-			{
-				app_in_focus = true;
-			}
-			else if (event.subtype == kernel::WindowMinimized || event.subtype == kernel::WindowLostFocus)
-			{
-				app_in_focus = false;
-			}
+			event_relay->queue(event, kernel::parameters().current_physics_tick);
 		}
-#endif
 	}
 
 	virtual void event(kernel::MouseEvent& event)
 	{
+		event_relay->queue(event, kernel::parameters().current_physics_tick);
 #if 0
 		if (compositor)
 		{
@@ -375,7 +574,22 @@ public:
 
 	virtual void event(kernel::GameControllerEvent& event)
 	{
+		event_relay->queue(event, kernel::parameters().current_physics_tick);
+	}
 
+	int32_t handle_input_message(const InputMessage& message)
+	{
+		//if (!handled && should_move_view)
+		//{
+		//	if (event.dx != 0 || event.dy != 0)
+		//	{
+		//		const float sensitivity = .10f;
+		//		camera.move_view(event.dx, event.dy);
+		//	}
+		//}
+		input_message_to_inputstate(message, inputstate);
+
+		return 0;
 	}
 
 	void on_view_reset(void)
@@ -421,30 +635,32 @@ public:
 
 	virtual kernel::Error startup()
 	{
+		gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
+		ArgumentParser parser;
+		argparse_create(allocator, &parser);
+
+		gemini::string asset_path;
+		argparse_arg(&parser, "The path to load content from", "--assets", nullptr, &asset_path);
+
+		Array<gemini::string> arguments(allocator);
+		runtime_load_arguments(allocator, arguments);
+		if (argparse_parse(&parser, arguments) != 0)
 		{
-			gemini::Allocator allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_DEFAULT);
-			ArgumentParser parser;
-			argparse_create(allocator, &parser);
-
-			gemini::string asset_path;
-			argparse_arg(&parser, "The path to load content from", "--assets", nullptr, &asset_path);
-
-			Array<gemini::string> arguments(allocator);
-			runtime_load_arguments(allocator, arguments);
-			if (argparse_parse(&parser, arguments) != 0)
-			{
-				argparse_destroy(allocator, &parser);
-				runtime_destroy_arguments(allocator, arguments);
-				return kernel::CoreFailed;
-			}
-
-			gemini::runtime_startup("arcfusion.net/protoviz", platform::make_absolute_path(asset_path.c_str()));
-
 			argparse_destroy(allocator, &parser);
 			runtime_destroy_arguments(allocator, arguments);
+			return kernel::CoreFailed;
 		}
 
 		default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
+
+		event_relay = MEMORY2_NEW(default_allocator, InputEventRelay)(default_allocator);
+		event_relay->add_handler(MAKE_MEMBER_DELEGATE(int32_t(const InputMessage&), ProtoVizKernel, &ProtoVizKernel::handle_input_message, this));
+
+		gemini::runtime_startup("arcfusion.net/protoviz", platform::make_absolute_path(asset_path.c_str()));
+
+		argparse_destroy(allocator, &parser);
+		runtime_destroy_arguments(allocator, arguments);
+
 
 		// create a platform window
 		{
@@ -586,6 +802,12 @@ public:
 			surface->set_texture_handle(handle);
 
 			center_layout->add_panel(surface);
+
+			gamepad_panel = new GamepadPanel(compositor);
+			gamepad_panel->set_size(600, 350);
+			gamepad_panel->set_origin(0, 0);
+			gamepad_panel->set_name("gamepad panel");
+			gamepad_panel->set_background_color(gemini::Color(0.3f, 0.3f, 0.3f));
 		}
 
 
@@ -597,13 +819,40 @@ public:
 
 	virtual void fixed_update(float step_seconds)
 	{
+		event_relay->dispatch(kernel::parameters().current_physics_tick);
 
+		if (inputstate.keyboard().get_key(BUTTON_ESCAPE).is_down() ||
+			inputstate.joystick_by_index(0).buttons[gemini::GAMEPAD_BUTTON_B].is_down() ||
+			inputstate.joystick_by_index(1).buttons[gemini::GAMEPAD_BUTTON_B].is_down())
+		{
+			set_active(false);
+		}
+
+		if (inputstate.keyboard().get_key(BUTTON_SPACE).was_released())
+		{
+			LOGV("press space\n");
+		}
+		else if (inputstate.mouse().get_button(MOUSE_LEFT).was_pressed())
+		{
+			LOGV("press left\n");
+		}
+		else if (inputstate.mouse().get_button(MOUSE_LEFT).is_down())
+		{
+			LOGV("left is down\n");
+		}
+		else if (inputstate.mouse().get_button(MOUSE_LEFT).was_released())
+		{
+			LOGV("left released\n");
+		}
+
+		gamepad_panel->set_from_joystick(inputstate.joystick_by_index(0));
+
+		inputstate.mouse().reset_delta();
 	}
 
 	virtual void tick(bool performed_fixed_update)
 	{
 		uint64_t current_time = platform::microseconds();
-
 
 		// while i debug network stuff; don't do this...
 		//if (!app_in_focus)
@@ -727,6 +976,11 @@ public:
 
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
+
+		if (performed_fixed_update)
+		{
+			inputstate.update();
+		}
 	}
 
 
@@ -757,6 +1011,8 @@ public:
 		resource_cache->clear();
 		MEMORY2_DELETE(render_allocator, resource_cache);
 
+		MEMORY2_DELETE(default_allocator, event_relay);
+		event_relay = nullptr;
 
 		assets::shutdown();
 

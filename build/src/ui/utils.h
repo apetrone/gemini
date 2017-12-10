@@ -154,18 +154,6 @@ namespace gui
 		void expand(const Rect& other);
 	}; // Rect
 
-
-
-	// -------------------------------------------------------------------------------------------------------------
-
-	struct InputState
-	{
-		virtual ~InputState() {}
-
-		virtual bool is_mouse_down(int index) = 0;
-		virtual bool is_mouse_held(int index) = 0;
-	};
-
 	// -------------------------------------------------------------------------------------------------------------
 	struct KeyState
 	{

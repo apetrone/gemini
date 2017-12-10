@@ -187,11 +187,9 @@ namespace kernel
 
 	struct GameControllerEvent : public Event<GameController>
 	{
-		int button;
 		uint8_t gamepad_id;
 		uint8_t axis_id;
-		int16_t axis_value;
-		bool is_down;
+		uint8_t axis_value;
 
 		float normalized_value() const;
 	}; // GameControllerEvent

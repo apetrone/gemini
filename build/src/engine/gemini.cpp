@@ -97,125 +97,6 @@ using namespace gemini; // for renderer
 gui::Compositor* _compositor = 0;
 
 
-namespace gemini
-{
-	GameMessage event_to_gamemessage(const kernel::KeyboardEvent& event, uint64_t physics_tick);
-	GameMessage event_to_gamemessage(const kernel::MouseEvent& event, uint64_t physics_tick);
-	GameMessage event_to_gamemessage(const kernel::SystemEvent& event, uint64_t physics_tick);
-	GameMessage event_to_gamemessage(const kernel::GameControllerEvent& event, uint64_t physics_tick);
-
-
-	GameMessage event_to_gamemessage(const kernel::KeyboardEvent& event, uint64_t physics_tick)
-	{
-		GameMessage out;
-		out.timestamp = physics_tick;
-		out.type = GameMessage::KeyboardEvent;
-		out.button = event.key;
-		out.params[0] = event.is_down;
-		out.params[1] = event.modifiers;
-		return out;
-	}
-
-	GameMessage event_to_gamemessage(const kernel::MouseEvent& event, uint64_t physics_tick)
-	{
-		GameMessage out;
-		out.timestamp = physics_tick;
-		switch (event.subtype)
-		{
-		case kernel::MouseButton:
-			out.type = GameMessage::MouseEvent;
-			out.button = event.button;
-			out.params[0] = event.is_down;
-			break;
-
-		case kernel::MouseMoved:
-			out.type = GameMessage::MouseMove;
-			out.params[0] = event.mx;
-			out.params[1] = event.my;
-			break;
-
-		case kernel::MouseDelta:
-			out.type = GameMessage::MouseDelta;
-			out.params[0] = event.dx;
-			out.params[1] = event.dy;
-			break;
-
-		case kernel::MouseWheelMoved:
-			out.type = GameMessage::MouseWheel;
-			out.button = event.wheel_direction;
-			out.params[0] = event.mx;
-			out.params[1] = event.my;
-			out.params[2] = event.dx;
-			out.params[3] = event.dy;
-			break;
-
-		default:
-			assert(0);
-			break;
-		}
-		return out;
-	}
-
-	GameMessage event_to_gamemessage(const kernel::SystemEvent& event, uint64_t physics_tick)
-	{
-		GameMessage out;
-		out.timestamp = physics_tick;
-		out.type = GameMessage::SystemEvent;
-		if (event.subtype == kernel::WindowGainFocus)
-		{
-			out.params[0] = 1;
-		}
-		else if (event.subtype == kernel::WindowLostFocus)
-		{
-			out.params[1] = 1;
-		}
-		return out;
-	}
-
-	GameMessage event_to_gamemessage(const kernel::GameControllerEvent& event, uint64_t physics_tick)
-	{
-		// TODO@APP: Implement.
-		GameMessage out;
-		out.timestamp = physics_tick;
-		out.params[0] = event.gamepad_id;
-
-		switch (event.subtype)
-		{
-		case kernel::JoystickConnected:
-			out.type = GameMessage::GamePadConnected;
-			break;
-
-		case kernel::JoystickDisconnected:
-			out.type = GameMessage::GamePadDisconnected;
-			break;
-
-		case kernel::JoystickButton:
-			out.type = GameMessage::GamePadButton;
-			out.button = event.button;
-			out.params[1] = event.is_down;
-			break;
-
-		case kernel::JoystickAxisMoved:
-			out.type = GameMessage::GamePadAxis;
-			out.params[1] = event.axis_id;
-			out.params[2] = event.axis_value;
-			break;
-
-		default:
-			// Unhandled gamepad input!
-			assert(0);
-			break;
-		}
-
-		return out;
-	}
-}
-
-
-
-
-
-
 class EntityManager : public IEntityManager
 {
 	gemini::IEngineEntity* entity_list[MAX_ENTITIES];
@@ -702,194 +583,6 @@ void copy_state(EntityRenderState* out, EntityRenderState* in)
 	}
 }
 
-// input handler returns 1 if message was not handled and should propagate to the next
-// returns 0 if message was handled.
-//typedef int32_t(*input_handler)(const gemini::GameMessage&);
-
-typedef Delegate<int32_t(const gemini::GameMessage&)> input_handler;
-
-
-struct InputEventRelay
-{
-	Array<gemini::GameMessage> messages;
-	Array<input_handler> handlers;
-
-	InputEventRelay(gemini::Allocator& allocator)
-		: messages(allocator)
-		, handlers(allocator)
-	{
-	}
-
-	void queue(const gemini::GameMessage& message);
-	void queue(const kernel::SystemEvent& event, uint64_t current_tick);
-	void queue(const kernel::KeyboardEvent& event, uint64_t current_tick);
-	void queue(const kernel::MouseEvent& event, uint64_t current_tick);
-	void queue(const kernel::TouchEvent& event, uint64_t current_tick);
-	void queue(const kernel::GameControllerEvent& event, uint64_t current_tick);
-
-	void dispatch(uint64_t current_tick);
-
-	void add_handler(input_handler handler);
-
-	void reset();
-};
-
-
-
-
-
-void InputEventRelay::queue(const gemini::GameMessage& message)
-{
-	messages.push_back(message);
-}
-
-void InputEventRelay::queue(const kernel::SystemEvent& event, uint64_t current_tick)
-{
-	GameMessage out;
-	out.timestamp = current_tick;
-	out.type = GameMessage::SystemEvent;
-	if (event.subtype == kernel::WindowGainFocus)
-	{
-		out.params[0] = 1;
-	}
-	else if (event.subtype == kernel::WindowLostFocus)
-	{
-		out.params[1] = 1;
-	}
-	else
-	{
-		LOGW("Missing system event type!\n");
-	}
-	messages.push_back(out);
-}
-
-void InputEventRelay::queue(const kernel::KeyboardEvent& event, uint64_t current_tick)
-{
-	GameMessage out;
-	out.timestamp = current_tick;
-	out.type = GameMessage::KeyboardEvent;
-	out.button = event.key;
-	out.params[0] = event.is_down;
-	out.params[1] = event.modifiers;
-	messages.push_back(out);
-}
-
-void InputEventRelay::queue(const kernel::MouseEvent& event, uint64_t current_tick)
-{
-	GameMessage out;
-	out.timestamp = current_tick;
-	switch (event.subtype)
-	{
-	case kernel::MouseButton:
-		out.type = GameMessage::MouseEvent;
-		out.button = event.button;
-		out.params[0] = event.is_down;
-		break;
-
-	case kernel::MouseMoved:
-		out.type = GameMessage::MouseMove;
-		out.params[0] = event.mx;
-		out.params[1] = event.my;
-		break;
-
-	case kernel::MouseDelta:
-		out.type = GameMessage::MouseDelta;
-		out.params[0] = event.dx;
-		out.params[1] = event.dy;
-		break;
-
-	case kernel::MouseWheelMoved:
-		out.type = GameMessage::MouseWheel;
-		out.button = event.wheel_direction;
-		out.params[0] = event.mx;
-		out.params[1] = event.my;
-		out.params[2] = event.dx;
-		out.params[3] = event.dy;
-		break;
-
-	default:
-		assert(0);
-		break;
-	}
-	messages.push_back(out);
-}
-
-void InputEventRelay::queue(const kernel::TouchEvent& event, uint64_t current_tick)
-{
-	// TODO@APP: Implement touch events!
-	assert(false);
-}
-
-void InputEventRelay::queue(const kernel::GameControllerEvent& event, uint64_t current_tick)
-{
-	GameMessage out;
-	out.timestamp = current_tick;
-	out.params[0] = event.gamepad_id;
-
-	switch (event.subtype)
-	{
-	case kernel::JoystickConnected:
-		out.type = GameMessage::GamePadConnected;
-		break;
-
-	case kernel::JoystickDisconnected:
-		out.type = GameMessage::GamePadDisconnected;
-		break;
-
-	case kernel::JoystickButton:
-		out.type = GameMessage::GamePadButton;
-		out.button = event.button;
-		out.params[1] = event.is_down;
-		break;
-
-	case kernel::JoystickAxisMoved:
-		out.type = GameMessage::GamePadAxis;
-		out.params[1] = event.axis_id;
-		out.params[2] = event.axis_value;
-		break;
-
-	default:
-		// Unhandled gamepad input!
-		assert(0);
-		break;
-	}
-	messages.push_back(out);
-}
-
-
-void InputEventRelay::dispatch(uint64_t current_tick)
-{
-	// iterate over queued messages and play until we hit the time cap
-	for (size_t message_index = 0; message_index < messages.size(); ++message_index)
-	{
-		const gemini::GameMessage& message = messages[message_index];
-		if (message.timestamp <= current_tick)
-		{
-			uint32_t handled_message = 0;
-
-			for (size_t index = 0; index < handlers.size() && handled_message == 0; ++index)
-			{
-				input_handler& handler = handlers[index];
-				if (handler(message) == 0)
-				{
-					// message was handled
-					handled_message = 1;
-				}
-			}
-		}
-	}
-}
-
-void InputEventRelay::add_handler(input_handler handler)
-{
-	handlers.push_back(handler);
-}
-
-void InputEventRelay::reset()
-{
-	messages.resize(0);
-}
-
 
 class EngineKernel : public kernel::IKernel
 {
@@ -1243,7 +936,7 @@ public:
 
 		engine_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 		event_relay = MEMORY2_NEW(engine_allocator, InputEventRelay)(engine_allocator);
-		event_relay->add_handler(MAKE_MEMBER_DELEGATE(int32_t(const gemini::GameMessage&), EngineKernel, &EngineKernel::test_handler, this));
+		event_relay->add_handler(MAKE_MEMBER_DELEGATE(int32_t(const gemini::InputMessage&), EngineKernel, &EngineKernel::test_handler, this));
 
 		const uint32_t runtime_flags = RF_CORE | RF_WINDOW_SYSTEM;
 		gemini::runtime_startup(nullptr, content_path, get_custom_application_directory, runtime_flags);
@@ -1384,7 +1077,7 @@ public:
 	{
 		kernel::Parameters& params = kernel::parameters();
 		event_relay->dispatch(params.current_physics_tick);
-		event_relay->reset();
+
 		if (game_interface)
 		{
 			const float game_step_seconds = (params.simulation_time_scale * params.step_interval_seconds);
@@ -1393,14 +1086,12 @@ public:
 		}
 	} // fixed_update
 
-	int32_t test_handler(const gemini::GameMessage& message)
+	int32_t test_handler(const gemini::InputMessage& message)
 	{
-
 		if (game_interface)
 		{
 			game_interface->handle_game_message(message);
 		}
-		LOGV("test handler!\n");
 		return 1;
 	}
 

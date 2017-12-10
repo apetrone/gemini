@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <core/mathlib.h>
 #include <platform/input.h>
+#include <runtime/runtime.h>
 
 namespace kernel
 {
@@ -35,11 +36,6 @@ namespace kernel
 	struct SystemEvent;
 	struct GameControllerEvent;
 } // namespace kernel
-
-namespace input
-{
-	class InputState;
-} // namespace input
 
 namespace gui
 {
@@ -51,71 +47,6 @@ namespace gemini
 {
 	struct UserCommand;
 	struct View;
-
-	struct GameMessage
-	{
-		enum Type
-		{
-			KeyboardEvent		= 1,
-			// button: keycode
-			// params[0]: is_down
-			// params[1]: keyboard modifiers
-
-			MouseEvent			= 8,
-			// button: mouse button
-			// params[0]: is_down
-
-			MouseMove			= MouseEvent | 16,
-			// params[0]: abs mouse x
-			// params[1]: abs mouse y
-
-			MouseDelta			= MouseEvent | 32,
-			// params[0]: delta mouse x
-			// params[1]: delta mouse y
-
-			MouseWheel			= MouseEvent | 64,
-			// button: wheel delta
-			// params[0]: absolute mouse x
-			// params[1]: absolute mouse y
-			// params[2]: delta mouse x
-			// params[3]: delta mouse y
-
-			GamePadConnected	= 512,
-			// params[0]: gamepad_id
-
-			GamePadDisconnected = 1024,
-			// params[0]: gamepad_id
-
-			GamePadButton		= 2048,
-			// button: gamepad button
-			// params[0]: gamepad_id
-			// params[1]: is_down
-
-			GamePadAxis			= 4096,
-			// params[0]: gamepad_id
-			// params[1]: axis_id
-			// params[2]: axis_value
-
-			SystemEvent			= 8192
-			// params[0]: gain_focus
-			// params[1]: lost_focus
-		};
-
-		uint32_t type;
-		uint32_t button;
-		int32_t params[4];
-
-		// timestamp in logic ticks when this event was recorded.
-		uint64_t timestamp;
-
-		GameMessage()
-			: type(0)
-			, button(0)
-			, timestamp(0)
-		{
-			params[0] = params[1] = params[2] = params[3] = 0;
-		}
-	};
 
 	struct UserCommand
 	{
@@ -210,7 +141,7 @@ namespace gemini
 		virtual void render_frame(float alpha) = 0;
 
 		// event handling
-		virtual void handle_game_message(const GameMessage& message) = 0;
+		virtual void handle_game_message(const InputMessage& message) = 0;
 
 		virtual void reset_events() = 0;
 
