@@ -193,6 +193,121 @@ namespace platform
 		}
 	}
 
+	uint8_t xinput_joystick_correct_axis_index(uint8_t platform_axis_index, int16_t* axis_value)
+	{
+		uint32_t flip_value = 0;
+
+		// If we need to flip the value, the axis index is incremented.
+		flip_value = (*axis_value < 0);
+
+		uint8_t axis_mapping[] = {
+			GAMEPAD_BUTTON_L2,
+			GAMEPAD_BUTTON_R2,
+			GAMEPAD_STICK0_AXIS_RIGHT,
+			GAMEPAD_STICK0_AXIS_UP,
+			GAMEPAD_STICK1_AXIS_RIGHT,
+			GAMEPAD_STICK1_AXIS_UP
+		};
+
+		assert(platform_axis_index < 6);
+
+		// Interpret this as an unsigned value to normalize it.
+		if (flip_value)
+		{
+			*axis_value = -(*axis_value + 1);
+		}
+
+		return axis_mapping[platform_axis_index] + flip_value;
+	}
+
+	void xinput_joystick_analog_radial(
+		Win32JoystickData* joystick,
+		int16_t xvalue,
+		int16_t yvalue,
+		uint8_t axis_selection, // 0: use x axis, 1: use y axis
+		uint8_t platform_axis_index,
+		int16_t deadzone)
+	{
+		// https://msdn.microsoft.com/en-us/library/windows/desktop/ee417001(v=vs.85).aspx#dead_zone
+		// http://www.third-helix.com/2013/04/12/doing-thumbstick-dead-zones-right.html
+		double magnitude = sqrt(xvalue * xvalue + yvalue * yvalue);
+
+		int16_t value_map[] = {
+			xvalue,
+			yvalue
+		};
+		int16_t target_value = value_map[axis_selection];
+
+
+		float normalized_value = target_value / magnitude;
+
+		if (magnitude > deadzone)
+		{
+			if (magnitude > 32767)
+			{
+				magnitude = 32767;
+			}
+
+			double fix = ((magnitude - deadzone) / (32767 - deadzone));
+			normalized_value = (normalized_value * fix);
+		}
+		else
+		{
+			magnitude = 0.0;
+			normalized_value = 0.0f;
+		}
+
+		int16_t corrected_value = static_cast<int16_t>(normalized_value * 32767.0);
+
+		uint8_t axis_mapping[] = {
+			GAMEPAD_BUTTON_L2,
+			GAMEPAD_BUTTON_R2,
+			GAMEPAD_STICK0_AXIS_RIGHT,
+			GAMEPAD_STICK0_AXIS_UP,
+			GAMEPAD_STICK1_AXIS_RIGHT,
+			GAMEPAD_STICK1_AXIS_UP
+		};
+
+		uint8_t pos_index = axis_mapping[platform_axis_index];
+		uint8_t neg_index = axis_mapping[platform_axis_index] + 1;
+
+		// If we need to flip the value, the axis index is incremented.
+		uint32_t flip_value = (corrected_value < 0);
+		uint8_t pos_value = 0;
+		uint8_t neg_value = 0;
+
+		// Interpret this as an unsigned value to normalize it.
+		if (flip_value)
+		{
+			corrected_value = -(corrected_value + 1);
+			pos_value = 0;
+			neg_value = static_cast<uint8_t>((corrected_value / 32767.0) * 255.0);
+		}
+		else
+		{
+			pos_value = static_cast<uint8_t>((corrected_value / 32767.0) * 255.0);
+			neg_value = 0;
+		}
+
+		{
+			kernel::GameControllerEvent event;
+			event.gamepad_id = joystick->index;
+			event.subtype = kernel::JoystickAxisMoved;
+			event.axis_id = pos_index;
+			event.axis_value = pos_value;
+			kernel::event_dispatch(event);
+		}
+
+		{
+			kernel::GameControllerEvent event;
+			event.gamepad_id = joystick->index;
+			event.subtype = kernel::JoystickAxisMoved;
+			event.axis_id = neg_index;
+			event.axis_value = neg_value;
+			kernel::event_dispatch(event);
+		}
+	}
+
 	void xinput_joystick_update_axis(Win32JoystickData* joystick, int16_t axis_value, uint8_t platform_axis_index, int16_t deadzone)
 	{
 		if ((axis_value > -deadzone) && (axis_value < deadzone))
@@ -211,33 +326,10 @@ namespace platform
 			gce.gamepad_id = joystick->index;
 			gce.subtype = kernel::JoystickAxisMoved;
 
-			uint32_t flip_value = 0;
-
-			// If we need to flip the value, the axis index is incremented.
-			flip_value = (axis_value < 0);
-
-			uint8_t axis_mapping[] = {
-				GAMEPAD_BUTTON_L2,
-				GAMEPAD_BUTTON_R2,
-				GAMEPAD_STICK0_AXIS_RIGHT,
-				GAMEPAD_STICK0_AXIS_UP,
-				GAMEPAD_STICK1_AXIS_RIGHT,
-				GAMEPAD_STICK1_AXIS_UP
-			};
-
-			assert(platform_axis_index < 6);
-
-			gce.axis_id = axis_mapping[platform_axis_index] + flip_value;
-
-			// Interpret this as an unsigned value to normalize it.
-			int16_t new_value = axis_value;
-			if (flip_value)
-			{
-				new_value = -(axis_value + 1);
-			}
+			gce.axis_id = xinput_joystick_correct_axis_index(platform_axis_index, &axis_value);
 
 			// Normalize the value and then convert it to 8-bit.
-			float normalized_value = (new_value / 32768.0);
+			float normalized_value = (axis_value/ 32767.0);
 			gce.axis_value = static_cast<uint8_t>(normalized_value * 255.0);
 
 			//LOGV("platform_axis_index: %i -> %i value: %i -> %i | %i [%i]\n", platform_axis_index, gce.axis_id, axis_value, gce.axis_value, new_value, flip_value);
@@ -311,13 +403,12 @@ namespace platform
 						// handle left and right triggers as axes
 						xinput_joystick_update_triggers(joystick, gamepad);
 
-						// handle left thumb stick
-						xinput_joystick_update_axis(joystick, gamepad->sThumbLX, 2, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
-						xinput_joystick_update_axis(joystick, gamepad->sThumbLY, 3, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+						// handle thumb sticks with radial dead zone
+						xinput_joystick_analog_radial(joystick, gamepad->sThumbLX, gamepad->sThumbLY, 0, 2, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+						xinput_joystick_analog_radial(joystick, gamepad->sThumbLX, gamepad->sThumbLY, 1, 3, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
 
-						// handle right thumb stick
-						xinput_joystick_update_axis(joystick, gamepad->sThumbRX, 4, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
-						xinput_joystick_update_axis(joystick, gamepad->sThumbRY, 5, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+						xinput_joystick_analog_radial(joystick, gamepad->sThumbRX, gamepad->sThumbRY, 0, 4, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+						xinput_joystick_analog_radial(joystick, gamepad->sThumbRX, gamepad->sThumbRY, 1, 5, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
 					}
 				}
 				else if (joystick->is_connected())
@@ -330,7 +421,6 @@ namespace platform
 					gce.subtype = kernel::JoystickDisconnected;
 					kernel::event_dispatch(gce);
 				}
-
 			}
 		}
 

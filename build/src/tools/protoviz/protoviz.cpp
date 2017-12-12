@@ -175,9 +175,7 @@ void JoystickAnalogPanel::render(gui::Compositor* compositor, gui::Renderer* ren
 		0.5 + (0.5 * -(static_cast<float>(up / 255.0) - static_cast<float>(down / 255.0))));
 
 	gemini::Color left_colors[] = {
-		gemini::Color(1.0f, 0.0f, 0.0f),
-		gemini::Color(1.0f, 0.0f, 0.0f),
-		gemini::Color(1.0f, 0.0f, 1.0f),
+		gemini::Color(1.0f, 1.0f, 0.0f),
 		gemini::Color(1.0f, 0.0f, 1.0f)
 	};
 
@@ -237,6 +235,9 @@ private:
 	JoystickAxisPanel* a_button;
 	JoystickAxisPanel* b_button;
 
+	JoystickAxisPanel* back_button;
+	JoystickAxisPanel* start_button;
+
 	JoystickAnalogPanel* left_stick;
 	JoystickAnalogPanel* right_stick;
 };
@@ -281,6 +282,12 @@ GamepadPanel::GamepadPanel(gui::Panel* parent)
 	b_button = new JoystickAxisPanel(this);
 	b_button->set_size(BUTTON_SIZE);
 
+	back_button = new JoystickAxisPanel(this);
+	back_button->set_size(BUTTON_SIZE);
+
+	start_button = new JoystickAxisPanel(this);
+	start_button->set_size(BUTTON_SIZE);
+
 	left_stick = new JoystickAnalogPanel(this);
 	left_stick->set_size(ANALOG_SIZE);
 
@@ -300,7 +307,7 @@ void GamepadPanel::update(gui::Compositor* compositor, float delta_seconds)
 	left_bumper->set_origin(10, top_height + 10 + 30);
 	right_bumper->set_origin(get_size().width - BUMPER.width - 10, top_height + 10 + 30);
 
-	const gui::Point left_offset(150, 100);
+	const gui::Point left_offset(110, 100);
 	left_button->set_origin(left_offset + gui::Point(-50, 50));
 	up_button->set_origin(left_offset + gui::Point(0, 0));
 	down_button->set_origin(left_offset + gui::Point(0, 100));
@@ -311,6 +318,9 @@ void GamepadPanel::update(gui::Compositor* compositor, float delta_seconds)
 	y_button->set_origin(right_offset + gui::Point(0, 0));
 	a_button->set_origin(right_offset + gui::Point(0, 100));
 	b_button->set_origin(right_offset + gui::Point(50, 50));
+
+	back_button->set_origin(185, 75);
+	start_button->set_origin(get_size().width - 225, 75);
 
 	left_stick->set_origin(220, 220);
 	right_stick->set_origin(get_size().width - 260, 220);
@@ -368,33 +378,36 @@ void GamepadPanel::render(gui::Compositor* compositor, gui::Renderer* renderer, 
 
 void GamepadPanel::set_from_joystick(JoystickInput& joystick)
 {
-	left_trigger->value		= joystick.get_button(GAMEPAD_BUTTON_L2).value();
-	right_trigger->value	= joystick.get_button(GAMEPAD_BUTTON_R2).value();
+	left_trigger->value			= joystick.get_button(GAMEPAD_BUTTON_L2).value();
+	right_trigger->value		= joystick.get_button(GAMEPAD_BUTTON_R2).value();
 
-	left_bumper->value		= joystick.get_button(GAMEPAD_BUTTON_LEFTSHOULDER).value();
-	right_bumper->value		= joystick.get_button(GAMEPAD_BUTTON_RIGHTSHOULDER).value();
+	left_bumper->value			= joystick.get_button(GAMEPAD_BUTTON_LEFTSHOULDER).value();
+	right_bumper->value			= joystick.get_button(GAMEPAD_BUTTON_RIGHTSHOULDER).value();
 
-	left_button->value		= joystick.get_button(GAMEPAD_BUTTON_DPAD_LEFT).value();
-	up_button->value		= joystick.get_button(GAMEPAD_BUTTON_DPAD_UP).value();
-	right_button->value		= joystick.get_button(GAMEPAD_BUTTON_DPAD_RIGHT).value();
-	down_button->value		= joystick.get_button(GAMEPAD_BUTTON_DPAD_DOWN).value();
+	left_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_LEFT).value();
+	up_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_UP).value();
+	right_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_RIGHT).value();
+	down_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_DOWN).value();
 
-	x_button->value			= joystick.get_button(GAMEPAD_BUTTON_X).value();
-	y_button->value			= joystick.get_button(GAMEPAD_BUTTON_Y).value();
-	a_button->value			= joystick.get_button(GAMEPAD_BUTTON_A).value();
-	b_button->value			= joystick.get_button(GAMEPAD_BUTTON_B).value();
+	x_button->value				= joystick.get_button(GAMEPAD_BUTTON_X).value();
+	y_button->value				= joystick.get_button(GAMEPAD_BUTTON_Y).value();
+	a_button->value				= joystick.get_button(GAMEPAD_BUTTON_A).value();
+	b_button->value				= joystick.get_button(GAMEPAD_BUTTON_B).value();
 
-	left_stick->left		= joystick.get_button(GAMEPAD_STICK0_AXIS_LEFT).value();
-	left_stick->right		= joystick.get_button(GAMEPAD_STICK0_AXIS_RIGHT).value();
-	left_stick->up			= joystick.get_button(GAMEPAD_STICK0_AXIS_UP).value();
-	left_stick->down		= joystick.get_button(GAMEPAD_STICK0_AXIS_DOWN).value();
-	left_stick->thumb_button = joystick.get_button(GAMEPAD_BUTTON_L3).value();
+	back_button->value			= joystick.get_button(GAMEPAD_BUTTON_BACK).value();
+	start_button->value			= joystick.get_button(GAMEPAD_BUTTON_START).value();
 
-	right_stick->left		= joystick.get_button(GAMEPAD_STICK1_AXIS_LEFT).value();
-	right_stick->right		= joystick.get_button(GAMEPAD_STICK1_AXIS_RIGHT).value();
-	right_stick->up			= joystick.get_button(GAMEPAD_STICK1_AXIS_UP).value();
-	right_stick->down		= joystick.get_button(GAMEPAD_STICK1_AXIS_DOWN).value();
-	right_stick->thumb_button = joystick.get_button(GAMEPAD_BUTTON_R3).value();
+	left_stick->left			= joystick.get_button(GAMEPAD_STICK0_AXIS_LEFT).value();
+	left_stick->right			= joystick.get_button(GAMEPAD_STICK0_AXIS_RIGHT).value();
+	left_stick->up				= joystick.get_button(GAMEPAD_STICK0_AXIS_UP).value();
+	left_stick->down			= joystick.get_button(GAMEPAD_STICK0_AXIS_DOWN).value();
+	left_stick->thumb_button	= joystick.get_button(GAMEPAD_BUTTON_L3).value();
+
+	right_stick->left			= joystick.get_button(GAMEPAD_STICK1_AXIS_LEFT).value();
+	right_stick->right			= joystick.get_button(GAMEPAD_STICK1_AXIS_RIGHT).value();
+	right_stick->up				= joystick.get_button(GAMEPAD_STICK1_AXIS_UP).value();
+	right_stick->down			= joystick.get_button(GAMEPAD_STICK1_AXIS_DOWN).value();
+	right_stick->thumb_button	= joystick.get_button(GAMEPAD_BUTTON_R3).value();
 }
 
 class ProtoVizKernel : public kernel::IKernel

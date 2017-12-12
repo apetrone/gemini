@@ -213,7 +213,7 @@ namespace gemini
 		case InputMessage::GamePadAxis:
 		{
 			JoystickInput& joystick = state.joystick_by_index(message.params[0]);
-			LOGV("gamepad [%i] button: %s (%i), value: %i\n", message.params[0], gemini::joystick_button_name(message.params[1]), message.params[1], message.params[2]);
+			//LOGV("gamepad [%i] button: %s (%i), value: %i\n", message.params[0], gemini::joystick_button_name(message.params[1]), message.params[1], message.params[2]);
 			joystick.axes[message.params[1]].update_state(message.params[2]);
 			break;
 		}
