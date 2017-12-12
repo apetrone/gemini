@@ -189,7 +189,7 @@ namespace kernel
 	{
 		uint8_t gamepad_id;
 		uint8_t axis_id;
-		uint8_t axis_value;
+		uint16_t axis_value;
 
 		float normalized_value() const;
 	}; // GameControllerEvent

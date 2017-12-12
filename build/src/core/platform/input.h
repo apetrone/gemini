@@ -244,10 +244,11 @@ namespace gemini
 	struct ButtonState
 	{
 		uint8_t state;
-		uint8_t axis_value;
+		uint16_t axis_value;
+		uint64_t timestamp;
 
 		// handle a press or release event
-		void update_state(uint8_t value);
+		void update_state(uint16_t value, uint64_t current_tick);
 
 		// update this button state for this frame
 		void update();
@@ -261,7 +262,7 @@ namespace gemini
 		// returns whether or not the button was just released
 		bool was_released() const;
 
-		uint8_t value() const;
+		uint16_t value() const;
 	}; // ButtonState
 
 	// This is modeled after SDL2's enums, which are in turn, modeled after the

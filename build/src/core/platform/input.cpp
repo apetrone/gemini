@@ -31,7 +31,7 @@
 
 namespace gemini
 {
-	void ButtonState::update_state(uint8_t value)
+	void ButtonState::update_state(uint16_t value, uint64_t current_tick)
 	{
 		if (value > 0)
 		{
@@ -55,6 +55,7 @@ namespace gemini
 			state = Button_Impulse | Button_Released;
 		}
 		axis_value = value;
+		timestamp = current_tick;
 	} // update_state
 
 	void ButtonState::update()
@@ -100,7 +101,7 @@ namespace gemini
 		return (state == (Button_Impulse|Button_Released));
 	}
 
-	uint8_t ButtonState::value() const
+	uint16_t ButtonState::value() const
 	{
 		return axis_value;
 	}

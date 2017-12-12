@@ -186,9 +186,8 @@ namespace platform
 			gce.gamepad_id = joystick->index;
 			gce.subtype = kernel::JoystickButton;
 			gce.axis_id = static_cast<int>(platform_button);
-			LOGV("platform_button = %i, axis_id = %i\n", platform_button, gce.axis_id);
 			assert(gce.axis_id < GAMEPAD_BUTTON_COUNT);
-			gce.axis_value = (current_state > 0) ? 255 : 0;
+			gce.axis_value = (current_state > 0) ? 32767 : 0;
 			kernel::event_dispatch(gce);
 		}
 	}
@@ -230,17 +229,17 @@ namespace platform
 	{
 		// https://msdn.microsoft.com/en-us/library/windows/desktop/ee417001(v=vs.85).aspx#dead_zone
 		// http://www.third-helix.com/2013/04/12/doing-thumbstick-dead-zones-right.html
+
 		double magnitude = sqrt(xvalue * xvalue + yvalue * yvalue);
 
 		int16_t value_map[] = {
 			xvalue,
 			yvalue
 		};
+
 		int16_t target_value = value_map[axis_selection];
 
-
 		float normalized_value = target_value / magnitude;
-
 		if (magnitude > deadzone)
 		{
 			if (magnitude > 32767)
@@ -273,19 +272,19 @@ namespace platform
 
 		// If we need to flip the value, the axis index is incremented.
 		uint32_t flip_value = (corrected_value < 0);
-		uint8_t pos_value = 0;
-		uint8_t neg_value = 0;
+		uint16_t pos_value = 0;
+		uint16_t neg_value = 0;
 
 		// Interpret this as an unsigned value to normalize it.
 		if (flip_value)
 		{
 			corrected_value = -(corrected_value + 1);
 			pos_value = 0;
-			neg_value = static_cast<uint8_t>((corrected_value / 32767.0) * 255.0);
+			neg_value = corrected_value;
 		}
 		else
 		{
-			pos_value = static_cast<uint8_t>((corrected_value / 32767.0) * 255.0);
+			pos_value = corrected_value;
 			neg_value = 0;
 		}
 
@@ -325,14 +324,8 @@ namespace platform
 			kernel::GameControllerEvent gce;
 			gce.gamepad_id = joystick->index;
 			gce.subtype = kernel::JoystickAxisMoved;
-
 			gce.axis_id = xinput_joystick_correct_axis_index(platform_axis_index, &axis_value);
-
-			// Normalize the value and then convert it to 8-bit.
-			float normalized_value = (axis_value/ 32767.0);
-			gce.axis_value = static_cast<uint8_t>(normalized_value * 255.0);
-
-			//LOGV("platform_axis_index: %i -> %i value: %i -> %i | %i [%i]\n", platform_axis_index, gce.axis_id, axis_value, gce.axis_value, new_value, flip_value);
+			gce.axis_value = axis_value;
 
 			kernel::event_dispatch(gce);
 		}

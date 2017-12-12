@@ -53,12 +53,12 @@ namespace gemini
 		}
 	} // update
 
-	void KeyboardInput::inject_key_event(int key, bool is_down)
+	void KeyboardInput::inject_key_event(int key, bool is_down, uint64_t current_tick)
 	{
 		Button button = static_cast<Button>(key);
 		assert(button <= BUTTON_COUNT);
 		ButtonState* b = &keys[button];
-		b->update_state(is_down);
+		b->update_state(is_down, current_tick);
 	} // inject_key_event
 
 //	bool KeyboardInput::is_down(input::Button key)
@@ -112,7 +112,9 @@ namespace gemini
 	void MouseInput::inject_mouse_button(MouseButton button, bool is_down)
 	{
 		assert(button < MOUSE_COUNT && button >= 0);
-		buttons[button].update_state(is_down);
+		uint64_t current_tick = 0;
+		assert(0); // TODO: Fix current tick!
+		buttons[button].update_state(is_down, current_tick);
 	} // inject_mouse_button
 
 	void MouseInput::inject_mouse_wheel(int direction)
@@ -172,7 +174,7 @@ namespace gemini
 			//{
 			//	gemini::engine::instance()->terminate_application();
 			//}
-			state.keyboard().inject_key_event(message.button, message.params[0]);
+			state.keyboard().inject_key_event(message.button, message.params[0], message.timestamp);
 			break;
 
 		case InputMessage::Mouse:
@@ -214,7 +216,7 @@ namespace gemini
 		{
 			JoystickInput& joystick = state.joystick_by_index(message.params[0]);
 			//LOGV("gamepad [%i] button: %s (%i), value: %i\n", message.params[0], gemini::joystick_button_name(message.params[1]), message.params[1], message.params[2]);
-			joystick.axes[message.params[1]].update_state(message.params[2]);
+			joystick.axes[message.params[1]].update_state(message.params[2], message.timestamp);
 			break;
 		}
 

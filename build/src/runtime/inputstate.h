@@ -120,7 +120,7 @@ namespace gemini
 		void reset();
 		void update();
 
-		void inject_key_event(int key, bool is_down);
+		void inject_key_event(int key, bool is_down, uint64_t current_tick);
 
 		inline const ButtonState& get_key(Button key) { return keys[key]; }
 	}; // KeyboardInput
