@@ -250,6 +250,9 @@ namespace gemini
 		// handle a press or release event
 		void update_state(uint16_t value, uint64_t current_tick);
 
+		// Returns the number of ticks this button is down for, or zero.
+		uint64_t held_ticks(uint64_t current_tick) const;
+
 		// update this button state for this frame
 		void update();
 
@@ -262,7 +265,8 @@ namespace gemini
 		// returns whether or not the button was just released
 		bool was_released() const;
 
-		uint16_t value() const;
+		// returns a normalized float value
+		float value() const;
 	}; // ButtonState
 
 	// This is modeled after SDL2's enums, which are in turn, modeled after the

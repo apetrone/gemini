@@ -58,6 +58,16 @@ namespace gemini
 		timestamp = current_tick;
 	} // update_state
 
+	uint64_t ButtonState::held_ticks(uint64_t current_tick) const
+	{
+		if (state & Button_Held)
+		{
+			return current_tick - timestamp;
+		}
+
+		return 0;
+	} // held_ticks
+
 	void ButtonState::update()
 	{
 		// impulse flag
@@ -101,9 +111,9 @@ namespace gemini
 		return (state == (Button_Impulse|Button_Released));
 	}
 
-	uint16_t ButtonState::value() const
+	float ButtonState::value() const
 	{
-		return axis_value;
+		return axis_value / 32767.0f;
 	}
 
 	const char* mouse_button_name(unsigned int value)

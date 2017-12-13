@@ -87,14 +87,14 @@ public:
 	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
 	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
 
-	uint16_t value;
+	float value;
 	float duration;
 };
 
 JoystickAxisPanel::JoystickAxisPanel(gui::Panel* parent)
 	: gui::Panel(parent)
 {
-	value = 0;
+	value = 0.0f;
 	duration = 0.0f;
 }
 
@@ -109,21 +109,20 @@ void JoystickAxisPanel::render(gui::Compositor* compositor, gui::Renderer* rende
 	const gemini::Color FULL_COLOR(1.0f, 0.0f, 0.0f);
 	const gemini::Color HELD_COLOR(1.0f, 1.0f, 1.0f);
 
-	if (value == 0)
+	if (value <= 0.1f)
 	{
 		set_background_color(UP_COLOR);
 	}
-	else if (value > 0 && value < 32767)
+	else if (value > 0.0f && value < 1.0f)
 	{
-		float alpha = (value / 32767.0);
-		set_background_color(interpolate(UP_COLOR, FULL_COLOR, alpha));
+		set_background_color(interpolate(UP_COLOR, FULL_COLOR, value));
 	}
-	else if (value == 32767)
+	else if (value >= 0.99f)
 	{
 		set_background_color(FULL_COLOR);
 	}
 
-	if (value == 32767 && duration > 0.5f)
+	if (value >= 0.99f && duration > 0.5f)
 	{
 		set_background_color(HELD_COLOR);
 	}
@@ -140,11 +139,11 @@ public:
 	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
 	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
 
-	uint16_t left;
-	uint16_t right;
-	uint16_t up;
-	uint16_t down;
-	uint16_t thumb_button;
+	float left;
+	float right;
+	float up;
+	float down;
+	float thumb_button;
 };
 
 JoystickAnalogPanel::JoystickAnalogPanel(gui::Panel* parent)
@@ -162,16 +161,15 @@ void JoystickAnalogPanel::render(gui::Compositor* compositor, gui::Renderer* ren
 	const gemini::Color UP_COLOR(0.1f, 0.1f, 0.1f);
 	const gemini::Color FULL_COLOR(1.0f, 0.0f, 0.0f);
 
-	if (thumb_button == 0)
+	if (thumb_button <= 0.1f)
 	{
 		set_background_color(UP_COLOR);
 	}
-	else if (thumb_button > 0 && thumb_button < 32767)
+	else if (thumb_button > 0.0f && thumb_button < 1.0f)
 	{
-		float alpha = (thumb_button / 32767.0);
-		set_background_color(interpolate(UP_COLOR, FULL_COLOR, alpha));
+		set_background_color(interpolate(UP_COLOR, FULL_COLOR, thumb_button));
 	}
-	else if (thumb_button == 32767)
+	else if (thumb_button >= 0.99f)
 	{
 		set_background_color(FULL_COLOR);
 	}
@@ -179,8 +177,8 @@ void JoystickAnalogPanel::render(gui::Compositor* compositor, gui::Renderer* ren
 	gui::Painter painter(this, render_commands);
 
 	gui::Point left_cursor(
-		0.5 + (0.5 * (static_cast<float>(right / 32767.0) - static_cast<float>(left / 32767.0))),
-		0.5 + (0.5 * -(static_cast<float>(up / 32767.0) - static_cast<float>(down / 32767.0))));
+		0.5 + (0.5 * (right - left)),
+		0.5 + (0.5 * -(up - down)));
 
 	gemini::Color left_colors[] = {
 		gemini::Color(1.0f, 1.0f, 0.0f),
@@ -381,8 +379,7 @@ void GamepadPanel::set_from_joystick(JoystickInput& joystick)
 	right_trigger->value		= joystick.get_button(GAMEPAD_BUTTON_R2).value();
 
 	left_bumper->value			= joystick.get_button(GAMEPAD_BUTTON_LEFTSHOULDER).value();
-	left_bumper->duration		= (kernel::parameters().current_physics_tick - joystick.get_button(GAMEPAD_BUTTON_LEFTSHOULDER).timestamp) * kernel::parameters().step_interval_seconds;
-	LOGV("duration: %2.2f\n", left_bumper->duration);
+	left_bumper->duration		= joystick.get_button(GAMEPAD_BUTTON_LEFTSHOULDER).held_ticks(kernel::parameters().current_physics_tick) * kernel::parameters().step_interval_seconds;
 	right_bumper->value			= joystick.get_button(GAMEPAD_BUTTON_RIGHTSHOULDER).value();
 
 	left_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_LEFT).value();
