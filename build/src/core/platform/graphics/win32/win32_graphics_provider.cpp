@@ -223,6 +223,10 @@ namespace platform
 			win32::Window* native_window = static_cast<win32::Window*>(window);
 			data->device_context = GetDC(static_cast<HWND>(native_window->get_native_handle()));
 
+			// Intel Graphics 520 will not return a pixel format
+			// without a stencil buffer.
+			int32_t min_stencil_bits = 8;
+
 			if (choose_pixel_format)
 			{
 				int attributes[] = {
@@ -233,7 +237,7 @@ namespace platform
 					WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
 					WGL_COLOR_BITS_ARB, 32,
 					WGL_DEPTH_BITS_ARB, 24,
-					WGL_STENCIL_BITS_ARB, 0,
+					WGL_STENCIL_BITS_ARB, min_stencil_bits,
 					//WGL_SAMPLE_BUFFERS_ARB, 0,
 					//WGL_SAMPLES_ARB, 1,
 					0
@@ -284,11 +288,20 @@ namespace platform
 					//	LOGV("attrib[%i] = %i\n", attrib_index, attrib_values[attrib_index]);
 					//}
 
-					if (attrib_values[0] == 32 && attrib_values[1] >= 24 && attrib_values[2] == 0 && attrib_values[7] == 0)
+					if (attrib_values[0] == 32 &&
+						attrib_values[1] >= 24 &&
+						attrib_values[2] == min_stencil_bits &&
+						attrib_values[7] == 0)
 					{
 						best_pixel_format = format_indices[format_index];
 						break;
 					}
+				}
+
+				if (best_pixel_format == -1)
+				{
+					LOGE("Unable to determine best pixel format!\n");
+					return;
 				}
 
 				result = SetPixelFormat(data->device_context, best_pixel_format, nullptr);
