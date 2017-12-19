@@ -63,12 +63,16 @@
 #include <sdk/shared.h>
 #include <sdk/game_api.h>
 
+namespace gemini
+{
+	void input_message_to_inputstate(const InputMessage& message, InputState& state);
+}
 
 using namespace platform;
 using namespace renderer;
 using namespace gemini;
 
-//#define USE_GAMEPAD_PANEL 1
+#define USE_GAMEPAD_PANEL 1
 
 
 class ProtoVizKernel : public kernel::IKernel
@@ -650,6 +654,8 @@ public:
 	{
 		// game actions:
 		// view movement (relative +/-)
+
+		input_message_to_inputstate(event, inputstate);
 
 		if (event.type == InputMessage::Keyboard)
 		{

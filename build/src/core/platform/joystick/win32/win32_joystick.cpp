@@ -182,13 +182,15 @@ namespace platform
 		{
 			uint8_t value = static_cast<uint8_t>(current_state);
 			joystick->last_axes[platform_button] = current_state;
-			kernel::GameControllerEvent gce;
-			gce.gamepad_id = joystick->index;
-			gce.subtype = kernel::JoystickButton;
-			gce.axis_id = static_cast<int>(platform_button);
-			assert(gce.axis_id < GAMEPAD_BUTTON_COUNT);
-			gce.axis_value = (current_state > 0) ? 32767 : 0;
-			kernel::event_dispatch(gce);
+
+			KernelEvent kevent;
+			kevent.gamepad_id = joystick->index;
+			kevent.type = kernel::GameController;
+			kevent.subtype = kernel::JoystickButton;
+			kevent.axis_id = static_cast<int>(platform_button);
+			assert(kevent.axis_id < GAMEPAD_BUTTON_COUNT);
+			kevent.axis_value = (current_state > 0) ? 32767 : 0;
+			kernel_event_queue(kevent);
 		}
 	}
 
@@ -289,21 +291,23 @@ namespace platform
 		}
 
 		{
-			kernel::GameControllerEvent event;
-			event.gamepad_id = joystick->index;
-			event.subtype = kernel::JoystickAxisMoved;
-			event.axis_id = pos_index;
-			event.axis_value = pos_value;
-			kernel::event_dispatch(event);
+			KernelEvent kevent;
+			kevent.type = kernel::GameController;
+			kevent.subtype = kernel::JoystickAxisMoved;
+			kevent.gamepad_id = joystick->index;
+			kevent.axis_id = pos_index;
+			kevent.axis_value = pos_value;
+			kernel_event_queue(kevent);
 		}
 
 		{
-			kernel::GameControllerEvent event;
-			event.gamepad_id = joystick->index;
-			event.subtype = kernel::JoystickAxisMoved;
-			event.axis_id = neg_index;
-			event.axis_value = neg_value;
-			kernel::event_dispatch(event);
+			KernelEvent kevent;
+			kevent.type = kernel::GameController;
+			kevent.subtype = kernel::JoystickAxisMoved;
+			kevent.gamepad_id = joystick->index;
+			kevent.axis_id = neg_index;
+			kevent.axis_value = neg_value;
+			kernel_event_queue(kevent);
 		}
 	}
 
@@ -321,13 +325,13 @@ namespace platform
 
 			assert(axis_value <= 32767 || axis_value >= -32768);
 
-			kernel::GameControllerEvent gce;
-			gce.gamepad_id = joystick->index;
-			gce.subtype = kernel::JoystickAxisMoved;
-			gce.axis_id = xinput_joystick_correct_axis_index(platform_axis_index, &axis_value);
-			gce.axis_value = axis_value;
-
-			kernel::event_dispatch(gce);
+			KernelEvent kevent;
+			kevent.gamepad_id = joystick->index;
+			kevent.type = kernel::GameController;
+			kevent.subtype = kernel::JoystickAxisMoved;
+			kevent.axis_id = xinput_joystick_correct_axis_index(platform_axis_index, &axis_value);
+			kevent.axis_value = axis_value;
+			kernel_event_queue(kevent);
 		}
 	}
 
@@ -364,10 +368,12 @@ namespace platform
 						// update state and dispatch message
 						joystick->state &= ~GEMINI_JOYSTICK_DISCONNECTED;
 						joystick->state |= GEMINI_JOYSTICK_CONNECTED;
-						kernel::GameControllerEvent gce;
-						gce.gamepad_id = joystick->index;
-						gce.subtype = kernel::JoystickConnected;
-						kernel::event_dispatch(gce);
+
+						KernelEvent kevent;
+						kevent.type = kernel::GameController;
+						kevent.subtype = kernel::JoystickConnected;
+						kevent.gamepad_id = joystick->index;
+						kernel_event_queue(kevent);
 					}
 
 					if (joystick->last_packet != controller_state.dwPacketNumber)
@@ -409,10 +415,12 @@ namespace platform
 					// update state and dispatch message
 					joystick->state &= ~GEMINI_JOYSTICK_CONNECTED;
 					joystick->state |= GEMINI_JOYSTICK_DISCONNECTED;
-					kernel::GameControllerEvent gce;
-					gce.gamepad_id = joystick->index;
-					gce.subtype = kernel::JoystickDisconnected;
-					kernel::event_dispatch(gce);
+
+					KernelEvent kevent;
+					kevent.gamepad_id = joystick->index;
+					kevent.type = kernel::GameController;
+					kevent.subtype = kernel::JoystickDisconnected;
+					kernel_event_queue(kevent);
 				}
 			}
 		}

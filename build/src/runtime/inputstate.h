@@ -246,7 +246,8 @@ namespace gemini
 	int16_t normalized_joystick_axis(JoystickInput& joystick, uint16_t axis_id, bool negative_half);
 
 
-	void input_message_to_inputstate(const InputMessage& message, InputState& state);
+
 
 #endif
+
 } // namespace gemini

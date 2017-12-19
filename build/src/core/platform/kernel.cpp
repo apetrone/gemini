@@ -192,6 +192,42 @@ namespace gemini
 				output.params[1] = event.modifiers;
 				break;
 			}
+			case kernel::GameController:
+			{
+				output.timestamp = timestamp;
+				output.params[0] = event.gamepad_id;
+
+				switch (event.subtype)
+				{
+				case kernel::JoystickConnected:
+					output.type = InputMessage::GamePadConnected;
+					break;
+
+				case kernel::JoystickDisconnected:
+					output.type = InputMessage::GamePadDisconnected;
+					break;
+
+				case kernel::JoystickButton:
+					output.type = InputMessage::GamePadButton;
+					output.params[1] = event.axis_id;
+					output.params[2] = event.axis_value;
+					break;
+
+				case kernel::JoystickAxisMoved:
+					output.type = InputMessage::GamePadAxis;
+					output.params[1] = event.axis_id;
+					output.params[2] = event.axis_value;
+					break;
+
+				default:
+					// Unhandled gamepad input!
+					assert(0);
+					break;
+				}
+				break;
+			}
+
+
 		}
 	} // kernel_event_translate
 
