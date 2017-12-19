@@ -60,12 +60,15 @@
 #include <sdk/camera.h>
 #include <sdk/game_api.h>
 #include <sdk/utils.h>
+#include <sdk/shared.h>
+#include <sdk/game_api.h>
 
-#include <ui/gamepad_panel.h>
 
 using namespace platform;
 using namespace renderer;
 using namespace gemini;
+
+//#define USE_GAMEPAD_PANEL 1
 
 
 class ProtoVizKernel : public kernel::IKernel
@@ -88,7 +91,7 @@ private:
 	render2::RenderTarget* render_target;
 	render2::Texture* texture;
 
-	InputEventRelay* event_relay;
+	//InputEventRelay* event_relay;
 	InputState inputstate;
 
 	//gui::Graph* graphs[IMOCAP_TOTAL_SENSORS];
@@ -111,10 +114,10 @@ private:
 	//float yaw;
 	//float pitch;
 
-	//bool left_down;
-	//bool right_down;
-	//bool forward_down;
-	//bool backward_down;
+	bool left_down;
+	bool right_down;
+	bool forward_down;
+	bool backward_down;
 
 	//bool should_move_view;
 
@@ -135,6 +138,11 @@ private:
 	gemini::Allocator render_allocator;
 	gemini::Allocator debugdraw_allocator;
 	gemini::Allocator default_allocator;
+
+
+
+	CameraState camera_state[2];
+	CameraState interpolated_camera_state;
 
 	//Array<core::StackString<32>> mesh_animations;
 	//uint32_t current_mesh_animation;
@@ -157,7 +165,7 @@ public:
 		, gui_renderer(nullptr)
 		, resource_cache(nullptr)
 		, render_target(nullptr)
-		, event_relay(nullptr)
+		//, event_relay(nullptr)
 	{
 	}
 
@@ -167,7 +175,7 @@ public:
 
 	virtual void event(kernel::KeyboardEvent& event)
 	{
-		event_relay->queue(event, kernel::parameters().current_physics_tick);
+		//event_relay->queue(event, kernel::parameters().current_physics_tick);
 #if 0
 		if (compositor && compositor->get_focus())
 		{
@@ -184,18 +192,6 @@ public:
 		//{
 		//	LOGV("key is_down: '%s', name: '%s', modifiers: %zu\n", event.is_down ? "Yes" : "No", gemini::key_name(event.key), event.modifiers);
 		//}
-
-		if (event.key == BUTTON_A)
-			left_down = event.is_down;
-
-		if (event.key == BUTTON_D)
-			right_down = event.is_down;
-
-		if (event.key == BUTTON_W)
-			forward_down = event.is_down;
-
-		if (event.key == BUTTON_S)
-			backward_down = event.is_down;
 
 		if (event.is_down)
 		{
@@ -278,21 +274,35 @@ public:
 
 			main_panel->set_size(event.window_width, event.window_height - 24);
 			camera.perspective(60.0f, (int)event.window_width, (int)event.window_height, 0.01f, 1024.0f);
+			camera.set_yaw(0.0f);
+			camera.set_pitch(0.0f);
+
 		}
 		else if (event.subtype == kernel::WindowClosed)
 		{
 			set_active(false);
 		}
 
-		if (event_relay)
-		{
-			event_relay->queue(event, kernel::parameters().current_physics_tick);
-		}
+		//if (event_relay)
+		//{
+		//	event_relay->queue(event, kernel::parameters().current_physics_tick);
+		//}
 	}
 
 	virtual void event(kernel::MouseEvent& event)
 	{
-		event_relay->queue(event, kernel::parameters().current_physics_tick);
+		//event_relay->queue(event, kernel::parameters().current_physics_tick);
+
+#if 0
+		if (event.subtype == kernel::MouseDelta)
+		{
+			if (event.dx != 0 || event.dy != 0)
+			{
+				const float sensitivity = .10f;
+				camera.move_view(event.dx, event.dy);
+			}
+		}
+#endif
 #if 0
 		if (compositor)
 		{
@@ -359,7 +369,7 @@ public:
 
 	virtual void event(kernel::GameControllerEvent& event)
 	{
-		event_relay->queue(event, kernel::parameters().current_physics_tick);
+		//event_relay->queue(event, kernel::parameters().current_physics_tick);
 	}
 
 	int32_t handle_input_message(const InputMessage& message)
@@ -372,7 +382,7 @@ public:
 		//		camera.move_view(event.dx, event.dy);
 		//	}
 		//}
-		input_message_to_inputstate(message, inputstate);
+		//input_message_to_inputstate(message, inputstate);
 
 		return 0;
 	}
@@ -391,9 +401,40 @@ public:
 
 	void render_main_content(render2::RenderTarget* render_target)
 	{
-		render_scene->camera_position_world = camera.get_position();
-		render_scene->camera_view_direction = camera.get_view();
-		render_scene_draw(render_scene, device, camera.get_modelview(), camera.get_projection(), render_target);
+		//render_scene->camera_position_world = camera.get_position();
+		//render_scene->camera_view_direction = camera.get_view();
+
+
+		// setup the inverse camera transform.
+		glm::vec3 cam_origin;
+		gemini::View view;
+
+		platform::window::Frame frame = platform::window::get_render_frame(main_window);
+		view.width = frame.width;
+		view.height = frame.height;
+
+		view.modelview = glm::translate(glm::mat4(1.0f), interpolated_camera_state.position) * glm::toMat4(interpolated_camera_state.rotation);
+		cam_origin = glm::vec3(glm::column(view.modelview, 3));
+
+
+		view.modelview = glm::inverse(view.modelview);
+
+		const float nearz = 0.01f;
+		const float farz = 4096.0f;
+		const float screen_aspect_ratio = (view.width / (float)view.height);
+		view.projection = glm::perspective(glm::radians(interpolated_camera_state.field_of_view), screen_aspect_ratio, nearz, farz);
+
+		render_scene_draw(render_scene, device, view.modelview, view.projection, render_target);
+
+		// Uncomment this to debug the camera.
+		//const glm::vec3 player_offset(0.0f);
+		//glm::mat4 tx = glm::translate(glm::mat4(1.0f), player_offset);
+		//debugdraw::axes(glm::inverse(tx) * view.modelview, 1.0f, 0.0f);
+		//debugdraw::camera(
+		//	cam_origin,
+		//	interpolated_camera_state.view,
+		//	0.0f
+		//);
 
 #if 0
 		// We need to put the grid in its own scene node.
@@ -415,7 +456,7 @@ public:
 		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
 #endif
-		debugdraw::render(camera.get_modelview(), camera.get_projection(), render_target->width, render_target->height, render_target);
+		debugdraw::render(view.modelview, view.projection, render_target->width, render_target->height, render_target);
 	}
 
 	virtual kernel::Error startup()
@@ -438,8 +479,8 @@ public:
 
 		default_allocator = memory_allocator_default(MEMORY_ZONE_DEFAULT);
 
-		event_relay = MEMORY2_NEW(default_allocator, InputEventRelay)(default_allocator);
-		event_relay->add_handler(MAKE_MEMBER_DELEGATE(int32_t(const InputMessage&), ProtoVizKernel, &ProtoVizKernel::handle_input_message, this));
+		//event_relay = MEMORY2_NEW(default_allocator, InputEventRelay)(default_allocator);
+		//event_relay->add_handler(MAKE_MEMBER_DELEGATE(int32_t(const InputMessage&), ProtoVizKernel, &ProtoVizKernel::handle_input_message, this));
 
 		gemini::runtime_startup("arcfusion.net/protoviz", platform::make_absolute_path(asset_path.c_str()));
 
@@ -464,7 +505,7 @@ public:
 				params.frame = platform::window::centered_window_frame(0, 800, 600);
 			}
 
-			params.window_title = "orion";
+			params.window_title = "protoviz";
 			main_window = platform::window::create(params);
 
 			// set perspective on camera
@@ -527,6 +568,7 @@ public:
 			device->init(window_frame.width, window_frame.height);
 		}
 
+		platform::window::set_relative_mouse_mode(main_window, false);
 		// setup editor assets / content paths
 		{
 			//			fs->add_virtual_path("editor/assets");
@@ -588,53 +630,95 @@ public:
 
 			center_layout->add_panel(surface);
 
+#if defined(USE_GAMEPAD_PANEL)
 			gamepad_panel = new gui::GamepadPanel(compositor);
 			gamepad_panel->set_size(600, 350);
 			gamepad_panel->set_origin(0, 0);
 			gamepad_panel->set_name("gamepad panel");
 			gamepad_panel->set_background_color(gemini::Color(0.3f, 0.3f, 0.3f));
+#endif
 		}
 
 
 
-		kernel::parameters().step_interval_seconds = (1.0f / 50.0f);
+		kernel::parameters().step_interval_seconds = (1.0f / 100.0f);
 
 		return kernel::NoError;
 	}
 
+	virtual void handle_input(const gemini::InputMessage &event)
+	{
+		// game actions:
+		// view movement (relative +/-)
+
+		if (event.type == InputMessage::Keyboard)
+		{
+			if (event.params[0] && event.button == BUTTON_ESCAPE)
+			{
+				set_active(false);
+			}
+		}
+	}
+
 	virtual void fixed_update(float step_seconds)
 	{
-		event_relay->dispatch(kernel::parameters().current_physics_tick);
+		//event_relay->dispatch(kernel::parameters().current_physics_tick);
 
 		if (inputstate.keyboard().get_key(BUTTON_ESCAPE).is_down())
 		{
 			set_active(false);
 		}
 
-		if (inputstate.keyboard().get_key(BUTTON_SPACE).was_released())
+
+
 		{
-			LOGV("press space\n");
-		}
-		else if (inputstate.mouse().get_button(MOUSE_LEFT).was_pressed())
-		{
-			LOGV("press left\n");
-		}
-		else if (inputstate.mouse().get_button(MOUSE_LEFT).is_down())
-		{
-			LOGV("left is down\n");
-		}
-		else if (inputstate.mouse().get_button(MOUSE_LEFT).was_released())
-		{
-			LOGV("left released\n");
+			kernel::Parameters& params = kernel::parameters();
+			const float movement_factor = 30.0f;
+
+			left_down = inputstate.keyboard().get_key(BUTTON_A).is_down();
+			right_down = inputstate.keyboard().get_key(BUTTON_D).is_down();
+			forward_down = inputstate.keyboard().get_key(BUTTON_W).is_down();
+			backward_down = inputstate.keyboard().get_key(BUTTON_S).is_down();
+
+			if (left_down)
+				camera.move_left(movement_factor * params.framedelta_seconds);
+			if (right_down)
+				camera.move_right(movement_factor * params.framedelta_seconds);
+			if (forward_down)
+				camera.move_forward(movement_factor * params.framedelta_seconds);
+			if (backward_down)
+				camera.move_backward(movement_factor * params.framedelta_seconds);
+
+			int dx, dy;
+			inputstate.mouse().mouse_delta(dx, dy);
+			if (dx != 0 || dy != 0)
+			{
+				const float sensitivity = .10f;
+				camera.move_view(dx, dy);
+			}
+
+			//{
+			//	platform::window::Frame frame = platform::window::get_render_frame(main_window);
+			//	platform::window::set_cursor(
+			//		frame.x + (frame.width / 2.0f),
+			//		frame.y + (frame.height / 2.0f)
+			//	);
+			//}
+
+			//camera.update_view();
 		}
 
+
+#if defined(USE_GAMEPAD_PANEL)
 		gamepad_panel->set_from_joystick(inputstate.joystick_by_index(0));
+#endif
 
-		inputstate.mouse().reset_delta();
+		//inputstate.mouse().reset_delta();
 	}
 
 	virtual void tick(bool performed_fixed_update)
 	{
+		platform::window::dispatch_events();
 		uint64_t current_time = platform::microseconds();
 
 		// while i debug network stuff; don't do this...
@@ -686,24 +770,6 @@ public:
 		if (value == 0.0f || value == 1.0f)
 			multiplifer *= -1;
 
-
-		{
-			kernel::Parameters& params = kernel::parameters();
-			const float movement_factor = 30.0f;
-
-			//if (left_down)
-			//	camera.move_left(movement_factor * params.framedelta_seconds);
-			//if (right_down)
-			//	camera.move_right(movement_factor * params.framedelta_seconds);
-			//if (forward_down)
-			//	camera.move_forward(movement_factor * params.framedelta_seconds);
-			//if (backward_down)
-			//	camera.move_backward(movement_factor * params.framedelta_seconds);
-
-			camera.update_view();
-		}
-
-
 		int32_t yoffset = 130;
 		debugdraw::text(20, yoffset, "Left Click + Drag: Rotate Camera", gemini::Color(1.0f, 1.0f, 1.0f));
 		debugdraw::text(20, yoffset + 16, "WASD: Move Camera", gemini::Color(1.0f, 1.0f, 1.0f));
@@ -737,6 +803,52 @@ public:
 		//modelview_matrix = camera.get_modelview();
 		//projection_matrix = camera.get_projection();
 
+		if (performed_fixed_update)
+		{
+			camera_state[0] = camera_state[1];
+
+			// extract camera state
+			camera_state[1].position = camera.get_position();
+			camera_state[1].rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+			camera_state[1].view = camera.get_view();
+			camera_state[1].horizontal_offset = 0;
+			camera_state[1].vertical_offset = 0;
+			camera_state[1].distance_from_pivot = 0.0f;
+			camera_state[1].world_position = camera.get_position();
+
+			{
+				glm::quat orientation;
+				const glm::vec3 YUP_DIRECTION(0.0f, 1.0f, 0.0f);
+				const float yaw = camera.get_yaw();
+				const float pitch = camera.get_pitch();
+
+				glm::quat qyaw;
+				glm::quat qpitch;
+				qyaw = glm::angleAxis(glm::radians(yaw), YUP_DIRECTION);
+
+				glm::vec3 camera_right = glm::normalize(glm::cross(camera.get_view(), YUP_DIRECTION));
+
+				qpitch = glm::angleAxis(glm::radians(pitch), camera_right);
+				orientation = glm::normalize(qpitch * qyaw);
+				camera_state[1].rotation = orientation;
+			}
+
+			float alpha = kernel::parameters().step_alpha;
+			interpolated_camera_state.world_position = gemini::lerp(camera_state[0].world_position, camera_state[1].world_position, alpha);
+			interpolated_camera_state.position = gemini::lerp(camera_state[0].position, camera_state[1].position, alpha);
+			interpolated_camera_state.distance_from_pivot = gemini::lerp(camera_state[0].distance_from_pivot, camera_state[1].distance_from_pivot, alpha);
+			interpolated_camera_state.rotation = gemini::slerp(camera_state[0].rotation, camera_state[1].rotation, alpha);
+			//interpolated_camera_state.field_of_view = gemini::lerp(camera_state[0].field_of_view, camera_state[1].field_of_view, alpha);
+			interpolated_camera_state.field_of_view = 60.0f;
+			interpolated_camera_state.vertical_offset = gemini::lerp(camera_state[0].vertical_offset, camera_state[1].vertical_offset, alpha);
+			interpolated_camera_state.horizontal_offset = gemini::lerp(camera_state[0].horizontal_offset, camera_state[1].horizontal_offset, alpha);
+			interpolated_camera_state.view = gemini::lerp(camera_state[0].view, camera_state[1].view, alpha);
+
+
+
+			inputstate.update();
+		}
+
 		platform::window::activate_context(main_window);
 
 		if (compositor)
@@ -759,11 +871,6 @@ public:
 
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds * SecondsPerMillisecond;
-
-		if (performed_fixed_update)
-		{
-			inputstate.update();
-		}
 	}
 
 
@@ -794,13 +901,14 @@ public:
 		resource_cache->clear();
 		MEMORY2_DELETE(render_allocator, resource_cache);
 
-		MEMORY2_DELETE(default_allocator, event_relay);
-		event_relay = nullptr;
+		//MEMORY2_DELETE(default_allocator, event_relay);
+		//event_relay = nullptr;
 
 		assets::shutdown();
 
 		destroy_device(render_allocator, device);
 
+		platform::window::set_relative_mouse_mode(main_window, false);
 		platform::window::destroy(main_window);
 		platform::window::shutdown();
 

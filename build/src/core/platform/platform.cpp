@@ -288,6 +288,13 @@ namespace platform
 				uint32_t iteration_count = 0;
 				while (accumulator > params.step_interval_seconds && (iteration_count < MAX_ITERATIONS_BEFORE_TICK))
 				{
+					Array<gemini::InputMessage> &events = gemini::kernel_events();
+					for (size_t index = 0; index < events.size(); ++index)
+					{
+						kernel::instance()->handle_input(events[index]);
+					}
+					gemini::kernel_event_reset();
+
 					kernel::instance()->fixed_update(params.step_interval_seconds);
 
 					// subtract the interval from the accumulator

@@ -265,8 +265,11 @@ namespace gemini
 		// returns whether or not the button was just released
 		bool was_released() const;
 
+		// returns the raw value
+		uint16_t value() const;
+
 		// returns a normalized float value
-		float value() const;
+		float normalized_value() const;
 	}; // ButtonState
 
 	// This is modeled after SDL2's enums, which are in turn, modeled after the

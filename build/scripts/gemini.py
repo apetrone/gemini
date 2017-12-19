@@ -28,6 +28,7 @@ def get_library_type(target_platform):
 libglm = Dependency(file="glm.py")
 librecastnavigation = Dependency(file="recastnavigation.py")
 libfreetype = Dependency(file="freetype.py")
+libhidapi = Dependency(file="hidapi.py")
 #rapidjson = Dependency(file="rapidjson.py")
 
 def assert_dependency(found, message):
@@ -290,7 +291,8 @@ def setup_driver(arguments, product, target_platform):
 		"OpenGL32", # for wglGetProcAddress
 		"Gdi32",	# for ChoosePixelFormat, SetPixelFormat
 		"ws2_32",	# for Windows Socks
-		"Comdlg32"  # for Common Dialogs
+		"Comdlg32", # for Common Dialogs
+		"setupAPI"	# for Setup API
 	]
 
 	# For COM use.
@@ -324,13 +326,13 @@ def get_tools(arguments, libruntime, librenderer, libcore, libsdk, **kwargs):
 
 	target_platform = kwargs.get("target_platform")
 
-	orion = get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs)
+	orion = get_orion(arguments, [libruntime, libcore, libhidapi, librenderer, libsdk], **kwargs)
 	tools.append(orion)
 
-	asset_compiler = get_asset_compiler(arguments, [libruntime, librenderer, libfreetype, libcore], **kwargs)
+	asset_compiler = get_asset_compiler(arguments, [libruntime, librenderer, libfreetype, libcore, libhidapi], **kwargs)
 	tools.append(asset_compiler)
 
-	protoviz = get_protoviz(arguments, [libsdk, libruntime, librenderer, libfreetype, libcore], **kwargs)
+	protoviz = get_protoviz(arguments, [libsdk, libruntime, librenderer, libfreetype, libcore, libhidapi], **kwargs)
 	tools.append(protoviz)
 
 	return tools
@@ -384,7 +386,8 @@ def get_libcore(arguments, target_platform):
 	]
 
 	libcore.dependencies += [
-		Dependency(file="glm.py")
+		Dependency(file="glm.py"),
+		libhidapi
 		#rapidjson
 	]
 
@@ -946,13 +949,13 @@ def get_unit_tests(arguments, libcore, librenderer, libruntime, libglm, **kwargs
 	return [
 		create_unit_test(target_platform, arguments, "test_core", [libcore, libglm], "tests/src/test_core.cpp"),
 		create_unit_test(target_platform, arguments, "test_platform", [libcore, libglm], "tests/src/test_platform.cpp"),
-		create_unit_test(target_platform, arguments, "test_runtime", [libruntime, librenderer, libfreetype, libcore, libglm], "tests/src/test_runtime.cpp"),
-		create_unit_test(target_platform, arguments, "test_render", [libruntime, librenderer, libfreetype, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_ui", [librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_window", [librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
+		create_unit_test(target_platform, arguments, "test_runtime", [libruntime, librenderer, libfreetype, libcore, libhidapi, libglm], "tests/src/test_runtime.cpp"),
+		create_unit_test(target_platform, arguments, "test_render", [libruntime, librenderer, libfreetype, libcore, libhidapi, libglm], "tests/src/test_render.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_ui", [librenderer, libfreetype, libruntime, libcore, libhidapi, libglm], "tests/src/test_ui.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_window", [librenderer, libfreetype, libruntime, libcore, libhidapi, libglm], "tests/src/test_window.cpp", ProductType.Application)
 	]
 
-def get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs):
+def get_orion(arguments, links, **kwargs):
 	orion = Product(name="orion", output=ProductType.Application)
 	orion.project_root = COMMON_PROJECT_ROOT
 	orion.product_root = COMMON_PRODUCT_ROOT
@@ -963,13 +966,7 @@ def get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs):
 	setup_driver(arguments, orion, target_platform)
 	setup_common_tool(orion)
 
-	orion.dependencies.extend([
-		libfreetype,
-		libruntime,
-		librenderer,
-		libcore,
-		libsdk
-	])
+	orion.dependencies.extend(links)
 
 	orion.sources += [
 		"src/tools/orion/gui/spring_panel.cpp",
@@ -1338,7 +1335,8 @@ def products(arguments, **kwargs):
 		libruntime,
 		librenderer,
 		librapid,
-		libfreetype
+		libfreetype,
+		libhidapi
 	]
 
 	gemini.dependencies += [
@@ -1479,7 +1477,7 @@ def products(arguments, **kwargs):
 
 	gemini.dependencies.append(libsdk)
 
-	rnd = get_rnd(arguments, [libruntime, librenderer, libfreetype, libcore], **kwargs)
+	rnd = get_rnd(arguments, [libruntime, librenderer, libfreetype, libcore, libhidapi], **kwargs)
 
 	tests = []
 	if arguments.with_tests:

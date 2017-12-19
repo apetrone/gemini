@@ -26,6 +26,7 @@
 
 #include "kernel_events.h"
 #include <core/typedefs.h>
+#include <core/array.h>
 
 namespace kernel
 {
@@ -127,6 +128,8 @@ namespace kernel
 		virtual void event(SystemEvent& event) = 0;
 		virtual void event(GameControllerEvent& event) = 0;
 
+		virtual void handle_input(const gemini::InputMessage &event) = 0;
+
 		virtual void fixed_update(float step_seconds) = 0;
 	};
 
@@ -161,3 +164,16 @@ namespace kernel
 #endif
 	} // event_dispatch
 } // namespace kernel
+
+
+namespace gemini
+{
+	// dispatch an event to the global Kernel instance.
+	void kernel_event_queue(KernelEvent &event);
+
+	void kernel_event_reset();
+
+	void kernel_event_translate(InputMessage &output, KernelEvent &event);
+
+	Array<InputMessage> &kernel_events();
+} // namespace gemini

@@ -227,36 +227,36 @@ namespace gui
 
 	void GamepadPanel::set_from_joystick(gemini::JoystickInput& joystick)
 	{
-		left_trigger->value			= joystick.get_button(GAMEPAD_BUTTON_L2).value();
-		right_trigger->value		= joystick.get_button(GAMEPAD_BUTTON_R2).value();
+		left_trigger->value			= joystick.get_button(GAMEPAD_BUTTON_L2).normalized_value();
+		right_trigger->value		= joystick.get_button(GAMEPAD_BUTTON_R2).normalized_value();
 
-		left_bumper->value			= joystick.get_button(GAMEPAD_BUTTON_LEFTSHOULDER).value();
+		left_bumper->value			= joystick.get_button(GAMEPAD_BUTTON_LEFTSHOULDER).normalized_value();
 		left_bumper->duration		= joystick.get_button(GAMEPAD_BUTTON_LEFTSHOULDER).held_ticks(kernel::parameters().current_physics_tick) * kernel::parameters().step_interval_seconds;
-		right_bumper->value			= joystick.get_button(GAMEPAD_BUTTON_RIGHTSHOULDER).value();
+		right_bumper->value			= joystick.get_button(GAMEPAD_BUTTON_RIGHTSHOULDER).normalized_value();
 
-		left_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_LEFT).value();
-		up_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_UP).value();
-		right_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_RIGHT).value();
-		down_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_DOWN).value();
+		left_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_LEFT).normalized_value();
+		up_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_UP).normalized_value();
+		right_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_RIGHT).normalized_value();
+		down_button->value			= joystick.get_button(GAMEPAD_BUTTON_DPAD_DOWN).normalized_value();
 
-		x_button->value				= joystick.get_button(GAMEPAD_BUTTON_X).value();
-		y_button->value				= joystick.get_button(GAMEPAD_BUTTON_Y).value();
-		a_button->value				= joystick.get_button(GAMEPAD_BUTTON_A).value();
-		b_button->value				= joystick.get_button(GAMEPAD_BUTTON_B).value();
+		x_button->value				= joystick.get_button(GAMEPAD_BUTTON_X).normalized_value();
+		y_button->value				= joystick.get_button(GAMEPAD_BUTTON_Y).normalized_value();
+		a_button->value				= joystick.get_button(GAMEPAD_BUTTON_A).normalized_value();
+		b_button->value				= joystick.get_button(GAMEPAD_BUTTON_B).normalized_value();
 
-		back_button->value			= joystick.get_button(GAMEPAD_BUTTON_BACK).value();
-		start_button->value			= joystick.get_button(GAMEPAD_BUTTON_START).value();
+		back_button->value			= joystick.get_button(GAMEPAD_BUTTON_BACK).normalized_value();
+		start_button->value			= joystick.get_button(GAMEPAD_BUTTON_START).normalized_value();
 
-		left_stick->left			= joystick.get_button(GAMEPAD_STICK0_AXIS_LEFT).value();
-		left_stick->right			= joystick.get_button(GAMEPAD_STICK0_AXIS_RIGHT).value();
-		left_stick->up				= joystick.get_button(GAMEPAD_STICK0_AXIS_UP).value();
-		left_stick->down			= joystick.get_button(GAMEPAD_STICK0_AXIS_DOWN).value();
-		left_stick->thumb_button	= joystick.get_button(GAMEPAD_BUTTON_L3).value();
+		left_stick->left			= joystick.get_button(GAMEPAD_STICK0_AXIS_LEFT).normalized_value();
+		left_stick->right			= joystick.get_button(GAMEPAD_STICK0_AXIS_RIGHT).normalized_value();
+		left_stick->up				= joystick.get_button(GAMEPAD_STICK0_AXIS_UP).normalized_value();
+		left_stick->down			= joystick.get_button(GAMEPAD_STICK0_AXIS_DOWN).normalized_value();
+		left_stick->thumb_button	= joystick.get_button(GAMEPAD_BUTTON_L3).normalized_value();
 
-		right_stick->left			= joystick.get_button(GAMEPAD_STICK1_AXIS_LEFT).value();
-		right_stick->right			= joystick.get_button(GAMEPAD_STICK1_AXIS_RIGHT).value();
-		right_stick->up				= joystick.get_button(GAMEPAD_STICK1_AXIS_UP).value();
-		right_stick->down			= joystick.get_button(GAMEPAD_STICK1_AXIS_DOWN).value();
-		right_stick->thumb_button	= joystick.get_button(GAMEPAD_BUTTON_R3).value();
+		right_stick->left			= joystick.get_button(GAMEPAD_STICK1_AXIS_LEFT).normalized_value();
+		right_stick->right			= joystick.get_button(GAMEPAD_STICK1_AXIS_RIGHT).normalized_value();
+		right_stick->up				= joystick.get_button(GAMEPAD_STICK1_AXIS_UP).normalized_value();
+		right_stick->down			= joystick.get_button(GAMEPAD_STICK1_AXIS_DOWN).normalized_value();
+		right_stick->thumb_button	= joystick.get_button(GAMEPAD_BUTTON_R3).normalized_value();
 	}
 } // namespace gui

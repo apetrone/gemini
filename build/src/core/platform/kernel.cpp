@@ -25,8 +25,11 @@
 
 #include "kernel.h"
 
+#include <core/array.h>
+
 #include <string.h>
 #include <limits.h>
+
 
 namespace kernel
 {
@@ -121,6 +124,13 @@ namespace kernel
 	}
 
 
+	namespace detail
+	{
+		gemini::Allocator allocator;
+
+		Array<gemini::InputMessage>* messages;
+	} // namespace detail
+
 	Error startup()
 	{
 		// The kernel instance must be set before calling kernel::startup!
@@ -129,17 +139,64 @@ namespace kernel
 		// perform any startup duties here before we init the core
 		Error result = detail::kernel_instance->startup();
 
+		detail::allocator = gemini::memory_allocator_default(gemini::MEMORY_ZONE_PLATFORM);
+		detail::messages = MEMORY2_NEW(detail::allocator, Array<gemini::InputMessage>)(detail::allocator);
+
 		return result;
 	} // startup
 
 	void shutdown()
 	{
 		detail::kernel_instance->shutdown();
+
+		MEMORY2_DELETE(detail::allocator, detail::messages);
+		detail::messages = nullptr;
 	}
 
 	//void tick()
 	//{
 	//	detail::kernel_instance->tick();
 	//}
-
 } // namespace kernel
+
+namespace gemini
+{
+	KernelEvent::KernelEvent()
+	{
+		memset(this, 0, sizeof(KernelEvent));
+	}
+
+	void kernel_event_queue(KernelEvent &event)
+	{
+		InputMessage input_message;
+		kernel_event_translate(input_message, event);
+		kernel::detail::messages->push_back(input_message);
+	} // kernel_event_queue
+
+	void kernel_event_reset()
+	{
+		kernel::detail::messages->resize(0);
+	} // kernel_event_reset
+
+	void kernel_event_translate(InputMessage &output, KernelEvent &event)
+	{
+		uint64_t timestamp = kernel::parameters().current_physics_tick;
+		switch (event.type)
+		{
+			case kernel::Keyboard:
+			{
+				output.timestamp = timestamp;
+				output.type = InputMessage::Keyboard;
+				output.button = event.key;
+				output.params[0] = event.is_down;
+				output.params[1] = event.modifiers;
+				break;
+			}
+		}
+	} // kernel_event_translate
+
+	Array<InputMessage> &kernel_events()
+	{
+		return *kernel::detail::messages;
+	} // kernel_events
+} // namespace gemini

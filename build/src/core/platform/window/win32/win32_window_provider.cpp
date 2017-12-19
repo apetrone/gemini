@@ -33,6 +33,10 @@
 #include "input.h"
 #include "kernel.h"
 
+#if 0
+#include <hidapi.h>
+#endif
+
 #include <windowsx.h> // GET_X_LPARAM, GET_Y_LPARAM
 
 using namespace gemini;
@@ -326,14 +330,24 @@ namespace platform
 						return 0;
 					}
 
-					kernel::KeyboardEvent event;
-					event.key = keymap[vkey];
-					event.is_down = (last_key == 0) ? true : false;
-					event.modifiers = 0;
-					event.window = window;
-					event.unicode = static_cast<uint32_t>(vkey);
-					event.is_text = 0;
-					kernel::event_dispatch(event);
+					//kernel::KeyboardEvent event;
+					//event.key = keymap[vkey];
+					//event.is_down = (last_key == 0) ? true : false;
+					//event.modifiers = 0;
+					//event.window = window;
+					//event.unicode = static_cast<uint32_t>(vkey);
+					//event.is_text = 0;
+					//kernel::event_dispatch(event);
+
+					KernelEvent kev;
+					kev.type = kernel::Keyboard;
+					kev.key = keymap[vkey];
+					kev.is_down = (last_key == 0) ? true : false;
+					kev.modifiers = 0;
+					kev.window = window;
+					kev.unicode = static_cast<uint32_t>(vkey);
+					kev.is_text = 0;
+					kernel_event_queue(kev);
 					return 0;
 				}
 				else
@@ -379,10 +393,13 @@ namespace platform
 				{
 					const int32_t prev_mouse[2] = { last_mousex, last_mousey };
 
-
-
 					switch (message)
 					{
+					//case WM_DEVICECHANGE:
+					//{
+					//	LOGV("Device Change Detected! lparam: %i, wparam: %i\n", lparam, wparam);
+					//}
+#if 0
 					case WM_INPUT:
 					{
 						// handle raw input
@@ -431,7 +448,7 @@ namespace platform
 
 						break;
 					}
-
+#endif
 					case WM_MOUSEMOVE:
 					{
 						// handle mouse events
@@ -453,7 +470,6 @@ namespace platform
 						mevent.window = window;
 						mevent.subtype = _window_provider->in_relative_mode() ? kernel::MouseDelta : kernel::MouseMoved;
 						kernel::event_dispatch(mevent);
-
 						constrain_mouse_in_relative_mode(hwnd, prev_mouse[0], prev_mouse[1]);
 						return 0;
 						break;
@@ -665,9 +681,85 @@ namespace platform
 		{
 			is_in_relative_mode = false;
 
+#if 0
+			{
+				int32_t result = hid_init();
+				assert(result == 0);
+
+				hid_device_info* devices = nullptr;
+
+				hid_device_info* joystick = nullptr;
+
+				devices = hid_enumerate(0, 0);
+				hid_device_info* device = devices;
+				for (; device;)
+				{
+					LOGV("Device (vendor: %04hx, product: %04hx\npath: %s\nserial_number: %ls)\n",
+						device->vendor_id,
+						device->product_id,
+						device->path,
+						device->serial_number);
+					LOGV("\tManufacturer: %ls\n", device->manufacturer_string);
+					LOGV("\tProduct: %ls\n", device->product_string);
+					LOGV("\tRelease: %hx\n", device->release_number);
+					LOGV("\tInterface: %d\n", device->interface_number);
+					LOGV("\tusage: %i, usage_page: %i\n", device->usage, device->usage_page);
+					LOGV("\n");
+					if (device->usage == 5 && device->usage_page == 1)
+					{
+						LOGV("select: %ls\n", device->product_string);
+						joystick = device;
+					}
+
+					device = device->next;
+				}
+
+
+				hid_device* test_device = hid_open_path(joystick->path);
+				if (test_device)
+				{
+					LOGV("Opened device\n");
+
+					unsigned char buf[32] = { 0 };
+					memset(buf, 0, 32);
+					buf[0] = 0x05;
+					buf[1] = 0xff;
+					buf[4] = 0; // Motor Left
+					buf[5] = 0; // Motor Right
+					buf[6] = 0; // Red
+					buf[7] = 0; // Green
+					buf[8] = 0; // Blue
+
+					int bytes_written = hid_write(test_device, buf, 32);
+					LOGV("wrote %i bytes\n", bytes_written);
+
+
+					unsigned char input_buffer[128] = { 0 };
+					memset(input_buffer, 0, 128);
+
+					for (size_t index = 0; index < 100; ++index)
+					{
+						int bytes_read = hid_read_timeout(test_device, input_buffer, 128, 3);
+						LOGV("bytes_read = %i\n", bytes_read);
+
+						LOGV("report: %i, %i %i\n", input_buffer[0], input_buffer[30], input_buffer[5] & 16);
+					}
+				}
+
+
+				hid_close(test_device);
+
+
+				hid_free_enumeration(devices);
+
+
+				hid_exit();
+			}
+#endif
 
 			// register for raw input
 			// keyboard: usagepage = 1, usage = 6
+
 #if 0
 
 			RAWINPUTDEVICELIST* device_list = nullptr;
@@ -1014,6 +1106,11 @@ namespace platform
 			NativeWindow* window = _window_provider->create(window_parameters, _graphics_provider->get_native_visual(graphics_data));
 			window->graphics_data = graphics_data;
 			window->backbuffer = window_parameters.backbuffer;
+
+			//
+
+
+			//
 
 			// pass the window to the graphics API for context creation
 			_graphics_provider->create_context(window);

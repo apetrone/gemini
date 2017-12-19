@@ -100,20 +100,19 @@ namespace gemini
 		window_coords[0] = absolute_x;
 		window_coords[1] = absolute_y;
 
-		//		LOGV("inject move: %i %i\n", absolute_x, absolute_y);
+		//LOGV("inject move: %i %i\n", absolute_x, absolute_y);
 	} // inject_mouse_move
 
-	void MouseInput::inject_mouse_delta(int dx, int dy)
+	void MouseInput::inject_mouse_delta(int dx, int dy, uint64_t current_tick)
 	{
 		cursor_delta[0] += dx;
 		cursor_delta[1] += dy;
+		LOGV("%i -> %i, %i\n", current_tick, dx, dy);
 	}
 
-	void MouseInput::inject_mouse_button(MouseButton button, bool is_down)
+	void MouseInput::inject_mouse_button(MouseButton button, bool is_down, uint64_t current_tick)
 	{
 		assert(button < MOUSE_COUNT && button >= 0);
-		uint64_t current_tick = 0;
-		assert(0); // TODO: Fix current tick!
 		buttons[button].update_state(is_down, current_tick);
 	} // inject_mouse_button
 
@@ -178,7 +177,7 @@ namespace gemini
 			break;
 
 		case InputMessage::Mouse:
-			state.mouse().inject_mouse_button(static_cast<MouseButton>(message.button), message.params[0]);
+			state.mouse().inject_mouse_button(static_cast<MouseButton>(message.button), message.params[0], message.timestamp);
 			break;
 
 		case InputMessage::MouseMove:
@@ -186,7 +185,7 @@ namespace gemini
 			break;
 
 		case InputMessage::MouseDelta:
-			state.mouse().inject_mouse_delta(message.params[0], message.params[1]);
+			state.mouse().inject_mouse_delta(message.params[0], message.params[1], message.timestamp);
 			break;
 
 		case InputMessage::MouseWheel:
@@ -233,7 +232,7 @@ namespace gemini
 		}
 	} // input_message_to_inputstate
 
-
+#if 0
 	void InputEventRelay::queue(const gemini::InputMessage& message)
 	{
 		messages.push_back(message);
@@ -381,4 +380,5 @@ namespace gemini
 	{
 		handlers.push_back(handler);
 	} // add_handler
+#endif
 } // namespace gemini

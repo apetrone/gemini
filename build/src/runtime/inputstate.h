@@ -28,6 +28,7 @@
 #include <platform/input.h>
 #include <core/util.h>
 
+
 namespace kernel
 {
 	struct SystemEvent;
@@ -36,78 +37,6 @@ namespace kernel
 	struct GameControllerEvent;
 	struct TouchEvent;
 }
-
-namespace gemini
-{
-	struct InputMessage
-	{
-		enum Type
-		{
-			Keyboard = 1,
-			// button: keycode
-			// params[0]: is_down
-			// params[1]: keyboard modifiers
-
-			Mouse = 8,
-			// button: mouse button
-			// params[0]: is_down
-
-			MouseMove = Mouse | 16,
-			// params[0]: abs mouse x
-			// params[1]: abs mouse y
-
-			MouseDelta = Mouse | 32,
-			// params[0]: delta mouse x
-			// params[1]: delta mouse y
-
-			MouseWheel = Mouse | 64,
-			// button: wheel delta
-			// params[0]: absolute mouse x
-			// params[1]: absolute mouse y
-			// params[2]: delta mouse x
-			// params[3]: delta mouse y
-
-			GamePadConnected = 512,
-			// params[0]: gamepad_id
-
-			GamePadDisconnected = 1024,
-			// params[0]: gamepad_id
-
-			GamePadButton = 2048,
-			// button: gamepad button
-			// params[0]: gamepad_id
-			// params[1]: axis_id
-			// params[2]: axis_value
-
-			GamePadAxis = 4096,
-			// params[0]: gamepad_id
-			// params[1]: axis_id
-			// params[2]: axis_value
-
-			System = 8192
-			// params[0]: gain_focus
-			// params[1]: lost_focus
-		};
-
-		uint32_t type;
-		uint32_t button;
-		int32_t params[4];
-
-		// timestamp in logic ticks when this event was recorded.
-		uint64_t timestamp;
-
-		InputMessage()
-			: type(0)
-			, button(0)
-			, timestamp(0)
-		{
-			params[0] = params[1] = params[2] = params[3] = 0;
-		}
-	}; // InputMessage
-} // namespace gemini
-
-
-
 
 namespace gemini
 {
@@ -143,8 +72,8 @@ namespace gemini
 		void update();
 
 		void inject_mouse_move(int absolute_x, int absolute_y);
-		void inject_mouse_delta(int dx, int dy);
-		void inject_mouse_button(MouseButton button_id, bool is_down);
+		void inject_mouse_delta(int dx, int dy, uint64_t current_tick);
+		void inject_mouse_button(MouseButton button_id, bool is_down, uint64_t current_tick);
 		void inject_mouse_wheel(int direction);
 
 		//
@@ -265,6 +194,8 @@ namespace gemini
 					joystick.update();
 				}
 			}
+
+			mouse_input.reset_delta();
 		}
 
 		void reset()
@@ -280,7 +211,7 @@ namespace gemini
 		}
 	}; // InputState
 
-
+#if 0
 
 	// input related utilities/functions
 
@@ -316,4 +247,6 @@ namespace gemini
 
 
 	void input_message_to_inputstate(const InputMessage& message, InputState& state);
+
+#endif
 } // namespace gemini

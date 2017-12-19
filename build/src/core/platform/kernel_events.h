@@ -198,14 +198,120 @@ namespace kernel
 	IKernel* find_listener_for_eventtype(kernel::EventType type);
 } // namespace kernel
 
-
 namespace gemini
 {
-	//struct EventAggregator
-	//{
-	//	void(*key_event)(kernel::KeyboardEvent&, void*);
-	//	void(*mouse_event)(kernel::MouseEvent&, void*);
-	//	void(*system_event)(kernel::SystemEvent&, void*);
-	//	void* userdata;
-	//}; // EventAggregator
+	// A general monolithic Kernel event used to dispatch
+	// platform-specific events to the application.
+	struct KernelEvent
+	{
+		kernel::EventType type;
+		kernel::EventSubType subtype;
+		struct platform::window::NativeWindow *window;
+
+		// System
+		int16_t window_width;
+		int16_t window_height;
+		int16_t render_width;
+		int16_t render_height;
+
+		// Keyboard
+		uint32_t unicode;
+		int32_t key;
+		uint16_t modifiers;
+		uint16_t is_text;
+		bool is_down;
+
+		// Mouse
+		uint16_t button;
+
+		// absolute mouse values in local (window) coordinates
+		int32_t mx;
+		int32_t my;
+
+		// delta mouse values
+		int32_t dx;
+		int32_t dy;
+
+		// < 0 is movement towards the user; > 0 is movement away toward the screen
+		// Should be normalized [-1, 1].
+		int16_t wheel_direction;
+
+		// GameControllerEvent
+		uint8_t gamepad_id;
+		uint8_t axis_id;
+		uint16_t axis_value;
+
+
+		KernelEvent();
+	};
+
+
+	// A compact structure after translating from KernelEvent.
+	// This is what the application uses to dispatch input.
+	// It is intended to be serialized to disk.
+	struct InputMessage
+	{
+		enum Type
+		{
+			Keyboard = 1,
+			// button: keycode
+			// params[0]: is_down
+			// params[1]: keyboard modifiers
+
+			Mouse = 8,
+			// button: mouse button
+			// params[0]: is_down
+
+			MouseMove = Mouse | 16,
+			// params[0]: abs mouse x
+			// params[1]: abs mouse y
+
+			MouseDelta = Mouse | 32,
+			// params[0]: delta mouse x
+			// params[1]: delta mouse y
+
+			MouseWheel = Mouse | 64,
+			// button: wheel delta
+			// params[0]: absolute mouse x
+			// params[1]: absolute mouse y
+			// params[2]: delta mouse x
+			// params[3]: delta mouse y
+
+			GamePadConnected = 512,
+			// params[0]: gamepad_id
+
+			GamePadDisconnected = 1024,
+			// params[0]: gamepad_id
+
+			GamePadButton = 2048,
+			// button: gamepad button
+			// params[0]: gamepad_id
+			// params[1]: axis_id
+			// params[2]: axis_value
+
+			GamePadAxis = 4096,
+			// params[0]: gamepad_id
+			// params[1]: axis_id
+			// params[2]: axis_value
+
+			System = 8192
+			// params[0]: gain_focus
+			// params[1]: lost_focus
+		};
+
+		uint32_t type;
+		uint32_t button;
+		int32_t params[4];
+
+		// timestamp in logic ticks when this event was recorded.
+		uint64_t timestamp;
+
+		InputMessage()
+			: type(0)
+			, button(0)
+			, timestamp(0)
+		{
+			params[0] = params[1] = params[2] = params[3] = 0;
+		}
+	}; // InputMessage
 } // namespace gemini

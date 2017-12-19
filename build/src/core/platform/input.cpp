@@ -111,10 +111,16 @@ namespace gemini
 		return (state == (Button_Impulse|Button_Released));
 	}
 
-	float ButtonState::value() const
+	uint16_t ButtonState::value() const
+	{
+		return axis_value;
+	}
+
+	float ButtonState::normalized_value() const
 	{
 		return axis_value / 32767.0f;
 	}
+
 
 	const char* mouse_button_name(unsigned int value)
 	{
